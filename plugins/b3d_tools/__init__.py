@@ -586,6 +586,14 @@ class PanelSettings(PropertyGroup):
 		default="aa_000",
 		maxlen=30,
 		)
+		
+	mirrorType_enum = EnumProperty(
+		name="Тип блока",
+		items=[ ('x', "x", ""),
+				('y', "y", ""),
+				('z', "z", ""),
+			   ]
+		)
 
 # ------------------------------------------------------------------------
 #	operators
@@ -1363,6 +1371,56 @@ class FixVertsOperator(bpy.types.Operator):
 	
 		return {'FINISHED'}
 		
+from mathutils import Vector, Matrix
+from math import radians, degrees
+		
+class MirrorAndFlipObjectsOperator(bpy.types.Operator):
+	bl_idname = "wm.mirror_objects_operator"
+	bl_label = "Отзеркалить объекты"
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+		
+		x = False
+		y = False
+		z = False
+		
+		if (mytool.mirrorType_enum) == "x":
+			x = True
+		else:
+			x = False
+			
+		if (mytool.mirrorType_enum) == "y":
+			y = True
+		else:
+			y = False
+			
+		if (mytool.mirrorType_enum) == "z":
+			z = True
+		else:
+			z = False
+		
+		
+		for object in context.selected_objects:
+			#object = bpy.context.selected_objects[i]
+			bpy.ops.transform.mirror(constraint_axis=(x, y, z), constraint_orientation='GLOBAL')
+			bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+			
+			#if object.type == 'MESH':
+			bpy.ops.object.mode_set(mode = 'EDIT') 
+			bpy.ops.mesh.select_mode(type="FACE")
+			bpy.ops.mesh.select_all(action='DESELECT')
+			bpy.ops.mesh.select_all(action='INVERT')
+			bpy.ops.mesh.flip_normals()
+			bpy.ops.mesh.select_all(action='DESELECT')
+			bpy.ops.object.mode_set(mode = 'OBJECT')
+				
+				
+		#bpy.ops.object.mode_set(mode = 'OBJECT')
+		
+		return {'FINISHED'}
+		
 class OBJECT_PT_b3d_edit_panel(Panel):
 	bl_idname = "OBJECT_PT_b3d_edit_panel"
 	bl_label = "Редактирование блоков"
@@ -1750,6 +1808,28 @@ class OBJECT_PT_b3d_blocks_panel(Panel):
 			layout.prop(mytool, "Radius")
 		
 		layout.operator("wm.add1_operator")
+		
+class OBJECT_PT_b3d_func_panel(Panel):
+	bl_idname = "OBJECT_PT_b3d_func_panel"
+	bl_label = "Дополнительные функции"
+	bl_space_type = "VIEW_3D"   
+	bl_region_type = "TOOLS"	
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"   
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+		
+		
+		layout.prop(mytool, "mirrorType_enum")
+		
+		layout.operator("wm.mirror_objects_operator")
 
 class OBJECT_PT_b3d_misc_panel(Panel):
 	bl_idname = "OBJECT_PT_b3d_misc_panel"
