@@ -45,8 +45,27 @@ def read_string_ht3(file):
 		ret = str(name_bytes.decode("utf-8")).rstrip('\0')
 	except UnicodeDecodeError:
 		ret = ""
-	print(counter)
+	#print(counter)
 	return ret
+	
+def skip_string_ht3(file):
+	byte = b'\x10'
+	counter = 0
+	
+	ret = "none"
+		
+	pos_start = file.tell()
+		
+	while byte != b'\x00':
+		
+		byte = file.read(1)
+		counter += 1;
+			
+		if counter > 256:
+			break
+						
+	file.seek(pos_start, 0)
+	file.seek(counter, 1)
 
 
 def read_wdb_data(context, filepath, use_some_setting):
@@ -146,6 +165,8 @@ def read_wdb_data(context, filepath, use_some_setting):
 		
 			#output_obj = open((output_meshes_dir + name + ".obj"),'w')
 			#output_debug_obj = open((output_meshes_dir + name + "_debug.obj"),'w')
+			
+			print(str(sections[i][5]) + " " + str(hex(sections[i][1])))
 			
 			file.seek(sections[i][1] + 4, 0) #к блоку
 			
@@ -367,6 +388,9 @@ def read_wdb_data(context, filepath, use_some_setting):
 						v = struct.unpack('<f',file.read(4))[0]
 						
 						file.seek(8, 1)
+						file.seek(8, 1) #
+						file.seek(8, 1) #
+						file.seek(8, 1) #
 						
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
@@ -528,7 +552,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 						u = struct.unpack('<f',file.read(4))[0]
 						v = struct.unpack('<f',file.read(4))[0]
 						
-						file.seek(24, 1)
+						file.seek(12, 1) #24
 						
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
@@ -755,9 +779,11 @@ def read_wdb_data(context, filepath, use_some_setting):
 					
 			mesh_type = struct.unpack("<i",file.read(4))[0]
 			
+			print(str(mesh_type) + " " + str(hex(file.tell() - 4)))
+			
 			#print("type: " + str(mesh_type))
 			mesh_section_length = struct.unpack("<i",file.read(4))[0]
-			mesh_name = read_string_ht3(file)
+			skip_string_ht3(file)
 			faces_type = struct.unpack("<i",file.read(4))[0]
 			
 			#faces_count = 0
