@@ -167,6 +167,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 			#output_debug_obj = open((output_meshes_dir + name + "_debug.obj"),'w')
 			
 			print(str(sections[i][5]) + " " + str(hex(sections[i][1])))
+			block_pos = hex(sections[i][1])
 			
 			file.seek(sections[i][1] + 4, 0) #к блоку
 			
@@ -181,6 +182,8 @@ def read_wdb_data(context, filepath, use_some_setting):
 			vertices = []
 			vert_normals = []
 			uvs = []
+			
+			bindexes = []
 			
 			#print(str(vertices_len))
 			#print(str(file.tell()))
@@ -414,6 +417,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
 						uvs.append((u, v))
+						bindexes.append(bindex)
 
 						#group = wdbObj.vertex_groups.new(name = "BINDEX_" + str(bindex))
 						#group.add(i, 0.1, 'ADD')
@@ -437,7 +441,8 @@ def read_wdb_data(context, filepath, use_some_setting):
 
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
-						uvs.append((u, v))						
+						uvs.append((u, v))					
+						bindexes.append(bindex)
 				elif (verts_type == 4434):
 					for i in range(vertices_len):
 					
@@ -459,6 +464,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
 						uvs.append((u, v))
+						bindexes.append(bindex)
 				elif (verts_type == 4626):
 					for i in range(vertices_len):
 					
@@ -481,7 +487,8 @@ def read_wdb_data(context, filepath, use_some_setting):
 						
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
-						uvs.append((u, v))				
+						uvs.append((u, v))		
+						bindexes.append(bindex)
 				elif (verts_type == 4882):
 					for i in range(vertices_len):
 					
@@ -538,6 +545,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
 						uvs.append((u, v))
+						bindexes.append(bindex)
 				elif (verts_type == 8466):
 					for i in range(vertices_len):
 					
@@ -670,8 +678,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 						y = struct.unpack('<f',file.read(4))[0]
 						z = struct.unpack('<f',file.read(4))[0]
 						
-						var_int = struct.unpack('<i',file.read(4))[0] #номер плоскости?
-						#file.seek(4, 1) #int
+						bindex = struct.unpack('<i',file.read(4))[0]
 						
 						nx = struct.unpack('<f',file.read(4))[0]
 						ny = struct.unpack('<f',file.read(4))[0]
@@ -684,7 +691,8 @@ def read_wdb_data(context, filepath, use_some_setting):
 
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
-						uvs.append((u, v))							
+						uvs.append((u, v))
+						bindexes.append(bindex)
 				elif (verts_type == 5510166):
 					for i in range(vertices_len):
 					
@@ -716,7 +724,8 @@ def read_wdb_data(context, filepath, use_some_setting):
 
 						vertices.append((x, y, z))
 						vert_normals.append((nx, ny, nz))
-						uvs.append((u, v))		
+						uvs.append((u, v))
+						bindexes.append(bindex)						
 				elif (verts_type == 22021394):
 					for i in range(vertices_len):
 					
@@ -776,7 +785,7 @@ def read_wdb_data(context, filepath, use_some_setting):
 				if (len(vertices) != len(uvs)):
 					print("VERTICES ARRAY LENGTH != UV ARRAY LENGTH, ERROR")
 					sys.exit()
-					
+			
 			mesh_type = struct.unpack("<i",file.read(4))[0]
 			
 			print(str(mesh_type) + " " + str(hex(file.tell() - 4)))
@@ -901,6 +910,26 @@ def read_wdb_data(context, filepath, use_some_setting):
 					vInd = wdbMesh.loops[index].vertex_index
 					uv_layer.data[index].uv = (uvs[vInd][0], 1 - uvs[vInd][1])
 					
+			if (verts_type == 4370) or (verts_type == 4374) or (verts_type == 4434) or (verts_type == 4626) or (verts_type == 5202) or (verts_type == 5510162) or (verts_type == 5510166):
+				for i in range(vertices_len):
+					index = []
+					bindex = bindexes[i]
+					index.append(i)
+					name = "BINDEX_" + str(bindex)
+					
+					group_index = wdbObj.vertex_groups.find(name)
+					
+					group = None
+					
+					if group_index == -1:
+						group = wdbObj.vertex_groups.new(name = "BINDEX_" + str(bindex))
+					else:
+						group = wdbObj.vertex_groups[group_index]
+						
+					group.add(index, 0.1, 'ADD')
+					
+			#print(wdbObj.vertex_groups[15])
+					
 			if ((verts_type != 258) or (verts_type != 514)):
 				i = 0
 				for i,vert in enumerate(wdbMesh.vertices):
@@ -911,7 +940,10 @@ def read_wdb_data(context, filepath, use_some_setting):
 			
 			for face in wdbMesh.polygons:
 				face.use_smooth = True
-
+				
+			wdbObj['VertexContainerType'] = verts_type
+			wdbObj['IndexContainerType'] = mesh_type
+			wdbObj['PositionInFile'] = block_pos
 
 			context.scene.objects.link(wdbObj)
 			
