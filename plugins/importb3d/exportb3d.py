@@ -13,6 +13,9 @@ from bpy.props import *
 from mathutils import Matrix
 from math import radians
 
+from math import cos
+from math import sin
+
 import bpy_extras.mesh_utils
 
 from bpy_extras.io_utils import (
@@ -140,6 +143,21 @@ def export_pro(file, textures_path):
 		
 	file.write('\n')
 	
+def clone_node():
+	b3d_node = bpy.data.objects['b3d']
+	bpy.context.scene.objects.active = b3d_node
+	bpy.ops.object.select_grouped(type='CHILDREN_RECURSIVE')
+	b3d_node.select = True
+	bpy.ops.object.duplicate(linked=False, mode='TRANSLATION')
+	bpy.context.scene.objects.active.name = "b3d_temporary"
+
+def delete_clone():
+	b3d_node = bpy.data.objects['b3d_temporary']
+	bpy.context.scene.objects.active = b3d_node
+	bpy.ops.object.select_grouped(type='CHILDREN_RECURSIVE')
+	b3d_node.select = True
+	bpy.ops.object.delete()
+	
 	
 def export(file, generate_pro_file):
 	file = open(myFile+'.b3d','wb')
@@ -184,7 +202,9 @@ def export(file, generate_pro_file):
 		file.write(ba)
 		
 	file.write(struct.pack("<i",111))
-	forChild(bpy.data.objects['b3d'],True, file)
+	clone_node()
+	forChild(bpy.data.objects['b3d_temporary'],True, file)
+	delete_clone()
 	file.write(struct.pack("<i",222))#EOF
 
 def export08(object, verticesL, file, faces, uvs):
@@ -881,20 +901,61 @@ def forChild(object, root, file):
 				#file.write(struct.pack("<f",0))
 				#file.write(struct.pack("<f",0))
 				#file.write(struct.pack("<f",1))
+				#PI = 3.14159265358979
+				#object.rotation_euler[0] *= -1
+				#object.rotation_euler[1] *= -1
+				#object.rotation_euler[2] *= -1
 				
-				object_matrix = object.matrix_world.to_3x3()
+				#object_matrix = object.matrix_world.to_3x3() #.normalized()
+
+				PI = 3.14159265358979
+
+
+				cos_y = cos(-object.rotation_euler[1])
+				sin_y = sin(-object.rotation_euler[1])
+				cos_z = cos(-object.rotation_euler[2])
+				sin_z = sin(-object.rotation_euler[2])
+				cos_x = cos(-object.rotation_euler[0])
+				sin_x = sin(-object.rotation_euler[0])
+
+				file.write(struct.pack("<f",(cos_y * cos_z)*object.scale[0]))
+				file.write(struct.pack("<f",(sin_y * sin_x - cos_y * sin_z * cos_x)*object.scale[1]))
+				file.write(struct.pack("<f",(cos_y * sin_z * sin_x + sin_y * cos_x)*object.scale[2]))
+				file.write(struct.pack("<f",(sin_z)*object.scale[0]))
+				file.write(struct.pack("<f",(cos_z * cos_x)*object.scale[1]))
+				file.write(struct.pack("<f",(-cos_z * sin_x)*object.scale[2]))
+				file.write(struct.pack("<f",(-sin_y * cos_z)*object.scale[0]))
+				file.write(struct.pack("<f",(sin_y * sin_z * cos_x + cos_y * sin_x)*object.scale[1]))
+				file.write(struct.pack("<f",(-sin_y * sin_z * sin_x + cos_y * cos_x)*object.scale[2]))
+						
+				"""
+				if ((object.rotation_euler[0] * 180/PI) < -180):
+					object.rotation_euler[0] = (360+(object.rotation_euler[0] * 180/PI)) * PI/180
+				elif ((object.rotation_euler[0] * 180/PI) > 180):
+					object.rotation_euler[0] = (360-(object.rotation_euler[0] * 180/PI)) * PI/180
+					
+				if ((object.rotation_euler[1] * 180/PI) < -180):
+					object.rotation_euler[1] = (360+(object.rotation_euler[1] * 180/PI)) * PI/180
+				elif ((object.rotation_euler[1] * 180/PI) > 180):
+					object.rotation_euler[1] = (360-(object.rotation_euler[1] * 180/PI)) * PI/180
+					
+				if ((object.rotation_euler[2] * 180/PI) < -180):
+					object.rotation_euler[2] = (360+(object.rotation_euler[2] * 180/PI)) * PI/180
+				elif ((object.rotation_euler[2] * 180/PI) > 180):
+					object.rotation_euler[2] = (360-(object.rotation_euler[2] * 180/PI)) * PI/180
+				"""
 				
-				file.write(struct.pack("<f",object_matrix[0][0]))
-				file.write(struct.pack("<f",object_matrix[0][1]))
-				file.write(struct.pack("<f",object_matrix[0][2]))
+				#file.write(struct.pack("<f",object_matrix[0][0]))
+				#file.write(struct.pack("<f",object_matrix[0][1]))
+				#file.write(struct.pack("<f",object_matrix[0][2]))
 				
-				file.write(struct.pack("<f",object_matrix[1][0]))
-				file.write(struct.pack("<f",object_matrix[1][1]))
-				file.write(struct.pack("<f",object_matrix[1][2]))
+				#file.write(struct.pack("<f",object_matrix[1][0]))
+				#file.write(struct.pack("<f",object_matrix[1][1]))
+				#file.write(struct.pack("<f",object_matrix[1][2]))
 				
-				file.write(struct.pack("<f",object_matrix[2][0]))
-				file.write(struct.pack("<f",object_matrix[2][1]))
-				file.write(struct.pack("<f",object_matrix[2][2]))
+				#file.write(struct.pack("<f",object_matrix[2][0]))
+				#file.write(struct.pack("<f",object_matrix[2][1]))
+				#file.write(struct.pack("<f",object_matrix[2][2]))
 
 				file.write(struct.pack("<f",object.location.x))
 				file.write(struct.pack("<f",object.location.y))
@@ -1007,18 +1068,18 @@ def forChild(object, root, file):
 					
 				
 			elif (type==33):
-				file.write(struct.pack("<f",0)) #node_x
-				file.write(struct.pack("<f",0)) #node_y
-				file.write(struct.pack("<f",0)) #node_z
+				file.write(struct.pack("<f",object.location.x)) #node pos
+				file.write(struct.pack("<f",object.location.y))
+				file.write(struct.pack("<f",object.location.z))
 				file.write(struct.pack("<f",(object['node_radius'])))
-				file.write(struct.pack("<i",1))
-				file.write(struct.pack("<i",1))
+				file.write(struct.pack("<i",1)) #use_lights
+				file.write(struct.pack("<i",(object['light_type'])))
 				file.write(struct.pack("<i",2))
-				file.write(struct.pack("<f",object.location.x))
+				file.write(struct.pack("<f",object.location.x)) #lamp pos
 				file.write(struct.pack("<f",object.location.y))
 				file.write(struct.pack("<f",object.location.z))
 				file.write(struct.pack("<5f",0,0,1,1,0))
-				file.write(struct.pack("<f",(object['radius_light'])))
+				file.write(struct.pack("<f",(object['light_radius'])))
 				file.write(struct.pack("<f",(object['intensity'])))
 				file.write(struct.pack("<f",0))
 				file.write(struct.pack("<f",0))
@@ -1161,7 +1222,7 @@ def forChild(object, root, file):
 				file.write(struct.pack("<f",object.location.x))
 				file.write(struct.pack("<f",object.location.y))
 				file.write(struct.pack("<f",object.location.z))
-				file.write(struct.pack("<f",object['scale']))
+				file.write(struct.pack("<f",object['node_radius']))
 				file.write(bytearray(b'\x00'*32))
 				file.write(str.encode(object['GType'])+bytearray(b'\x00'*(32-len(object['GType']))))
 				
@@ -1186,7 +1247,7 @@ def forChild(object, root, file):
 					file.write(struct.pack("<i",11))
 					file.write(struct.pack("<f",1))
 					file.write(struct.pack("<f",150))
-					file.write(struct.pack("<f",1))
+					file.write(struct.pack("<f",object['scale'])) #1
 					file.write(struct.pack("<f",5))
 					file.write(struct.pack("<f",1.0471976))
 					file.write(struct.pack("<f",2))
@@ -1774,4 +1835,3 @@ def forChild(object, root, file):
 		
 		
 		
-
