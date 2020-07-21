@@ -1,4 +1,4 @@
-﻿import struct
+import struct
 import sys
 import timeit
 import threading
@@ -35,7 +35,8 @@ def openclose(file):
 		print(str(file.tell()))
 		print (str(oc))
 		print('brackets error')
-		sys.exit()
+		#sys.exit()
+		raise Exception()
 
 def onebyte(file):
 	return (file.read(1))
@@ -44,6 +45,7 @@ def readName(file):
 	objName = file.read(32)
 	if (objName[0] == 0):
 		objName = "empty name"
+		#objname = "Untitled_0x" + str(hex(file.tell()-36))
 	else:
 		objName = (objName.decode("cp1251").rstrip('\0'))
 	return objName
@@ -528,7 +530,6 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				objString.append(context.scene.objects[0].name)
 				
 			elif (type == 8):	#тоже фейсы		face
-				offset_start = file.tell()
 				faces = []
 				faces_all = []
 				uvs = []
@@ -536,7 +537,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				cnt+=1
 				b3dMesh = (bpy.data.meshes.new(objName))
 				b3dObj=bpy.data.objects.new(objName, b3dMesh)
-				b3dObj['block_type'] = 8
+				b3dObj['block_type'] = '8'
+				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				
 				#b3dObj.hide = True	
@@ -545,178 +547,72 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#b3dObj.location = qu
 				file.read(4)
 				num = struct.unpack("<i",file.read(4))[0]
-				
-				b3dObj_node = b3dObj
-				context.scene.objects.link(b3dObj)
-				
-				b3dFaceMeshes = []
 				for i in range(num):
-					FaceObjName = "type8_face_" + str(i)
-					b3dFaceMesh = (bpy.data.meshes.new(FaceObjName))
-					b3dFaceObj = bpy.data.objects.new(FaceObjName, b3dFaceMesh)
-					
 					faces = []
 					faces_new = []
 					format = struct.unpack("<i",file.read(4))[0]
-					b3dObj['format'] = format
 					
 					struct.unpack("<fi",file.read(8))
 					texnum = struct.unpack("i",file.read(4))[0]
 					
 					num1 = struct.unpack("<i",file.read(4))[0]
 					
-					uv_local = uv
-					uv_local_list = list(uv)
-					
 					if ((format == 178) or (format == 50)):
 						for j in range(num1):
-							vertex_num = struct.unpack("<i",file.read(4))[0]
-							faces.append(vertex_num)
-							uv_local_list[vertex_num] = struct.unpack("f",file.read(4))[0]								
-							struct.unpack("<3f",file.read(12))
+							faces.append(struct.unpack("<i",file.read(4))[0])							
+							struct.unpack("<5f",file.read(20))
 					elif ((format == 176) or (format == 48)or (format == 179)or (format == 51)):
 						for j in range(num1):
-							vertex_num = struct.unpack("<i",file.read(4))[0]
-							faces.append(vertex_num)
-							uv_local_list[vertex_num] = struct.unpack("2f",file.read(8))
-							struct.unpack("f",file.read(4))[0]
-					elif ((format == 3) or (format == 131)):
+							faces.append(struct.unpack("<i",file.read(4))[0])							
+							struct.unpack("<3f",file.read(12))
+					elif ((format == 3) or (format == 2) or (format == 131)):
 						for j in range(num1):
-							vertex_num = struct.unpack("<i",file.read(4))[0]
-							faces.append(vertex_num)
-							uv_local_list[vertex_num] = struct.unpack("2f",file.read(8))
-					elif ((format == 2)):
-						face = []
-						for j in range(num1):
-							vertex_num = struct.unpack("<i",file.read(4))[0]
-							faces.append(vertex_num)
-							uv_local_list[vertex_num] = struct.unpack("2f",file.read(8))
-						##faces.extend(face)
-					elif ((format == 0)):
-						face = []
-						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])			
-						#faces.extend(face)
-					elif ((format == 144)):
-						face = []
-						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])
-						if (len(faces)>4):
-							#faces = Triangulate(faces)
-							faces = MakePolyOk(faces)
-						#print('fac new '+str(faces))
-
-						# if (len(faces)>4):
-							# faces1 = []
-							# face = []
-							# for j in range(len(faces)):
-								# if (j%2 == 0):
-									# faces1.append(faces[j])
-								# else:
-									# face.append(faces[j])
-									
-							# faces = face
-							# faces1.reverse()
-							# faces.extend(faces1)
-						# print('fac half norm '+str(face))
-						# print('fac half rev '+str(faces1))
-	
-						#print('fac new '+str(faces))
+							faces.append(struct.unpack("<i",file.read(4))[0])							
+							struct.unpack("<2f",file.read(8))
 					elif format == 177:
 						for j in range(num1):
 							faces.append(struct.unpack("<i",file.read(4))[0])							
 							struct.unpack("<f",file.read(4))
-					elif ((format == 24)): #ifif
-						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])
-							file.seek(4,1)
-							file.seek(4,1)
-							#faces.append(struct.unpack("<i",file.read(4))[0])
-							file.seek(4,1)
 					else:
 						for j in range(num1):
 							faces.append(struct.unpack("<i",file.read(4))[0])
 						#print ('faces:	'+str(faces))
-					#print(faces)
-					
-					uv_local = tuple(uv_local_list)
-					
-					uv1 = []
-					for t in range (len(faces)):
-						uv1.append(uv_local[faces[t]])
-					uvs.append(uv1)
-					#faces.reverse()
-					faces_all.append(faces)
+					for t in range(len(faces)-2):
+						if t%2 ==0:
+							faces_new.append([faces[t],faces[t+1],faces[t+2]])
+						else:
+							if ((format == 0) or (format == 16) or (format == 1)):
+								faces_new.append([faces[t+2],faces[t+1],faces[0]])
+							else:
+								faces_new.append([faces[t+2],faces[t+1],faces[t]])
+						uvs.append((uv[faces_new[t][0]],uv[faces_new[t][1]],uv[faces_new[t][2]]))
+					faces_all.extend(faces_new)
+					#print(str(faces_all))
+				#pdb.set_trace()
+				Ev = threading.Event()
+				Tr = threading.Thread(target=b3dMesh.from_pydata, args = (vertexes,[],faces_all))
+				Tr.start()
+				Ev.set()
+				Tr.join()
 
-				#	pdb.set_trace()
-					Ev = threading.Event()
-					Tr = threading.Thread(target=b3dFaceMesh.from_pydata, args = (vertexes,[],faces_all))
-					Tr.start()
-					Ev.set()
-					Tr.join()
-
 				
-					uvMesh = b3dFaceMesh.uv_textures.new()
-					imgMesh = math[texnum].texture_slots[0].texture.image.size[0]
-					uvMesh.name = 'default'
-					uvLoop = b3dFaceMesh.uv_layers[0]
-					uvsMesh = []
+				uvMesh = b3dMesh.uv_textures.new()
+				imgMesh = math[texnum].texture_slots[0].texture.image.size[0]
+				uvMesh.name = 'default'
+				uvLoop = b3dMesh.uv_layers[0]
+				uvsMesh = []
 				
-					#print('uvs:	',str(uvs))
-				
-					for i, texpoly in enumerate(uvMesh.data):
-						texpoly.image = Imgs[texnum]
-						poly = b3dFaceMesh.polygons[i]
-						for j,k in enumerate(poly.loop_indices):
-							uvsMesh = [ uvs[i][j][0], uvs[i][j][1]]
-							#print('uvs:	',str([uvs[i][j][0], uvs[i][j][1]]))
-							uvLoop.data[k].uv = uvsMesh
+				#print('uvs:	',str(uvs))
+				for i, texpoly in enumerate(uvMesh.data):
+					texpoly.image = Imgs[texnum]
+					poly = b3dMesh.polygons[i]
+					for j,k in enumerate(poly.loop_indices):
+						uvsMesh = [uvs[i][j][0],1 - uvs[i][j][1]]
+						uvLoop.data[k].uv = uvsMesh
 						
-					mat = b3dFaceMesh.materials.append(math[texnum])
-					
-					context.scene.objects.link(b3dFaceObj)
-					
-					#b3dFaceMeshes.append(b3dFaceObj)
-					
-					#b3dFaceObj.parent = b3dObj_node
-					
-					bpy.ops.object.select_all(action='DESELECT')
-					obs = [b3dObj_node, b3dFaceObj]
-					
-
-					for o in bpy.context.selected_objects:
-						o.select = False
-					for o in obs:
-						o.select = True
-					bpy.context.scene.objects.active = obs[0]
-					bpy.ops.object.join()
-					
-				#file.seek(-(file.tell() - offset_start), 1)
-				#MakeIndTextures(file, b3dMesh)
+				mat = b3dMesh.materials.append(math[texnum])
 				
-				#bpy.ops.object.mode_set(mode = 'OBJECT')
-				#bpy.ops.object.mode_set(mode = 'EDIT') 
-				#bpy.ops.mesh.select_mode(type="FACE")
-				#bpy.ops.mesh.select_all(action='DESELECT')
-				#bpy.ops.mesh.select_all(action='INVERT')
-				#bpy.ops.mesh.select_mode(type="VERT")
-				#bpy.ops.mesh.select_all(action='INVERT')
-				#bpy.ops.mesh.delete(type='VERT')
-				
-				#bpy.ops.object.mode_set(mode = 'OBJECT')
-				
-				#context.scene.objects.link(b3dObj)
-
-				bm = bmesh.new()
-
-				bm.from_mesh(b3dMesh)
-				bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
-				bm.to_mesh(b3dMesh)
-				b3dMesh.update()
-				bm.clear()
-
-				bm.free()
-				
+				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 
 				
@@ -1096,7 +992,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				cnt+=1
 				
 				#qu = quat(file).v
-				objString.append(context.scene.objects[0].name)
+				#objString.append(context.scene.objects[0].name)
 				#file.seek(20,1)
 				
 				m11 = struct.unpack("<f",file.read(4))[0]
@@ -1137,23 +1033,28 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 
 
 				
-				bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=sp_pos)
-				b3dObj = bpy.context.selected_objects[0]
-				b3dObj.name = objName
+				#bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=sp_pos)
+				b3dObj = bpy.data.objects.new(objName, None)
+				#b3dObj = bpy.context.selected_objects[0]
+				#b3dObj.name = objName
 				b3dObj['block_type'] = 24
 				b3dObj.rotation_euler[0] = x_d
 				b3dObj.rotation_euler[1] = y_d
 				b3dObj.rotation_euler[2] = z_d
+				b3dObj.location = sp_pos
 				
 				#b3dObj['rotation_euler0'] = rot_x
 				#b3dObj['rotation_euler1'] = rot_y
 				#b3dObj['rotation_euler2'] = rot_z
 				
-				b3dObj.parent = context.scene.objects[objString[-1]]
-				bpy.ops.object.select_all(action='DESELECT')
+				#bpy.ops.object.select_all(action='DESELECT')
 				flag = struct.unpack("<i",file.read(4))[0]
 				b3dObj['flag'] = flag
 				file.seek(4,1)#01 00 00 00
+				
+				b3dObj.parent = context.scene.objects[objString[-1]]
+				context.scene.objects.link(b3dObj)
+				objString.append(context.scene.objects[0].name)
 				
 			elif (type == 25): #copSiren????/ контейнер
 				
@@ -1355,9 +1256,27 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 				qu = quat(file).v
-				ff = file.read(4)
-				for i in range(18):
-					file.seek(4,1)
+				#ff = file.read(4)
+				#for i in range(18):
+				#	file.seek(4,1)
+				
+				file.seek(4,1)
+				b3dObj['light_type'] = struct.unpack("<i",file.read(4))[0]
+				file.seek(4,1)
+				b3dObj.location = struct.unpack("<3f",file.read(12))
+				file.seek(4,1)
+				file.seek(4,1)
+				file.seek(4,1)
+				file.seek(4,1)#global_light_state
+				file.seek(4,1)
+				b3dObj['light_radius'] = struct.unpack("<f",file.read(4))[0]
+				b3dObj['intensity'] = struct.unpack("<f",file.read(4))[0]
+				file.seek(4,1)
+				file.seek(4,1)
+				b3dObj['R'] = struct.unpack("<f",file.read(4))[0]
+				b3dObj['G'] = struct.unpack("<f",file.read(4))[0]
+				b3dObj['B'] = struct.unpack("<f",file.read(4))[0]
+				file.seek(4,1)
 					
 			elif (type == 34): #lamp
 				num = 0
@@ -1480,13 +1399,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				for i, texpoly in enumerate(uvMesh.data):
 					#print(str(i))
 					poly = b3dMesh.polygons[i]
-					texpoly.image = Imgs[texNum]#coords23[i][3]]
+					#texpoly.image = Imgs[texNum]#coords23[i][3]]
 					for j,k in enumerate(poly.loop_indices):
 						uvsMesh = [uvs[i][j][0],1 - uvs[i][j][1]]
 						uvLoop.data[k].uv = uvsMesh
 						
 				
-				b3dMesh.materials.append(math[texNum])#coords23[i][3]])
+				#b3dMesh.materials.append(math[texNum])#coords23[i][3]])
 				
 				
 				b3dMesh.uv_textures['UVmap'].active = True
@@ -1505,6 +1424,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj['BType'] = 35
 				b3dObj['pos'] = str(file.tell())
 				b3dObj['block_type'] = b3dObj.parent['block_type']
+				for face in b3dMesh.polygons:
+					face.use_smooth = True
 				objString.append(context.scene.objects[0].name)
 
 			elif (type == 36):
@@ -1634,14 +1555,15 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#objString.append(context.scene.objects[0].name)
 				sp_pos = struct.unpack("<fff",file.read(12))	
 				file.seek(4,1)				
-				bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=sp_pos)
-				b3dObj = bpy.context.selected_objects[0]
-				b3dObj.name = objName
+				#bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=sp_pos)
+				#b3dObj = bpy.context.selected_objects[0]
+				b3dObj = bpy.data.objects.new(objName, None)	
+				#b3dObj.name = objName
 				b3dObj['block_type'] = 40
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				objString.append(context.scene.objects[0].name)
-				bpy.ops.object.select_all(action='DESELECT')
+				#bpy.ops.object.select_all(action='DESELECT')
 				#b3dObj.hide = True				
 
 				file.read(32)
