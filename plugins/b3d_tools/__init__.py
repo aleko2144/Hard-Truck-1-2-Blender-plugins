@@ -2,7 +2,7 @@ bl_info = {
 	"name": "King of The Road Tools Panel for b3d exporter",
 	"description": "",
 	"author": "Andrey Prozhoga",
-	"version": (0, 0, 5),
+	"version": (1, 0, 0),
 	"blender": (2, 79, 0),
 	"location": "3D View > Tools",
 	"warning": "",
@@ -239,9 +239,18 @@ class PanelSettings(PropertyGroup):
 		min = 0.0,
 		)
 		
+	LType_enum = bpy.props.EnumProperty(
+		name="Тип источника света",
+		items=(('0', 'Тип 0', ""),
+			   ('1', 'Тип 1', ""),
+			   ('2', 'Тип 2', ""),
+			   ('3', 'Тип 3', ""),
+			   ),
+		)
+		
 	SType_enum = bpy.props.EnumProperty(
 		name="Тип записи вершин",
-		items=(('1', "Тип 1, координаты + UV + нормали", ""),
+		items=(#('1', "Тип 1, координаты + UV + нормали", ""),
 			   ('2', "Тип 2, координаты + UV + нормали", "Данный тип используется на обычных моделях"),
 			   ('3', "Тип 3, координаты + UV", "Данный тип используется на моделях света фар"),
 			   ('258', "Тип 258, координаты + UV + нормали + 2 float", "Данный тип используется для моделей асфальтированных дорог"),
@@ -407,6 +416,13 @@ class PanelSettings(PropertyGroup):
 				('BlinkLightKey', "BlinkLightKey", ""),
 				('SearchLightKey', "SearchLightKey", ""),
 				]
+		)
+		
+	addGroupName_string = StringProperty(
+		name="Имя группы",
+		description="Имя переключаемой группы",
+		default="",
+		maxlen=30,
 		)
 		
 	T14_enum = EnumProperty(
@@ -788,6 +804,19 @@ class AddOperator(bpy.types.Operator):
 			object['groups_num'] = mytool.groupsNum_int
 			object.location=cursor_pos
 			bpy.context.scene.objects.link(object)
+			for i in range(mytool.groupsNum_int):
+				group = bpy.data.objects.new((mytool.addGroupName_string + str(i)), None) 
+				group['block_type'] = 5
+				group['node_radius'] = mytool.Radius
+				group['add_name'] = ""
+				bpy.context.scene.objects.link(group)
+				group.parent = object
+				if (i < mytool.groupsNum_int - 1):
+					separator = bpy.data.objects.new((mytool.addGroupName_string + str(i) + "_444"), None) 
+					separator['block_type'] = 444
+					bpy.context.scene.objects.link(separator)
+					separator.parent = object
+				
 
 		if block_type == 24:
 			object = bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=(0.0,0.0,0.0))	
@@ -864,7 +893,8 @@ class AddOperator(bpy.types.Operator):
 			object.location=cursor_pos
 			object['block_type'] = block_type
 			object['node_radius'] = mytool.Radius
-			object['radius_light'] = mytool.RadiusLight
+			object['light_radius'] = mytool.RadiusLight
+			object['light_type'] = int(mytool.LType_enum)
 			object['intensity'] = mytool.Intensity
 			object['R'] = mytool.R / 255
 			object['G'] = mytool.G / 255
@@ -893,6 +923,7 @@ class AddOperator(bpy.types.Operator):
 				object.location=cursor_pos
 			
 				object['block_type'] = block_type
+				object['node_radius'] = mytool.Radius
 				object['scale'] = mytool.Scale
 				object['mat_name'] = mytool.materialName_string
 				object['GType'] = mytool.generatorType_enum
@@ -1043,6 +1074,7 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			layout.prop(mytool, "addBlockType_enum", text="")
 			layout.prop(mytool, "Radius")
 			layout.prop(mytool, "groupsNum_int")
+			layout.prop(mytool, "addGroupName_string")
 			
 		elif block_type == 24:
 			layout.prop(mytool, "BlockName_string")
@@ -1078,6 +1110,7 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
+			layout.prop(mytool, "LType_enum")
 			layout.prop(mytool, "Radius")
 			layout.prop(mytool, "RadiusLight")
 			layout.prop(mytool, "Intensity")
@@ -1087,6 +1120,7 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			
 		elif block_type == 40:
 			layout.prop(mytool, "BlockName_string")
+			layout.prop(mytool, "Radius")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 			self.layout.label("Тип генератора:")
@@ -1178,7 +1212,8 @@ class GetValuesOperator(bpy.types.Operator):
 
 		elif block_type == 33:
 			mytool.Radius1 = object['node_radius']
-			mytool.RadiusLight1 = object['radius_light']
+			mytool.LType_enum = str(object['light_type'])
+			mytool.RadiusLight1 = object['light_radius']
 			mytool.Intensity1 = object['intensity'] 
 			mytool.R1 = object['R'] * 255
 			mytool.G1 = object['G'] * 255
@@ -1272,7 +1307,8 @@ class SetValuesOperator(bpy.types.Operator):
 				
 			elif block_type == 33:
 				object['node_radius'] = mytool.Radius1
-				object['radius_light'] = mytool.RadiusLight1
+				object['light_type'] = int(mytool.LType_enum)
+				object['light_radius'] = mytool.RadiusLight1
 				object['intensity'] = mytool.Intensity1
 				object['R'] = mytool.R1 / 255
 				object['G'] = mytool.G1 / 255
@@ -1401,20 +1437,22 @@ class MirrorAndFlipObjectsOperator(bpy.types.Operator):
 		else:
 			z = False
 		
-		
 		for object in context.selected_objects:
-			#object = bpy.context.selected_objects[i]
-			bpy.ops.transform.mirror(constraint_axis=(x, y, z), constraint_orientation='GLOBAL')
-			bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-			
-			#if object.type == 'MESH':
-			bpy.ops.object.mode_set(mode = 'EDIT') 
-			bpy.ops.mesh.select_mode(type="FACE")
-			bpy.ops.mesh.select_all(action='DESELECT')
-			bpy.ops.mesh.select_all(action='INVERT')
-			bpy.ops.mesh.flip_normals()
-			bpy.ops.mesh.select_all(action='DESELECT')
-			bpy.ops.object.mode_set(mode = 'OBJECT')
+			if object.type == 'MESH':
+				#object = bpy.context.selected_objects[i]
+				bpy.ops.transform.mirror(constraint_axis=(x, y, z), constraint_orientation='GLOBAL')
+				bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+				
+				#if object.type == 'MESH':
+				bpy.ops.object.mode_set(mode = 'EDIT') 
+				bpy.ops.mesh.select_mode(type="FACE")
+				bpy.ops.mesh.select_all(action='DESELECT')
+				bpy.ops.mesh.select_all(action='INVERT')
+				bpy.ops.mesh.flip_normals()
+				bpy.ops.mesh.select_all(action='DESELECT')
+				bpy.ops.object.mode_set(mode = 'OBJECT')
+				
+				
 				
 				
 		#bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -1652,6 +1690,7 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 			elif block_type == 33:
 				self.layout.label("Тип блока: " + str(block_type))
 				layout.prop(mytool, "Radius1")
+				layout.prop(mytool, "LType_enum")
 				layout.prop(mytool, "RadiusLight1")
 				layout.prop(mytool, "Intensity1")
 				layout.prop(mytool, "R1")
