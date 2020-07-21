@@ -58,11 +58,11 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
 
     use_image_search = BoolProperty(name='Image Search',
                         description='Search subdirectories for any associated'\
-                                    'images', default=True)
+                                    'images', default=False)
 						
     search_tex_names = BoolProperty(name='Get texture names from *.res',
                         description='Get texture names from res-file'\
-                                    'images', default=True)
+                                    'images', default=False)
 						
     textures_format = StringProperty(
         name="Textures format",
@@ -123,7 +123,7 @@ class ExportB3D(bpy.types.Operator, ImportHelper):
 
     generate_pro_file = BoolProperty(name='Generate .pro file',
                         description='Generate .pro file, which can used'\
-                                    'to assembly the resources file', default=True)
+                                    'to assembly the resources file', default=False)
 									
     textures_path = StringProperty(
         name="Textures directory",
@@ -162,4 +162,4 @@ def unregister():
 
 
 if __name__ == "__main__":
-    register()
+    register() 
