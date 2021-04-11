@@ -34,7 +34,7 @@ Hard Truck classic games (VWI engine) import/export plugins for Blender.
 
 #### Roadmap
 * Blender 2.9 support
-* Import Export game resource files (.res/.rmp)
+* Add support for game resource files (.res/.rmp)
 
 ## Supported games and formats
 
