@@ -25,3 +25,27 @@
 
 ## Ссылки
 [Сообщество VK](https://vk.com/rnr_mods)
+
+# About
+
+Hard Truck classic games (VWI engine) import/export plugins for Blender.
+
+#### Roadmap
+* Blender 2.9 support
+* Import Export game resource files (.res/.rmp)
+
+## Supported games and formats
+
+1. Hard Truck: Road to Victory (1998)
+
+| Расширение | Описание           | Import | 
+|-----------|-----------------------|:----------:|
+| .b3d  | Models, game logic, various objects    | Yes  | 
+
+2. Hard Truck: King Of The Road (2003)
+
+| Расширение | Описание           | Import | Export | 
+|-----------|-----------------------|:----------:|:----------:|
+| .b3d  | Models, game logic, various objects   | Yes   | Yes  | 
+| .way  | AI paths   | Yes  | Yes  | 
+| .tch/.tech  | Transport parameters |      | Yes | 
