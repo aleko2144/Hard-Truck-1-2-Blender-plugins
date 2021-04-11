@@ -26,6 +26,8 @@
 ## Ссылки
 [Сообщество VK](https://vk.com/rnr_mods)
 
+***
+
 # About
 
 Hard Truck classic games (VWI engine) import/export plugins for Blender.
