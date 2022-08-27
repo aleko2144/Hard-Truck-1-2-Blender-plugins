@@ -3,7 +3,7 @@ bl_info = {
 	"description": "",
 	"author": "Andrey Prozhoga",
 	"version": (0, 0, 1),
-	"blender": (2, 79, 0),
+	"blender": (3, 0, 0),
 	"location": "3D View > Tools",
 	"warning": "",
 	"wiki_url": "",

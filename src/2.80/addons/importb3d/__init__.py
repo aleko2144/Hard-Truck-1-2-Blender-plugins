@@ -19,10 +19,10 @@
 # <pep8 compliant>
 
 bl_info = {
-    'name': 'B3D importer/exporter',
+    'name': 'King of the Road B3D importer/exporter',
     'author': 'Yuriy Gladishenko, Andrey Prozhoga',
-    'version': (0, 1, 15),
-    'blender': (2, 7, 9),
+    'version': (0, 1, 17),
+    'blender': (2, 80, 0),
     'api': 34893,
     'description': 'This script imports and exports the King of the Road b3d',
     'warning': '',
@@ -31,21 +31,44 @@ bl_info = {
     'tracker_url': 'vk.com/rnr_mods',
     'category': 'Import-Export'}
 
-
 # To support reload properly, try to access a package var, if it's there,
 # reload everything
 if "bpy" in locals():
-    import imp
-    if 'importb3d' in locals():
-        imp.reload(importb3d)
-#   if 'export_m3' in locals():
-#       imp.reload(exportb3d)
+    print("Reimporting modules!!!")
+    import importlib
+    importlib.reload(common)
+    importlib.reload(importb3d)
+    # importlib.reload(exportb3d)
+    importlib.reload(imghelp)
+else:
+    import bpy
+    from . import (
+        common,
+        importb3d,
+        # exportb3d,
+        imghelp,
+    )
 
 import time
 import datetime
 import bpy
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
+# from . import common, exportb3d, imghelp, importb3d
+
+
+class HTImportPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    COMMON_RES_Path: bpy.props.StringProperty(
+        name="Common.res path",
+        default="",
+        subtype='FILE_PATH')
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop(self, 'COMMON_RES_Path', expand=True)
 
 
 class ImportB3D(bpy.types.Operator, ImportHelper):
@@ -54,38 +77,29 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
     bl_label = 'Import B3D'
 
     filename_ext = '.b3d'
-    filter_glob = StringProperty(default='*.b3d', options={'HIDDEN'})
+    filter_glob : StringProperty(default='*.b3d', options={'HIDDEN'})
 
-    use_image_search = BoolProperty(name='Image Search',
-                        description='Search subdirectories for any associated'\
-                                    'images', default=False)
+    to_unpack_res : BoolProperty(name='Unpack .res archive',
+                    description='Unpack associated with .b3d fie .res archive. \n'\
+                                'NOTE: .res archive must be located in the same folder as .b3d file', default=False)
 
-    search_tex_names = BoolProperty(name='Get texture names from *.res',
-                        description='Get texture names from res-file'\
-                                    'images', default=False)
+    to_import_textures : BoolProperty(name='Import Textures',
+                    description='Import textures from unpacked .res archive. \n'\
+                                'NOTE: if importing for the first time select previous option too', default=False)
 
-    textures_format = StringProperty(
-        name="Textures format",
-        default="png",
-        )
 
-    color_format = StringProperty(
-        name="Color format",
-        default="RGB",
-        description="RGB or BGR",
-        )
-
-    tex_path = StringProperty(
-        name="Created textures path",
-        default="\\txr",
-        )
+    textures_format : StringProperty(
+        name="Images format",
+        description="Loaded images format",
+        default="tga",
+    )
 
     def execute(self, context):
         from . import importb3d
         print('Importing file', self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple())
         with open(self.filepath, 'rb') as file:
-            importb3d.read(file, context, self, self.filepath, self.search_tex_names, self.textures_format, self.color_format, self.tex_path)
+            importb3d.read(file, context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished importing in', t, 'seconds')
         return {'FINISHED'}
@@ -148,17 +162,32 @@ def menu_func_import(self, context):
 def menu_func_export(self, context):
    self.layout.operator(ExportB3D.bl_idname, text='KOTR B3D (.b3d)')
 
+classes = (
+    HTImportPreferences,
+    ImportB3D,
+    ImportWayTxt,
+    ExportB3D
+)
+
+
 
 def register():
-    bpy.utils.register_module(__name__)
+    print("registering addon")
+    # import importlib
+    # for cls in classes:
+    #     importlib.reload(cls)
+    for cls in classes:
+        bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    print("unregistering addon")
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
 
 
 if __name__ == "__main__":
