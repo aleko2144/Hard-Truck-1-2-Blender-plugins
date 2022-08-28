@@ -56,7 +56,7 @@ def applyTransform(block_18):
 
     allChildren = [obj for obj in getAllChildren(destObj)]
 
-    subTransforms = [obj for obj in allChildren if obj["block_type"] == 18]
+    subTransforms = [obj for obj in allChildren if obj.get("block_type") is not None and obj["block_type"] == 18]
 
     meshes = [obj for obj in allChildren if obj.type=="MESH" and not reIsCopy.search(obj.name)]
 
@@ -117,13 +117,13 @@ def removeTransforms():
     bpy.ops.object.delete()
 
 def applyTransforms():
-    objs = [cn for cn in bpy.data.objects if cn["block_type"]==18]
+    objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==18]
     for obj in objs:
         applyTransform(obj)
 
 def showHideObjByType(type):
-    objs = [cn for cn in bpy.data.objects if cn["block_type"]==type]
-    hiddenObj = [cn for cn in bpy.data.objects if cn["block_type"]==type and cn.hide_get()]
+    objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
+    hiddenObj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type and cn.hide_get()]
     if objs == hiddenObj:
         for obj in objs:
             obj.hide_set(False)
@@ -132,8 +132,8 @@ def showHideObjByType(type):
             obj.hide_set(True)
 
 def showHideObjTreeByType(type):
-    objs = [cn for cn in bpy.data.objects if cn["block_type"]==type]
-    hiddenObj = [cn for cn in bpy.data.objects if cn["block_type"]==type and cn.hide_get()]
+    objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
+    hiddenObj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type and cn.hide_get()]
     if objs == hiddenObj:
         for obj in objs:
             children = getAllChildren(obj)

@@ -11,6 +11,18 @@ bl_info = {
 	"category": "Development"
 }
 
+# To support reload properly, try to access a package var, if it's there,
+# reload everything
+if "bpy" in locals():
+    print("Reimporting modules!!!")
+    import importlib
+    importlib.reload(import_way)
+else:
+    import bpy
+    from . import (
+        import_way
+    )
+
 import bpy
 
 from bpy.props import (StringProperty,
@@ -29,6 +41,14 @@ from bpy.types import (Panel,
 import struct
 
 bytes_len = 0
+
+
+# https://blenderartists.org/t/solved-adding-a-tab-in-blender-2-8/1133119/3
+def getRegion():
+	if bpy.app.version < (2,80,0):
+		return "TOOLS"
+	else:
+		return "UI"
 
 # panel
 
@@ -350,7 +370,7 @@ class OBJECT_PT_way_add_panel(Panel):
 	bl_idname = "OBJECT_PT_way_add_panel"
 	bl_label = "Добавление блоков"
 	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
+	bl_region_type = getRegion()
 	bl_category = "way Tools"
 	#bl_context = "objectmode"
 
@@ -365,7 +385,7 @@ class OBJECT_PT_way_add_panel(Panel):
 		global blockW_type
 		blockW_type = waytool.addWBlockType_enum
 
-		self.layout.label("Тип блока:")
+		self.layout.label(text="Тип блока:")
 		layout.prop(waytool, "addWBlockType_enum", text="")
 
 		if blockW_type == "ATTR":
@@ -428,7 +448,7 @@ class OBJECT_PT_way_edit_panel(Panel):
 	bl_idname = "OBJECT_PT_way_edit_panel"
 	bl_label = "Редактирование блоков"
 	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
+	bl_region_type = getRegion()
 	bl_category = "way Tools"
 	#bl_context = "objectmode"
 
@@ -471,7 +491,7 @@ class OBJECT_PT_way_misc_panel(Panel):
 	bl_idname = "OBJECT_PT_way_misc_panel"
 	bl_label = "О плагине"
 	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
+	bl_region_type = getRegion()
 	bl_category = "way Tools"
 	#bl_context = "objectmode"
 
@@ -484,14 +504,14 @@ class OBJECT_PT_way_misc_panel(Panel):
 		scene = context.scene
 		waytool = scene.way_tool
 
-		self.layout.label("Автор плагина: aleko2144")
-		self.layout.label("vk.com/rnr_mods")
+		self.layout.label(text="Автор плагина: aleko2144")
+		self.layout.label(text="vk.com/rnr_mods")
 
 class OBJECT_PT_blocks_panel(Panel):
 	bl_idname = "OBJECT_PT_blocks_panel"
 	bl_label = "Создание блоков"
 	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
+	bl_region_type = getRegion()
 	bl_category = "way Tools"
 	#bl_context = "objectmode"
 
@@ -529,7 +549,7 @@ class OBJECT_PT_blocks_panel(Panel):
 def MsgBox(label = "", title = "Error", icon = 'ERROR'):
 
     def draw(self, context):
-        self.layout.label(label)
+        self.layout.label(text=label)
 
     bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
 
@@ -1071,21 +1091,17 @@ from bpy.types import Operator
 class ImportSomeData(Operator, ExportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
     bl_idname = "import_test.some_data"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label = "Import *.way"
+    bl_label = "Import WAY"
 
     # ExportHelper mixin class uses this
-    filename_ext = ".way"
+    filename_ext = '.way'
 
-    filter_glob = StringProperty(
-            default="*.way",
-            options={'HIDDEN'},
-            maxlen=255,  # Max internal buffer length, longer would be clamped.
-            )
+    filter_glob : StringProperty(default='*.way',options={'HIDDEN'})  # Max internal buffer length, longer would be clamped.
 
     def execute(self, context):
         from . import import_way
-        with open(self.filepath, 'r') as file:
-            import_way.read(self.filepath, context)
+        with open(self.filepath, 'rb') as file:
+            import_way.read(file, context, self.filepath)
         return {'FINISHED'}
 
 class ExportSomeData(Operator, ExportHelper):
@@ -1094,13 +1110,9 @@ class ExportSomeData(Operator, ExportHelper):
     bl_label = "Export *.way"
 
     # ExportHelper mixin class uses this
-    filename_ext = ".way"
+    filename_ext = '.way'
 
-    filter_glob = StringProperty(
-            default="*.way",
-            options={'HIDDEN'},
-            maxlen=255,  # Max internal buffer length, longer would be clamped.
-            )
+    filter_glob : StringProperty(default='*.way', options={'HIDDEN'})  # Max internal buffer length, longer would be clamped.
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
@@ -1124,31 +1136,60 @@ class ExportSomeData(Operator, ExportHelper):
 
 # Only needed if you want to add into a dynamic menu
 def menu_func_export(self, context):
-    self.layout.operator(ExportSomeData.bl_idname, text="Export KOTR *.way")
+    self.layout.operator(ExportSomeData.bl_idname, text="KOTR WAY (.way")
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportSomeData.bl_idname, text="Import KOTR *.way")
+    self.layout.operator(ImportSomeData.bl_idname, text="KOTR WAY (.way)")
+
+classes = (
+	PanelSettings1,
+	AddOperator1,
+	SetValuesOperator1,
+	AddOperator11,
+	OBJECT_PT_way_add_panel,
+	GetValuesOperator1,
+	OBJECT_PT_way_edit_panel,
+	OBJECT_PT_way_misc_panel,
+	OBJECT_PT_blocks_panel,
+	ImportSomeData,
+	ExportSomeData
+)
+
 
 def register():
-	bpy.utils.register_class(ExportSomeData)
+	for cls in classes:
+		bpy.utils.register_class(cls)
 	bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-
-	bpy.utils.register_class(ImportSomeData)
 	bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
-
-	bpy.utils.register_module(__name__)
-	bpy.types.Scene.way_tool = PointerProperty(type=PanelSettings1)
-
+	bpy.types.Scene.way_tool = bpy.props.PointerProperty(type=PanelSettings1)
 
 def unregister():
-	bpy.utils.unregister_class(ExportSomeData)
-	bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-
-	bpy.utils.unregister_class(ImportSomeData)
-	bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-
-	bpy.utils.unregister_module(__name__)
 	del bpy.types.Scene.way_tool
+	bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+	bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+	for cls in classes:
+		bpy.utils.unregister_class(cls)
+
+# def register():
+# 	bpy.utils.register_class(ExportSomeData)
+# 	bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
+# 	bpy.utils.register_class(ImportSomeData)
+# 	bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+
+# 	bpy.utils.register_module(__name__)
+# 	bpy.types.Scene.way_tool = PointerProperty(type=PanelSettings1)
+
+
+# def unregister():
+# 	bpy.utils.unregister_class(ExportSomeData)
+# 	bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+
+# 	bpy.utils.unregister_class(ImportSomeData)
+# 	bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+
+# 	bpy.utils.unregister_module(__name__)
+# 	del bpy.types.Scene.way_tool
 
 
 if __name__ == "__main__":
