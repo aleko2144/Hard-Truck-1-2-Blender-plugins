@@ -1065,7 +1065,7 @@ def read(file, context, op, filepath):
 
                     formatRaw = struct.unpack("<i",file.read(4))[0]
                     unknown1 = formatRaw & 0xFFFF
-                    unknown2 = (formatRaw & 0xFF00) >> 8 #ah
+                    unknown2 = ((formatRaw & 0xFF00) >> 8) + 1 #ah
                     file.seek(4,1)
 
                     unknown3 = struct.unpack("<i",file.read(4))[0]
@@ -1073,9 +1073,9 @@ def read(file, context, op, filepath):
 
                     vert_num = struct.unpack("<i", file.read(4))[0]
                     for k in range(vert_num):
+                        l_x = struct.unpack("<f", file.read(4))[0]
+                        l_y = struct.unpack("<f", file.read(4))[0]
                         if unknown1 & 0b10:
-                            l_x = struct.unpack("<f", file.read(4))[0]
-                            l_y = struct.unpack("<f", file.read(4))[0]
                             for j in range(unknown2):
                                 l_u = struct.unpack("<f", file.read(4))[0]
                                 l_v = struct.unpack("<f", file.read(4))[0]
@@ -1781,6 +1781,7 @@ def getPolygonsBySelectedVertices():
         for v in f.vertices:
             if not data.vertices[v].select:
                 s = False
+                break
         if s:
             selectedPolygons.append(f)
     return selectedPolygons
