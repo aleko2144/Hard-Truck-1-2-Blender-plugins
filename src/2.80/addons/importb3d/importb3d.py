@@ -2,6 +2,7 @@ import enum
 from hashlib import new
 import struct
 import sys
+import time
 import timeit
 import threading
 import pdb
@@ -390,7 +391,8 @@ def read(file, context, op, filepath):
             type = 	struct.unpack("<i",file.read(4))[0]
             # objName = "{}_{}".format(str(type).zfill(2), onlyName)
             objName = onlyName
-            log.info("Importing block #{}: {}".format(type, objName))
+            realName = onlyName
+            # log.info("Importing block #{}: {}".format(type, objName))
             if (type == 0): # Empty Block
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 objString.append(b3dName)
@@ -402,6 +404,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 b3dObj['2 name'] = file.read(32).decode("cp1251").rstrip('\0') #?
@@ -415,6 +418,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -430,6 +434,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -443,6 +448,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
 
                 objString.append(b3dObj.name)
 
@@ -468,6 +474,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
                 b3dObj['child_count'] = struct.unpack("<i",file.read(4))[0]
 
@@ -482,6 +489,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
 
                 objString.append(b3dObj.name)
 
@@ -517,6 +525,7 @@ def read(file, context, op, filepath):
                 childCnt = struct.unpack("<i",file.read(4))[0]
 
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
             elif (type == 8):	#тоже фейсы		face
@@ -613,8 +622,11 @@ def read(file, context, op, filepath):
                 b3dObj['pos'] = pos
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
 
                 if op.to_import_textures:
+                    #For assignMaterialByVertices just-in-case
+                    bpy.ops.object.mode_set(mode = 'OBJECT')
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
@@ -631,7 +643,6 @@ def read(file, context, op, filepath):
 
                 objString.append(b3dObj.name)
 
-
             elif (type == 9 or type == 22):
                 cnt+=1
                 b3dObj = bpy.data.objects.new(objName, None)
@@ -640,6 +651,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -654,6 +666,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -668,6 +681,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -682,6 +696,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -700,6 +715,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
 
@@ -722,6 +738,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -742,6 +759,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
 
@@ -764,6 +782,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -786,6 +805,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -812,6 +832,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
 
@@ -822,6 +843,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 childCnt = struct.unpack("i",file.read(4))[0]
@@ -862,6 +884,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
             elif (type == 21): #testkey???
@@ -873,6 +896,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 unknown1 = struct.unpack("<i",file.read(4))[0]
@@ -890,6 +914,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
 
@@ -985,6 +1010,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -996,6 +1022,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1014,6 +1041,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1033,6 +1061,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1116,6 +1145,7 @@ def read(file, context, op, filepath):
                 # #b3dMesh.from_pydata(vertexes,[],faces)
 
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1169,6 +1199,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1222,6 +1253,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
             elif (type == 31):
@@ -1231,6 +1263,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1251,6 +1284,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
@@ -1280,6 +1314,7 @@ def read(file, context, op, filepath):
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 #b3dObj.hide_viewport = True
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1420,6 +1455,7 @@ def read(file, context, op, filepath):
                     b3dMesh.materials.append(mat)
 
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
+                realName = b3dObj.name
                 b3dObj['MType'] = mType
                 b3dObj['texNum'] = texNum
                 b3dObj['FType'] = 0
@@ -1449,6 +1485,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 objString.append(b3dObj.name)
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1531,6 +1568,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
 
@@ -1576,6 +1614,7 @@ def read(file, context, op, filepath):
 
                 b3dObj.parent = context.scene.objects[objString[-1]]
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 # objString.append(context.scene.objects[0].name)
                 objString.append(b3dObj.name)
                 ##b3dObj.hide_viewport = True
@@ -1600,6 +1639,7 @@ def read(file, context, op, filepath):
                 b3dObj.location = bounding_sphere[:3]
 
                 context.collection.objects.link(b3dObj)
+                realName = b3dObj.name
                 #b3dObj.name = objName
                 b3dObj['block_type'] = type
                 b3dObj['pos'] = str(file.tell())
@@ -1642,6 +1682,8 @@ def read(file, context, op, filepath):
             else:
                 log.warning('smthng wrng')
                 return
+
+            log.info("Importing block #{}: {}".format(type, realName))
 
 def readWayTxt(file, context, op, filepath):
     b3dObj = 0
@@ -1763,10 +1805,21 @@ def readWayTxt(file, context, op, filepath):
 
 def assignMaterialByVertices(obj, vertIndexes, matIndex):
     bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.mode_set(mode = 'EDIT')
-    bpy.ops.mesh.select_mode(type= 'VERT')
-    bpy.ops.mesh.select_all(action = 'DESELECT')
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    # bpy.ops is slow https://blender.stackexchange.com/questions/2848/why-avoid-bpy-ops#comment11187_2848
+    # bpy.ops.object.mode_set(mode = 'EDIT')
+    # bpy.ops.mesh.select_mode(type= 'VERT')
+    # bpy.ops.mesh.select_all(action = 'DESELECT')
+    # bpy.ops.object.mode_set(mode = 'OBJECT')
+    vert = bpy.context.object.data.vertices
+    face = bpy.context.object.data.polygons
+    edge = bpy.context.object.data.edges
+    for i in face:
+        i.select=False
+    for i in edge:
+        i.select=False
+    for i in vert:
+        i.select=False
+
     for idx in vertIndexes:
         obj.data.vertices[idx].select = True
     selectedPolygons = getPolygonsBySelectedVertices()
