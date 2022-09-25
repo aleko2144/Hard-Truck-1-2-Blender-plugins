@@ -169,3 +169,32 @@ def srgb_to_linearrgb(c):
 def hex_to_rgb(r,g,b,alpha=1):
     return tuple([srgb_to_linearrgb(c/0xff) for c in (r,g,b)] + [alpha])
 
+
+def getUsedVerticesAndTransform(vertices, faces):
+    indices = set()
+    idxTransf = {}
+    newVertexes = []
+    newFaces = []
+    for face in faces:
+        for idx in face:
+            indices.add(idx)
+    indices = sorted(indices)
+    for idx in indices:
+        idxTransf[idx] = len(newVertexes)
+        newVertexes.append(vertices[idx])
+    newFaces = getUsedFaces(faces, idxTransf)
+
+    return [newVertexes, newFaces, idxTransf]
+
+def getUsedFaces(faces, idxTransf):
+    newFaces = []
+    for face in faces:
+        newFace = getUsedFace(face, idxTransf)
+        newFaces.append(tuple(newFace))
+    return newFaces
+
+def getUsedFace(face, idxTransf):
+    newFace = []
+    for idx in face:
+        newFace.append(idxTransf[idx])
+    return newFace

@@ -1,3 +1,4 @@
+import math
 import bpy
 import logging
 import sys
@@ -19,6 +20,15 @@ def getAllChildren(obj):
         else:
             break
     return allChildren
+
+def getLODObjects(obj):
+    vertObjs = [cn for cn in obj.children if (cn.get("block_type") is not None and (cn["block_type"]==6 or cn["block_type"]==7 or cn["block_type"]==36 or cn["block_type"]==37)) and (cn.get("level_group") is not None and (cn["level_group"]==1))]
+    if len(vertObjs) == 0:
+        vertObjs = [cn for cn in obj.children if (cn.get("block_type") is not None and (cn["block_type"]==8 or cn["block_type"]==35)) and (cn.get("level_group") is not None and (cn["level_group"]==1))]
+    # vertObjs.sort(key=lambda x: x.name, reverse=True)
+    # lodCnt = math.floor(len(vertObjs) / 2)
+    # return vertObjs[0:lodCnt]
+    return vertObjs
 
 
 def applyTransform(block_18):
@@ -124,7 +134,7 @@ def applyTransforms():
 def showHideObjByType(type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
     hiddenObj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type and cn.hide_get()]
-    if objs == hiddenObj:
+    if len(objs) == len(hiddenObj):
         for obj in objs:
             obj.hide_set(False)
     else:
@@ -134,7 +144,7 @@ def showHideObjByType(type):
 def showHideObjTreeByType(type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
     hiddenObj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type and cn.hide_get()]
-    if objs == hiddenObj:
+    if len(objs) == len(hiddenObj):
         for obj in objs:
             children = getAllChildren(obj)
             for child in children:
@@ -146,3 +156,25 @@ def showHideObjTreeByType(type):
             for child in children:
                 child.hide_set(True)
             obj.hide_set(True)
+
+def showHideLOD():
+    lodRoots = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==10]
+    hiddenLodRoots = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==10 and cn.hide_get()]
+    if len(hiddenLodRoots) > 0: #show
+        for lodRoot in lodRoots:
+            lods = getLODObjects(lodRoot)
+            if len(lods) > 0:
+                lodRoot.hide_set(False)
+            for lod in lods:
+                lod.hide_set(False)
+                for obj in getAllChildren(lod):
+                    obj.hide_set(False)
+    else: #hide
+        for lodRoot in lodRoots:
+            lods = getLODObjects(lodRoot)
+            if len(lods) > 0:
+                lodRoot.hide_set(True)
+            for lod in lods:
+                lod.hide_set(True)
+                for obj in getAllChildren(lod):
+                    obj.hide_set(True)

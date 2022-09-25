@@ -30,7 +30,7 @@ def getRegion():
 		return "UI"
 
 import bpy
-from .common import applyRemoveTransforms, applyTransforms, showHideObjByType, showHideObjTreeByType
+from .common import applyRemoveTransforms, applyTransforms, showHideLOD, showHideObjByType, showHideObjTreeByType
 
 from bpy.props import (StringProperty,
 						BoolProperty,
@@ -1544,7 +1544,7 @@ class ShowHideLODOperator(bpy.types.Operator):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		showHideObjTreeByType(10)
+		showHideLOD()
 
 		return {'FINISHED'}
 
@@ -1584,36 +1584,49 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 
 				object = bpy.context.selected_objects[i]
 
+				level_group = None
+
 				if 'block_type' in object:
 					block_type = object['block_type']
 				else:
 					block_type = None
+
+				if 'level_group' in object:
+					level_group = object['level_group']
+				else:
+					level_group = None
 
 				lenStr = str(len(object.children))
 
 				if block_type == 0:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 1:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 2:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 3:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 4:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 5:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'add_name' in object:
 						layout.prop(mytool, "addBlockName1_string")
 						layout.prop(mytool, "Radius1")
@@ -1624,9 +1637,11 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 6:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 7:
 					self.layout.label(text="Тип блока: " + str(block_type))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'texNum' in object:
 						layout.prop(mytool, "addBlockMeshType_enum")
 
@@ -1648,13 +1663,16 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 8:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 9:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 10:
 					self.layout.label(text="Тип блока: " + str(block_type))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'node_radius' in object:
 						layout.prop(mytool, "Radius1")
 						layout.prop(mytool, "LOD_Distance1")
@@ -1666,9 +1684,11 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 11:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 12:
 					self.layout.label(text="Тип блока: " + str(block_type))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'CType' in object:
 						self.layout.label(text="Тип коллизии:")
 						layout.prop(mytool, "CollisionType_enum", text="")
@@ -1680,26 +1700,32 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 13:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 14:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 15:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 16:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 17:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 18:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'add_name' in object:
 						layout.prop(mytool, "Radius1")
 						layout.prop(mytool, "addBlockName1_string")
@@ -1711,14 +1737,17 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 19:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 20:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 21:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + str(len(object.children)-object['groups_num']+1))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'groups_num' in object:
 						layout.prop(mytool, "groupsNum1_int")
 						layout.prop(mytool, "Radius1")
@@ -1729,6 +1758,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 23:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'CType' in object:
 						self.layout.label(text="Тип коллизии:")
 						layout.prop(mytool, "CollisionType_enum", text="")
@@ -1739,6 +1769,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 24:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'flag' in object:
 						layout.prop(mytool, "add24Flag_enum1", text="")
 					else:
@@ -1747,6 +1778,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 
 				elif block_type == 25:
 					self.layout.label(text="Тип блока: " + str(block_type))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'RSound' in object:
 						layout.prop(mytool, "addSoundName1_string")
 						layout.prop(mytool, "RSound1")
@@ -1758,13 +1790,16 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 26:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 27:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 28:
 					self.layout.label(text="Тип блока: " + str(block_type))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'sprite_radius' in object:
 						layout.prop(mytool, "Radius1")
 						layout.prop(mytool, "T28_radius1")
@@ -1776,21 +1811,26 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 29:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 30:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 31:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 32:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 33:
 					self.layout.label(text="Тип блока: " + str(block_type))
+					self.layout.label(text="Группа блока: " + str(level_group))
 					layout.prop(mytool, "Radius1")
 					layout.prop(mytool, "LType_enum")
 					layout.prop(mytool, "RadiusLight1")
@@ -1802,18 +1842,22 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 34:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 35:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 36:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 37:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					#self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 					if 'texNum' in object:
 						layout.prop(mytool, "addBlockMeshType_enum")
 
@@ -1840,14 +1884,17 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				elif block_type == 38:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 39:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Количество вложенных блоков: " + lenStr)
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 40:
 					self.layout.label(text="Тип блока: " + str(block_type))
 					self.layout.label(text="Тип генератора: " + object['GType'])
+					self.layout.label(text="Группа блока: " + str(level_group))
 
 				elif block_type == 444:
 					self.layout.label(text="Тип объекта - разделитель")
