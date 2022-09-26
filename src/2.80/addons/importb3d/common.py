@@ -171,7 +171,8 @@ def hex_to_rgb(r,g,b,alpha=1):
 
 def getUsedVerticesAndTransform(vertices, faces):
     indices = set()
-    idxTransf = {}
+    oldNewTransf = {}
+    newOldTransf = {}
     newVertexes = []
     newFaces = []
     for face in faces:
@@ -179,11 +180,18 @@ def getUsedVerticesAndTransform(vertices, faces):
             indices.add(idx)
     indices = sorted(indices)
     for idx in indices:
-        idxTransf[idx] = len(newVertexes)
+        oldNewTransf[idx] = len(newVertexes)
+        newOldTransf[len(newVertexes)] = idx
         newVertexes.append(vertices[idx])
-    newFaces = getUsedFaces(faces, idxTransf)
+    newFaces = getUsedFaces(faces, oldNewTransf)
 
-    return [newVertexes, newFaces, idxTransf]
+    return [newVertexes, newFaces, indices, oldNewTransf, newOldTransf]
+
+def transformVertices(vertices, idxTransf):
+    newVertices = []
+    for idx in vertices:
+        newVertices.append(idxTransf[idx])
+    return newVertices
 
 def getUsedFaces(faces, idxTransf):
     newFaces = []
@@ -191,6 +199,14 @@ def getUsedFaces(faces, idxTransf):
         newFace = getUsedFace(face, idxTransf)
         newFaces.append(tuple(newFace))
     return newFaces
+
+def getUserVertices(faces):
+    indices = set()
+    for face in faces:
+        for idx in face:
+            indices.add(idx)
+    return list(indices)
+
 
 def getUsedFace(face, idxTransf):
     newFace = []
