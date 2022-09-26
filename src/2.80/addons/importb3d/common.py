@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 import os
 import struct
 import bpy
@@ -76,13 +75,13 @@ class HTMaterial():
 
 class Vector3F():
 
-    def __init__(self, file=NULL, tuple=NULL):
-        if file != NULL:
+    def __init__(self, file=None, tuple=None):
+        if file != None:
             tpl = struct.unpack("<3f", file.read(12))
             self.x = tpl[0]
             self.y = tpl[1]
             self.z = tpl[2]
-        elif tuple != NULL:
+        elif tuple != None:
             self.x = tuple[0]
             self.y = tuple[1]
             self.z = tuple[2]

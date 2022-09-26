@@ -16,6 +16,7 @@ import bpy
 import mathutils
 import os.path
 import os
+from threading import Lock
 from bpy.props import *
 from bpy_extras.image_utils import load_image
 from ast import literal_eval as make_tuple
@@ -242,9 +243,9 @@ def read(file, context, op, filepath):
         RESUnpacked = unpackRES(resPath, basename, False)
 
     if op.to_import_textures and not os.path.exists(commonResPath):
-        ShowMessageBox("Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.",
-        "COMMON.res wrong path",
-        "ERROR")
+        # ShowMessageBox("Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.",
+        # "COMMON.res wrong path",
+        # "ERROR")
         op.to_import_textures = False
 
     if op.to_import_textures and os.path.exists(commonResPath):
@@ -367,7 +368,7 @@ def read(file, context, op, filepath):
     b3dObj = 0
     uv = []
 
-    b3dName = os.path.basename(op.properties.filepath)
+    b3dName = os.path.basename(filepath)
 
     b3dObj = bpy.data.objects.new(b3dName,None)
     b3dObj['block_type'] = 0
@@ -657,7 +658,9 @@ def read(file, context, op, filepath):
 
                             for vertArr in texnums[texnum]:
                                 newVertArr = getUsedFace(vertArr, idxTransf)
+                                # op.lock.acquire()
                                 assignMaterialByVertices(b3dObj, newVertArr, lastIndex)
+                                # op.lock.release()
                     else:
                         for texnum in texnums:
                             mat = bpy.data.materials[RESUnpacked.getPrefixedMaterial(int(texnum))]
@@ -1772,9 +1775,9 @@ def assignMaterialByVertices(obj, vertIndexes, matIndex):
     # bpy.ops.mesh.select_mode(type= 'VERT')
     # bpy.ops.mesh.select_all(action = 'DESELECT')
     # bpy.ops.object.mode_set(mode = 'OBJECT')
-    vert = bpy.context.object.data.vertices
-    face = bpy.context.object.data.polygons
-    edge = bpy.context.object.data.edges
+    vert = obj.data.vertices
+    face = obj.data.polygons
+    edge = obj.data.edges
     for i in face:
         i.select=False
     for i in edge:
@@ -1789,7 +1792,7 @@ def assignMaterialByVertices(obj, vertIndexes, matIndex):
         poly.material_index = matIndex
 
 def getPolygonsBySelectedVertices():
-    data = bpy.context.object.data
+    data = bpy.context.view_layer.objects.active.data
     selectedPolygons = []
     for f in data.polygons:
         s = True
