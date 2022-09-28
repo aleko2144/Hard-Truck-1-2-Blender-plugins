@@ -211,6 +211,69 @@ def parse_pro(input_file, colors_list):
 
         return material_textures
 
+def parseRAW(file, context, op, filepath):
+
+    basename1 = os.path.basename(filepath)[:-4]
+    basename2 = basename1+"_2"
+    basename1 = basename1+"_1"
+
+    vertexes = []
+    faces1 = []
+    faces2 = []
+
+    counter = 0
+
+    width = 257
+
+    for i in range(width):
+        for j in range(width):
+            vertexes.append((i*10,j*10,struct.unpack('<B',file.read(1))[0]))
+            file.read(1)
+
+    for i in range(width-1):
+        for j in range(i,width-1):
+            counter = i*width+j
+            if i == j:
+                # log.debug('Triangle')
+                faces1.append((counter, counter+1, counter+width+1))
+            else:
+                # log.debug('Quad')
+                faces1.append((counter, counter+1, counter+width+1, counter+width))
+
+    log.debug(faces1)
+
+    for i in range(width-1):
+        for j in range(i,width-1):
+            counter = j*width+i
+            if i == j:
+                # log.debug('Triangle')
+                faces2.append((counter, counter+width, counter+width+1))
+            else:
+                # log.debug('Quad')
+                faces2.append((counter, counter+1, counter+width+1, counter+width))
+
+
+    b3dMesh1 = bpy.data.meshes.new(basename1)
+    b3dMesh2 = bpy.data.meshes.new(basename2)
+
+    Ev = threading.Event()
+    Tr = threading.Thread(target=b3dMesh1.from_pydata, args = (vertexes,[],faces1))
+    Tr.start()
+    Ev.set()
+    Tr.join()
+
+    Ev = threading.Event()
+    Tr = threading.Thread(target=b3dMesh2.from_pydata, args = (vertexes,[],faces2))
+    Tr.start()
+    Ev.set()
+    Tr.join()
+
+
+    b3dObj1 = bpy.data.objects.new(basename1, b3dMesh1)
+    context.collection.objects.link(b3dObj1)
+
+    b3dObj2 = bpy.data.objects.new(basename2, b3dMesh2)
+    context.collection.objects.link(b3dObj2)
 
 
 def read(file, context, op, filepath):
@@ -652,7 +715,6 @@ def read(file, context, op, filepath):
                     for i,vert in enumerate(b3dMesh.vertices):
                         normalList.append(normals[newOldTransf[i]])
                         # b3dMesh.vertices[idx].normal = normals[idx]
-                    log.debug(normalList)
                     b3dMesh.normals_split_custom_set_from_vertices(normalList)
 
                 #Setup UV

@@ -82,6 +82,34 @@ class HTImportPreferences(bpy.types.AddonPreferences):
         row = layout.row()
         row.prop(self, 'COMMON_RES_Path', expand=True)
 
+class ImportRAW(bpy.types.Operator, ImportHelper):
+    '''Import from RAW file format (.raw)'''
+    bl_idname = 'import_scene.kotr_raw'
+    bl_label = 'Import RAW'
+
+    filename_ext = '.raw'
+
+    files: CollectionProperty(
+        type=bpy.types.OperatorFileListElement,
+        options={'HIDDEN', 'SKIP_SAVE'},
+    )
+    filter_glob : StringProperty(default='*.raw', options={'HIDDEN'})
+
+    directory: StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+
+    def execute(self, context):
+        for rawfile in self.files:
+            filepath = os.path.join(self.directory, rawfile.name)
+
+            print('Importing file', filepath)
+            t = time.mktime(datetime.datetime.now().timetuple())
+            with open(filepath, 'rb') as file:
+                importb3d.parseRAW(file, context, self, filepath)
+            t = time.mktime(datetime.datetime.now().timetuple()) - t
+            print('Finished importing in', t, 'seconds')
+
+        return {'FINISHED'}
+
 
 class ImportB3D(bpy.types.Operator, ImportHelper):
     '''Import from B3D file format (.b3d)'''
@@ -216,6 +244,7 @@ class ExportB3D(bpy.types.Operator, ImportHelper):
 
 
 def menu_func_import(self, context):
+    self.layout.operator(ImportRAW.bl_idname, text='KOTR RAW (.raw)')
     self.layout.operator(ImportB3D.bl_idname, text='KOTR B3D (.b3d)')
     self.layout.operator(ImportWayTxt.bl_idname, text='KOTR WAY (.txt)')
 
@@ -226,6 +255,7 @@ def menu_func_export(self, context):
 classes = (
     HTImportPreferences,
     ImportB3D,
+    ImportRAW,
     ImportWayTxt,
     ExportB3D
 )

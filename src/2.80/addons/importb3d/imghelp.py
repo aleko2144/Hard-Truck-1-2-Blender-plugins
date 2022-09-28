@@ -95,13 +95,11 @@ def TXR565toTGA8888(filepath):
 
         footerIdentifier = txrFile.read(4)
         footerSize = struct.unpack("<i", txrFile.read(4))[0]
-        log.debug(footerIdentifier)
         if footerIdentifier == b"LVMP": #skip mipmap section
             txrFile.seek(footerSize+2, 1) # 2 extra bytes
             footerIdentifier = txrFile.read(4)
             footerSize = struct.unpack("<i", txrFile.read(4))[0]
 
-        log.debug(footerIdentifier)
         footer = list(struct.unpack("<4i"+str(footerSize-16)+"B", txrFile.read(footerSize)))
         Rmsk = footer[0]
         Gmsk = footer[1]
