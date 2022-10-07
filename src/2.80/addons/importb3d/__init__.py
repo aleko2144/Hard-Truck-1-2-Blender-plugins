@@ -49,12 +49,13 @@ else:
         imghelp,
     )
 
+import math
 from threading import Lock, Thread
 import time
 import datetime
 import os
 import bpy
-from bpy.props import StringProperty, BoolProperty, CollectionProperty
+from bpy.props import StringProperty, EnumProperty, BoolProperty, CollectionProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 # from . import common, exportb3d, imghelp, importb3d
 
@@ -110,6 +111,18 @@ class ImportRAW(bpy.types.Operator, ImportHelper):
 
         return {'FINISHED'}
 
+class ActiveBlock(bpy.types.PropertyGroup):
+    name: StringProperty()
+    state : BoolProperty()
+
+# def initBlocksArray():
+    # blocks = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]
+    # result = CollectionProperty(type=ActiveBlock)
+    # for i, block in enumerate(blocks):
+    #     item = result.add()
+    #     item.index = str(block)
+    #     item.active = False
+#     return result
 
 class ImportB3D(bpy.types.Operator, ImportHelper):
     '''Import from B3D file format (.b3d)'''
@@ -142,6 +155,28 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         default="tga",
     )
 
+
+    blocks_to_import: CollectionProperty(type=ActiveBlock)
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+
+        self.blocks_to_import.clear()
+
+        blocks = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+        # 32,
+        33,34,35,36,37,
+        # 38,
+        39,40]
+        for i, block in enumerate(blocks):
+            item = self.blocks_to_import.add()
+            item.name = str(block)
+            item.state = False
+
+        wm.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+
     def thread_import_b3d(self, files, context):
         for b3dfile in files:
             filepath = os.path.join(self.directory, b3dfile.name)
@@ -153,13 +188,34 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             print('Finished importing in', t, 'seconds')
 
-    lock = Lock()
+    def draw_import_config(self, context):
+        # --- Import Options --- #
+        layout = self.layout
+
+        layout.label(text="Main settings:")
+        box1 = layout.box()
+        row = box1.row()
+        row.prop(self, 'to_unpack_res')
+        row = box1.row()
+        row.prop(self, 'to_import_textures')
+        row = box1.row()
+        row.prop(self, 'textures_format')
+
+        layout.label(text="Blocks to import:")
+        box1 = layout.box()
+        i = 0
+        perRow = 8
+        rowcnt = math.floor(len(self.blocks_to_import)/perRow)
+        for j in range(rowcnt):
+            row = box1.row()
+            for block in self.blocks_to_import[i:i+perRow]:
+                row.prop(block, 'state', text=block['name'], toggle=True)
+            i+=perRow
+        row = box1.row()
+        for block in self.blocks_to_import[i:]:
+            row.prop(block, 'state', text=block['name'], toggle=True)
 
     def execute(self, context):
-        # from . import importb3d
-        # t1 = None
-        # t2 = None
-
         evens = [cn for i,cn in enumerate(self.files) if i%2==0]
         odds = [cn for i,cn in enumerate(self.files) if i%2==1]
 
@@ -190,6 +246,9 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         print('All imported in', tt, 'seconds')
 
         return {'FINISHED'}
+
+    def draw(self, context):
+        self.draw_import_config(context)
 
 
 
@@ -267,6 +326,7 @@ def register():
     # import importlib
     # for cls in classes:
     #     importlib.reload(cls)
+    bpy.utils.register_class(ActiveBlock)
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
@@ -279,6 +339,7 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     for cls in classes:
         bpy.utils.unregister_class(cls)
+    bpy.utils.unregister_class(ActiveBlock)
 
 
 if __name__ == "__main__":
