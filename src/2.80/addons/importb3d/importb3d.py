@@ -412,7 +412,7 @@ def read(file, context, op, filepath):
             t1 = time.perf_counter()
             objString.append(objString[-1])
             onlyName = readName(file)
-            type = 	struct.unpack("<i",file.read(4))[0]
+            type = struct.unpack("<i",file.read(4))[0]
             pos = file.tell()
             # objName = "{}_{}".format(str(type).zfill(2), onlyName)
             objName = onlyName
@@ -433,6 +433,7 @@ def read(file, context, op, filepath):
 
                 if not usedBlocks[str(type)]:
                     continue
+
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj['block_type'] = type
                 b3dObj['level_group'] = levelGroups[lvl-1]
@@ -451,6 +452,7 @@ def read(file, context, op, filepath):
 
                 if not usedBlocks[str(type)]:
                     continue
+
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj['block_type'] = type
                 b3dObj['level_group'] = levelGroups[lvl-1]
@@ -543,6 +545,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 7):	#25? xyzuv TailLight? похоже на "хвост" движения	mesh
                 format = 0
                 coords25 = []
@@ -801,7 +804,6 @@ def read(file, context, op, filepath):
 
             elif (type == 13):
 
-
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 num = []
                 coords = []
@@ -825,6 +827,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 14): #sell_ ?
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -851,8 +854,6 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 15):
-
-
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 num = []
@@ -906,7 +907,6 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 17):
-
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 vector1 = struct.unpack("<3f",file.read(12))
@@ -989,6 +989,10 @@ def read(file, context, op, filepath):
                 coords = []
                 for i in range (verts_count):
                     coords.append(struct.unpack("fff",file.read(12)))
+
+                if not usedBlocks[str(type)]:
+                    continue
+
                 curveData = bpy.data.curves.new('curve', type='CURVE')
 
                 curveData.dimensions = '3D'
@@ -1004,9 +1008,6 @@ def read(file, context, op, filepath):
                 curveData.bevel_depth = 0.01
 
                 # create Object
-                if not usedBlocks[str(type)]:
-                    continue
-
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 b3dObj.location = (0,0,0)
                 b3dObj['block_type'] = type
@@ -1041,10 +1042,9 @@ def read(file, context, op, filepath):
 
             elif (type == 23): #colision mesh
 
-                b3dMesh = (bpy.data.meshes.new(objName))
 
                 var1 = struct.unpack("<i",file.read(4))[0]
-                b3dObj['CType'] = struct.unpack("<i",file.read(4))[0]
+                ctype = struct.unpack("<i",file.read(4))[0]
                 var4 = struct.unpack("<i",file.read(4))[0]
                 for i in range(var4):
                     struct.unpack("<i",file.read(4))[0]
@@ -1067,15 +1067,18 @@ def read(file, context, op, filepath):
                     for j in range(vertsInBlock):
                         l_vertexes.append(struct.unpack("<3f",file.read(12)))
 
-                b3dMesh.from_pydata(l_vertexes,[],faces)
-
                 if not usedBlocks[str(type)]:
                     continue
+
+                b3dMesh = (bpy.data.meshes.new(objName))
+                b3dMesh.from_pydata(l_vertexes,[],faces)
+
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj['block_type'] = type
                 b3dObj['level_group'] = levelGroups[lvl-1]
                 b3dObj['pos'] = str(pos)
+                b3dObj['CType'] = ctype
 
                 b3dObj.parent = context.scene.objects[objString[-2]]
                 context.collection.objects.link(b3dObj)
@@ -1097,6 +1100,12 @@ def read(file, context, op, filepath):
                 m33 = struct.unpack("<f",file.read(4))[0]
 
                 sp_pos = struct.unpack("<fff",file.read(12))
+
+                flag = struct.unpack("<i",file.read(4))[0]
+                childCnt = struct.unpack("<i", file.read(4))[0]
+
+                if not usedBlocks[str(type)]:
+                    continue
 
                 x_d = 0.0
                 y_d = 0.0
@@ -1120,11 +1129,7 @@ def read(file, context, op, filepath):
                 rot_y = ((y_d * 180) / PI)
                 rot_z = ((z_d * 180) / PI)
 
-                flag = struct.unpack("<i",file.read(4))[0]
-                childCnt = struct.unpack("<i", file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
-                    continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj['block_type'] = type
@@ -1184,6 +1189,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 27):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1204,6 +1210,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 28): #face
 
                 coords = []
@@ -1284,6 +1291,9 @@ def read(file, context, op, filepath):
                 p1 = Vector3F(file)
                 p2 = Vector3F(file)
 
+                if not usedBlocks[str(type)]:
+                    continue
+
                 l_vertexes = [
                     (p1.x, p1.y, p1.z),
                     (p1.x, p1.y, p2.z),
@@ -1302,8 +1312,6 @@ def read(file, context, op, filepath):
                 Ev.set()
                 Tr.join()
 
-                if not usedBlocks[str(type)]:
-                    continue
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj['block_type'] = type
@@ -1372,6 +1380,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 34): #lamp
                 num = 0
 
@@ -1396,8 +1405,6 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 35): #mesh
-
-                b3dMesh = (bpy.data.meshes.new(objName))
 
                 #b3dObj.hide_viewport = True
 
@@ -1450,10 +1457,11 @@ def read(file, context, op, filepath):
                     faces_all.append(faces)
                     uvs.append((uv[faces[0]],uv[faces[1]],uv[faces[2]]))
 
-                curVertexes, curFaces, indices, oldNewTransf, newOldTransf = getUsedVerticesAndTransform(vertexes, faces_all)
-
                 if not usedBlocks[str(type)]:
                     continue
+
+                b3dMesh = (bpy.data.meshes.new(objName))
+                curVertexes, curFaces, indices, oldNewTransf, newOldTransf = getUsedVerticesAndTransform(vertexes, faces_all)
 
                 Ev = threading.Event()
                 Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
@@ -1522,8 +1530,6 @@ def read(file, context, op, filepath):
                 normals =[]
                 uv = []
 
-
-
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 name1 = readName(file)
                 name2 = readName(file)
@@ -1566,6 +1572,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 37):
 
                 coords25 = []
@@ -1582,14 +1589,12 @@ def read(file, context, op, filepath):
                 uvCount = formatRaw >> 8
                 format = formatRaw & 0xFF
 
-
                 vertexCount = struct.unpack("<i",file.read(4))[0]
-
 
                 if vertexCount > 0:
 
                     if format == 0:
-                        objString[len(objString)-1] = objString[-2]
+                        # objString[len(objString)-1] = objString[-2]
                         pass
                     else:
                         for i in range(vertexCount):
@@ -1622,6 +1627,7 @@ def read(file, context, op, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
+
             elif (type == 39):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1651,7 +1657,6 @@ def read(file, context, op, filepath):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
-
                 name1 = readName(file)
                 name2 = readName(file)
 
@@ -1661,14 +1666,13 @@ def read(file, context, op, filepath):
                 for i in range(num):
                     data1.append(struct.unpack("f", file.read(4))[0])
 
-
                 if not usedBlocks[str(type)]:
                     continue
 
+                b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj['block_type'] = type
                 b3dObj['level_group'] = levelGroups[lvl-1]
                 b3dObj['pos'] = str(pos)
-                b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj.location = bounding_sphere[:3]
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
