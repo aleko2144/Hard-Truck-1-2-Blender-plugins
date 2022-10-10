@@ -70,6 +70,11 @@ def thread_import_b3d(self, files, context):
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished importing in', t, 'seconds')
 
+
+class ActiveBlock(bpy.types.PropertyGroup):
+    name: StringProperty()
+    state : BoolProperty()
+
 class HTImportPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -111,19 +116,6 @@ class ImportRAW(bpy.types.Operator, ImportHelper):
 
         return {'FINISHED'}
 
-class ActiveBlock(bpy.types.PropertyGroup):
-    name: StringProperty()
-    state : BoolProperty()
-
-# def initBlocksArray():
-    # blocks = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]
-    # result = CollectionProperty(type=ActiveBlock)
-    # for i, block in enumerate(blocks):
-    #     item = result.add()
-    #     item.index = str(block)
-    #     item.active = False
-#     return result
-
 class ImportB3D(bpy.types.Operator, ImportHelper):
     '''Import from B3D file format (.b3d)'''
     bl_idname = 'import_scene.kotr_b3d'
@@ -155,6 +147,14 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         default="tga",
     )
 
+    show_all_blocks : EnumProperty(
+		name="Block",
+		items=[
+            ('0', 'Custom select', 'Custom select'),
+            ('1', 'Select all', 'Select all'),
+            ('2', 'Select none', 'Select none'),
+        ]
+    )
 
     blocks_to_import: CollectionProperty(type=ActiveBlock)
 
@@ -168,6 +168,7 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         33,34,35,36,37,
         # 38,
         39,40]
+
         for i, block in enumerate(blocks):
             item = self.blocks_to_import.add()
             item.name = str(block)
@@ -187,33 +188,6 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
                 importb3d.read(file, context, self, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             print('Finished importing in', t, 'seconds')
-
-    def draw_import_config(self, context):
-        # --- Import Options --- #
-        layout = self.layout
-
-        layout.label(text="Main settings:")
-        box1 = layout.box()
-        row = box1.row()
-        row.prop(self, 'to_unpack_res')
-        row = box1.row()
-        row.prop(self, 'to_import_textures')
-        row = box1.row()
-        row.prop(self, 'textures_format')
-
-        layout.label(text="Blocks to import:")
-        box1 = layout.box()
-        i = 0
-        perRow = 8
-        rowcnt = math.floor(len(self.blocks_to_import)/perRow)
-        for j in range(rowcnt):
-            row = box1.row()
-            for block in self.blocks_to_import[i:i+perRow]:
-                row.prop(block, 'state', text=block['name'], toggle=True)
-            i+=perRow
-        row = box1.row()
-        for block in self.blocks_to_import[i:]:
-            row.prop(block, 'state', text=block['name'], toggle=True)
 
     def execute(self, context):
         evens = [cn for i,cn in enumerate(self.files) if i%2==0]
@@ -248,9 +222,45 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         return {'FINISHED'}
 
     def draw(self, context):
-        self.draw_import_config(context)
 
+        layout = self.layout
 
+        layout.label(text="Main settings:")
+        box1 = layout.box()
+        row = box1.row()
+        row.prop(self, 'to_unpack_res')
+        row = box1.row()
+        row.prop(self, 'to_import_textures')
+        row = box1.row()
+        row.prop(self, 'textures_format')
+
+        layout.label(text="Blocks to import:")
+        box1 = layout.box()
+        row = box1.row()
+        row.prop(self, 'show_all_blocks')
+        # props = row.operator(SelectAllBlocksBtn.bl_idname)
+        # props.blocks_to_import = self.blocks_to_import
+        # props.test = PointerProperty(type=self.blocks_to_import)
+        row = box1.row()
+
+        if self.show_all_blocks == '1':
+            for block in self.blocks_to_import:
+                block.state = True
+        elif self.show_all_blocks == '2':
+            for block in self.blocks_to_import:
+                block.state = False
+
+        i = 0
+        perRow = 8
+        rowcnt = math.floor(len(self.blocks_to_import)/perRow)
+        for j in range(rowcnt):
+            row = box1.row()
+            for block in self.blocks_to_import[i:i+perRow]:
+                row.prop(block, 'state', text=block['name'], toggle=True)
+            i+=perRow
+        row = box1.row()
+        for block in self.blocks_to_import[i:]:
+            row.prop(block, 'state', text=block['name'], toggle=True)
 
 class ImportWayTxt(bpy.types.Operator, ImportHelper):
     '''Import from txt file format (.txt)'''

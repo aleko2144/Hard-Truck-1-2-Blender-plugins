@@ -370,8 +370,6 @@ def read(file, context, op, filepath):
     lvl = 0
     cnt = 0
     levelGroups = []
-    coords25 = []
-    coords23 = []
     vertexes = []
     normals = []
     formats = []
@@ -554,7 +552,7 @@ def read(file, context, op, filepath):
                 uv = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                groupName = str(file.read(32)) #0-0
+                groupName = readName(file) #0-0
 
                 vertexCount = struct.unpack("<i",file.read(4))[0]
                 for i in range(vertexCount):
@@ -583,8 +581,9 @@ def read(file, context, op, filepath):
                 # normals = []
                 intencities = []
                 texnums = {}
-                b3dObj
                 b3dMesh = bpy.data.meshes.new(objName)
+                l_uv = uv.copy()
+                vert_uvs = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16)) # skip bounding sphere
                 polygonCount = struct.unpack("<i",file.read(4))[0]
@@ -607,11 +606,14 @@ def read(file, context, op, filepath):
                     vertexCount = struct.unpack("<i",file.read(4))[0]
 
                     for j in range(vertexCount):
-                        faces.append(struct.unpack("<i",file.read(4))[0])
+                        face = struct.unpack("<i",file.read(4))[0]
+                        faces.append(face)
                         if format & 0b10:
                             for k in range(coordsPerVertex):
-                                u = struct.unpack("<f",file.read(4))[0]
-                                v = struct.unpack("<f",file.read(4))[0]
+                                vert_uvs.append(struct.unpack("<2f",file.read(8)))
+                            # uv override
+                            if len(vert_uvs) > 0:
+                                l_uv[face] = vert_uvs[len(vert_uvs)-1]
                         if format & 0b10000:
                             if format & 0b1:
                                 if format & 0b100000:
@@ -638,6 +640,7 @@ def read(file, context, op, filepath):
                     #     uv_new = uv_new + (uv[faces[t]],)
                     # uvs.append(uv_new)
                     # faces_all.append(faces)
+
                     #Triangulating faces
                     for t in range(len(faces)-2):
                         if not triangulateOffset:
@@ -651,7 +654,7 @@ def read(file, context, op, filepath):
                             else:
                                 faces_new.append([faces[t],faces[t+2],faces[t+1]])
 
-                        uvs.append((uv[faces_new[t][0]],uv[faces_new[t][1]],uv[faces_new[t][2]]))
+                        uvs.append((l_uv[faces_new[t][0]],l_uv[faces_new[t][1]],l_uv[faces_new[t][2]]))
 
                     faces_all.extend(faces_new)
 
@@ -665,10 +668,6 @@ def read(file, context, op, filepath):
                 Tr.start()
                 Ev.set()
                 Tr.join()
-
-                # log.debug(len(normals))
-                # log.debug(list(b3dMesh.vertices))
-                # log.debug(list(indices))
 
                 # newIndices = getUserVertices(curFaces)
 
@@ -686,7 +685,7 @@ def read(file, context, op, filepath):
 
                 for k, texpoly in enumerate(b3dMesh.polygons):
                     for j,loop in enumerate(texpoly.loop_indices):
-                        uvsMesh = [uvs[k][j][0],1 - uvs[k][j][1]]
+                        uvsMesh = (uvs[k][j][0], 1-uvs[k][j][1])
                         customUV.data[loop].uv = uvsMesh
 
                 #Create Object
@@ -1406,10 +1405,7 @@ def read(file, context, op, filepath):
 
             elif (type == 35): #mesh
 
-                #b3dObj.hide_viewport = True
-
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                # qu = quat(file).v
                 faces_all = []
                 faces = []
                 formats = []
@@ -1419,6 +1415,8 @@ def read(file, context, op, filepath):
                 polygonCount = struct.unpack("<i",file.read(4))[0]
                 uvs = []
                 intencities = []
+                vert_uvs = []
+                l_uv = uv.copy()
 
                 for i in range(polygonCount):
                     faces = []
@@ -1437,11 +1435,14 @@ def read(file, context, op, filepath):
                     vertexCount = struct.unpack("<i",file.read(4))[0]
 
                     for j in range(vertexCount):
-                        faces.append(struct.unpack("<i",file.read(4))[0])
+                        face = struct.unpack("<i",file.read(4))[0]
+                        faces.append(face)
                         if format & 0b10:
                             for k in range(coordsPerVertex):
-                                u = struct.unpack("<f",file.read(4))[0]
-                                v = struct.unpack("<f",file.read(4))[0]
+                                vert_uvs.append(struct.unpack("<2f",file.read(8)))
+                            # uv override
+                            if len(vert_uvs) > 0:
+                                l_uv[face] = vert_uvs[len(vert_uvs)-1]
                         if format & 0b10000:
                             if format & 0b1:
                                 if format & 0b100000:
@@ -1455,7 +1456,7 @@ def read(file, context, op, filepath):
                                 intencities.append(intens)
 
                     faces_all.append(faces)
-                    uvs.append((uv[faces[0]],uv[faces[1]],uv[faces[2]]))
+                    uvs.append((l_uv[faces[0]],l_uv[faces[1]],l_uv[faces[2]]))
 
                 if not usedBlocks[str(type)]:
                     continue
@@ -1468,12 +1469,6 @@ def read(file, context, op, filepath):
                 Tr.start()
                 Ev.set()
                 Tr.join()
-
-                # log.debug(formats)
-                # log.debug(normals)
-                # log.debug(len(b3dMesh.vertices))
-                # log.debug(len(indices))
-                # log.debug(indices)
 
                 # newIndices = getUserVertices(curFaces)
 
