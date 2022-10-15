@@ -22,9 +22,22 @@ def getAllChildren(obj):
     return allChildren
 
 def getLODObjects(obj):
-    vertObjs = [cn for cn in obj.children if (cn.get("block_type") is not None and (cn["block_type"]==6 or cn["block_type"]==7 or cn["block_type"]==36 or cn["block_type"]==37)) and (cn.get("level_group") is not None and (cn["level_group"]==1))]
-    if len(vertObjs) == 0:
-        vertObjs = [cn for cn in obj.children if (cn.get("block_type") is not None and (cn["block_type"]==8 or cn["block_type"]==35)) and (cn.get("level_group") is not None and (cn["level_group"]==1))]
+    vertObjs = None
+    if obj["level_group"] == 0:
+        vertObjs = [cn for cn in obj.children if ( \
+            cn.get("block_type") is not None
+            and (cn["block_type"]==6 or cn["block_type"]==7 \
+            or cn["block_type"]==36 or cn["block_type"]==37 \
+            or cn["block_type"]==8 or cn["block_type"]==35)) \
+            and (cn.get("level_group") is not None and (cn["level_group"]==1))]
+    else: # == 1
+        vertObjs = [cn for cn in obj.children if ( \
+            cn.get("block_type") is not None
+            and (cn["block_type"]==6 or cn["block_type"]==7 \
+            or cn["block_type"]==36 or cn["block_type"]==37 \
+            or cn["block_type"]==8 or cn["block_type"]==35))]
+        # if len(vertObjs) == 0:
+        #     vertObjs = [cn for cn in obj.children if (cn.get("block_type") is not None and (cn["block_type"]==8 or cn["block_type"]==35)) and (cn.get("level_group") is not None and (cn["level_group"]==1))]
     # vertObjs.sort(key=lambda x: x.name, reverse=True)
     # lodCnt = math.floor(len(vertObjs) / 2)
     # return vertObjs[0:lodCnt]

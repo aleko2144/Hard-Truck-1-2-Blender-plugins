@@ -306,10 +306,11 @@ def read(file, context, op, filepath):
         usedBlocks[block.name] = block.state
 
     RESUnpacked = None
-    if op.to_unpack_res:
-        RESUnpacked = unpackRES(resPath, basename, True)
-    else:
-        RESUnpacked = unpackRES(resPath, basename, False)
+    if op.to_import_textures:
+        if op.to_unpack_res:
+            RESUnpacked = unpackRES(resPath, basename, True)
+        else:
+            RESUnpacked = unpackRES(resPath, basename, False)
 
     if op.to_import_textures and not os.path.exists(commonResPath):
         # ShowMessageBox("Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.",
@@ -1513,8 +1514,8 @@ def read(file, context, op, filepath):
                 b3dObj['block_type'] = type
                 b3dObj['level_group'] = levelGroups[lvl-1]
                 realName = b3dObj.name
-                for face in b3dMesh.polygons:
-                    face.use_smooth = True
+                # for face in b3dMesh.polygons:
+                #     face.use_smooth = True
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
                 objString[len(objString)-1] = b3dObj.name
 
@@ -1547,11 +1548,12 @@ def read(file, context, op, filepath):
                         if format == 1 or format == 2:	#Vertex with normals
                             normals.append(struct.unpack("<3f",file.read(12)))
                         elif format == 3: #отличается от шаблона 010Editor
-                            normal = struct.unpack("<f",file.read(4))
-                            normal = normal + (0.0,0.0)
-                            # normal = (0.0,) + normal + (0.0,)
-                            # normal = (0.0,0.0) + normal
-                            normals.append(normal)
+                            normal = struct.unpack("<f",file.read(4))[0]
+                            normal1 = (normal,0.0,0.0)
+                            # normal1 = (0.0,normal,0.0)
+                            # normal1 = (0.0,0.0,normal)
+                            # normal1 = (normal,normal,normal)
+                            normals.append(normal1)
 
                 childCnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
 
@@ -1601,11 +1603,12 @@ def read(file, context, op, filepath):
                             if format == 1 or format == 2:	#Vertex with normals
                                 normals.append(struct.unpack("<3f",file.read(12)))
                             elif format == 3: #отличается от шаблона 010Editor
-                                normal = struct.unpack("<f",file.read(4))
-                                normal = normal + (0.0,0.0)
-                                # normal = (0.0,) + normal + (0.0,)
-                                # normal = (0.0,0.0) + normal
-                                normals.append(normal)
+                                normal = struct.unpack("<f",file.read(4))[0]
+                                normal1 = (normal,0.0,0.0)
+                                # normal1 = (0.0,normal,0.0)
+                                # normal1 = (0.0,0.0,normal)
+                                # normal1 = (normal,normal,normal)
+                                normals.append(normal1)
 
                 childCnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
 
