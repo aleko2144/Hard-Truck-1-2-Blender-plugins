@@ -61,6 +61,7 @@ def applyTransform(block_18):
         log.warn("Destination object not found in "+block_18.name)
         return
 
+    # if not destObj.hide_get(): #hidden objects not coopied
 
     linkObj = None
     if bpy.data.objects.get(spaceObj.name + "_b3dSpaceCopy"):
@@ -77,11 +78,11 @@ def applyTransform(block_18):
 
     reIsCopy = re.compile(r'.*b3dcopy.*')
 
-    allChildren = [obj for obj in getAllChildren(destObj)]
+    allVisibleChildren = [obj for obj in getAllChildren(destObj) if not obj.hide_get()]
 
-    subTransforms = [obj for obj in allChildren if obj.get("block_type") is not None and obj["block_type"] == 18]
+    subTransforms = [obj for obj in allVisibleChildren if obj.get("block_type") is not None and obj["block_type"] == 18]
 
-    meshes = [obj for obj in allChildren if obj.type=="MESH" and not reIsCopy.search(obj.name)]
+    meshes = [obj for obj in allVisibleChildren if obj.type=="MESH" and not reIsCopy.search(obj.name)]
 
     newmeshes = []
 
@@ -96,20 +97,11 @@ def applyTransform(block_18):
         # newmesh.data = mesh.data.copy() # for NOT linked copy
         newmesh.parent = linkObj
         newmesh.name = "{}_b3dcopy".format(mesh.name)
-        # newmesh.rotation_euler[0] = spaceObj.rotation_euler[0]
-        # newmesh.rotation_euler[1] = spaceObj.rotation_euler[1]
-        # newmesh.rotation_euler[2] = spaceObj.rotation_euler[2]
-        # newmesh.location = spaceObj.location
         newmeshes.append(newmesh)
 
     log.info("Linking meshes")
     for newmesh in newmeshes:
         bpy.context.collection.objects.link(newmesh)
-
-    # destObj.rotation_euler[0] = spaceObj.rotation_euler[0]
-    # destObj.rotation_euler[1] = spaceObj.rotation_euler[1]
-    # destObj.rotation_euler[2] = spaceObj.rotation_euler[2]
-    # destObj.location = spaceObj.location
 
 
 reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
