@@ -4,9 +4,27 @@ import bpy
 import logging
 import sys
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-log = logging.getLogger("common")
-log.setLevel(logging.DEBUG)
+from b3d_tools.common import log
+
+from bpy.props import FloatProperty, IntProperty
+from bpy.types import UIList
+
+# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+# log = logging.getLogger("common")
+# log.setLevel(logging.DEBUG)
+
+class SCENE_UL_list(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.prop(item, "value", text="")
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label(text="", icon_value=icon)
+
+class FloatBlock(bpy.types.PropertyGroup):
+    index: IntProperty()
+    value: FloatProperty()
 
 def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
 

@@ -1,52 +1,26 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
-#  of the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-#
-# ##### END GPL LICENSE BLOCK #####
 
-# <pep8 compliant>
-
-bl_info = {
-    'name': 'King of the Road B3D importer/exporter',
-    'author': 'Yuriy Gladishenko, Andrey Prozhoga',
-    'version': (0, 1, 17),
-    'blender': (2, 80, 0),
-    'api': 34893,
-    'description': 'This script imports and exports the King of the Road b3d',
-    'warning': '',
-    'wiki_url': 'http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/'\
-        'Import-Export/M3_Import',
-    'tracker_url': 'vk.com/rnr_mods',
-    'category': 'Import-Export'}
 
 # To support reload properly, try to access a package var, if it's there,
 # reload everything
 if "bpy" in locals():
     print("Reimporting modules!!!")
     import importlib
+
     importlib.reload(common)
+    importlib.reload(classes)
     importlib.reload(importb3d)
     # importlib.reload(exportb3d)
     importlib.reload(imghelp)
+    importlib.reload(panel)
 else:
     import bpy
     from . import (
         common,
+        classes,
         importb3d,
         # exportb3d,
         imghelp,
+        panel
     )
 
 import math
@@ -55,7 +29,7 @@ import time
 import datetime
 import os
 import bpy
-from bpy.props import StringProperty, EnumProperty, BoolProperty, CollectionProperty
+from bpy.props import StringProperty, EnumProperty, BoolProperty, CollectionProperty, FloatProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 # from . import common, exportb3d, imghelp, importb3d
 
@@ -75,8 +49,9 @@ class ActiveBlock(bpy.types.PropertyGroup):
     name: StringProperty()
     state : BoolProperty()
 
+
 class HTImportPreferences(bpy.types.AddonPreferences):
-    bl_idname = __package__
+    bl_idname = "b3d_tools"
 
     COMMON_RES_Path: bpy.props.StringProperty(
         name="Common.res path",
@@ -135,6 +110,9 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
     to_unpack_res : BoolProperty(name='Unpack .res archive',
                     description='Unpack associated with .b3d fie .res archive. \n'\
                                 'NOTE: .res archive must be located in the same folder as .b3d file', default=False)
+
+    to_convert_txr : BoolProperty(name='Convert .txr to .tga',
+                    description='Convert .txr from unpacked .res to .tga', default=False)
 
     to_import_textures : BoolProperty(name='Import Textures',
                     description='Import textures from unpacked .res archive. \n'\
@@ -230,6 +208,8 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         row = box1.row()
         row.prop(self, 'to_unpack_res')
         row = box1.row()
+        row.prop(self, 'to_convert_txr')
+        row = box1.row()
         row.prop(self, 'to_import_textures')
         row = box1.row()
         row.prop(self, 'textures_format')
@@ -321,7 +301,8 @@ def menu_func_import(self, context):
 def menu_func_export(self, context):
    self.layout.operator(ExportB3D.bl_idname, text='KOTR B3D (.b3d)')
 
-classes = (
+_classes = (
+    common.SCENE_UL_list,
     HTImportPreferences,
     ImportB3D,
     ImportRAW,
@@ -331,26 +312,24 @@ classes = (
 
 
 
-def register():
+def b3d_register():
     print("registering addon")
     # import importlib
     # for cls in classes:
     #     importlib.reload(cls)
     bpy.utils.register_class(ActiveBlock)
-    for cls in classes:
+    bpy.utils.register_class(common.FloatBlock)
+    for cls in _classes:
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
-def unregister():
+def b3d_unregister():
     print("unregistering addon")
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-    for cls in classes:
+    for cls in _classes:
         bpy.utils.unregister_class(cls)
+    bpy.utils.unregister_class(common.FloatBlock)
     bpy.utils.unregister_class(ActiveBlock)
-
-
-if __name__ == "__main__":
-    register()

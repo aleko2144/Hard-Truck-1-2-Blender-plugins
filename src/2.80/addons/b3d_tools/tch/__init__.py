@@ -1,16 +1,3 @@
-bl_info = {
-	"name": "King of The Road *.tch exporter",
-	"description": "",
-	"author": "Andrey Prozhoga",
-	"version": (0, 0, 1),
-	"blender": (3, 0, 0),
-	"location": "3D View > Tools",
-	"warning": "",
-	"wiki_url": "",
-	"tracker_url": "vk.com/rnr_mods",
-	"category": "Development"
-}
-
 import bpy
 from mathutils import Matrix
 from math import radians
@@ -213,7 +200,6 @@ def forChild(object, root, file, CollisionPlane_num):
 from bpy_extras.io_utils import (
 		ImportHelper,
 		ExportHelper,
-		orientation_helper_factory,
 		path_reference_mode,
 		axis_conversion,
 		)
@@ -277,14 +263,14 @@ def menu_func_export(self, context):
 	self.layout.operator(ExportTch.bl_idname, text="Export KOTR tch")
 
 
-def register():
+def tch_register():
 	bpy.utils.register_class(ImportTch)
 	bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 	bpy.utils.register_class(ExportTch)
 	bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
-def unregister():
+def tch_unregister():
 	bpy.utils.unregister_class(ImportTch)
 	bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 	bpy.utils.unregister_class(ExportTch)

@@ -1,16 +1,3 @@
-bl_info = {
-	"name": "King of The Road *.way exporter",
-	"description": "",
-	"author": "Andrey Prozhoga",
-	"version": (0, 0, 1),
-	"blender": (3, 0, 0),
-	"location": "3D View > Tools",
-	"warning": "",
-	"wiki_url": "",
-	"tracker_url": "vk.com/rnr_mods",
-	"category": "Development"
-}
-
 # To support reload properly, try to access a package var, if it's there,
 # reload everything
 if "bpy" in locals():
@@ -38,18 +25,11 @@ from bpy.types import (Panel,
 						PropertyGroup,
 						)
 
+from b3d_tools.common import getRegion
+
 import struct
 
 bytes_len = 0
-
-
-# https://blenderartists.org/t/solved-adding-a-tab-in-blender-2-8/1133119/3
-def getRegion():
-	if bpy.app.version < (2,80,0):
-		return "TOOLS"
-	else:
-		return "UI"
-
 # panel
 
 class PanelSettings1(PropertyGroup):
@@ -1141,7 +1121,7 @@ def menu_func_export(self, context):
 def menu_func_import(self, context):
     self.layout.operator(ImportSomeData.bl_idname, text="KOTR WAY (.way)")
 
-classes = (
+_classes = (
 	PanelSettings1,
 	AddOperator1,
 	SetValuesOperator1,
@@ -1156,18 +1136,18 @@ classes = (
 )
 
 
-def register():
-	for cls in classes:
+def way_register():
+	for cls in _classes:
 		bpy.utils.register_class(cls)
 	bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 	bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 	bpy.types.Scene.way_tool = bpy.props.PointerProperty(type=PanelSettings1)
 
-def unregister():
+def way_unregister():
 	del bpy.types.Scene.way_tool
 	bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 	bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-	for cls in classes:
+	for cls in _classes:
 		bpy.utils.unregister_class(cls)
 
 # def register():
@@ -1191,9 +1171,3 @@ def unregister():
 # 	bpy.utils.unregister_module(__name__)
 # 	del bpy.types.Scene.way_tool
 
-
-if __name__ == "__main__":
-    register()
-
-    # test call
-    bpy.ops.export_test.some_data('INVOKE_DEFAULT')
