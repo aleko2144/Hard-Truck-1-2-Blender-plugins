@@ -5,14 +5,74 @@ import logging
 import sys
 import re
 
-from b3d_tools.common import log
+from b3d_tools.b3d.classes import (
+    b_18,
+    b_21
+)
+from b3d_tools.common import (
+    log
+)
+from b3d_tools.b3d.common import (
+    getPolygonsBySelectedVertices,
+    getSelectedVertices
+)
 from b3d_tools.b3d.classes import fieldType, b_common
 
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # log = logging.getLogger("common")
 
+reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
+reb3dMesh = re.compile(r'.*b3dcopy.*')
+
+class Graph:
+
+    def __init__(self, graph):
+        self.graph = graph
+
+    def DFSUtil(self, val, visited):
+
+        visited[val]["in"] += 1
+        for v in self.graph[val]:
+            print(v)
+            if self.graph.get(v) is not None:
+                visited[val]["out"] += 1
+                self.DFSUtil(v, visited)
+
+    def DFS(self, start=None):
+        V = len(self.graph)  #total vertices
+
+        visited = {}
+        for val in self.graph.keys():
+            visited[val] = {
+                "in": 0,
+                "out": 0
+            }
+
+        searchIn = []
+        if start is not None:
+            searchIn.append(start.name)
+        else:
+            searchIn = self.graph.keys()
+
+        for val in searchIn:
+            for v in self.graph[val]:
+                print(v)
+                if self.graph.get(v) is not None:
+                    visited[val]["out"] += 1
+                    self.DFSUtil(v, visited)
+
+        return visited
+
+
 def prop(obj):
     return obj['prop']
+
+def isRootObj(obj):
+    return obj.parent is None and obj.name[-4:] == '.b3d'
+
+def isEmptyName(name):
+    reIsEmpty = re.compile(r'.*empty name.*')
+    return reIsEmpty.search(name)
 
 def getAllChildren(obj):
     allChildren = []
@@ -28,102 +88,102 @@ def getAllChildren(obj):
             break
     return allChildren
 
-def getLODObjects(obj):
-    vertObjs = None
-    if obj["level_group"] == 0:
-        vertObjs = [cn for cn in obj.children if ( \
-            cn.get("block_type") is not None
-            and (cn["block_type"]==6 or cn["block_type"]==7 \
-            or cn["block_type"]==36 or cn["block_type"]==37 \
-            or cn["block_type"]==8 or cn["block_type"]==35\
-            or cn["block_type"]==28)) \
-            and (cn.get("level_group") is not None and (cn["level_group"]==1))]
-    else: # == 1
-        vertObjs = [cn for cn in obj.children if ( \
-            cn.get("block_type") is not None
-            and (cn["block_type"]==6 or cn["block_type"]==7 \
-            or cn["block_type"]==36 or cn["block_type"]==37 \
-            or cn["block_type"]==8 or cn["block_type"]==35 \
-            or cn["block_type"]==28))]
-        # if len(vertObjs) == 0:
-        #     vertObjs = [cn for cn in obj.children if (cn.get("block_type") is not None and (cn["block_type"]==8 or cn["block_type"]==35)) and (cn.get("level_group") is not None and (cn["level_group"]==1))]
-    # vertObjs.sort(key=lambda x: x.name, reverse=True)
-    # lodCnt = math.floor(len(vertObjs) / 2)
-    # return vertObjs[0:lodCnt]
-    return vertObjs
+def applyTransforms():
+    roots = [cn for cn in bpy.data.objects if isRootObj(cn)]
+    for root in roots:
+        log.debug(root.name)
+        hroots = getHierarchyRoots(root)
+        for hroot in hroots:
+            obj = bpy.data.objects.get(hroot)
+            if obj is not None:
+                applyTransform(obj)
 
-def getCondObjects(obj, group):
-    vertObjs = None
-    if group != -1:
-        vertObjs = [cn for cn in obj.children if \
-            (cn.get("level_group") is not None and (cn["level_group"]==group))]
-    else:
-        vertObjs = [cn for cn in obj.children]
-    return vertObjs
+def applyTransform(root):
 
-def applyTransform(block_18):
+    if bpy.data.objects.get('b3dCenterSpace') is None:
+        b3dObj = bpy.data.objects.new('b3dCenterSpace', None)
+        b3dObj['block_type'] = 24
+        b3dObj.rotation_euler[0] = 0.0
+        b3dObj.rotation_euler[1] = 0.0
+        b3dObj.rotation_euler[2] = 0.0
+        b3dObj.location = (0.0, 0.0, 0.0)
+        bpy.context.collection.objects.link(b3dObj)
 
-    spaceName = block_18["space_name"]
-    objName = block_18["add_name"]
-    log.debug("Applying transform {} to object {}".format(spaceName, objName))
+    if bpy.data.objects.get('b3dCenterSpace' + '_b3dSpaceCopy') is None:
+        b3dObj = bpy.data.objects.new('b3dCenterSpace' + '_b3dSpaceCopy', None)
+        b3dObj['block_type'] = 24
+        b3dObj.rotation_euler[0] = 0.0
+        b3dObj.rotation_euler[1] = 0.0
+        b3dObj.rotation_euler[2] = 0.0
+        b3dObj.location = (0.0, 0.0, 0.0)
+        bpy.context.collection.objects.link(b3dObj)
 
-    spaceObj = bpy.data.objects.get(spaceName)
-    destObj = bpy.data.objects.get(objName)
+    stack = [[root, 'b3dCenterSpace', 'b3dCenterSpace' + '_b3dSpaceCopy']]
 
-    if(spaceObj == None):
-        log.warn("Transformation object not found in "+block_18.name)
-        return
+    while stack:
+        block, prevSpace, prevSpaceCopy = stack.pop()
 
-    if(destObj == None):
-        log.warn("Destination object not found in "+block_18.name)
-        return
+        prevSpaceObj = bpy.data.objects.get(prevSpace)
+        prevSpaceCopyObj = bpy.data.objects.get(prevSpaceCopy)
 
-    # if not destObj.hide_get(): #hidden objects not coopied
+        log.debug("{} {}".format(block['block_type'], block.name))
+        log.debug(prevSpace)
+        log.debug(prevSpaceCopy)
 
-    linkObj = None
-    if bpy.data.objects.get(spaceObj.name + "_b3dSpaceCopy"):
-        linkObj = bpy.data.objects[spaceObj.name + "_b3dSpaceCopy"]
-    else:
-        linkObj = spaceObj.copy()
-        linkObj.parent = spaceObj.parent
-        linkObj.rotation_euler[0] = spaceObj.rotation_euler[0]
-        linkObj.rotation_euler[1] = spaceObj.rotation_euler[1]
-        linkObj.rotation_euler[2] = spaceObj.rotation_euler[2]
-        linkObj.location = spaceObj.location
-        linkObj.name = spaceObj.name + "_b3dSpaceCopy"
-        bpy.context.collection.objects.link(linkObj)
+        if block['block_type'] == 18:
+            objName = block["add_name"]
+            spaceName = block["space_name"]
 
-    reIsCopy = re.compile(r'.*b3dcopy.*')
+            destObj = bpy.data.objects.get(objName)
 
-    allVisibleChildren = [obj for obj in getAllChildren(destObj) if not obj.hide_get()]
+            if not block.hide_get():
 
-    subTransforms = [obj for obj in allVisibleChildren if obj.get("block_type") is not None and obj["block_type"] == 18]
+                if spaceName == 'empty name':
+                    spaceName = prevSpace
 
-    meshes = [obj for obj in allVisibleChildren if obj.type=="MESH" and not reIsCopy.search(obj.name)]
+                spaceObj = bpy.data.objects.get(spaceName)
 
-    newmeshes = []
+                if(spaceObj == None):
+                    log.warn("Transformation object not found in " + block.name)
+                    return
 
-    for trans in subTransforms:
-        subSpaceObj = bpy.data.objects.get(trans["space_name"]+"_b3dSpaceCopy")
-        if subSpaceObj:
-            subSpaceObj.parent = linkObj
+                if(destObj == None):
+                    log.warn("Destination object not found in " + block.name)
+                    return
 
-    log.info("Copying meshes")
-    for mesh in meshes:
-        newmesh = mesh.copy()
-        # newmesh.data = mesh.data.copy() # for NOT linked copy
-        newmesh.parent = linkObj
-        newmesh.name = "{}_b3dcopy".format(mesh.name)
-        newmeshes.append(newmesh)
+                spaceCopy = None
+                if bpy.data.objects.get(spaceObj.name + "_b3dSpaceCopy"):
+                    spaceCopy = bpy.data.objects[spaceObj.name + "_b3dSpaceCopy"]
+                else:
+                    spaceCopy = spaceObj.copy()
+                    spaceCopy.parent = prevSpaceCopyObj
+                    spaceCopy.rotation_euler[0] = spaceObj.rotation_euler[0]
+                    spaceCopy.rotation_euler[1] = spaceObj.rotation_euler[1]
+                    spaceCopy.rotation_euler[2] = spaceObj.rotation_euler[2]
+                    spaceCopy.location = spaceObj.location
+                    spaceCopy.name = spaceObj.name + "_b3dSpaceCopy"
+                    bpy.context.collection.objects.link(spaceCopy)
+                stack.append([destObj, spaceObj.name, spaceCopy.name])
+            # else:
+            #     stack.append([destObj, prevSpace, prevSpaceCopy])
 
-    log.info("Linking meshes")
-    for newmesh in newmeshes:
-        log.info("Linking {}".format(newmesh.name))
-        bpy.context.collection.objects.link(newmesh)
+            continue
 
+        if isMeshBlock(block) and not block.hide_get():
+            # block.hide_set(True)
+            # log.debug(block.name)
+            # log.debug(prevSpace)
+            newmesh = block.copy()
+            # newmesh.data = mesh.data.copy() # for NOT linked copy
+            newmesh.parent = prevSpaceCopyObj
+            newmesh.name = "{}_b3dcopy".format(block.name)
+            # log.info("Linking {}".format(newmesh.name))
+            bpy.context.collection.objects.link(newmesh)
+            # newmesh.hide_set(False)
 
-reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
-reb3dMesh = re.compile(r'.*b3dcopy.*')
+        for directChild in block.children:
+            stack.append([directChild, prevSpace, prevSpaceCopy])
+
 
 def applyRemoveTransforms():
     toRemove = False
@@ -136,12 +196,19 @@ def applyRemoveTransforms():
     else:
         applyTransforms()
 
-
 def removeTransforms():
     spaces = [cn for cn in bpy.data.objects if reb3dSpace.search(cn.name)]
     meshes = [cn for cn in bpy.data.objects if reb3dMesh.search(cn.name)]
 
+    reb3dPos = re.compile(r'b3dcopy')
+
+    bpy.ops.object.select_all(action = 'DESELECT')
+
     for mesh in meshes:
+        # res = reb3dPos.search(mesh.name)
+        # postfixStart = res.start()
+        # original = bpy.data.objects[mesh.name[:postfixStart-1]]
+        # original.hide_set(False)
         mesh.select_set(True)
     bpy.ops.object.delete()
 
@@ -149,10 +216,6 @@ def removeTransforms():
         space.select_set(True)
     bpy.ops.object.delete()
 
-def applyTransforms():
-    objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==18 and not cn.hide_get()]
-    for obj in objs:
-        applyTransform(obj)
 
 def showHideObjByType(type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
@@ -180,107 +243,215 @@ def showHideObjTreeByType(type):
                 child.hide_set(True)
             obj.hide_set(True)
 
-def getNBlockHierarchy(root, block_type, rootnum=0, curlevel=0, arr=[]):
-    for obj in root.children:
-        if obj['block_type'] == block_type:
-            arr.append([rootnum, curlevel, obj])
-            getNBlockHierarchy(obj, block_type, rootnum, curlevel+1, arr)
-            rootnum+=1
-        getNBlockHierarchy(obj, block_type, rootnum, curlevel, arr)
+def getHierarchyRoots(root):
+    globalRoot = root
+    while globalRoot.parent is not None:
+        globalRoot = globalRoot.parent
 
-def processLOD(root, state):
-    arr = []
-    rootnum = 0
-    curlevel = 0
-    if root['block_type'] == 10:
-        arr.append([rootnum, curlevel, root])
-        curlevel +=1
-    getNBlockHierarchy(root, 10, rootnum, curlevel, arr)
-    LODRoots = [cn[2] for cn in arr if cn[1]==0]
-    for LODRoot in LODRoots:
-        print(LODRoot.name)
-        lods = [cn for cn in LODRoot.children if (cn.get("level_group") is not None and (cn["level_group"]==1))]
-        print(len(lods))
-        for lod in lods:
-            if isMeshBlock(lod):
-                lod.hide_set(state)
-            else:
-                for obj in [cn for cn in getAllChildren(lod) if isMeshBlock(cn)]:
-                    obj.hide_set(state)
+    blocks18 = [cn for cn in bpy.data.objects if cn['block_type'] is not None and cn['block_type'] == 18]
+    ref_set = set()
+    for cn in blocks18:
+        #out refs
+        if bpy.data.objects.get(cn['add_name']) is not None:
+            ref_set.add(cn['add_name'])
 
-def showLOD(root):
-    processLOD(root, False)
+        #in refs
+        temp = cn
+        while temp.parent is not globalRoot:
+            temp = temp.parent
+        ref_set.add(temp.name)
 
-def hideLOD(root):
-    processLOD(root, True)
+    referenceables = list(ref_set)
+    referenceables.sort()
 
-# def showHideLOD():
-#     lodRoots = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==10]
-#     hiddenLodRoots = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==10 and cn.hide_get()]
-#     if len(hiddenLodRoots) > 0: #show
-#         for lodRoot in lodRoots:
-#             lods = getLODObjects(lodRoot)
-#             if len(lods) > 0:
-#                 lodRoot.hide_set(False)
-#             for lod in lods:
-#                 lod.hide_set(False)
-#                 for obj in getAllChildren(lod):
-#                     obj.hide_set(False)
-#     else: #hide
-#         for lodRoot in lodRoots:
-#             lods = getLODObjects(lodRoot)
-#             if len(lods) > 0:
-#                 lodRoot.hide_set(True)
-#             for lod in lods:
-#                 lod.hide_set(True)
-#                 for obj in getAllChildren(lod):
-#                     obj.hide_set(True)
+    other = [cn.name for cn in globalRoot.children if cn['block_type'] is not None \
+        and (cn['block_type'] == 4 or cn['block_type'] == 5 or cn['block_type'] == 19) \
+        and cn.name not in referenceables ]
 
-# def get21blocks(root, rootnum=0, curlevel=0, arr=[]):
+    noDubGraph = {}
+    graph = {}
+    for r in referenceables:
+        noDubGraph[r] = set()
+
+    for r in referenceables:
+        references = [cn for cn in getAllChildren(bpy.data.objects[r]) if cn['block_type'] is not None and cn['block_type'] == 18]
+        for refObj in references:
+            noDubGraph[r].add(refObj['add_name'])
+
+    for r in referenceables:
+        graph[r] = list(noDubGraph[r])
+
+    zgraph = Graph(graph)
+
+    closestRoot = root
+    if closestRoot != globalRoot:
+        if closestRoot.name not in graph:
+            while (closestRoot.parent['block_type'] is not None and closestRoot.parent['block_type'] != 5 \
+            and closestRoot.parent.name not in graph) or closestRoot.parent is None: # closest or global
+                closestRoot = closestRoot.parent
+    else:
+        closestRoot = None
+
+    visited = zgraph.DFS(closestRoot)
+
+    roots = [cn for cn in visited.keys() if (visited[cn]["in"] == 0) and (visited[cn]["out"] > 0)]
+
+    res = other
+    res.extend(roots)
+
+    return res
+
+
+# def getNBlockHierarchy(root, block_type, rootnum=0, curlevel=0, arr=[]):
 #     for obj in root.children:
-#         if obj['block_type'] == 21:
+#         if obj['block_type'] == block_type:
+#             print("block_type block")
 #             arr.append([rootnum, curlevel, obj])
-#             get21blocks(obj, rootnum, curlevel+1, arr)
+#             getNBlockHierarchy(obj, block_type, rootnum, curlevel+1, arr)
 #             rootnum+=1
-#         get21blocks(obj, rootnum, curlevel, arr)
+#         elif obj['block_type'] == 18:
+#             print("ref block")
+#             refObj = bpy.data.objects[obj[prop(b_18.Add_Name)]]
+#             arr.append([rootnum, curlevel, refObj])
+#             getNBlockHierarchy(refObj, block_type, rootnum, curlevel+1, arr)
+#             rootnum+=1
+#         getNBlockHierarchy(obj, block_type, rootnum, curlevel, arr)
 
 def isMeshBlock(obj):
     # 18 - for correct transform apply
     return obj.get("block_type") is not None \
         and (obj["block_type"]==8 or obj["block_type"]==35\
-        or obj["block_type"]==28 or obj["block_type"]==18)
+        or obj["block_type"]==28 \
+        # or obj["block_type"]==18
+        )
+
+def isRefBlock(obj):
+    return obj.get("block_type") is not None and obj["block_type"]==18
+
+
+def processLOD(root, state, explevel = 0, curlevel = -1):
+
+    stack = [[root, curlevel, False]]
+
+    while stack:
+        block, clevel, isActive = stack.pop()
+
+        if block['block_type'] == 18:
+            refObj = bpy.data.objects.get(block['add_name'])
+            if refObj is not None:
+                stack.append([refObj, clevel, isActive])
+                if isActive:
+                    block.hide_set(state)
+
+        if block['block_type'] == 10:
+            clevel += 1
+
+        if isActive and isMeshBlock(block):
+            block.hide_set(state)
+
+
+        for directChild in block.children:
+            log.debug("Processing {}".format(directChild.name))
+            if clevel == explevel:
+                if directChild['level_group'] == 1:
+                    stack.append([directChild, clevel, True])
+                else:
+                    stack.append([directChild, -1, isActive])
+            elif clevel > explevel:
+                stack.append([directChild, clevel, True])
+            else:
+                stack.append([directChild, clevel, isActive])
+
+
+def showLOD(root):
+    if root.parent is None:
+        hroots = getHierarchyRoots(root)
+        for hroot in hroots:
+            obj = bpy.data.objects.get(hroot)
+            if obj is not None:
+                processLOD(obj, False, 0, -1)
+    else:
+        processLOD(root, False, 0, -1)
+
+def hideLOD(root):
+    if root.parent is None:
+        hroots = getHierarchyRoots(root)
+        for hroot in hroots:
+            obj = bpy.data.objects.get(hroot)
+            if obj is not None:
+                processLOD(obj, True, 0, -1)
+    else:
+        processLOD(root, True, 0, -1)
 
 
 def processCond(root, group, state):
-    arr = []
-    rootnum = 0
+
     curlevel = 0
-    if root['block_type'] == 21:
-        arr.append([rootnum, curlevel, root])
-        curlevel +=1
-    getNBlockHierarchy(root, 21, rootnum, curlevel, arr)
-    condRoots = sorted(arr, key=lambda arr: arr[1], reverse=True)
-    for condRootArr in condRoots:
-        condRoot = condRootArr[2]
-        groupMax = sorted([cn['level_group'] for cn in condRoot.children], reverse=True)[0]
-        if group > groupMax:
-            group = groupMax
-        print(condRoot.name)
-        conds = getCondObjects(condRoot, group)
-        print(len(conds))
-        for cond in conds:
-            if isMeshBlock(cond):
-                cond.hide_set(state)
+    globlevel = 0
+
+    stack = [[root, curlevel, globlevel, 0, False]]
+
+    while stack:
+        block, clevel, glevel, groupMax, isActive = stack.pop()
+
+        l_group = group
+
+        if block['block_type'] == 18:
+            refObj = bpy.data.objects.get(block['add_name'])
+            if refObj is not None:
+                stack.append([refObj, clevel+1, glevel, groupMax, isActive])
+                if isActive:
+                    block.hide_set(state)
+
+        if block['block_type'] == 21:
+            glevel += 1
+            clevel = 1
+            groupMax = block[prop(b_21.GroupCnt)]
+            if l_group > groupMax-1:
+                l_group = groupMax-1
+
+        if isActive and isMeshBlock(block):
+            block.hide_set(state)
+
+        for directChild in block.children:
+            log.debug("Processing {}".format(directChild.name))
+            nextState = False
+            if glevel == 1:
+                nextState = True
+            elif glevel > 1:
+                nextState = isActive and True
+            if clevel == 1:
+                if directChild['level_group'] == l_group or l_group == -1:
+                    stack.append([directChild, clevel+1, glevel, groupMax, nextState])
+                else:
+                    stack.append([directChild, clevel+1, glevel, groupMax, False])
+            elif clevel > 1:
+                stack.append([directChild, clevel+1, glevel, groupMax, isActive])
             else:
-                for obj in [cn for cn in getAllChildren(cond) if isMeshBlock(cn)]:
-                    obj.hide_set(state)
+                stack.append([directChild, clevel+1, glevel, groupMax, False])
 
 def showConditionals(root, group):
-    processCond(root, group, False)
+
+    if root.parent is None:
+        hroots = getHierarchyRoots(root)
+        for hroot in hroots:
+            obj = bpy.data.objects.get(hroot)
+            if obj is not None:
+                processCond(obj, group, False)
+    else:
+        processCond(root, group, False)
 
 
 def hideConditionals(root, group):
-    processCond(root, group, True)
+
+    if root.parent is None:
+        hroots = getHierarchyRoots(root)
+        for hroot in hroots:
+            obj = bpy.data.objects.get(hroot)
+            if obj is not None:
+                processCond(obj, group, True)
+    else:
+        processCond(root, group, True)
 
 
 
@@ -301,58 +472,93 @@ def drawCommon(l_self, obj):
 	box.label(text="Группа блока: " + str(level_group))
 
 def drawAllFieldsByType(l_self, context, zclass):
-    drawFieldsByType(l_self, context, b_common)
-    drawFieldsByType(l_self, context, zclass)
+    if zclass.__name__.split('_')[0] == 'b':
+        drawFieldsByType(l_self, context, b_common)
+        drawFieldsByType(l_self, context, zclass)
+    else:
+        drawFieldsByType(l_self, context, zclass)
 
 def drawFieldsByType(l_self, context, zclass):
-    btype = zclass.__name__.split('_')[1]
-    bname = "block{}".format(btype)
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "block{}".format(btype)
 
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
     for attr in attrs:
         obj = zclass.__dict__[attr]
-        drawFieldByType(l_self, context, obj, bname)
+        drawFieldByType(l_self, context, obj, zclass)
 
-def drawFieldByType(l_self, context, obj, bname):
+def drawFieldByType(l_self, context, obj, zclass):
+
+    bname = ''
+    btype, bnum = zclass.__name__.split('_')
+    if btype == 'b':
+        bname = 'block{}'.format(bnum)
+    elif btype == 'pfb':
+        bname = 'perFaceBlock{}'.format(bnum)
+    elif btype == 'pvb':
+        bname = 'perVertBlock{}'.format(bnum)
+
     ftype = obj['type']
     pname = obj['prop']
     mytool = context.scene.my_tool
-    box = l_self.layout.box()
-    box.prop(getattr(mytool, bname), "show_"+pname)
 
-    col = box.column()
-    if ftype == fieldType.STRING:
-        col.prop(getattr(mytool, bname), pname)
+    if ftype == fieldType.STRING \
+    or ftype == fieldType.COORD \
+    or ftype == fieldType.RAD \
+    or ftype == fieldType.INT \
+    or ftype == fieldType.FLOAT \
+    or ftype == fieldType.ENUM \
+    or ftype == fieldType.LIST:
 
-    elif ftype == fieldType.COORD:
-        col.prop(getattr(mytool, bname), pname)
+        box = l_self.layout.box()
+        box.prop(getattr(mytool, bname), "show_"+pname)
 
-    elif ftype == fieldType.RAD:
-        col.prop(getattr(mytool, bname), pname)
+        col = box.column()
+        if ftype == fieldType.STRING:
+            col.prop(getattr(mytool, bname), pname)
 
-    elif ftype == fieldType.INT:
-        col.prop(getattr(mytool, bname), pname)
+        elif ftype == fieldType.COORD:
+            col.prop(getattr(mytool, bname), pname)
 
-    elif ftype == fieldType.FLOAT:
-        col.prop(getattr(mytool, bname), pname)
+        elif ftype == fieldType.RAD:
+            col.prop(getattr(mytool, bname), pname)
 
-    elif ftype == fieldType.ENUM:
-        col.prop(getattr(mytool, bname), pname)
+        elif ftype == fieldType.INT:
+            col.prop(getattr(mytool, bname), pname)
 
-    elif ftype == fieldType.LIST:
-        collect = getattr(mytool, bname)
-        # col.prop(getattr(mytool, bname), pname)
-        col.template_list("SCENE_UL_list", "", collect, pname, mytool, "list_index")
-        # collect = getattr(getattr(mytool, bname), pname)
-        # print(dir(collect))
-        # for item in collect.items():
-        #     print(item)
-        #     col.prop(item, "value")
+        elif ftype == fieldType.FLOAT:
+            col.prop(getattr(mytool, bname), pname)
 
-    if getattr(getattr(mytool, bname), "show_"+pname):
-        col.enabled = True
-    else:
-        col.enabled = False
+        elif ftype == fieldType.ENUM:
+            col.prop(getattr(mytool, bname), pname)
+
+        elif ftype == fieldType.LIST:
+            collect = getattr(mytool, bname)
+            # col.prop(getattr(mytool, bname), pname)
+            col.template_list("SCENE_UL_list", "", collect, pname, mytool, "list_index")
+            # collect = getattr(getattr(mytool, bname), pname)
+            # print(dir(collect))
+            # for item in collect.items():
+            #     print(item)
+            #     col.prop(item, "value")
+
+        if getattr(getattr(mytool, bname), "show_"+pname):
+            col.enabled = True
+        else:
+            col.enabled = False
+    elif ftype == fieldType.V_FORMAT:
+        box = l_self.layout.box()
+        box.prop(getattr(mytool, bname), "show_{}".format(pname))
+        col1 = box.column()
+        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'triang_offset'))
+        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_uvs'))
+        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_normals'))
+        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'normal_flag'))
+
+        if getattr(getattr(mytool, bname), "show_"+pname):
+            col1.enabled = True
+        else:
+            col1.enabled = False
 
 def getAllObjsByType(context, object, zclass):
     getObjsByType(context, object, b_common)
@@ -398,7 +604,6 @@ def setAllObjsByType(context, object, zclass):
     setObjsByType(context, object, b_common)
     setObjsByType(context, object, zclass)
 
-
 def setObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
     btype = zclass.__name__.split('_')[1]
@@ -433,3 +638,188 @@ def setObjsByType(context, object, zclass):
 
             else:
                 object[obj['prop']] = getattr(mytool, bname)[obj['prop']]
+
+def getFromAttributes(context, obj, attrs, bname, index):
+
+    mytool = context.scene.my_tool
+
+
+    if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
+        and getattr(getattr(mytool, bname), "show_"+obj['prop']):
+
+        if obj['type'] == fieldType.FLOAT:
+            getattr(mytool, bname)[obj['prop']] = float(getattr(attrs[index], "value"))
+
+        elif obj['type'] == fieldType.COORD:
+            getattr(mytool, bname)[obj['prop']] = getattr(attrs[index], "vector")
+
+        elif obj['type'] == fieldType.INT:
+            getattr(mytool, bname)[obj['prop']] = int(getattr(attrs[index], "value"))
+
+        elif obj['type'] == fieldType.V_FORMAT:
+            format = getattr(attrs[index], "value") ^ 1
+            triangOffset = format & 0b10000000
+            useUV = format & 0b10
+            useNormals = format & 0b10000 and format & 0b100000
+            normalFlag = format & 1
+
+            getattr(mytool, bname)["{}_{}".format(obj['prop'],'triang_offset')] = triangOffset
+            getattr(mytool, bname)["{}_{}".format(obj['prop'],'use_uvs')] = useUV
+            getattr(mytool, bname)["{}_{}".format(obj['prop'],'use_normals')] = useNormals
+            getattr(mytool, bname)["{}_{}".format(obj['prop'],'normal_flag')] = normalFlag
+
+def setFromAttributes(context, obj, attrs, bname, index):
+
+    mytool = context.scene.my_tool
+
+    if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
+        and getattr(getattr(mytool, bname), "show_"+obj['prop']):
+
+        if obj['type'] == fieldType.FLOAT:
+            attrs[index].value = getattr(mytool, bname)[obj['prop']]
+
+        elif obj['type'] == fieldType.INT:
+            attrs[index].value = getattr(mytool, bname)[obj['prop']]
+
+        elif obj['type'] == fieldType.COORD:
+            attrs[index].vector = getattr(mytool, bname)[obj['prop']]
+
+        elif obj['type'] == fieldType.V_FORMAT:
+            value = 0
+            triangOffset = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'triang_offset')]
+            useUV = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'use_uvs')]
+            useNormals = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'use_normals')]
+            normalFlag = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'normal_flag')]
+
+            if triangOffset:
+                value = value ^ 0b10000000
+            if useUV:
+                value = value ^ 0b10
+            if useNormals:
+                value = value ^ 0b110000
+            if normalFlag:
+                value = value ^ 0b1
+
+            value = value ^ 1
+
+            attrs[index].value = value
+
+def getPerFaceByType(context, object, zclass):
+    zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    btype = zclass.__name__.split('_')[1]
+    bname = "perFaceBlock{}".format(btype)
+    mesh = object.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    polygons = getPolygonsBySelectedVertices(object)
+    indexes = [cn.index for cn in polygons]
+
+    if len(indexes) > 0:
+        index = indexes[0]
+        for property in zattrs:
+            obj = zclass.__dict__[property]
+            attrs = mesh.attributes[obj['prop']].data
+            getFromAttributes(context, obj, attrs, bname, index)
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def getPerVertexByType(context, object, zclass):
+    zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    btype = zclass.__name__.split('_')[1]
+    bname = "perVertBlock{}".format(btype)
+    mesh = object.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    vertices = getSelectedVertices(object)
+    # log.debug(vertices)
+    indexes = [cn.index for cn in vertices]
+
+    if len(indexes) > 0:
+        index = indexes[0]
+        for property in zattrs:
+            obj = zclass.__dict__[property]
+            attrs = mesh.attributes[obj['prop']].data
+            getFromAttributes(context, obj, attrs, bname, index)
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def setPerVertexByType(context, object, zclass):
+    zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    btype = zclass.__name__.split('_')[1]
+    bname = "perVertBlock{}".format(btype)
+    mesh = object.data
+
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    vertices = getSelectedVertices(object)
+    indexes = [cn.index for cn in vertices]
+
+    for index in indexes:
+        for property in zattrs:
+            obj = zclass.__dict__[property]
+            attrs = mesh.attributes[obj['prop']].data
+            setFromAttributes(context, obj, attrs, bname, index)
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def setPerFaceByType(context, object, zclass):
+    zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    btype = zclass.__name__.split('_')[1]
+    bname = "perFaceBlock{}".format(btype)
+    mesh = object.data
+
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    polygons = getPolygonsBySelectedVertices(object)
+    indexes = [cn.index for cn in polygons]
+
+    for index in indexes:
+        for property in zattrs:
+            obj = zclass.__dict__[property]
+            attrs = mesh.attributes[obj['prop']].data
+            setFromAttributes(context, obj, attrs, bname, index)
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def createCustomAttribute(mesh, values, zclass, zobj):
+    # attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    ctype, btype = zclass.__name__.split('_')
+    domain = ''
+    if ctype == 'pvb':
+        domain = 'POINT'
+    elif ctype == 'pfb':
+        domain = 'FACE'
+
+    # log.debug(domain)
+    # log.debug(zobj['type'])
+    if zobj['type'] == fieldType.FLOAT:
+        ztype = 'FLOAT'
+        mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
+        attr = mesh.attributes[zobj['prop']].data
+        # log.debug(len(attr))
+        # log.debug(len(values))
+        for i in range(len(attr)):
+            setattr(attr[i], "value", values[i])
+
+    elif zobj['type'] == fieldType.COORD:
+        ztype = 'FLOAT_VECTOR'
+        mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
+        attr = mesh.attributes[zobj['prop']].data
+        # log.debug(len(attr))
+        # log.debug(len(values))
+        for i in range(len(attr)):
+            setattr(attr[i], "vector", values[i])
+
+    elif zobj['type'] == fieldType.INT:
+        ztype = 'INT'
+        mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
+        attr = mesh.attributes[zobj['prop']].data
+        # log.debug(len(attr))
+        # log.debug(len(values))
+        for i in range(len(attr)):
+            setattr(attr[i], "value", values[i])
+
+    elif zobj['type'] == fieldType.V_FORMAT:
+        ztype = 'INT'
+        mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
+        attr = mesh.attributes[zobj['prop']].data
+        # log.debug(len(attr))
+        # log.debug(len(values))
+        for i in range(len(attr)):
+            setattr(attr[i], "value", values[i])

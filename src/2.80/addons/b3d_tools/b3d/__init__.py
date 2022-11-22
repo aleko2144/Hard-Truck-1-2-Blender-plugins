@@ -118,11 +118,16 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
                     description='Import textures from unpacked .res archive. \n'\
                                 'NOTE: if importing for the first time select previous option too', default=False)
 
-
     textures_format : StringProperty(
         name="Images format",
         description="Loaded images format",
         default="tga",
+    )
+
+    res_location : StringProperty(
+        name=".res path",
+        description="Path to .res file location. Default: .res file with name and location of imported .b3d",
+        default=""
     )
 
     show_all_blocks : EnumProperty(
@@ -213,6 +218,11 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
         row.prop(self, 'to_import_textures')
         row = box1.row()
         row.prop(self, 'textures_format')
+
+        layout.label(text="Optional settings:")
+        box1 = layout.box()
+        row = box1.row()
+        row.prop(self, 'res_location')
 
         layout.label(text="Blocks to import:")
         box1 = layout.box()

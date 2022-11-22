@@ -231,3 +231,28 @@ def getUsedFace(face, idxTransf):
     for idx in face:
         newFace.append(idxTransf[idx])
     return newFace
+
+
+def getPolygonsBySelectedVertices(obj):
+    data = obj.data
+    # data = bpy.context.object.data
+    selectedPolygons = []
+    for f in data.polygons:
+        s = True
+        for v in f.vertices:
+            if not data.vertices[v].select:
+                s = False
+                break
+        if s:
+            selectedPolygons.append(f)
+    return selectedPolygons
+
+def getSelectedVertices(obj):
+    data = obj.data
+    # data = bpy.context.object.data
+    selectedVertices = []
+    for v in data.vertices:
+        if v.select:
+            selectedVertices.append(v)
+
+    return selectedVertices

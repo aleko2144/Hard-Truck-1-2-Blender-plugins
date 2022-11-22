@@ -9,12 +9,15 @@ else:
     )
 
 
-from b3d_tools.common import getRegion
+from b3d_tools.common import (
+	getRegion
+)
 from .common import (
 	applyRemoveTransforms,
 	applyTransforms,
 	hideConditionals,
 	showConditionals,
+	isRootObj,
 	hideLOD,
 	showLOD,
 	showConditionals,
@@ -26,7 +29,11 @@ from .common import (
 	drawAllFieldsByType,
 	drawFieldByType,
 	getAllObjsByType,
-	setAllObjsByType
+	setAllObjsByType,
+	getPerFaceByType,
+	setPerFaceByType,
+	getPerVertexByType,
+	setPerVertexByType
 )
 
 
@@ -34,13 +41,15 @@ from b3d_tools.b3d.classes import (
 	block_1,block_2,block_3,block_4,block_5,block_6,block_7,block_8,block_9,block_10,\
 	block_11,block_12,block_13,block_14,block_15,block_16,block_17,block_18,block_20,\
 	block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,block_30,\
-	block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,block_common
+	block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,block_common,\
+	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35
 )
 from b3d_tools.b3d.classes import (
 	b_1,b_2,b_3,b_4,b_5,b_6,b_7,b_8,b_9,b_10,\
 	b_11,b_12,b_13,b_14,b_15,b_16,b_17,b_18,b_20,\
 	b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
-	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,b_common
+	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,b_common, \
+	pfb_8, pfb_28, pfb_35, pvb_8, pvb_35
 )
 
 
@@ -128,6 +137,12 @@ class PanelSettings(bpy.types.PropertyGroup):
 	block39: PointerProperty(type=block_39)
 	block40: PointerProperty(type=block_40)
 	blockcommon: PointerProperty(type=block_common)
+
+	perFaceBlock8: PointerProperty(type=perFaceBlock_8)
+	perFaceBlock28: PointerProperty(type=perFaceBlock_28)
+	perFaceBlock35: PointerProperty(type=perFaceBlock_35)
+	perVertBlock8: PointerProperty(type=perVertBlock_8)
+	perVertBlock35: PointerProperty(type=perVertBlock_35)
 
 	list_index: IntProperty(name = "Index for my_list", default = 0)
 
@@ -1186,8 +1201,40 @@ class AddOperator(bpy.types.Operator):
 		# 	bpy.context.scene.objects.link(object)
 		return {'FINISHED'}
 
+class GetVertexValuesOperator(bpy.types.Operator):
+	bl_idname = "wm.get_vertex_values_operator"
+	bl_label = "Получить настройки блока"
+
+	def execute(self, context):
+		object = bpy.context.selected_objects[0]
+		block_type = object['block_type']
+
+		if block_type == 8:
+			getPerVertexByType(context, object, pvb_8)
+		elif block_type == 35:
+			getPerVertexByType(context, object, pvb_35)
+
+		return {'FINISHED'}
+
+class GetFaceValuesOperator(bpy.types.Operator):
+	bl_idname = "wm.get_face_values_operator"
+	bl_label = "Получить настройки блока"
+
+	def execute(self, context):
+		object = bpy.context.selected_objects[0]
+		block_type = object['block_type']
+
+		if block_type == 8:
+			getPerFaceByType(context, object, pfb_8)
+		elif block_type == 28:
+			getPerFaceByType(context, object, pfb_28)
+		elif block_type == 35:
+			getPerFaceByType(context, object, pfb_35)
+
+		return {'FINISHED'}
+
 class GetValuesOperator(bpy.types.Operator):
-	bl_idname = "wm.get_values_operator"
+	bl_idname = "wm.get_block_values_operator"
 	bl_label = "Получить настройки блока"
 
 	def execute(self, context):
@@ -1196,7 +1243,7 @@ class GetValuesOperator(bpy.types.Operator):
 
 		global block_type
 		global lenStr
-		object = bpy.context.selected_objects[0]
+		object = bpy.context.object
 		block_type = object['block_type']
 
 		if block_type == 1:
@@ -1368,8 +1415,50 @@ class GetValuesOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+class SetFaceValuesOperator(bpy.types.Operator):
+	bl_idname = "wm.set_face_values_operator"
+	bl_label = "Сохранить настройки блока"
+
+	def execute(self, context):
+		curtype = bpy.context.object['block_type']
+		objects = [cn for cn in bpy.context.selected_objects if cn['block_type'] is not None and cn['block_type'] == curtype]
+
+		for i in range(len(objects)):
+
+			object = objects[i]
+			block_type = object['block_type']
+
+			if block_type == 8:
+				setPerFaceByType(context, object, pfb_8)
+			elif block_type == 28:
+				setPerFaceByType(context, object, pfb_28)
+			elif block_type == 35:
+				setPerFaceByType(context, object, pfb_35)
+
+		return {'FINISHED'}
+
+class SetVertexValuesOperator(bpy.types.Operator):
+	bl_idname = "wm.set_vertex_values_operator"
+	bl_label = "Сохранить настройки блока"
+
+	def execute(self, context):
+		curtype = bpy.context.object['block_type']
+		objects = [cn for cn in bpy.context.selected_objects if cn['block_type'] is not None and cn['block_type'] == curtype]
+
+		for i in range(len(objects)):
+
+			object = objects[i]
+			block_type = object['block_type']
+
+			if block_type == 8:
+				setPerVertexByType(context, object, pvb_8)
+			elif block_type == 35:
+				setPerVertexByType(context, object, pvb_35)
+
+		return {'FINISHED'}
+
 class SetValuesOperator(bpy.types.Operator):
-	bl_idname = "wm.set_values_operator"
+	bl_idname = "wm.set_block_values_operator"
 	bl_label = "Сохранить настройки блока"
 
 	def execute(self, context):
@@ -1380,9 +1469,15 @@ class SetValuesOperator(bpy.types.Operator):
 		global lenStr
 		#object = bpy.context.selected_objects[0]
 
-		for i in range(len(bpy.context.selected_objects)):
+		active_obj = bpy.context.object
 
-			object = bpy.context.selected_objects[i]
+		curtype = active_obj['block_type']
+
+		objects = [cn for cn in bpy.context.selected_objects if cn['block_type'] is not None and cn['block_type'] == curtype]
+
+		for i in range(len(objects)):
+
+			object = objects[i]
 
 			if 'block_type' in object:
 				block_type = object['block_type']
@@ -1544,7 +1639,7 @@ class SetValuesOperator(bpy.types.Operator):
 		return {'FINISHED'}
 
 class DelValuesOperator(bpy.types.Operator):
-	bl_idname = "wm.del_values_operator"
+	bl_idname = "wm.del_block_values_operator"
 	bl_label = "Удалить настройки блока"
 
 	def execute(self, context):
@@ -1677,6 +1772,7 @@ class MirrorAndFlipObjectsOperator(bpy.types.Operator):
 class ApplyTransformsOperator(bpy.types.Operator):
 	bl_idname = "wm.apply_transforms_operator"
 	bl_label = "Расположить/Убрать обьекты"
+	bl_description = "Создаёт копии обьектов и располагает по местам(блок 24) указанным в блоке 18"
 
 	def execute(self, context):
 		scene = context.scene
@@ -1689,6 +1785,7 @@ class ApplyTransformsOperator(bpy.types.Operator):
 class ShowHideCollisionsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_collisions_operator"
 	bl_label = "Отобразить/Скрыть коллизии"
+	bl_description = "Если скрыты все коллизии(23), показывает их. Иначе - скрывает."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1701,6 +1798,7 @@ class ShowHideCollisionsOperator(bpy.types.Operator):
 class ShowHideRoomBordersOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_room_borders_operator"
 	bl_label = "Отобразить/Скрыть границы комнат"
+	bl_description = "Если скрыты все границы комнат(30), показывает их. Иначе - скрывает."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1710,43 +1808,10 @@ class ShowHideRoomBordersOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
-class ShowLODOperator(bpy.types.Operator):
-	bl_idname = "wm.show_lod_operator"
-	bl_label = "Отобразить LOD модели"
-
-	def execute(self, context):
-		scene = context.scene
-		mytool = scene.my_tool
-
-		objs = context.selected_objects
-		if not len(objs):
-			objs = [cn for cn in bpy.data.objects if cn.parent is None]
-
-		for obj in objs:
-			showLOD(obj)
-
-		return {'FINISHED'}
-
-class HideLODOperator(bpy.types.Operator):
-	bl_idname = "wm.hide_lod_operator"
-	bl_label = "Скрыть LOD модели"
-
-	def execute(self, context):
-		scene = context.scene
-		mytool = scene.my_tool
-
-		objs = context.selected_objects
-		if not len(objs):
-			objs = [cn for cn in bpy.data.objects if cn.parent is None]
-
-		for obj in objs:
-			hideLOD(obj)
-
-		return {'FINISHED'}
-
 class ShowHideGeneratorsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_generator_operator"
 	bl_label = "Отобразить/Скрыть генераторы обьектов"
+	bl_description = "Если скрыты все генераторы обьектов(40), показывает их. Иначе - скрывает."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1756,9 +1821,50 @@ class ShowHideGeneratorsOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+class ShowLODOperator(bpy.types.Operator):
+	bl_idname = "wm.show_lod_operator"
+	bl_label = "Отобразить LOD модели"
+	bl_description = "Показывает LOD(10) выделенного обьекта. " + \
+					"Если нет активного обьекта показывает LOD у всех обьектов сцены"
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+
+		objs = context.selected_objects
+		if not len(objs):
+			objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+
+		for obj in objs:
+			showLOD(obj)
+
+		return {'FINISHED'}
+
+class HideLODOperator(bpy.types.Operator):
+	bl_idname = "wm.hide_lod_operator"
+	bl_label = "Скрыть LOD модели"
+	bl_description = "Скрывает LOD(10) выделенного обьекта. " + \
+					"Если нет активного обьекта скрывает LOD у всех обьектов сцены"
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+
+		objs = context.selected_objects
+		if not len(objs):
+			objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+
+		for obj in objs:
+			hideLOD(obj)
+
+		return {'FINISHED'}
+
+
 class ShowConditionalsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_conditional_operator"
 	bl_label = "Отобразить обьекты с условием"
+	bl_description = "Показывает выбранное условие блока 21 выделенного обьекта. " + \
+					"Если нет активного обьекта показывает выбранное условие блока 21 у всех обьектов сцены"
 
 	group : bpy.props.IntProperty()
 
@@ -1768,7 +1874,7 @@ class ShowConditionalsOperator(bpy.types.Operator):
 
 		objs = context.selected_objects
 		if not len(objs):
-			objs = [cn for cn in bpy.data.objects if cn.parent is None]
+			objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
 
 		for obj in objs:
 			showConditionals(obj, self.group)
@@ -1778,6 +1884,8 @@ class ShowConditionalsOperator(bpy.types.Operator):
 class HideConditionalsOperator(bpy.types.Operator):
 	bl_idname = "wm.hide_conditional_operator"
 	bl_label = "Скрыть обьекты с условием"
+	bl_description = "Скрывает выбранное условие блока 21 выделенного обьекта. " + \
+					"Если нет активного обьекта скрывает выбранное условие блока 21 у всех обьектов сцены"
 
 	group : bpy.props.IntProperty()
 
@@ -1787,13 +1895,12 @@ class HideConditionalsOperator(bpy.types.Operator):
 
 		objs = context.selected_objects
 		if not len(objs):
-			objs = [cn for cn in bpy.data.objects if cn.parent is None]
+			objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
 
 		print(objs)
 
 		for obj in objs:
 			hideConditionals(obj, self.group)
-		# showHideObjByType(40)
 
 		return {'FINISHED'}
 
@@ -1856,11 +1963,6 @@ class AddBlocksOperator(bpy.types.Operator):
 			bpy.ops.object.select_all(action='DESELECT')
 
 		return {'FINISHED'}
-
-# ------------------------------------------------------------------------
-# panels
-# ------------------------------------------------------------------------
-
 
 # ------------------------------------------------------------------------
 # panels
@@ -2134,6 +2236,76 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 
 		layout.operator("wm.add_operator")
 
+class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_pfb_edit_panel"
+	bl_label = "Редактирование полигонов"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		mytool = context.scene.my_tool
+
+		object = bpy.context.object
+
+		if object is not None:
+
+			if 'block_type' in object:
+				block_type = object['block_type']
+			else:
+				block_type = None
+
+			if block_type == 8:
+				drawAllFieldsByType(self, context, pfb_8)
+			if block_type == 28:
+				drawAllFieldsByType(self, context, pfb_28)
+			if block_type == 35:
+				drawAllFieldsByType(self, context, pfb_35)
+
+
+		layout.operator("wm.get_face_values_operator")
+		layout.operator("wm.set_face_values_operator")
+
+class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_pvb_edit_panel"
+	bl_label = "Редактирование вершин"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		mytool = context.scene.my_tool
+
+		object = bpy.context.object
+
+		if object is not None:
+
+			if 'block_type' in object:
+				block_type = object['block_type']
+			else:
+				block_type = None
+
+			if block_type == 8:
+				drawAllFieldsByType(self, context, pvb_8)
+			if block_type == 35:
+				drawAllFieldsByType(self, context, pvb_35)
+
+
+		layout.operator("wm.get_vertex_values_operator")
+		layout.operator("wm.set_vertex_values_operator")
+
 class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_edit_panel"
 	bl_label = "Редактирование блоков"
@@ -2153,297 +2325,298 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 		type(context)
 		#for i in range(len(bpy.context.selected_objects)):
 
-		if len(bpy.context.selected_objects):
-			for i in range(1):
+		object = bpy.context.object
 
-				object = bpy.context.selected_objects[i]
+		# if len(bpy.context.selected_objects):
+		# 	for i in range(1):
+		if object is not None:
 
+			level_group = None
+
+			if 'block_type' in object:
+				block_type = object['block_type']
+			else:
+				block_type = None
+
+			if 'level_group' in object:
+				level_group = object['level_group']
+			else:
 				level_group = None
 
-				if 'block_type' in object:
-					block_type = object['block_type']
-				else:
-					block_type = None
+			lenStr = str(len(object.children))
 
-				if 'level_group' in object:
-					level_group = object['level_group']
-				else:
-					level_group = None
+			if block_type == 0:
+				drawCommon(self, object)
 
-				lenStr = str(len(object.children))
+			elif block_type == 1:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_1)
 
-				if block_type == 0:
-					drawCommon(self, object)
+			elif block_type == 2:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_2)
 
-				elif block_type == 1:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_1)
+			elif block_type == 3:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_3)
 
-				elif block_type == 2:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_2)
+			elif block_type == 4:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_4)
 
-				elif block_type == 3:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_3)
+			elif block_type == 5:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_5)
+				# layout.prop(getattr(mytool, 'block5'), "name1")
+				# layout.prop(mytool.block5, "XYZ")
+				# layout.prop(mytool.block5, "R")
+				# if 'add_name' in object:
+				# 	pass
+				# else:
+				# 	self.layout.label(text="Имя присоединённого блока не указано. Сохраните настройки,")
+				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
-				elif block_type == 4:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_4)
+			elif block_type == 6:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_6)
 
-				elif block_type == 5:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_5)
-					# layout.prop(getattr(mytool, 'block5'), "name1")
-					# layout.prop(mytool.block5, "XYZ")
-					# layout.prop(mytool.block5, "R")
-					# if 'add_name' in object:
-					# 	pass
-					# else:
-					# 	self.layout.label(text="Имя присоединённого блока не указано. Сохраните настройки,")
-					# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
+			elif block_type == 7:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_7)
+				# if 'texNum' in object:
+				# 	layout.prop(mytool, "addBlockMeshType_enum")
 
-				elif block_type == 6:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_6)
+				# 	if (mytool.addBlockMeshType_enum) == "auto":
+				# 		layout.prop(mytool, "FType_enum")
+				# 		layout.prop(mytool, "MType_enum")
+				# 	else:
+				# 		layout.prop(mytool, "Faces_enum")
+				# 		if int(mytool.Faces_enum) == 35:
+				# 			layout.prop(mytool, "MType_enum")
+				# 		else:
+				# 			layout.prop(mytool, "FType_enum")
 
-				elif block_type == 7:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_7)
-					# if 'texNum' in object:
-					# 	layout.prop(mytool, "addBlockMeshType_enum")
+				# 	layout.prop(mytool, "texNum_int")
+				# else:
+				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
+				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-					# 	if (mytool.addBlockMeshType_enum) == "auto":
-					# 		layout.prop(mytool, "FType_enum")
-					# 		layout.prop(mytool, "MType_enum")
-					# 	else:
-					# 		layout.prop(mytool, "Faces_enum")
-					# 		if int(mytool.Faces_enum) == 35:
-					# 			layout.prop(mytool, "MType_enum")
-					# 		else:
-					# 			layout.prop(mytool, "FType_enum")
+			elif block_type == 8:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_8)
 
-					# 	layout.prop(mytool, "texNum_int")
-					# else:
-					# 	self.layout.label(text="Указаны не все атрибуты объекта.")
-					# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
+			elif block_type == 9:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_9)
 
-				elif block_type == 8:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_8)
+			elif block_type == 10:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_10)
+				# if 'node_radius' in object:
+				# 	layout.prop(mytool, "Radius1")
+				# 	layout.prop(mytool, "LOD_Distance1")
+				# else:
+				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
+				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-				elif block_type == 9:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_9)
+			elif block_type == 11:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_11)
 
-				elif block_type == 10:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_10)
-					# if 'node_radius' in object:
-					# 	layout.prop(mytool, "Radius1")
-					# 	layout.prop(mytool, "LOD_Distance1")
-					# else:
-					# 	self.layout.label(text="Указаны не все атрибуты объекта.")
-					# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
+			elif block_type == 12:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_12)
+				# if 'CType' in object:
+				# 	self.layout.label(text="Тип коллизии:")
+				# 	layout.prop(mytool, "CollisionType_enum", text="")
+				# 	layout.prop(mytool, "CH1")
+				# else:
+				# 	self.layout.label(text="Тип коллизии не указан. Сохраните настройки,")
+				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
-				elif block_type == 11:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_11)
+			elif block_type == 13:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_13)
 
-				elif block_type == 12:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_12)
-					# if 'CType' in object:
-					# 	self.layout.label(text="Тип коллизии:")
-					# 	layout.prop(mytool, "CollisionType_enum", text="")
-					# 	layout.prop(mytool, "CH1")
-					# else:
-					# 	self.layout.label(text="Тип коллизии не указан. Сохраните настройки,")
-					# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
+			elif block_type == 14:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_14)
 
-				elif block_type == 13:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_13)
+			elif block_type == 15:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_15)
 
-				elif block_type == 14:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_14)
+			elif block_type == 16:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_16)
 
-				elif block_type == 15:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_15)
+			elif block_type == 17:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_17)
 
-				elif block_type == 16:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_16)
+			elif block_type == 18:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_18)
+				# if 'add_name' in object:
+				# 	layout.prop(mytool, "Radius1")
+				# 	layout.prop(mytool, "addBlockName1_string")
+				# 	layout.prop(mytool, "addSpaceName1_string")
+				# else:
+				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
+				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-				elif block_type == 17:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_17)
+			elif block_type == 19:
+				drawCommon(self, object)
 
-				elif block_type == 18:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_18)
-					# if 'add_name' in object:
-					# 	layout.prop(mytool, "Radius1")
-					# 	layout.prop(mytool, "addBlockName1_string")
-					# 	layout.prop(mytool, "addSpaceName1_string")
-					# else:
-					# 	self.layout.label(text="Указаны не все атрибуты объекта.")
-					# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
+			elif block_type == 20:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_20)
 
-				elif block_type == 19:
-					drawCommon(self, object)
+			elif block_type == 21:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_21)
+				# if 'groups_num' in object:
+				# 	layout.prop(mytool, "groupsNum1_int")
+				# 	layout.prop(mytool, "Radius1")
+				# else:
+				# 	self.layout.label(text="Кол-во групп не указано. Сохраните настройки,")
+				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
-				elif block_type == 20:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_20)
+			elif block_type == 23:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_23)
+				# if 'CType' in object:
+				# 	self.layout.label(text="Тип коллизии:")
+				# 	layout.prop(mytool, "CollisionType_enum", text="")
+				# else:
+				# 	self.layout.label(text="Тип коллизии не указан. Сохраните настройки,")
+				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
-				elif block_type == 21:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_21)
-					# if 'groups_num' in object:
-					# 	layout.prop(mytool, "groupsNum1_int")
-					# 	layout.prop(mytool, "Radius1")
-					# else:
-					# 	self.layout.label(text="Кол-во групп не указано. Сохраните настройки,")
-					# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
+			elif block_type == 24:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_24)
+				# if 'flag' in object:
+				# 	layout.prop(mytool, "add24Flag_enum1", text="")
+				# else:
+				# 	self.layout.label(text="Флаг блока не указан. Сохраните настройки,")
+				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
-				elif block_type == 23:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_23)
-					# if 'CType' in object:
-					# 	self.layout.label(text="Тип коллизии:")
-					# 	layout.prop(mytool, "CollisionType_enum", text="")
-					# else:
-					# 	self.layout.label(text="Тип коллизии не указан. Сохраните настройки,")
-					# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
+			elif block_type == 25:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_25)
+				# if 'RSound' in object:
+				# 	layout.prop(mytool, "addSoundName1_string")
+				# 	layout.prop(mytool, "RSound1")
+				# 	layout.prop(mytool, "SLevel1")
+				# else:
+				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
+				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-				elif block_type == 24:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_24)
-					# if 'flag' in object:
-					# 	layout.prop(mytool, "add24Flag_enum1", text="")
-					# else:
-					# 	self.layout.label(text="Флаг блока не указан. Сохраните настройки,")
-					# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
+			elif block_type == 26:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_26)
 
-				elif block_type == 25:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_25)
-					# if 'RSound' in object:
-					# 	layout.prop(mytool, "addSoundName1_string")
-					# 	layout.prop(mytool, "RSound1")
-					# 	layout.prop(mytool, "SLevel1")
-					# else:
-					# 	self.layout.label(text="Указаны не все атрибуты объекта.")
-					# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
+			elif block_type == 27:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_27)
 
-				elif block_type == 26:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_26)
+			elif block_type == 28:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_28)
+				# if 'sprite_radius' in object:
+				# 	layout.prop(mytool, "Radius1")
+				# 	layout.prop(mytool, "T28_radius1")
+				# 	layout.prop(mytool, "texNum_int")
+				# else:
+				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
+				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-				elif block_type == 27:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_27)
+			elif block_type == 29:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_29)
 
-				elif block_type == 28:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_28)
-					# if 'sprite_radius' in object:
-					# 	layout.prop(mytool, "Radius1")
-					# 	layout.prop(mytool, "T28_radius1")
-					# 	layout.prop(mytool, "texNum_int")
-					# else:
-					# 	self.layout.label(text="Указаны не все атрибуты объекта.")
-					# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
+			elif block_type == 30:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_30)
 
-				elif block_type == 29:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_29)
+			elif block_type == 31:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_31)
 
-				elif block_type == 30:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_30)
+			# elif block_type == 32:
+			# 	drawCommon(self, object)
 
-				elif block_type == 31:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_31)
+			elif block_type == 33:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_33)
+				# layout.prop(mytool, "Radius1")
+				# layout.prop(mytool, "LType_enum")
+				# layout.prop(mytool, "RadiusLight1")
+				# layout.prop(mytool, "Intensity1")
+				# layout.prop(mytool, "R1")
+				# layout.prop(mytool, "G1")
+				# layout.prop(mytool, "B1")
 
-				# elif block_type == 32:
-				# 	drawCommon(self, object)
+			elif block_type == 34:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_34)
 
-				elif block_type == 33:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_33)
-					# layout.prop(mytool, "Radius1")
-					# layout.prop(mytool, "LType_enum")
-					# layout.prop(mytool, "RadiusLight1")
-					# layout.prop(mytool, "Intensity1")
-					# layout.prop(mytool, "R1")
-					# layout.prop(mytool, "G1")
-					# layout.prop(mytool, "B1")
+			elif block_type == 35:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_35)
 
-				elif block_type == 34:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_34)
+			elif block_type == 36:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_36)
 
-				elif block_type == 35:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_35)
+			elif block_type == 37:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_37)
+				# if 'texNum' in object:
+				# 	layout.prop(mytool, "addBlockMeshType_enum")
 
-				elif block_type == 36:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_36)
+				# 	if (mytool.addBlockMeshType_enum) == "auto":
+				# 		layout.prop(mytool, "SType_enum")
+				# 		#layout.prop(mytool, "FType_enum")
+				# 		#layout.prop(mytool, "addMeshType_enum")
+				# 		layout.prop(mytool, "FType_enum")
+				# 		layout.prop(mytool, "MType_enum")
+				# 	else:
+				# 		layout.prop(mytool, "Faces_enum")
+				# 		if int(mytool.Faces_enum) == 35:
+				# 			layout.prop(mytool, "MType_enum")
+				# 			layout.prop(mytool, "SType_enum")
+				# 		else:
+				# 			layout.prop(mytool, "SType_enum")
+				# 			layout.prop(mytool, "FType_enum")
 
-				elif block_type == 37:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_37)
-					# if 'texNum' in object:
-					# 	layout.prop(mytool, "addBlockMeshType_enum")
+				# 	layout.prop(mytool, "texNum_int")
+				# else:
+				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
+				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-					# 	if (mytool.addBlockMeshType_enum) == "auto":
-					# 		layout.prop(mytool, "SType_enum")
-					# 		#layout.prop(mytool, "FType_enum")
-					# 		#layout.prop(mytool, "addMeshType_enum")
-					# 		layout.prop(mytool, "FType_enum")
-					# 		layout.prop(mytool, "MType_enum")
-					# 	else:
-					# 		layout.prop(mytool, "Faces_enum")
-					# 		if int(mytool.Faces_enum) == 35:
-					# 			layout.prop(mytool, "MType_enum")
-					# 			layout.prop(mytool, "SType_enum")
-					# 		else:
-					# 			layout.prop(mytool, "SType_enum")
-					# 			layout.prop(mytool, "FType_enum")
+			# elif block_type == 38:
+			# 	drawCommon(self, object)
 
-					# 	layout.prop(mytool, "texNum_int")
-					# else:
-					# 	self.layout.label(text="Указаны не все атрибуты объекта.")
-					# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
+			elif block_type == 39:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_39)
 
-				# elif block_type == 38:
-				# 	drawCommon(self, object)
+			elif block_type == 40:
+				drawCommon(self, object)
+				drawAllFieldsByType(self, context, b_40)
+				# self.layout.label(text="Тип генератора: " + object['GType'])
 
-				elif block_type == 39:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_39)
+			# elif block_type == 444:
+			# 	self.layout.label(text="Тип объекта - разделитель")
 
-				elif block_type == 40:
-					drawCommon(self, object)
-					drawAllFieldsByType(self, context, b_40)
-					# self.layout.label(text="Тип генератора: " + object['GType'])
+			else:
+				self.layout.label(text="Выбранный объект не имеет типа.")
+				self.layout.label(text="Чтобы указать его, нажмите на кнопку сохранения настроек.")
 
-				# elif block_type == 444:
-				# 	self.layout.label(text="Тип объекта - разделитель")
-
-				else:
-					self.layout.label(text="Выбранный объект не имеет типа.")
-					self.layout.label(text="Чтобы указать его, нажмите на кнопку сохранения настроек.")
-
-			layout.operator("wm.get_values_operator")
-			layout.operator("wm.set_values_operator")
-			layout.operator("wm.del_values_operator")
+			layout.operator("wm.get_block_values_operator")
+			layout.operator("wm.set_block_values_operator")
+			layout.operator("wm.del_block_values_operator")
 			layout.operator("wm.fix_uv_operator")
 			layout.operator("wm.fix_verts_operator")
 
@@ -2537,43 +2710,6 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 # ------------------------------------------------------------------------
 
 _classes = (
-	# 'b_1_gen',
-	# 'b_2_gen',
-	# 'b_3_gen',
-	# 'b_4_gen',
-	# 'b_5_gen',
-	# 'b_6_gen',
-	# 'b_7_gen',
-	# 'b_8_gen',
-	# 'b_9_gen',
-	# 'b_10_gen',
-	# 'b_11_gen',
-	# 'b_12_gen',
-	# 'b_13_gen',
-	# 'b_14_gen',
-	# 'b_15_gen',
-	# 'b_16_gen',
-	# 'b_17_gen',
-	# 'b_18_gen',
-	# 'b_20_gen',
-	# 'b_21_gen',
-	# 'b_22_gen',
-	# 'b_23_gen',
-	# 'b_24_gen',
-	# 'b_25_gen',
-	# 'b_26_gen',
-	# 'b_27_gen',
-	# 'b_28_gen',
-	# 'b_29_gen',
-	# 'b_30_gen',
-	# 'b_31_gen',
-	# 'b_33_gen',
-	# 'b_34_gen',
-	# 'b_35_gen',
-	# 'b_36_gen',
-	# 'b_37_gen',
-	# 'b_39_gen',
-	# 'b_40_gen',
 	block_1,
 	block_2,
 	block_3,
@@ -2612,11 +2748,21 @@ _classes = (
 	block_39,
 	block_40,
 	block_common,
+	perFaceBlock_8,
+	perFaceBlock_28,
+	perFaceBlock_35,
+	perVertBlock_8,
+	perVertBlock_35,
 	PanelSettings,
 	AddOperator,
-	OBJECT_PT_b3d_add_panel,
+	# getters
 	GetValuesOperator,
+	GetFaceValuesOperator,
+	GetVertexValuesOperator,
+	# setters
 	SetValuesOperator,
+	SetFaceValuesOperator,
+	SetVertexValuesOperator,
 	DelValuesOperator,
 	FixUVOperator,
 	FixVertsOperator,
@@ -2629,8 +2775,11 @@ _classes = (
 	ShowHideGeneratorsOperator,
 	ShowConditionalsOperator,
 	HideConditionalsOperator,
-	OBJECT_PT_b3d_edit_panel,
 	AddBlocksOperator,
+	OBJECT_PT_b3d_add_panel,
+	OBJECT_PT_b3d_edit_panel,
+	OBJECT_PT_b3d_pfb_edit_panel,
+	OBJECT_PT_b3d_pvb_edit_panel,
 	OBJECT_PT_b3d_blocks_panel,
 	OBJECT_PT_b3d_func_panel,
 	OBJECT_PT_b3d_misc_panel,

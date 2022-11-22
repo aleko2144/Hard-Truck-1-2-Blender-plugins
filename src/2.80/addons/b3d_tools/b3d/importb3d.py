@@ -46,17 +46,36 @@ from .classes import (
 	b_36,
 	b_37,
 	b_39,
-	b_40
+	b_40,
+	pfb_8,
+	pfb_28,
+	pfb_35,
+	pvb_8,
+	pvb_35
 )
 
 from .panel.common import (
-    prop
+    prop,
+    createCustomAttribute
 )
 
 
 from .imghelp import TXRtoTGA32
 from .imghelp import parsePLM
-from .common import ShowMessageBox, Vector3F, createMaterial, getUsedFaces, getUsedFace, getUsedVerticesAndTransform, getUserVertices, parseMaterials, readCString, RESUnpack, transformVertices
+from .common import (
+    ShowMessageBox,
+    Vector3F,
+    createMaterial,
+    getUsedFaces,
+    getUsedFace,
+    getUsedVerticesAndTransform,
+    getUserVertices,
+    parseMaterials,
+    readCString,
+    RESUnpack,
+    transformVertices,
+    getPolygonsBySelectedVertices
+)
 
 import bpy
 import mathutils
@@ -286,20 +305,16 @@ def parseRAW(file, context, op, filepath):
         for j in range(i,width-1):
             counter = i*width+j
             if i == j:
-                # log.debug('Triangle')
                 faces1.append((counter, counter+1, counter+width+1))
             else:
-                # log.debug('Quad')
                 faces1.append((counter, counter+1, counter+width+1, counter+width))
 
     for i in range(width-1):
         for j in range(i,width-1):
             counter = j*width+i
             if i == j:
-                # log.debug('Triangle')
                 faces2.append((counter, counter+width, counter+width+1))
             else:
-                # log.debug('Quad')
                 faces2.append((counter, counter+1, counter+width+1, counter+width))
 
 
@@ -346,8 +361,18 @@ def read(file, context, op, filepath):
     noextPath, ext = os.path.splitext(filepath)
     basepath = os.path.dirname(filepath)
     basename = os.path.basename(filepath)[:-4] #cut extension
+
+
     #Пути
-    resPath = os.path.join(noextPath + ".res")
+    resPath = ''
+    if len(op.res_location) > 0 and os.path.exists(op.res_location):
+        resPath = op.res_location
+    else:
+        resPath = os.path.join(noextPath + ".res")
+
+    res_basepath = os.path.dirname(resPath)
+    res_basename = os.path.basename(resPath)[:-4] #cut extension
+
     # commonPath = os.path.join(bpy.context.preferences.addons['importb3d'].preferences.COMMON_RES_Path, r"COMMON")
 
     blocksToImport = op.blocks_to_import
@@ -359,9 +384,9 @@ def read(file, context, op, filepath):
     RESUnpacked = None
     if op.to_import_textures:
         if op.to_unpack_res:
-            RESUnpacked = unpackRES(resPath, basename, True)
+            RESUnpacked = unpackRES(resPath, res_basename, True)
         else:
-            RESUnpacked = unpackRES(resPath, basename, False)
+            RESUnpacked = unpackRES(resPath, res_basename, False)
 
     if op.to_import_textures and not os.path.exists(commonResPath):
         # ShowMessageBox("Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.",
@@ -374,7 +399,7 @@ def read(file, context, op, filepath):
         # commonResPath = os.path.join(commonPath, r"COMMON.RES")
         commonPath = os.path.join(os.path.dirname(commonResPath))
         palettePath = os.path.join(commonPath, r"COMMON_unpack/PALETTEFILES/common.plm")
-        unpackPath = os.path.join(basepath, basename + r"_unpack")
+        unpackPath = os.path.join(res_basepath, res_basename + r"_unpack")
         materialsPath = os.path.join(unpackPath, r"MATERIALS", "MATERIALS.txt")
         colorsPath = os.path.join(unpackPath, r"COLORS", "COLORS.txt")
         texturePath = os.path.join(unpackPath, r"TEXTUREFILES")
@@ -400,7 +425,7 @@ def read(file, context, op, filepath):
                     TXRtoTGA32(fullpath)
 
         #3. Парсинг и добавление материалов
-        materials = parseMaterials(materialsPath, basename)
+        materials = parseMaterials(materialsPath, res_basename)
         for material in materials:
             createMaterial(commonPalette, RESUnpacked.textures, texturePath, material, op.textures_format)
 
@@ -432,14 +457,6 @@ def read(file, context, op, filepath):
     poly_block_uvs = []
 
     uv = []
-
-    # b_1 = block_1()
-    # b_2_9_11_22 = block_2_9_11_22()
-    # b_3 = block_3()
-    # b_4 = block_4()
-    # b_5 = block_5()
-
-    # log.debug(block_5.XYZ)
 
     b3dName = os.path.basename(filepath)
 
@@ -610,6 +627,8 @@ def read(file, context, op, filepath):
             elif (type == 6):
                 vertexes = []
                 uv = []
+                normals = []
+                normals_off = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 name1 = readName(file)
@@ -619,6 +638,7 @@ def read(file, context, op, filepath):
                     vertexes.append(struct.unpack("<3f",file.read(12)))
                     uv.append(struct.unpack("<2f",file.read(8)))
                     normals.append((0.0, 0.0, 0.0))
+                    normals_off.append(1.0)
 
                 childCnt = struct.unpack("<i",file.read(4))[0]
 
@@ -643,6 +663,7 @@ def read(file, context, op, filepath):
                 format = 0
                 vertexes = []
                 normals = []
+                normals_off = []
                 # uv = []
                 vertex_block_uvs = []
 
@@ -656,6 +677,7 @@ def read(file, context, op, filepath):
                     vertexes.append(struct.unpack("<3f",file.read(12)))
                     vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
                     normals.append((0.0, 0.0, 0.0))
+                    normals_off.append(1.0)
                     # uv.append(struct.unpack("<2f",file.read(8)))
 
 
@@ -681,11 +703,14 @@ def read(file, context, op, filepath):
                 faces = []
                 faces_all = []
                 overriden_uvs = []
-                # normals = []
-                intencities = []
                 texnums = {}
-                b3dMesh = bpy.data.meshes.new(objName)
                 uv_indexes = []
+                formats = []
+                unkFs = []
+                unkInts = []
+                l_normals = normals
+                l_normals_off = normals_off
+
 
                 bounding_sphere = struct.unpack("<4f",file.read(16)) # skip bounding sphere
                 polygonCount = struct.unpack("<i",file.read(4))[0]
@@ -702,6 +727,12 @@ def read(file, context, op, filepath):
                     if format & 0b10:
                         uvCount += 1
 
+                    if format & 0b100000 and format & 0b10000:
+                        if format & 0b1:
+                            log.debug("intencities 3f")
+                        else:
+                            log.debug("intencities f")
+
                     poly_block_uvs = [{}]
 
                     poly_block_len = len(poly_block_uvs)
@@ -709,7 +740,10 @@ def read(file, context, op, filepath):
                     for i in range(uvCount - poly_block_len):
                         poly_block_uvs.append({})
 
-                    uunknown = struct.unpack("<fi",file.read(8))
+                    unkF = struct.unpack("<f",file.read(4))[0]
+                    unkInt = struct.unpack("<i",file.read(4))[0]
+
+                    # uunknown = struct.unpack("<fi",file.read(8))
                     texnum = str(struct.unpack("i",file.read(4))[0])
 
                     vertexCount = struct.unpack("<i",file.read(4))[0]
@@ -724,15 +758,13 @@ def read(file, context, op, filepath):
                         else:
                             poly_block_uvs[0][face] = vertex_block_uvs[0][face]
                         if format & 0b100000 and format & 0b10000:
+                            # if used with no-normals vertex blocks(6,7) use this normals
                             if format & 0b1:
-                                intens = struct.unpack("<3f",file.read(12))
-                                intencities.append(intens)
+                                normal = struct.unpack("<3f",file.read(12))
+                                l_normals[face] = normal
                             else:
-                                intencity = struct.unpack("<f",file.read(4))
-                                intens = intencity + (0.0,0.0)
-                                # intens = (0.0,) + intencity + (0.0,)
-                                # intens = (0.0,0.0) + intencity
-                                intencities.append(intens)
+                                normal_off = struct.unpack("<f",file.read(4))
+                                l_normals_off[face] = normal_off
 
                     #Save materials for faces
                     if texnum in texnums:
@@ -770,13 +802,24 @@ def read(file, context, op, filepath):
                             overriden_uvs[u].append((over_uv[faces_new[t][0]], over_uv[faces_new[t][1]], over_uv[faces_new[t][2]]))
 
                         uv_indexes.append(faces_new[t])
+                        formats.append(formatRaw)
+                        unkFs.append(unkF)
+                        unkInts.append(unkInt)
 
                     faces_all.extend(faces_new)
 
                 if not usedBlocks[str(type)]:
                     continue
 
+                b3dMesh = (bpy.data.meshes.new(objName))
+
                 curVertexes, curFaces, indices, oldNewTransf, newOldTransf = getUsedVerticesAndTransform(vertexes, faces_all)
+
+                curNormals = []
+                curNormalsOff = []
+                for i in range(len(curVertexes)):
+                    curNormals.append(l_normals[newOldTransf[i]])
+                    curNormalsOff.append(l_normals_off[newOldTransf[i]])
 
                 Ev = threading.Event()
                 Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
@@ -825,6 +868,13 @@ def read(file, context, op, filepath):
                         for j,loop in enumerate(texpoly.loop_indices):
                             uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
                             customUV.data[loop].uv = uvsMesh
+
+                createCustomAttribute(b3dMesh, formats, pfb_8, pfb_8.Format_Flags)
+                createCustomAttribute(b3dMesh, unkFs, pfb_8, pfb_8.Unk_Float1)
+                createCustomAttribute(b3dMesh, unkInts, pfb_8, pfb_8.Unk_Int2)
+
+                createCustomAttribute(b3dMesh, curNormalsOff, pvb_8, pvb_8.Normal_Switch)
+                createCustomAttribute(b3dMesh, curNormals, pvb_8, pvb_8.Custom_Normal)
 
                 #Create Object
 
@@ -1225,10 +1275,9 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 21): #testkey???
+
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-
-
-                unknown1 = struct.unpack("<i",file.read(4))[0]
+                groupCnt = struct.unpack("<i",file.read(4))[0]
                 unknown2 = struct.unpack("<i",file.read(4))[0]
                 childCnt = struct.unpack("<i",file.read(4))[0]
 
@@ -1241,7 +1290,7 @@ def read(file, context, op, filepath):
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_21.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_21.R)] = bounding_sphere[3]
-                b3dObj[prop(b_21.Unk_Int1)] = unknown1
+                b3dObj[prop(b_21.GroupCnt)] = groupCnt
                 b3dObj[prop(b_21.Unk_Int2)] = unknown2
                 b3dObj.parent = context.scene.objects[objString[-2]]
                 context.collection.objects.link(b3dObj)
@@ -1330,10 +1379,12 @@ def read(file, context, op, filepath):
                     z_d = atan2(m12, m22)
                     x_d = atan2(- m32, var_cy)
                     y_d = atan2(m31, m33)
+                    # log.debug("MORE than 16")
                 else:
                     z_d = atan2(- m21, m11)
                     x_d = atan2(- m32, var_cy)
                     y_d = 0
+                    # log.debug("LESS than 16")
 
                 rot_x = ((x_d * 180) / PI)
                 rot_y = ((y_d * 180) / PI)
@@ -1385,7 +1436,6 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 26):
-
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
@@ -1453,6 +1503,9 @@ def read(file, context, op, filepath):
                 vertex_block_uvs.append([])
                 overriden_uvs = []
                 uv_indexes = []
+                formats = []
+                unkFs = []
+                unkInts = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 sprite_center = struct.unpack("<3f",file.read(12))
@@ -1466,7 +1519,8 @@ def read(file, context, op, filepath):
                     uvCount = ((formatRaw & 0xFF00) >> 8) + 1 #ah
                     triangulateOffset = format & 0b10000000
 
-                    unknown3 = struct.unpack("<fi",file.read(8))[0]
+                    unkF = struct.unpack("<f",file.read(4))[0]
+                    unkInt = struct.unpack("<i",file.read(4))[0]
                     texnum = struct.unpack("<i",file.read(4))[0]
 
                     vert_num = struct.unpack("<i", file.read(4))[0]
@@ -1505,8 +1559,6 @@ def read(file, context, op, filepath):
                         for i in range(len(poly_block_uvs)-len(overriden_uvs)):
                             overriden_uvs.append([])
 
-                    log.debug(poly_block_uvs)
-
                     #Triangulating faces
                     for t in range(len(l_faces)-2):
                         if not triangulateOffset:
@@ -1524,9 +1576,11 @@ def read(file, context, op, filepath):
                             if over_uv: #not empty
                                 overriden_uvs[u].append((over_uv[faces_new[t][0]], over_uv[faces_new[t][1]], over_uv[faces_new[t][2]]))
 
-                        log.debug(faces_new)
                         # store face indexes for setting uv coords later
                         uv_indexes.append(faces_new[t])
+                        formats.append(formatRaw)
+                        unkFs.append(unkF)
+                        unkInts.append(unkInt)
 
                     l_faces_all.extend(faces_new)
 
@@ -1583,6 +1637,10 @@ def read(file, context, op, filepath):
                             mat = bpy.data.materials[RESUnpacked.getPrefixedMaterial(int(texnum))]
                             b3dMesh.materials.append(mat)
 
+                createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
+                createCustomAttribute(b3dMesh, unkFs, pfb_28, pfb_28.Unk_Float1)
+                createCustomAttribute(b3dMesh, unkInts, pfb_28, pfb_28.Unk_Int2)
+
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj['block_type'] = type
                 b3dObj['level_group'] = levelGroups[lvl-1]
@@ -1597,7 +1655,6 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 29):
-
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 num0 = struct.unpack("<i",file.read(4))[0]
@@ -1631,10 +1688,7 @@ def read(file, context, op, filepath):
 
             elif (type == 30):
 
-                b3dMesh = (bpy.data.meshes.new(objName))
-
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-
                 connectedRoomName = readName(file)
 
                 p1 = struct.unpack("<3f",file.read(12))
@@ -1643,6 +1697,7 @@ def read(file, context, op, filepath):
                 if not usedBlocks[str(type)]:
                     continue
 
+                b3dMesh = (bpy.data.meshes.new(objName))
                 #0-x
                 #1-y
                 #2-z
@@ -1790,7 +1845,6 @@ def read(file, context, op, filepath):
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 faces_all = []
                 faces = []
-                formats = []
                 poly_block_uvs = []
 
                 mType = struct.unpack("<i",file.read(4))[0]
@@ -1798,18 +1852,28 @@ def read(file, context, op, filepath):
                 polygonCount = struct.unpack("<i",file.read(4))[0]
                 overriden_uvs = []
                 uv_indexes = []
-                intencities = []
+                l_normals = normals
+                l_normals_off = normals_off
+
+                formats = []
+                unkFs = []
+                unkInts = []
 
                 for i in range(polygonCount):
                     faces = []
                     formatRaw = struct.unpack("<i",file.read(4))[0]
                     format = formatRaw ^ 1
-                    formats.append(format)
-                    uvCount = (format >> 8) & 0xF0 #ah
+                    uvCount = (format & 0xFF00) >> 8 #ah
                     triangulateOffset = format & 0b10000000
 
                     if format & 0b10:
                         uvCount += 1
+
+                    if format & 0b100000 and format & 0b10000:
+                        if format & 0b1:
+                            log.debug("intencities 3f")
+                        else:
+                            log.debug("intencities f")
 
                     poly_block_uvs = [{}]
 
@@ -1820,7 +1884,7 @@ def read(file, context, op, filepath):
 
                     unkF = struct.unpack("<f",file.read(4))[0]
                     unkInt = struct.unpack("<i",file.read(4))[0]
-                    texnum = str(struct.unpack("i",file.read(4))[0])
+                    texnum = str(struct.unpack("<i",file.read(4))[0])
 
                     vertexCount = struct.unpack("<i",file.read(4))[0]
 
@@ -1834,20 +1898,17 @@ def read(file, context, op, filepath):
                         else:
                             poly_block_uvs[0][face] = vertex_block_uvs[0][face]
                         if format & 0b100000 and format & 0b10000:
-                            log.debug("intencities")
                             if format & 0b1:
-                                intens = struct.unpack("<3f",file.read(12))
-                                intencities.append(intens)
+                                l_normals[face] = struct.unpack("<3f",file.read(12))
                             else:
-                                intencity = struct.unpack("<f",file.read(4))
-                                intens = intencity + (0.0,0.0)
-                                # intens = (0.0,) + intencity + (0.0,)
-                                # intens = (0.0,0.0) + intencity
-                                intencities.append(intens)
-                        else:
-                            intencities.append((0.0, 0.0, 0.0))
+                                l_normals_off[face] = struct.unpack("<f",file.read(4))
+
 
                     faces_all.append(faces)
+
+                    formats.append(formatRaw)
+                    unkFs.append(unkF)
+                    unkInts.append(unkInt)
 
                     # store uv coords for each face
                     if len(poly_block_uvs) > len(overriden_uvs):
@@ -1876,6 +1937,12 @@ def read(file, context, op, filepath):
 
                 b3dMesh = (bpy.data.meshes.new(objName))
                 curVertexes, curFaces, indices, oldNewTransf, newOldTransf = getUsedVerticesAndTransform(vertexes, faces_all)
+
+                curNormals = []
+                curNormalsOff = []
+                for i in range(len(curVertexes)):
+                    curNormals.append(l_normals[newOldTransf[i]])
+                    curNormalsOff.append(l_normals_off[newOldTransf[i]])
 
                 Ev = threading.Event()
                 Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
@@ -1924,23 +1991,15 @@ def read(file, context, op, filepath):
                             uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
                             customUV.data[loop].uv = uvsMesh
 
-                # log.debug(normals_set)
-
-
-                # log.debug(len(b3dMesh.attributes["my_normal"].data))
-                # log.debug(len(normals_set))
 
                 # b3dMesh.attributes["my_normal"].data.foreach_set("vector", normals_set)
-                b3dMesh.attributes.new(name="my_normal", type="FLOAT_VECTOR", domain="POINT")
-                attr = b3dMesh.attributes["my_normal"].data
-                for i in range(len(attr)):
-                    setattr(attr[i], "vector", list(normals[newOldTransf[i]]))
 
-                b3dMesh.attributes.new(name="my_intens", type="FLOAT_VECTOR", domain="POINT")
-                attr = b3dMesh.attributes["my_intens"].data
-                # b3dMesh.attributes["my_intens"].data.foreach_set("vector", intens_set)
-                for i in range(len(attr)):
-                    setattr(attr[i], "vector", list(intencities[i]))
+                createCustomAttribute(b3dMesh, formats, pfb_35, pfb_35.Format_Flags)
+                createCustomAttribute(b3dMesh, unkFs, pfb_35, pfb_35.Unk_Float1)
+                createCustomAttribute(b3dMesh, unkInts, pfb_35, pfb_35.Unk_Int2)
+
+                createCustomAttribute(b3dMesh, curNormalsOff, pvb_35, pvb_35.Normal_Switch)
+                createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
                 for i, texpoly in enumerate(b3dMesh.polygons):
                     for j,loop in enumerate(texpoly.loop_indices):
@@ -1977,7 +2036,8 @@ def read(file, context, op, filepath):
             elif (type == 36):
 
                 vertexes = []
-                normals =[]
+                normals = []
+                normals_off = []
                 uv = []
                 vertex_block_uvs = []
 
@@ -1988,6 +2048,11 @@ def read(file, context, op, filepath):
                 formatRaw = struct.unpack("<i",file.read(4))[0]
                 uvCount = formatRaw >> 8
                 format = formatRaw & 0xFF
+
+                if format == 1 or format == 2:
+                    log.debug("normals 3f")
+                elif format == 3:
+                    log.debug("normals f")
 
                 vertex_block_uvs.append([])
                 for i in range(uvCount):
@@ -2005,15 +2070,13 @@ def read(file, context, op, filepath):
                             vertex_block_uvs[j+1].append(struct.unpack("<2f",file.read(8)))
                         if format == 1 or format == 2:	#Vertex with normals
                             normals.append(struct.unpack("<3f",file.read(12)))
+                            normals_off.append(1.0)
                         elif format == 3: #отличается от шаблона 010Editor
-                            normal = struct.unpack("<f",file.read(4))[0]
-                            normal1 = (normal,0.0,0.0)
-                            # normal1 = (0.0,normal,0.0)
-                            # normal1 = (0.0,0.0,normal)
-                            # normal1 = (normal,normal,normal)
-                            normals.append(normal1)
+                            normals.append((0.0, 0.0, 0.0))
+                            normals_off.append(struct.unpack("<f",file.read(4))[0])
                         else:
                             normals.append((0.0, 0.0, 0.0))
+                            normals_off.append(1.0)
 
                 childCnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
 
@@ -2039,6 +2102,7 @@ def read(file, context, op, filepath):
 
                 vertexes = []
                 normals = []
+                normals_off = []
                 vertex_block_uvs = []
                 uv = []
 
@@ -2049,6 +2113,11 @@ def read(file, context, op, filepath):
                 formatRaw = struct.unpack("<i",file.read(4))[0]
                 uvCount = formatRaw >> 8
                 format = formatRaw & 0xFF
+
+                if format == 1 or format == 2:
+                    log.debug("normals 3f")
+                elif format == 3:
+                    log.debug("normals f")
 
                 vertex_block_uvs.append([])
                 for i in range(uvCount):
@@ -2070,15 +2139,13 @@ def read(file, context, op, filepath):
                                 vertex_block_uvs[j+1].append(struct.unpack("<2f",file.read(8)))
                             if format == 1 or format == 2:	#Vertex with normals
                                 normals.append(struct.unpack("<3f",file.read(12)))
+                                normals_off.append(1.0)
                             elif format == 3: #отличается от шаблона 010Editor
-                                normal = struct.unpack("<f",file.read(4))[0]
-                                normal1 = (normal,0.0,0.0)
-                                # normal1 = (0.0,normal,0.0)
-                                # normal1 = (0.0,0.0,normal)
-                                # normal1 = (normal,normal,normal)
-                                normals.append(normal1)
+                                normals.append((0.0, 0.0, 0.0))
+                                normals_off.append(struct.unpack("<f",file.read(4))[0])
                             else:
                                 normals.append((0.0, 0.0, 0.0))
+                                normals_off.append(1.0)
 
                 childCnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
 
@@ -2310,22 +2377,9 @@ def assignMaterialByVertices(obj, vertIndexes, matIndex):
 
     for idx in vertIndexes:
         obj.data.vertices[idx].select = True
-    selectedPolygons = getPolygonsBySelectedVertices()
+    selectedPolygons = getPolygonsBySelectedVertices(bpy.context.view_layer.objects.active)
     for poly in selectedPolygons:
         poly.material_index = matIndex
-
-def getPolygonsBySelectedVertices():
-    data = bpy.context.view_layer.objects.active.data
-    selectedPolygons = []
-    for f in data.polygons:
-        s = True
-        for v in f.vertices:
-            if not data.vertices[v].select:
-                s = False
-                break
-        if s:
-            selectedPolygons.append(f)
-    return selectedPolygons
 
 def getRESFolder(filepath):
     basename = os.path.basename(filepath)

@@ -29,6 +29,7 @@ class fieldType(enum.Enum):
 	FLOAT = 5
 	ENUM = 6
 	LIST = 7
+	V_FORMAT = 8
 
 
 
@@ -44,54 +45,198 @@ def createTypeClass(zclass):
 		propName = obj['prop']
 		prop = None
 
-		prop = BoolProperty(
+		lockProp = BoolProperty(
 			name = "Вкл./Выкл.",
 			description = "Включить/выключить параметр для редактирования",
 			default = True
 		)
-		attributes['__annotations__']["show_"+propName] = prop
 
-		if obj['type'] == fieldType.STRING:
-			prop = StringProperty(
-				name = obj['name'],
-				description = obj['description'],
-				default = obj['default'],
-				maxlen = 30
+		if obj['type'] == fieldType.STRING \
+		or obj['type'] == fieldType.COORD \
+		or obj['type'] == fieldType.RAD \
+		or obj['type'] == fieldType.FLOAT \
+		or obj['type'] == fieldType.INT \
+		or obj['type'] == fieldType.ENUM \
+		or obj['type'] == fieldType.LIST:
+
+
+			attributes['__annotations__']["show_"+propName] = lockProp
+
+			if obj['type'] == fieldType.STRING:
+				prop = StringProperty(
+					name = obj['name'],
+					description = obj['description'],
+					default = obj['default'],
+					maxlen = 30
+				)
+
+			elif obj['type'] == fieldType.COORD:
+				prop = FloatVectorProperty(
+					name = obj['name'],
+					description = obj['description'],
+					default = obj['default']
+				)
+
+			elif obj['type'] == fieldType.RAD or obj['type'] == fieldType.FLOAT:
+				prop = FloatProperty(
+					name = obj['name'],
+					description = obj['description'],
+					default = obj['default']
+				)
+
+			elif obj['type'] == fieldType.INT:
+				prop = IntProperty(
+					name = obj['name'],
+					description = obj['description'],
+					default = obj['default']
+				)
+
+			elif obj['type'] == fieldType.ENUM:
+				prop = EnumProperty(
+					name = obj['name'],
+					description = obj['description'],
+					default = obj['default'],
+					items = obj['items']
+				)
+
+			elif obj['type'] == fieldType.LIST:
+				prop = CollectionProperty(
+					name = obj['name'],
+					description = obj['description'],
+					type = FloatBlock
+				)
+
+			attributes['__annotations__'][propName] = prop
+
+		elif obj['type'] == fieldType.V_FORMAT:
+
+			attributes['__annotations__']["show_{}".format(propName)] = lockProp
+
+			prop1 = BoolProperty(
+				name = 'Смещенная триангуляция',
+				description = 'Порядок в котором считываются вертексы, зависит от этой переменной',
+				default = True
 			)
-		elif obj['type'] == fieldType.COORD:
-			prop = FloatVectorProperty(
-				name = obj['name'],
-				description = obj['description'],
-				default = obj['default']
+			attributes['__annotations__']['{}_{}'.format(propName, 'triang_offset')] = prop1
+
+			prop2 = BoolProperty(
+				name = 'Использовать UV',
+				description = 'Когда активен, при экспорте записывает UV.',
+				default = True
 			)
-		elif obj['type'] == fieldType.RAD or obj['type'] == fieldType.FLOAT:
-			prop = FloatProperty(
-				name = obj['name'],
-				description = obj['description'],
-				default = obj['default']
+			attributes['__annotations__']['{}_{}'.format(propName, 'use_uvs')] = prop2
+
+			prop3 = BoolProperty(
+				name = 'Использовать нормали',
+				description = 'Когда активен, при экспорте записывает нормали.',
+				default = True
 			)
-		elif obj['type'] == fieldType.INT:
-			prop = IntProperty(
-				name = obj['name'],
-				description = obj['description'],
-				default = obj['default']
+			attributes['__annotations__']['{}_{}'.format(propName, 'use_normals')] = prop3
+
+			prop4 = BoolProperty(
+				name = 'Выключатель нормалей',
+				description = 'Когда активен, использует float для вкл./выкл. нормалей. Когда неактивен использует float vector для обычных нормалей. Игнорируется если пункт "Использовать нормали" неактивен',
+				default = True
 			)
-		elif obj['type'] == fieldType.ENUM:
-			prop = EnumProperty(
-				name = obj['name'],
-				description = obj['description'],
-				default = obj['default'],
-				items = obj['items']
-			)
-		elif obj['type'] == fieldType.LIST:
-			prop = CollectionProperty(
-				name = obj['name'],
-				description = obj['description'],
-				type = FloatBlock
-			)
-		attributes['__annotations__'][propName] = prop
+			attributes['__annotations__']['{}_{}'.format(propName, 'normal_flag')] = prop4
+
 	newclass = type("{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
 	return newclass
+
+class pvb_8():
+	Normal_Switch = {
+		'prop': 'normal_switch',
+		'type': fieldType.FLOAT,
+		'name': 'Выключатель нормали',
+		'description': '',
+		'default': 0.0
+	}
+	Custom_Normal = {
+		'prop': 'custom_normal',
+		'type': fieldType.COORD,
+		'name': 'Кастомная нормаль',
+		'description': '',
+		'default': (0.0, 0.0, 0.0)
+	}
+
+
+class pvb_35():
+	Normal_Switch = {
+		'prop': 'normal_switch',
+		'type': fieldType.FLOAT,
+		'name': 'Выключатель нормали',
+		'description': '',
+		'default': 0.0
+	}
+	Custom_Normal = {
+		'prop': 'custom_normal',
+		'type': fieldType.COORD,
+		'name': 'Кастомная нормаль',
+		'description': '',
+		'default': (0.0, 0.0, 0.0)
+	}
+
+class pfb_8():
+	Format_Flags = {
+		'prop': 'format_flags',
+		'type': fieldType.V_FORMAT,
+	}
+	Unk_Float1 = {
+		'prop': 'float1',
+		'type': fieldType.FLOAT,
+		'name': 'Неизвестная 1',
+		'description': '',
+		'default': 0.0
+	}
+	Unk_Int2 = {
+		'prop': 'int2',
+		'type': fieldType.INT,
+		'name': 'Неизвестная 2',
+		'description': '',
+		'default': 0
+	}
+
+class pfb_28():
+	Format_Flags = {
+		'prop': 'format_flags',
+		'type': fieldType.V_FORMAT,
+	}
+	Unk_Float1 = {
+		'prop': 'float1',
+		'type': fieldType.FLOAT,
+		'name': 'Неизвестная 1',
+		'description': '',
+		'default': 0.0
+	}
+	Unk_Int2 = {
+		'prop': 'int2',
+		'type': fieldType.INT,
+		'name': 'Неизвестная 2',
+		'description': '',
+		'default': 0
+	}
+
+
+class pfb_35():
+	Format_Flags = {
+		'prop': 'format_flags',
+		'type': fieldType.V_FORMAT,
+	}
+	Unk_Float1 = {
+		'prop': 'float1',
+		'type': fieldType.FLOAT,
+		'name': 'Неизвестная 1',
+		'description': '',
+		'default': 0.0
+	}
+	Unk_Int2 = {
+		'prop': 'int2',
+		'type': fieldType.INT,
+		'name': 'Неизвестная 2',
+		'description': '',
+		'default': 0
+	}
+
 
 class b_common():
 	LevelGroup = {
@@ -777,10 +922,10 @@ class b_21():
 		'description': '',
 		'default': 0.0
 	}
-	Unk_Int1 = {
-		'prop': 'int1',
+	GroupCnt = {
+		'prop': 'group_cnt',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Количество групп',
 		'description': '',
 		'default': 0
 	}
@@ -1460,6 +1605,13 @@ class b_40():
 	}
  	#todo check
 
+
+perFaceBlock_8 = createTypeClass(pfb_8)
+perFaceBlock_28 = createTypeClass(pfb_28)
+perFaceBlock_35 = createTypeClass(pfb_35)
+
+perVertBlock_8 = createTypeClass(pvb_8)
+perVertBlock_35 = createTypeClass(pvb_35)
 
 block_common = createTypeClass(b_common)
 block_1 = createTypeClass(b_1)
