@@ -1,23 +1,29 @@
+
+
 if "bpy" in locals():
     print("Reimporting modules!!!")
     import importlib
-    importlib.reload(common)
+    importlib.reload(scripts)
 else:
     import bpy
     from . import (
-        common
+        scripts
     )
 
-
-from b3d_tools.common import (
+from ..common import (
 	getRegion
 )
+
+from .. import consts
+
 from .common import (
+	isRootObj
+)
+from .scripts import (
 	applyRemoveTransforms,
 	applyTransforms,
 	hideConditionals,
 	showConditionals,
-	isRootObj,
 	hideLOD,
 	showLOD,
 	showConditionals,
@@ -37,19 +43,20 @@ from .common import (
 )
 
 
-from b3d_tools.b3d.classes import (
+from .classes import (
 	block_1,block_2,block_3,block_4,block_5,block_6,block_7,block_8,block_9,block_10,\
 	block_11,block_12,block_13,block_14,block_15,block_16,block_17,block_18,block_20,\
 	block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,block_30,\
 	block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,block_common,\
 	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35
 )
-from b3d_tools.b3d.classes import (
+from .classes import (
 	b_1,b_2,b_3,b_4,b_5,b_6,b_7,b_8,b_9,b_10,\
 	b_11,b_12,b_13,b_14,b_15,b_16,b_17,b_18,b_20,\
 	b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
 	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,b_common, \
-	pfb_8, pfb_28, pfb_35, pvb_8, pvb_35
+	pfb_8, pfb_28, pfb_35, pvb_8, pvb_35,
+	ResBlock
 )
 
 
@@ -59,7 +66,8 @@ from bpy.props import (StringProperty,
 						FloatProperty,
 						EnumProperty,
 						PointerProperty,
-						FloatVectorProperty
+						FloatVectorProperty,
+						CollectionProperty
 						)
 
 from bpy.types import (Panel,
@@ -76,28 +84,6 @@ from bpy.types import (Panel,
 # ------------------------------------------------------------------------
 
 class PanelSettings(bpy.types.PropertyGroup):
-
-	#my_bool = bpy.props.BoolProperty(
-	#	name="Enable or Disable",
-	#	description="A bool property",
-	#	default = False
-	#	)
-
-	#my_int : bpy.props.IntProperty(
-	#	name = "Int Value",
-	#	description="A integer property",
-	#	default = 23,
-	#	min = 10,
-	#	max = 100
-	#	)
-
-	#my_float : bpy.props.FloatProperty(
-	#	name = "Float Value",
-	#	description = "A float property",
-	#	default = 23.7,
-	#	min = 0.01,
-	#	max = 30.0
-	#	)
 
 	block1: PointerProperty(type=block_1)
 	block2: PointerProperty(type=block_2)
@@ -144,7 +130,7 @@ class PanelSettings(bpy.types.PropertyGroup):
 	perVertBlock8: PointerProperty(type=perVertBlock_8)
 	perVertBlock35: PointerProperty(type=perVertBlock_35)
 
-	list_index: IntProperty(name = "Index for my_list", default = 0)
+	resModules: CollectionProperty(type=ResBlock)
 
 	conditionGroup : bpy.props.IntProperty(
 		name='Номер условия',
@@ -167,66 +153,13 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 	addBlockType_enum : bpy.props.EnumProperty(
 		name="Тип блока",
-		items=[ ('6566754', "b3d", "b3d"),
-				('00', "00", "2D фон"),
-				('01', "01", "Камера"),
-				('02', "02", "Неизв. блок"),
-				('03', "03", "Контейнер"),
-				('04', "04", "Контейнер с возможностью привязки к нему других блоков"),
-				('05', "05", "Контейнер с возможностью привязки к нему другого блока"),
-				('06', "06", "Блок вершин"),
-				('07', "07", "Блок вершин"),
-				('08', "08", "Блок полигонов"),
-				('09', "09", "Триггер"),
-				('10', "10", "LOD"),
-				('11', "11", "Неизв. блок"),
-				('12', "12", "Плоскость коллизии"),
-				('13', "13", "Триггер (загрузчик карты)"),
-				('14', "14", "Блок, связанный с автомобилями"),
-				('15', "15", "Неизв. блок"),
-				('16', "16", "Неизв. блок"),
-				('17', "17", "Неизв. блок"),
-				('18', "18", "Связка локатора и 3D-модели, например: FiatWheel0Space и Single0Wheel14"),
-				('19', "19", "Контейнер, в отличие от блока типа 05, не имеет возможности привязки"),
-				('20', "20", "Плоская коллизия"),
-				('21', "21", "Контейнер с обработкой событий"),
-				('22', "22", "Блок-локатор"),
-				('23', "23", "Объёмная коллизия"),
-				('24', "24", "Локатор"),
-				('25', "25", "Звуковой объект"),
-				('26', "26", "Блок-локатор"),
-				('27', "27", "Блок-локатор"),
-				('28', "28", "Блок-локатор"),
-				('29', "29", "Неизв. блок"),
-				('30', "30", "Триггер для загрузки участков карты"),
-				('31', "31", "Неизв. блок"),
-				('33', "33", "Источник света"),
-				('34', "34", "Неизв. блок"),
-				('35', "35", "Блок полигонов"),
-				('36', "36", "Блок вершин"),
-				('37', "37", "Блок вершин"),
-				('39', "39", "Блок-локатор"),
-				('40', "40", "Генератор объектов"),
-				# ('444', "Разделитель", "Разделитель"),
-			   ]
+		items= consts.blockTypeList
 		)
 
 
 	CollisionType_enum : bpy.props.EnumProperty(
 		name="Тип коллизии",
-		items=(('0', "стандарт", ""),
-			   ('1', "асфальт", ""),
-			   ('2', "земля", ""),
-			   ('3', "вязкое болото", ""),
-			   ('4', "легкопроходимое болото", ""),
-			   ('5', "мокрый асфальт", ""),
-			   ('7', "лёд", ""),
-			   ('8', "вода (уничтожает автомобиль)", ""),
-			   ('10', "песок", ""),
-			   ('11', "пустыня", ""),
-			   ('13', "шипы", ""),
-			   ('16', "лёд (следы от шин не остаются)", ""),
-			   ),
+		items=consts.collisionTypeList,
 		)
 
 	Radius : bpy.props.FloatProperty(
@@ -330,30 +263,18 @@ class PanelSettings(bpy.types.PropertyGroup):
 		)
 
 	LType_enum : bpy.props.EnumProperty(
-		name="Тип источника света",
-		items=(('0', 'Тип 0', ""),
-			   ('1', 'Тип 1', ""),
-			   ('2', 'Тип 2', ""),
-			   ('3', 'Тип 3', ""),
-			   ),
+		name= "Тип источника света",
+		items = consts.lTypeList,
 		)
 
 	SType_enum : bpy.props.EnumProperty(
-		name="Тип записи вершин",
-		items=(#('1', "Тип 1, координаты + UV + нормали", ""),
-			   ('2', "Тип 2, координаты + UV + нормали", "Данный тип используется на обычных моделях"),
-			   ('3', "Тип 3, координаты + UV", "Данный тип используется на моделях света фар"),
-			   ('258', "Тип 258, координаты + UV + нормали + 2 float", "Данный тип используется для моделей асфальтированных дорог"),
-			   ('514', "Тип 514, координаты + UV + нормали + 4 float", "Данный тип используется на моделях поверхности воды"),
-			   ('515', "Тип 515, координаты + UV + нормали + 2 float", "Тоже самое, что и 258. Данный тип используется для моделей асфальтированных дорог"),
-			   ),
+		name= "Тип записи вершин",
+		items = consts.sTypeList,
 		)
 
 	MType_enum : bpy.props.EnumProperty(
 		name="Тип записи полигонов (35)",
-		items=(('1', "Тип 1, с разрывной UV", "Каждый трис модели записывается вместе со собственной UV."),
-			   ('3', "Тип 3, без разрывной UV", "Этот тип можно использовать для моделей, которые используют текстуру отражений."),
-			   ),
+		items=consts.mTypeList,
 		)
 
 	texNum_int : bpy.props.IntProperty(
@@ -417,16 +338,7 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 	generatorType_enum : bpy.props.EnumProperty(
 		name="Тип генератора",
-		items=[ ('$SeaGenerator', "$SeaGenerator", ""),
-				('$$TreeGenerator1', "$$TreeGenerator1", ""),
-				('$$TreeGenerator', "$$TreeGenerator", ""),
-				('$$CollisionOfTerrain', "$$CollisionOfTerrain", ""),
-				('$$GeneratorOfTerrain', "$$GeneratorOfTerrain", ""),
-				('$$People', "$$People", ""),
-				('$$WeldingSparkles', "$$WeldingSparkles", ""),
-				('$$DynamicGlow', "$$DynamicGlow", ""),
-				('$$StaticGlow', "$$StaticGlow", ""),
-				]
+		items=consts.generatorTypeList,
 		)
 
 	groupsNum_int : bpy.props.IntProperty(
@@ -447,65 +359,7 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 	Type21_enum : bpy.props.EnumProperty(
 		name="Имя 21 блока",
-		items=[ ('GeometryKey', "GeometryKey", ""),
-				('CollisionKey', "CollisionKey", ""),
-				('GlassKey', "GlassKey", ""),
-				('RD_LampKey', "RD_LampKey", ""),
-				('RD_Key', "RD_Key", ""),
-				('RedSvetKey', "RedSvetKey", ""),
-				('GreenSvetKey', "GreenSvetKey", ""),
-				('TrafficLightKey0', "TrafficLightKey0", ""),
-				('TrafficLightKey1', "TrafficLightKey1", ""),
-				('ILLUM_LEVEL_00', "ILLUM_LEVEL_00", ""),
-				('ILLUM_LEVEL_01', "ILLUM_LEVEL_01", ""),
-				('ILLUM_LEVEL_02', "ILLUM_LEVEL_02", ""),
-				('ILLUM_LEVEL_03', "ILLUM_LEVEL_03", ""),
-				('ILLUM_LEVEL_04', "ILLUM_LEVEL_04", ""),
-				('ILLUM_LEVEL_05', "ILLUM_LEVEL_05", ""),
-				('ILLUM_LEVEL_06', "ILLUM_LEVEL_06", ""),
-				('ILLUM_LEVEL_07', "ILLUM_LEVEL_07", ""),
-				('ILLUM_LEVEL_08', "ILLUM_LEVEL_08", ""),
-				('ILLUM_LEVEL_09', "ILLUM_LEVEL_09", ""),
-				('ILLUM_LEVEL_10', "ILLUM_LEVEL_10", ""),
-				('ILLUM_LEVEL_11', "ILLUM_LEVEL_11", ""),
-				('ILLUM_LEVEL_12', "ILLUM_LEVEL_12", ""),
-				('ILLUM_LEVEL_13', "ILLUM_LEVEL_13", ""),
-				('ILLUM_LEVEL_14', "ILLUM_LEVEL_14", ""),
-				('ILLUM_LEVEL_15', "ILLUM_LEVEL_15", ""),
-				('Damage1Key', "Damage1Key", ""),
-				('DamageFRKey', "DamageFRKey", ""),
-				('DamageFCKey', "DamageFCKey", ""),
-				('DamageFLKey', "DamageFLKey", ""),
-				('DamageRKey', "DamageRKey", ""),
-				('DamageLKey', "DamageLKey", ""),
-				('DamageBRKey', "DamageBRKey", ""),
-				('DamageBCKey', "DamageBCKey", ""),
-				('DamageBLKey', "DamageBLKey", ""),
-				('DamageWheel0Key', "DamageWheel0Key", ""),
-				('DamageWheel1Key', "DamageWheel1Key", ""),
-				('DamageWheel2Key', "DamageWheel2Key", ""),
-				('DamageWheel3Key', "DamageWheel3Key", ""),
-				('DamageWheel4Key', "DamageWheel4Key", ""),
-				('DamageWheel5Key', "DamageWheel5Key", ""),
-				('DamageWheel6Key', "DamageWheel6Key", ""),
-				('DamageWheel7Key', "DamageWheel7Key", ""),
-				('HeadLightKey', "HeadLightKey", ""),
-				('BackFaraKeyR', "BackFaraKeyR", ""),
-				('StopFaraKeyR', "StopFaraKeyR", ""),
-				('BackFaraKeyL', "BackFaraKeyL", ""),
-				('StopFaraKeyL', "StopFaraKeyL", ""),
-				('IconKey', "IconKey", ""),
-				('SizeLightKey', "SizeLightKey", ""),
-				('HornKey', "HornKey", ""),
-				('SupportKey', "SupportKey", ""),
-				('CopSirenKey', "CopSirenKey", ""),
-				('CopLightKey', "CopLightKey", ""),
-				('GunRightKey', "GunRightKey", ""),
-				('GunLeftKey', "GunLeftKey", ""),
-				('StaticLightKey', "StaticLightKey", ""),
-				('BlinkLightKey', "BlinkLightKey", ""),
-				('SearchLightKey', "SearchLightKey", ""),
-				]
+		items=consts.conditionBlockTypeList,
 		)
 
 	addGroupName_string : bpy.props.StringProperty(
@@ -2238,7 +2092,8 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pfb_edit_panel"
-	bl_label = "Редактирование полигонов"
+	bl_label = "Параметры полигона"
+	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -2274,7 +2129,8 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pvb_edit_panel"
-	bl_label = "Редактирование вершин"
+	bl_label = "Параметры вершины"
+	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -2322,6 +2178,28 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 		layout = self.layout
 		mytool = context.scene.my_tool
 
+		object = bpy.context.object
+		if object is not None:
+			drawCommon(self, object)
+
+
+class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_pob_edit_panel"
+	bl_label = "Параметры обьекта"
+	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		mytool = context.scene.my_tool
+
 		type(context)
 		#for i in range(len(bpy.context.selected_objects)):
 
@@ -2346,26 +2224,21 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 			lenStr = str(len(object.children))
 
 			if block_type == 0:
-				drawCommon(self, object)
+				pass
 
 			elif block_type == 1:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_1)
 
 			elif block_type == 2:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_2)
 
 			elif block_type == 3:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_3)
 
 			elif block_type == 4:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_4)
 
 			elif block_type == 5:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_5)
 				# layout.prop(getattr(mytool, 'block5'), "name1")
 				# layout.prop(mytool.block5, "XYZ")
@@ -2377,11 +2250,9 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
 			elif block_type == 6:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_6)
 
 			elif block_type == 7:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_7)
 				# if 'texNum' in object:
 				# 	layout.prop(mytool, "addBlockMeshType_enum")
@@ -2402,15 +2273,12 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
 			elif block_type == 8:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_8)
 
 			elif block_type == 9:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_9)
 
 			elif block_type == 10:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_10)
 				# if 'node_radius' in object:
 				# 	layout.prop(mytool, "Radius1")
@@ -2420,11 +2288,9 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
 			elif block_type == 11:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_11)
 
 			elif block_type == 12:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_12)
 				# if 'CType' in object:
 				# 	self.layout.label(text="Тип коллизии:")
@@ -2435,27 +2301,21 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
 			elif block_type == 13:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_13)
 
 			elif block_type == 14:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_14)
 
 			elif block_type == 15:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_15)
 
 			elif block_type == 16:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_16)
 
 			elif block_type == 17:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_17)
 
 			elif block_type == 18:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_18)
 				# if 'add_name' in object:
 				# 	layout.prop(mytool, "Radius1")
@@ -2466,14 +2326,12 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
 			elif block_type == 19:
-				drawCommon(self, object)
+				pass
 
 			elif block_type == 20:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_20)
 
 			elif block_type == 21:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_21)
 				# if 'groups_num' in object:
 				# 	layout.prop(mytool, "groupsNum1_int")
@@ -2483,7 +2341,6 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
 			elif block_type == 23:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_23)
 				# if 'CType' in object:
 				# 	self.layout.label(text="Тип коллизии:")
@@ -2493,7 +2350,6 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
 			elif block_type == 24:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_24)
 				# if 'flag' in object:
 				# 	layout.prop(mytool, "add24Flag_enum1", text="")
@@ -2502,7 +2358,6 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="а затем попробуйте выделить блок заново.")
 
 			elif block_type == 25:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_25)
 				# if 'RSound' in object:
 				# 	layout.prop(mytool, "addSoundName1_string")
@@ -2513,15 +2368,12 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
 			elif block_type == 26:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_26)
 
 			elif block_type == 27:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_27)
 
 			elif block_type == 28:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_28)
 				# if 'sprite_radius' in object:
 				# 	layout.prop(mytool, "Radius1")
@@ -2532,22 +2384,15 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
 			elif block_type == 29:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_29)
 
 			elif block_type == 30:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_30)
 
 			elif block_type == 31:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_31)
 
-			# elif block_type == 32:
-			# 	drawCommon(self, object)
-
 			elif block_type == 33:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_33)
 				# layout.prop(mytool, "Radius1")
 				# layout.prop(mytool, "LType_enum")
@@ -2558,19 +2403,15 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# layout.prop(mytool, "B1")
 
 			elif block_type == 34:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_34)
 
 			elif block_type == 35:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_35)
 
 			elif block_type == 36:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_36)
 
 			elif block_type == 37:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_37)
 				# if 'texNum' in object:
 				# 	layout.prop(mytool, "addBlockMeshType_enum")
@@ -2595,15 +2436,10 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 				# 	self.layout.label(text="Указаны не все атрибуты объекта.")
 				# 	self.layout.label(text="Сохраните настройки, а затем попробуйте выделить блок заново.")
 
-			# elif block_type == 38:
-			# 	drawCommon(self, object)
-
 			elif block_type == 39:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_39)
 
 			elif block_type == 40:
-				drawCommon(self, object)
 				drawAllFieldsByType(self, context, b_40)
 				# self.layout.label(text="Тип генератора: " + object['GType'])
 
@@ -2710,49 +2546,6 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 # ------------------------------------------------------------------------
 
 _classes = (
-	block_1,
-	block_2,
-	block_3,
-	block_4,
-	block_5,
-	block_6,
-	block_7,
-	block_8,
-	block_9,
-	block_10,
-	block_11,
-	block_12,
-	block_13,
-	block_14,
-	block_15,
-	block_16,
-	block_17,
-	block_18,
-	block_20,
-	block_21,
-	block_22,
-	block_23,
-	block_24,
-	block_25,
-	block_26,
-	block_27,
-	block_28,
-	block_29,
-	block_30,
-	block_31,
-	block_33,
-	block_34,
-	block_35,
-	block_36,
-	block_37,
-	block_39,
-	block_40,
-	block_common,
-	perFaceBlock_8,
-	perFaceBlock_28,
-	perFaceBlock_35,
-	perVertBlock_8,
-	perVertBlock_35,
 	PanelSettings,
 	AddOperator,
 	# getters
@@ -2778,6 +2571,7 @@ _classes = (
 	AddBlocksOperator,
 	OBJECT_PT_b3d_add_panel,
 	OBJECT_PT_b3d_edit_panel,
+	OBJECT_PT_b3d_pob_edit_panel,
 	OBJECT_PT_b3d_pfb_edit_panel,
 	OBJECT_PT_b3d_pvb_edit_panel,
 	OBJECT_PT_b3d_blocks_panel,
@@ -2785,13 +2579,13 @@ _classes = (
 	OBJECT_PT_b3d_misc_panel,
 )
 
-def b3dpanel_register():
+def register():
 	for cls in _classes:
 		bpy.utils.register_class(cls)
 	bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=PanelSettings)
 
-def b3dpanel_unregister():
+def unregister():
 	del bpy.types.Scene.my_tool
-	for cls in _classes:
+	for cls in _classes[::-1]:
 		bpy.utils.unregister_class(cls)
 

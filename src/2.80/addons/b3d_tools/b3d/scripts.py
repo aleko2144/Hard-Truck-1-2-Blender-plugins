@@ -5,18 +5,21 @@ import logging
 import sys
 import re
 
-from b3d_tools.b3d.classes import (
+from .classes import (
     b_18,
     b_21
 )
-from b3d_tools.common import (
+from ..common import (
     log
 )
-from b3d_tools.b3d.common import (
+from .common import (
     getPolygonsBySelectedVertices,
-    getSelectedVertices
+    getSelectedVertices,
+	isRootObj
 )
-from b3d_tools.b3d.classes import fieldType, b_common
+from .classes import (
+    fieldType, b_common
+)
 
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # log = logging.getLogger("common")
@@ -67,12 +70,7 @@ class Graph:
 def prop(obj):
     return obj['prop']
 
-def isRootObj(obj):
-    return obj.parent is None and obj.name[-4:] == '.b3d'
 
-def isEmptyName(name):
-    reIsEmpty = re.compile(r'.*empty name.*')
-    return reIsEmpty.search(name)
 
 def getAllChildren(obj):
     allChildren = []
@@ -454,7 +452,6 @@ def hideConditionals(root, group):
         processCond(root, group, True)
 
 
-
 def drawCommon(l_self, obj):
 	block_type = None
 	level_group = None
@@ -534,8 +531,51 @@ def drawFieldByType(l_self, context, obj, zclass):
 
         elif ftype == fieldType.LIST:
             collect = getattr(mytool, bname)
-            # col.prop(getattr(mytool, bname), pname)
-            col.template_list("SCENE_UL_list", "", collect, pname, mytool, "list_index")
+
+            scn = bpy.context.scene
+
+            rows = 2
+            row = box.row()
+            row.template_list("CUSTOM_UL_items", "", collect, pname, scn, "custom_index", rows=rows)
+
+            col = row.column(align=True)
+            props = col.operator("custom.list_action", icon='ADD', text="")
+            props.action = 'ADD'
+            props.bname = bname
+            props.pname = pname
+            props = col.operator("custom.list_action", icon='REMOVE', text="")
+            props.action = 'REMOVE'
+            props.bname = bname
+            props.pname = pname
+            col.separator()
+            props = col.operator("custom.list_action", icon='TRIA_UP', text="")
+            props.action = 'UP'
+            props.bname = bname
+            props.pname = pname
+            props = col.operator("custom.list_action", icon='TRIA_DOWN', text="")
+            props.action = 'DOWN'
+            props.bname = bname
+            props.pname = pname
+
+
+            # row = box.row()
+            # col = row.column(align=True)
+            # row = col.row(align=True)
+            # row.operator("custom.print_items", icon="LINENUMBERS_ON")
+            # row = col.row(align=True)
+            # row.operator("custom.clear_list", icon="X")
+            # row.operator("custom.remove_duplicates", icon="GHOST_ENABLED")
+
+            # row = box.row()
+            # col = row.column(align=True)
+            # row = col.row(align=True)
+            # row.operator("custom.add_viewport_selection", icon="HAND") #LINENUMBERS_OFF, ANIM
+            # row = col.row(align=True)
+            # row.operator("custom.select_items", icon="VIEW3D", text="Select Item in 3D View")
+            # row.operator("custom.select_items", icon="GROUP", text="Select All Items in 3D View").select_all = True
+            # row = col.row(align=True)
+            # row.operator("custom.delete_object", icon="X")
+
             # collect = getattr(getattr(mytool, bname), pname)
             # print(dir(collect))
             # for item in collect.items():

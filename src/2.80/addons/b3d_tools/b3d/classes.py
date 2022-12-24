@@ -17,8 +17,7 @@ from bpy.types import (Panel,
 						PropertyGroup,
 						)
 
-from b3d_tools.common import log
-from b3d_tools.b3d.common import FloatBlock
+from ..common import log
 
 
 class fieldType(enum.Enum):
@@ -31,6 +30,90 @@ class fieldType(enum.Enum):
 	LIST = 7
 	V_FORMAT = 8
 
+
+class ActiveBlock(bpy.types.PropertyGroup):
+    name: StringProperty()
+    state : BoolProperty()
+
+class FloatBlock(bpy.types.PropertyGroup):
+    value: FloatProperty()
+
+class MaskfileBlock(bpy.types.PropertyGroup):
+	name: StringProperty()
+
+	is_noload: BoolProperty(default=False)
+	is_someint: BoolProperty(default=False)
+	someint: IntProperty(default=0)
+
+class TextureBlock(bpy.types.PropertyGroup):
+	name: StringProperty()
+
+	is_memfix: BoolProperty(default=False)
+	is_noload: BoolProperty(default=False)
+	is_bumpcoord: BoolProperty(default=False)
+	is_someint: BoolProperty(default=False)
+	someint: IntProperty()
+
+class MaterialBlock(bpy.types.PropertyGroup):
+	name: StringProperty()
+
+	is_reflect: BoolProperty(default=False)
+	reflect: FloatProperty(default=0.0)
+
+	is_specular: BoolProperty(default=False)
+	specular: FloatProperty(default=0.0)
+
+	is_transp: BoolProperty(default=False)
+	transp: FloatProperty(default=0.0)
+
+	is_rot: BoolProperty(default=False)
+	rot: FloatProperty(default=0.0)
+
+	is_col: BoolProperty(default=False)
+	col: IntProperty(default=0)
+
+	is_tex: BoolProperty(default=False)
+	tex: IntProperty(default=0)
+	ttx: IntProperty(default=0)
+	itx: IntProperty(default=0)
+
+	is_att: BoolProperty(default=False)
+	att: IntProperty(default=0)
+
+	is_msk: BoolProperty(default=False)
+	msk: IntProperty(default=0)
+
+	is_power: BoolProperty(default=False)
+	power: IntProperty(default=0)
+
+	is_coord: BoolProperty(default=False)
+	coord: IntProperty(default=0)
+
+	is_env: BoolProperty(default=False)
+	envId: IntProperty(default=0)
+	env: FloatVectorProperty(default=(0.0, 0.0), size=2)
+
+	is_rotPoint: BoolProperty(default=False)
+	rotPoint: FloatVectorProperty(default=(0.0, 0.0), size=2)
+
+	is_move: BoolProperty(default=False)
+	move: FloatVectorProperty(default=(0.0, 0.0), size=2)
+
+	is_noz: BoolProperty(default=False)
+	is_nof: BoolProperty(default=False)
+	is_notile: BoolProperty(default=False)
+	is_notileu: BoolProperty(default=False)
+	is_notilev: BoolProperty(default=False)
+	is_alphamirr: BoolProperty(default=False)
+	is_bumpcoord: BoolProperty(default=False)
+	is_usecol: BoolProperty(default=False)
+	is_wave: BoolProperty(default=False)
+
+class ResBlock(bpy.types.PropertyGroup):
+    name: StringProperty()
+    textures: CollectionProperty(type=TextureBlock)
+    materials: CollectionProperty(type=MaterialBlock)
+    maskfiles: CollectionProperty(type=MaskfileBlock)
 
 
 def createTypeClass(zclass):
@@ -1651,3 +1734,63 @@ block_36 = createTypeClass(b_36)
 block_37 = createTypeClass(b_37)
 block_39 = createTypeClass(b_39)
 block_40 = createTypeClass(b_40)
+
+_classes = (
+	ActiveBlock,
+	FloatBlock,
+	TextureBlock,
+	MaskfileBlock,
+	MaterialBlock,
+	ResBlock,
+	block_1,
+	block_2,
+	block_3,
+	block_4,
+	block_5,
+	block_6,
+	block_7,
+	block_8,
+	block_9,
+	block_10,
+	block_11,
+	block_12,
+	block_13,
+	block_14,
+	block_15,
+	block_16,
+	block_17,
+	block_18,
+	block_20,
+	block_21,
+	block_22,
+	block_23,
+	block_24,
+	block_25,
+	block_26,
+	block_27,
+	block_28,
+	block_29,
+	block_30,
+	block_31,
+	block_33,
+	block_34,
+	block_35,
+	block_36,
+	block_37,
+	block_39,
+	block_40,
+	block_common,
+	perFaceBlock_8,
+	perFaceBlock_28,
+	perFaceBlock_35,
+	perVertBlock_8,
+	perVertBlock_35
+)
+
+def register():
+	for cls in _classes:
+		bpy.utils.register_class(cls)
+
+def unregister():
+	for cls in _classes[::-1]: #reversed
+		bpy.utils.unregister_class(cls)

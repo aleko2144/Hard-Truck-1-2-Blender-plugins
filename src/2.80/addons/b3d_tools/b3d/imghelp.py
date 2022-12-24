@@ -5,7 +5,7 @@ import logging
 import sys
 
 
-from b3d_tools.common import log
+from ..common import log
 
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # log = logging.getLogger("imghelp")

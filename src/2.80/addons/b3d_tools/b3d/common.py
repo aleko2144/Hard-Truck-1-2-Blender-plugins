@@ -3,28 +3,32 @@ import struct
 import bpy
 import logging
 import sys
+import re
 
-from b3d_tools.common import log
+from ..common import log
 
-from bpy.props import FloatProperty, IntProperty
+from bpy.props import (
+    FloatProperty,
+    IntProperty,
+    FloatVectorProperty,
+    BoolProperty,
+    StringProperty,
+    PointerProperty
+)
 from bpy.types import UIList
 
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # log = logging.getLogger("common")
 # log.setLevel(logging.DEBUG)
 
-class SCENE_UL_list(UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
 
-        if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.prop(item, "value", text="")
-        elif self.layout_type in {'GRID'}:
-            layout.alignment = 'CENTER'
-            layout.label(text="", icon_value=icon)
+def isRootObj(obj):
+    return obj.parent is None and obj.name[-4:] == '.b3d'
 
-class FloatBlock(bpy.types.PropertyGroup):
-    index: IntProperty()
-    value: FloatProperty()
+
+def isEmptyName(name):
+    reIsEmpty = re.compile(r'.*empty name.*')
+    return reIsEmpty.search(name)
 
 def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
 
@@ -69,27 +73,31 @@ class HTMaterial():
     def __init__(self):
         self.prefix = ""
         self.path = ""
-        self.reflect = 0.0 #HT1
-        self.specular = 0.0 #HT1
-        self.col = 0
-        self.transp = 1.0
-        self.tex = 0
-        self.ttx = 0
-        self.rot = 0.0
-        self.rotPoint = [0, 0]
-        self.power = 0.0
-        self.noz = False
-        self.nof = False
-        self.notile = False
-        self.move = None
-        self.att = 0
-        self.itx = 0
-        self.coord = 2
-        self.env = [0, 0] #scale x,y
-        self.notilev = False
-        self.notileu = False
-        self.bumpcoord = 0
-        self.alphamirr = 0
+        self.reflect = None #HT1 float
+        self.specular = None #HT1 float
+        self.transp = None # float
+        self.rot = None # float
+        self.col = None # int
+        self.tex = None # int
+        self.ttx = None # int
+        self.itx = None # int
+        self.att = None # int
+        self.msk = None # int
+        self.power = None # int
+        self.coord = None # int
+        self.envId = None # int
+        self.env = None #scale x,y  2 floats
+        self.rotPoint = None # 2 floats
+        self.move = None # 2 floats
+        self.noz = False # bool
+        self.nof = False # bool
+        self.notile = False # bool
+        self.notileu = False # bool
+        self.notilev = False # bool
+        self.alphamirr = False # bool
+        self.bumpcoord = False # bool
+        self.usecol = False # bool
+        self.wave = False # bool
 
 class Vector3F():
 
@@ -110,72 +118,36 @@ class Vector3F():
 
 
 
-class RESUnpack():
+def createMaterials(resModule, palette, texturePath, imageFormat):
+    materialList = resModule.materials
 
-    def __init__(self):
-        self.prefix = ""
-        self.textures = []
-        self.maskfiles = []
-        self.materials = []
-        self.materialParams = []
-        self.colors = []
-
-    def getPrefixedMaterial(self, ind):
-        return "{}_{}".format(self.prefix, self.materials[ind])
-
-def parseMaterial(matString, prefix):
-    params = matString.split(" ")
-    i = 1
-    mat = HTMaterial()
-    mat.prefix = prefix
-    mat.path = params[0]
-    while i < len(params):
-        if params[i] == "col":
-            i+=1
-            mat.col = int(params[i])
-        elif params[i] == "tex":
-            i+=1
-            mat.tex = int(params[i])
-        elif params[i] == "ttx":
-            i+=1
-            mat.ttx = int(params[i])
-        elif params[i] == "itx":
-            i+=1
-            mat.itx = int(params[i])
-        i+=1
-    return mat
-
-
-def parseMaterials(filepath, prefix):
-    content = ""
-    with open(filepath, "rb") as matFile:
-        content = matFile.read().decode("UTF-8")
-
-    matStrings = content.split("\n")
-    materials = []
-    for matStr in matStrings:
-        material = parseMaterial(matStr, prefix)
-        materials.append(material)
-    return materials
+    for material in materialList:
+        createMaterial(resModule, palette, texturePath, material, imageFormat)
 
 #https://blender.stackexchange.com/questions/118646/add-a-texture-to-an-object-using-python-and-blender-2-8
-def createMaterial(palette, texturelist, texturepath, mat, imageFormat):
-    newMat = bpy.data.materials.new(name="{}_{}".format(mat.prefix, mat.path))
+def createMaterial(resModule, palette, texturepath, mat, imageFormat):
+
+    textureList = resModule.textures
+
+    newMat = bpy.data.materials.new(name="{}_{}".format(resModule.name, mat.name))
     newMat.use_nodes = True
     bsdf = newMat.node_tree.nodes["Principled BSDF"]
-    if int(mat.col) > 0:
+
+    if mat.is_col and int(mat.col) > 0:
         R = palette[mat.col-1][0]
         G = palette[mat.col-1][1]
         B = palette[mat.col-1][2]
         texColor = newMat.node_tree.nodes.new("ShaderNodeRGB")
         texColor.outputs[0].default_value = hex_to_rgb(R,G,B)
         newMat.node_tree.links.new(bsdf.inputs['Base Color'], texColor.outputs['Color'])
-    if int(mat.tex) > 0 or int(mat.ttx) > 0 or int(mat.itx) > 0:
+
+    if (mat.is_tex and (int(mat.tex) > 0 or int(mat.ttx) > 0 or int(mat.itx) > 0)):
         texidx = mat.tex | mat.ttx | mat.itx
-        path = texturelist[texidx-1][:-4]
+        path = textureList[texidx-1].name
         texImage = newMat.node_tree.nodes.new("ShaderNodeTexImage")
         texImage.image = bpy.data.images.load(os.path.join(texturepath, "{}.{}".format(path, imageFormat)))
         newMat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+
 
 #https://blender.stackexchange.com/questions/158896/how-set-hex-in-rgb-node-python
 def srgb_to_linearrgb(c):

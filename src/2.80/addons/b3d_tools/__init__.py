@@ -21,14 +21,19 @@
 if "bpy" in locals():
 	print("Reimporting modules!!!")
 	import importlib
+	# importlib.reload(object_UIList)
+	# importlib.reload(material_UIList)
+	importlib.reload(custom_UIList)
 	importlib.reload(common)
 	importlib.reload(way)
 	importlib.reload(tch)
 	importlib.reload(b3d)
-	# importlib.reload(exportb3d)
 else:
 	import bpy
 	from . import (
+		# object_UIList,
+		# material_UIList,
+		custom_UIList,
 		common,
 		way,
 		tch,
@@ -38,11 +43,8 @@ else:
 
 
 
-# from .b3d import b3d_register, b3d_unregister
-from .b3d import b3d_register, b3d_unregister
 from .tch import tch_unregister, tch_register
-from .b3d.panel import b3dpanel_register, b3dpanel_unregister
-from .way import way_register, way_unregister
+
 
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
@@ -84,14 +86,18 @@ bl_info = {
 
 
 def register():
-	b3d_register()
+	# material_UIList.register()
+	# object_UIList.register()
+	custom_UIList.register()
+	b3d.register()
 	# tch_register()
-	b3dpanel_register()
 
 def unregister():
-	b3dpanel_unregister()
+	# material_UIList.unregister()
+	# object_UIList.unregister()
+	b3d.unregister()
+	custom_UIList.unregister()
 	# tch_unregister()
-	b3d_unregister()
 
 if __name__ == "__main__":
 	register()

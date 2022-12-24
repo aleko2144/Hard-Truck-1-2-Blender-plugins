@@ -18,6 +18,65 @@ from math import sin
 
 import bpy_extras.mesh_utils
 
+
+from .classes import (
+	b_1,
+	b_2,
+	b_3,
+	b_4,
+	b_5,
+	b_6,
+	b_7,
+	b_8,
+	b_9,
+	b_10,
+	b_11,
+	b_12,
+	b_13,
+	b_14,
+	b_15,
+	b_16,
+	b_17,
+	b_18,
+	b_20,
+	b_21,
+	b_22,
+	b_23,
+	b_24,
+	b_25,
+	b_26,
+	b_27,
+	b_28,
+	b_29,
+	b_30,
+	b_31,
+	b_33,
+	b_34,
+	b_35,
+	b_36,
+	b_37,
+	b_39,
+	b_40,
+	pfb_8,
+	pfb_28,
+	pfb_35,
+	pvb_8,
+	pvb_35
+)
+
+from .scripts import (
+    prop
+)
+
+from ..common import (
+	log
+)
+
+from .common import (
+	isRootObj,
+	isEmptyName
+)
+
 from bpy_extras.io_utils import (
 		ImportHelper,
 		ExportHelper,
@@ -44,20 +103,19 @@ from bpy_extras.image_utils import load_image
 from mathutils import Vector
 from bpy import context
 
-scene = bpy.context.scene
 RoMesh = True
 
 def openclose(file):
 	oc = file.read(4)
-	if (oc == (b'\x4D\x01\x00\x00')):
+	if (oc == (b'\x4D\x01\x00\x00')): #Begin Chunk
 		return 2
-	elif oc == (b'\x2B\x02\x00\x00'):
+	elif oc == (b'\x2B\x02\x00\x00'): #End Chunk
 		# print('}')
 		return 0
-	elif oc == (b'\xbc\x01\x00\x00'):
+	elif oc == (b'\xbc\x01\x00\x00'): #Group Chunk
 		#print('BC01')
 		return 3
-	elif oc == (b'\xde\x00\00\00'):
+	elif oc == (b'\xde\x00\00\00'): #End Chunks
 		print ('EOF')
 		return 1
 	else:
@@ -143,6 +201,16 @@ def export_pro(file, textures_path):
 
 	file.write('\n')
 
+def writeName(name, file):
+	objName = ''
+	if not isEmptyName(name):
+		objName = name
+	nameLen = len(objName)
+	if nameLen <= 32:
+		file.write(objName.encode("cp1251"))
+	file.write(bytearray(b'\00'*(32-nameLen)))
+	return
+
 def clone_node():
 	b3d_node = bpy.data.objects['b3d']
 	bpy.context.scene.objects.active = b3d_node
@@ -160,7 +228,7 @@ def delete_clone():
 
 
 def export(file, generate_pro_file):
-	file = open(myFile+'.b3d','wb')
+	file = open(myFile,'wb')
 
 	global global_matrix
 	global_matrix = axis_conversion(to_forward="-Z",
@@ -173,38 +241,72 @@ def export(file, generate_pro_file):
 	global verNums
 	verNums = []
 
-	file.write(b'B3D\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
 	#ba = bytearray(b'\x00' * 20)
 
 	#file.write(ba)
-
-	file.write(struct.pack('<i',0))
-
-	file.write(struct.pack('<i',6))
 
 	materials = []
 
 	for material in bpy.data.materials:
 		materials.append(material.name)
 
-	file.write(struct.pack('<i',len(materials)*8 + 1))
+	#Header
 
-	file.write(struct.pack('<i',len(materials)* 8 + 1 + 6))
+	file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
+	# file.write(struct.pack('<i',0)) #File Size
+	# file.write(struct.pack('<i',6)) #Mat list offset
+	# file.write(struct.pack('<i',len(materials)*8 + 1)) #Mat list Data Size
+	# file.write(struct.pack('<i',len(materials)* 8 + 1 + 6)) #Data Chunks Offset
+	# file.write(struct.pack('<i',0)) #Data Chunks Size
+	# file.write(struct.pack('<i', 0)) #Materials Count
 
-	file.write(struct.pack('<i',0))
 
-	file.write(struct.pack('<i',len(materials)))
+	file.write(struct.pack('<i',0)) #File Size
+	file.write(struct.pack('<i',0)) #Mat list offset
+	file.write(struct.pack('<i',0)) #Mat list Data Size
+	file.write(struct.pack('<i',0)) #Data Chunks Offset
+	file.write(struct.pack('<i',0)) #Data Chunks Size
+	file.write(struct.pack('<i',0)) #Materials Count
 
-	for i in range(len(materials)):
-		file.write(str.encode(materials[i]))#+ bytearray(b'\x00' * (32-len(img))))
-		imgNone = 32-len(materials[i])
-		ba = bytearray(b'\x00'* imgNone)
-		file.write(ba)
 
-	file.write(struct.pack("<i",111))
-	clone_node()
-	forChild(bpy.data.objects['b3d_temporary'],True, file)
-	delete_clone()
+	#todo: add material list
+	# for i in range(len(materials)):
+	# 	file.write(str.encode(materials[i]))#+ bytearray(b'\x00' * (32-len(img))))
+	# 	imgNone = 32-len(materials[i])
+	# 	ba = bytearray(b'\x00'* imgNone)
+	# 	file.write(ba)
+
+	file.write(struct.pack("<i",111)) # Begin_Chunks
+
+	objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+	curRoot = objs[0]
+
+	rChild = curRoot.children
+
+
+	curMaxCnt = 0
+	curLevel = 0
+
+	# prevLevel = 0
+	for obj in rChild[:-1]:
+		if obj['block_type'] == 10 or obj['block_type'] == 9:
+			curMaxCnt = 2
+		elif obj['block_type'] == 21:
+			curMaxCnt = obj[prop(b_21.GroupCnt)]
+		exportBlock(obj, True, curLevel, curMaxCnt, [0], None, file)
+		file.write(struct.pack("<i", 444))
+
+	obj = rChild[-1]
+
+	if obj['block_type'] == 10 or obj['block_type'] == 9:
+		curMaxCnt = 2
+	elif obj['block_type'] == 21:
+		curMaxCnt = obj[prop(b_21.GroupCnt)]
+	exportBlock(obj, True, curLevel, curMaxCnt, [0], None, file)
+
+	# clone_node()
+	# forChild(bpy.data.objects['b3d_temporary'],True, file)
+	# delete_clone()
 	file.write(struct.pack("<i",222))#EOF
 
 def export08(object, verticesL, file, faces, uvs):
@@ -333,7 +435,525 @@ def export35(object, verticesL, file, faces, uvs):
 
 			#file.write(struct.pack("<iffiffiff",faces[i*3],uvs[i*3].x,uvs[i*3].y,faces[i*3+1],uvs[i*3+1].x,uvs[i*3+1].y,faces[i*3+2],uvs[i*3+2].x,uvs[i*3+2].y))
 
-	file.write(struct.pack("<i",555))
+	file.write(struct.pack("<i",555)) #End Block
+
+blocksWithChildren = [2,3,4,5,6,7,9]
+
+def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
+
+
+	toProcessChild = False
+	curMaxCnt = 0
+
+	block = obj
+
+	objName = block.name
+	objType = block.get('block_type')
+
+	l_extra = None
+	passToMesh = []
+
+	if objType != None:
+
+		log.debug("{}_{}_{}".format(curLevel, block['level_group'], block.name))
+
+		if len(curGroups) <= curLevel:
+			curGroups.append(0)
+
+		#write Group Chunk
+		if block['level_group'] > curGroups[curLevel]:
+			log.debug('group ended')
+			file.write(struct.pack("<i",444))#Group Chunk
+			curGroups[curLevel] = block['level_group']
+
+		file.write(struct.pack("<i",333))#Begin Chunk
+
+		blChildren = list(block.children)
+
+		blChildren.sort(key=lambda cn: cn['level_group'])
+		# blChildren.sort(key=lambda cn: cn.name, reverse=True)
+
+		writeName(objName, file)
+		file.write(struct.pack("<i", objType))
+
+		if objType == 0:
+			file.write(bytearray(b'\x00'*44))
+
+		elif objType == 1:
+
+			writeName(block[prop(b_1.Name1)], file)
+			writeName(block[prop(b_1.Name2)], file)
+
+		elif objType == 2:
+
+			file.write(struct.pack("<3f", *block[prop(b_2.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_2.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_2.Unk_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_2.Unk_R)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 3:
+
+			file.write(struct.pack("<3f", *block[prop(b_3.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_3.R)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 4:
+
+			file.write(struct.pack("<3f", *block[prop(b_4.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_4.R)]))
+			writeName(block[prop(b_4.Name1)], file)
+			writeName(block[prop(b_4.Name2)], file)
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 5:
+
+			file.write(struct.pack("<3f", *block[prop(b_5.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_5.R)]))
+			writeName(block[prop(b_5.Name1)], file)
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 6:
+
+			file.write(struct.pack("<3f", *block[prop(b_6.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_6.R)]))
+			writeName(block[prop(b_6.Name1)], file)
+			writeName(block[prop(b_6.Name2)], file)
+			file.write(struct.pack("<i", 0)) # VertexCount
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 7:
+
+			file.write(struct.pack("<3f", *block[prop(b_7.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_7.R)]))
+			writeName(block[prop(b_7.Name1)], file)
+			file.write(struct.pack("<i", 0)) # VertexCount
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 8:
+
+			file.write(struct.pack("<3f", *block[prop(b_8.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_8.R)]))
+			file.write(struct.pack("<i", 0)) # PolygonCount
+
+		elif objType == 9 or objType == 22:
+
+			file.write(struct.pack("<3f", *block[prop(b_9.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_9.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_9.Unk_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_9.Unk_R)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+			curMaxCnt = 2
+			maxGroups = 2
+
+		elif objType == 10:
+
+			file.write(struct.pack("<3f", *block[prop(b_10.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_10.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_10.LOD_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_10.LOD_R)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			blChildren.sort(key=lambda cn: cn['level_group'])
+			log.debug(["{}_{}".format(cn['level_group'], cn.name) for cn in blChildren])
+
+			toProcessChild = True
+			curMaxCnt = 2
+
+		elif objType == 11:
+
+			file.write(struct.pack("<3f", *block[prop(b_11.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_11.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_11.Unk_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_11.Unk_R)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 12:
+
+			file.write(struct.pack("<3f", *block[prop(b_12.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_12.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_12.Unk_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_12.Unk_R)]))
+			file.write(struct.pack("<i", block[prop(b_12.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_12.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Params Count
+
+		elif objType == 13:
+
+			file.write(struct.pack("<3f", *block[prop(b_13.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_13.R)]))
+			file.write(struct.pack("<i", block[prop(b_13.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_13.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Params Count
+
+		elif objType == 14:
+
+			file.write(struct.pack("<3f", *block[prop(b_14.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_14.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_14.Unk_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_14.Unk_R)]))
+			file.write(struct.pack("<i", block[prop(b_14.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_14.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Params Count
+
+		elif objType == 15:
+
+			file.write(struct.pack("<3f", *block[prop(b_15.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_15.R)]))
+			file.write(struct.pack("<i", block[prop(b_15.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_15.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Params Count
+
+		elif objType == 16:
+
+			file.write(struct.pack("<3f", *block[prop(b_16.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_16.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_16.Unk_XYZ1)]))
+			file.write(struct.pack("<3f", *block[prop(b_16.Unk_XYZ2)]))
+			file.write(struct.pack("<f", block[prop(b_16.Unk_Float1)]))
+			file.write(struct.pack("<f", block[prop(b_16.Unk_Float2)]))
+			file.write(struct.pack("<i", block[prop(b_16.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_16.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Params Count
+
+		elif objType == 17:
+
+			file.write(struct.pack("<3f", *block[prop(b_17.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_17.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_17.Unk_XYZ1)]))
+			file.write(struct.pack("<3f", *block[prop(b_17.Unk_XYZ2)]))
+			file.write(struct.pack("<f", block[prop(b_17.Unk_Float1)]))
+			file.write(struct.pack("<f", block[prop(b_17.Unk_Float2)]))
+			file.write(struct.pack("<i", block[prop(b_17.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_17.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Params Count
+
+		elif objType == 18:
+
+			file.write(struct.pack("<3f", *block[prop(b_18.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_18.R)]))
+
+			writeName(block[prop(b_18.Add_Name)], file)
+			writeName(block[prop(b_18.Space_Name)], file)
+
+		elif objType == 19:
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 20:
+
+			file.write(struct.pack("<3f", *block[prop(b_20.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_20.R)]))
+			file.write(struct.pack("<i", 0)) #Verts Count
+			file.write(struct.pack("<i", block[prop(b_20.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_20.Unk_Int2)]))
+			file.write(struct.pack("<i", 0)) #Unknowns Count
+
+		elif objType == 21:
+
+			file.write(struct.pack("<3f", *block[prop(b_21.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_21.R)]))
+			file.write(struct.pack("<i", block[prop(b_21.GroupCnt)]))
+			file.write(struct.pack("<i", block[prop(b_21.Unk_Int2)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+			curMaxCnt = block[prop(b_21.GroupCnt)]
+
+		elif objType == 23:
+
+			file.write(struct.pack("<i", block[prop(b_23.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_23.Surface)]))
+			file.write(struct.pack("<i", 0)) #Unknowns Count
+			file.write(struct.pack("<i", 0)) #Verts Count
+
+		elif objType == 24:
+			PI = 3.14159265358979
+
+			cos_y = cos(-block.rotation_euler[1])
+			sin_y = sin(-block.rotation_euler[1])
+			cos_z = cos(-block.rotation_euler[2])
+			sin_z = sin(-block.rotation_euler[2])
+			cos_x = cos(-block.rotation_euler[0])
+			sin_x = sin(-block.rotation_euler[0])
+
+			file.write(struct.pack("<f", (cos_y * cos_z)*block.scale[0]))
+			file.write(struct.pack("<f", (sin_y * sin_x - cos_y * sin_z * cos_x)*block.scale[1]))
+			file.write(struct.pack("<f", (cos_y * sin_z * sin_x + sin_y * cos_x)*block.scale[2]))
+
+			file.write(struct.pack("<f", (sin_z)*block.scale[0]))
+			file.write(struct.pack("<f", (cos_z * cos_x)*block.scale[1]))
+			file.write(struct.pack("<f", (-cos_z * sin_x)*block.scale[2]))
+
+			file.write(struct.pack("<f", (-sin_y * cos_z)*block.scale[0]))
+			file.write(struct.pack("<f", (sin_y * sin_z * cos_x + cos_y * sin_x)*block.scale[1]))
+			file.write(struct.pack("<f", (-sin_y * sin_z * sin_x + cos_y * cos_x)*block.scale[2]))
+
+
+			file.write(struct.pack("<f",block.location.x))
+			file.write(struct.pack("<f",block.location.y))
+			file.write(struct.pack("<f",block.location.z))
+
+			file.write(struct.pack("<i",block[prop(b_24.Flag)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 25:
+
+			file.write(struct.pack("<3i", *block[prop(b_25.XYZ)]))
+			writeName(block[prop(b_25.Name)], file)
+			file.write(struct.pack("<3f", *block[prop(b_25.Unk_XYZ1)]))
+			file.write(struct.pack("<3f", *block[prop(b_25.Unk_XYZ2)]))
+			file.write(struct.pack("<f", block[prop(b_25.Unk_Float1)]))
+			file.write(struct.pack("<f", block[prop(b_25.Unk_Float2)]))
+			file.write(struct.pack("<f", block[prop(b_25.Unk_Float3)]))
+			file.write(struct.pack("<f", block[prop(b_25.Unk_Float4)]))
+			file.write(struct.pack("<f", block[prop(b_25.Unk_Float5)]))
+
+		elif objType == 26:
+
+			file.write(struct.pack("<3f", *block[prop(b_26.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_26.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_26.Unk_XYZ1)]))
+			file.write(struct.pack("<3f", *block[prop(b_26.Unk_XYZ2)]))
+			file.write(struct.pack("<3f", *block[prop(b_26.Unk_XYZ3)]))
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 27:
+
+			file.write(struct.pack("<3f", *block[prop(b_27.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_27.R)]))
+			file.write(struct.pack("<i",block[prop(b_27.Flag)]))
+			file.write(struct.pack("<3f", *block[prop(b_27.Unk_XYZ)]))
+			file.write(struct.pack("<i",block[prop(b_27.Material)]))
+
+		elif objType == 28:
+
+			file.write(struct.pack("<3f", *block[prop(b_28.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_28.R)]))
+			file.write(struct.pack("<3f", *block[prop(b_28.Unk_XYZ)]))
+			file.write(struct.pack("<3f", 0)) #Vertex Count
+
+		elif objType == 29:
+
+			file.write(struct.pack("<3f", *block[prop(b_29.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_29.R)]))
+			file.write(struct.pack("<i",block[prop(b_29.Unk_Int1)]))
+			file.write(struct.pack("<i",block[prop(b_29.Unk_Int2)]))
+			file.write(struct.pack("<3f", *block[prop(b_29.Unk_XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_29.Unk_R)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 30:
+
+			file.write(struct.pack("<3f", *block[prop(b_30.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_30.R)]))
+			writeName(block[prop(b_30.Name)], file)
+			file.write(struct.pack("<3f", *block[prop(b_30.XYZ1)]))
+			file.write(struct.pack("<3f", *block[prop(b_30.XYZ2)]))
+
+		elif objType == 31:
+
+			file.write(struct.pack("<3f", *block[prop(b_31.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_31.R)]))
+			file.write(struct.pack("<i",block[prop(b_31.Unk_Int1)]))
+			file.write(struct.pack("<3f", *block[prop(b_31.Unk_XYZ1)]))
+			file.write(struct.pack("<f", block[prop(b_31.Unk_R)]))
+			file.write(struct.pack("<i",block[prop(b_31.Unk_Int2)]))
+			file.write(struct.pack("<3f", *block[prop(b_31.Unk_XYZ2)]))
+
+		elif objType == 33:
+
+			file.write(struct.pack("<3f", *block[prop(b_33.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_33.R)]))
+			file.write(struct.pack("<i",block[prop(b_33.Use_Lights)]))
+			file.write(struct.pack("<i",block[prop(b_33.Light_Type)]))
+			file.write(struct.pack("<i",block[prop(b_33.Flag)]))
+			file.write(struct.pack("<3f", *block[prop(b_33.Unk_XYZ1)]))
+			file.write(struct.pack("<3f", *block[prop(b_33.Unk_XYZ2)]))
+			file.write(struct.pack("<f",block[prop(b_33.Unk_Float1)]))
+			file.write(struct.pack("<f",block[prop(b_33.Unk_Float2)]))
+			file.write(struct.pack("<f",block[prop(b_33.Light_R)]))
+			file.write(struct.pack("<f",block[prop(b_33.Intens)]))
+			file.write(struct.pack("<f",block[prop(b_33.Unk_Float3)]))
+			file.write(struct.pack("<f",block[prop(b_33.Unk_Float4)]))
+			file.write(struct.pack("<3f", *block[prop(b_33.RGB)]))
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 34:
+
+			file.write(struct.pack("<3f", *block[prop(b_34.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_34.R)]))
+			file.write(struct.pack("<i", 0)) #skipped Int
+			file.write(struct.pack("<i", 0)) #Verts count
+
+		elif objType == 35:
+
+			file.write(struct.pack("<3f", *block[prop(b_35.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_35.R)]))
+			file.write(struct.pack("<i",block[prop(b_35.MType)]))
+			file.write(struct.pack("<i",block[prop(b_35.TexNum)]))
+
+
+
+			file.write(struct.pack("<i", 0)) #Polygon count
+
+		elif objType == 36:
+
+			file.write(struct.pack("<3f", *block[prop(b_36.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_36.R)]))
+			writeName(block[prop(b_36.Name1)], file)
+			writeName(block[prop(b_36.Name2)], file)
+			file.write(struct.pack("<i", block[prop(b_36.MType)]))
+			file.write(struct.pack("<i", 0)) #Vertex count
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 37:
+
+			file.write(struct.pack("<3f", *block[prop(b_37.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_37.R)]))
+			writeName(block[prop(b_37.Name1)], file)
+			# file.write(struct.pack("<i", block[prop(b_37.SType)]))
+			file.write(struct.pack("<i", 1))
+
+			offset = 0
+			for ch in block.children:
+				obj = bpy.data.objects[ch.name]
+				someProps = getMeshProps(obj)
+				passToMesh.append({
+					"offset": offset,
+					"props": someProps
+				})
+				offset += len(someProps[0])
+
+			file.write(struct.pack("<i", offset)) #Vertex count
+
+			for mesh in passToMesh:
+				verts, uvs, normals = mesh['props']
+				for i, v in enumerate(verts):
+					file.write(struct.pack("<3f", *v))
+					file.write(struct.pack("<2f", *uvs[i]))
+					file.write(struct.pack("<3f", *normals[i]))
+
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 39:
+
+			file.write(struct.pack("<3f", *block[prop(b_39.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_39.R)]))
+			file.write(struct.pack("<i", block[prop(b_39.Color_R)]))
+			file.write(struct.pack("<f", block[prop(b_39.Unk_Float1)]))
+			file.write(struct.pack("<f", block[prop(b_39.Fog_Start)]))
+			file.write(struct.pack("<f", block[prop(b_39.Fog_End)]))
+			file.write(struct.pack("<i", block[prop(b_39.Color_Id)]))
+			file.write(struct.pack("<i", 0)) #Unknown count
+
+			file.write(struct.pack("<i", len(block.children)))
+
+			toProcessChild = True
+
+		elif objType == 40:
+
+			file.write(struct.pack("<3f", *block[prop(b_40.XYZ)]))
+			file.write(struct.pack("<f", block[prop(b_40.R)]))
+			writeName(block[prop(b_40.Name1)], file)
+			writeName(block[prop(b_40.Name2)], file)
+			file.write(struct.pack("<i", block[prop(b_40.Unk_Int1)]))
+			file.write(struct.pack("<i", block[prop(b_40.Unk_Int2)]))
+			file.write(struct.pack("<i", 0))
+
+		if toProcessChild:
+			if(len(block.children) > 0):
+				for i, ch in enumerate(blChildren[:-1]):
+
+					if len(passToMesh):
+						l_extra = passToMesh[i]
+					exportBlock(ch, False, curLevel+1, curMaxCnt, curGroups, l_extra, file)
+
+				if len(passToMesh):
+					l_extra = passToMesh[-1]
+				exportBlock(blChildren[-1], True, curLevel+1, curMaxCnt, curGroups, l_extra, file)
+
+
+		log.debug("{}_{}".format(curGroups, block.name))
+
+		if isLast:
+			log.info("{}_{}".format(maxGroups, curGroups[curLevel]))
+			for i in range(maxGroups-1 - curGroups[curLevel]):
+				log.debug('not enough in group')
+				file.write(struct.pack("<i",444))#Group Chunk
+			curGroups[curLevel] = 0
+
+		file.write(struct.pack("<i",555))#End Chunk
+
+
+	return curLevel
+
+def getMeshProps(obj):
+
+	mesh = obj.mesh
+
+	vertexes = [cn.co for cn in mesh.vertices]
+
+	uvs = [None] * len(vertexes)
+	for poly in mesh.polygons:
+		for li in poly.loop_indices:
+			vi = mesh.loops[li].vertex_index
+			uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+
+	normals = [cn.normal for cn in mesh.vertices]
+
+	return [vertexes, uvs, normals]
+
+def getMeshPolys(obj):
+    mesh = obj.data
+    pv = [list(cn.vertices) for cn in mesh.polygons]
+
+    return pv
 
 def forChild(object, root, file):
 	if (not root):

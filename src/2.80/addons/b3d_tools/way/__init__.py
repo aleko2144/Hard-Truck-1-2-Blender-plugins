@@ -4,10 +4,12 @@ if "bpy" in locals():
     print("Reimporting modules!!!")
     import importlib
     importlib.reload(import_way)
+    importlib.reload(menus)
 else:
     import bpy
     from . import (
-        import_way
+        import_way,
+		menus
     )
 
 import bpy
@@ -25,7 +27,7 @@ from bpy.types import (Panel,
 						PropertyGroup,
 						)
 
-from b3d_tools.common import getRegion
+from ..common import getRegion
 
 import struct
 
@@ -1136,19 +1138,21 @@ _classes = (
 )
 
 
-def way_register():
+def register():
+	menus.register()
 	for cls in _classes:
 		bpy.utils.register_class(cls)
 	bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 	bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 	bpy.types.Scene.way_tool = bpy.props.PointerProperty(type=PanelSettings1)
 
-def way_unregister():
+def unregister():
 	del bpy.types.Scene.way_tool
 	bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 	bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 	for cls in _classes:
 		bpy.utils.unregister_class(cls)
+	menus.unregister()
 
 # def register():
 # 	bpy.utils.register_class(ExportSomeData)
