@@ -83,6 +83,16 @@ from bpy.types import (Panel,
 #	store properties in the active scene
 # ------------------------------------------------------------------------
 
+def resModuleCallback(scene, context):
+
+	mytool = context.scene.my_tool
+	resModules = mytool.resModules
+
+	enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(resModules)]
+
+	return enumProperties
+
+
 class PanelSettings(bpy.types.PropertyGroup):
 
 	block1: PointerProperty(type=block_1)
@@ -131,6 +141,12 @@ class PanelSettings(bpy.types.PropertyGroup):
 	perVertBlock35: PointerProperty(type=perVertBlock_35)
 
 	resModules: CollectionProperty(type=ResBlock)
+
+	selectedResModule: EnumProperty(
+        name="RES модуль",
+        description="Выбранный RES модуль",
+        items=resModuleCallback
+	)
 
 	conditionGroup : bpy.props.IntProperty(
 		name='Номер условия',
@@ -1751,8 +1767,6 @@ class HideConditionalsOperator(bpy.types.Operator):
 		if not len(objs):
 			objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
 
-		print(objs)
-
 		for obj in objs:
 			hideConditionals(obj, self.group)
 
@@ -2522,6 +2536,342 @@ class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
 		oper = box.operator("wm.hide_conditional_operator")
 		oper.group = getattr(mytool, 'conditionGroup')
 
+
+class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_res_module_panel"
+	bl_label = "Игровые ресурсы"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+
+		layout.prop(mytool, "selectedResModule")
+
+class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_maskfiles_panel"
+	bl_label = "MSK-файлы"
+	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+
+		currentRes = int(mytool.selectedResModule)
+		curResModule = mytool.resModules[currentRes]
+
+		box = self.layout.box()
+
+		rows = 2
+		row = box.row()
+		row.template_list("CUSTOM_UL_items", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
+
+		col = row.column(align=True)
+
+		props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
+		props.action = 'ADD'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "maskfiles"
+		props.customindex = "maskfiles_index"
+
+		props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
+		props.action = 'REMOVE'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "maskfiles"
+		props.customindex = "maskfiles_index"
+
+		col.separator()
+
+		props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
+		props.action = 'UP'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "maskfiles"
+		props.customindex = "maskfiles_index"
+
+		props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
+		props.action = 'DOWN'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "maskfiles"
+		props.customindex = "maskfiles_index"
+
+		#Maskfile edit
+		box = self.layout.box()
+
+		maskfiles_index = scene.maskfiles_index
+		curMaskfile = curResModule.maskfiles[maskfiles_index]
+
+		box.prop(curMaskfile, "is_noload", text="Noload")
+
+		split = box.split(factor=0.3)
+		split.prop(curMaskfile, "is_someint", text="?Someint?")
+		col = split.column()
+		col.prop(curMaskfile, "someint")
+
+		col.enabled = curMaskfile.is_someint
+
+
+class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_textures_panel"
+	bl_label = "Текстуры"
+	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+
+		currentRes = int(mytool.selectedResModule)
+		curResModule = mytool.resModules[currentRes]
+
+		box = self.layout.box()
+
+		rows = 2
+		row = box.row()
+		row.template_list("CUSTOM_UL_items", "textures_list", curResModule, "textures", scene, "textures_index", rows=rows)
+
+		col = row.column(align=True)
+
+		props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
+		props.action = 'ADD'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "textures"
+		props.customindex = "textures_index"
+
+		props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
+		props.action = 'REMOVE'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "textures"
+		props.customindex = "textures_index"
+
+		col.separator()
+
+		props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
+		props.action = 'UP'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "textures"
+		props.customindex = "textures_index"
+
+		props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
+		props.action = 'DOWN'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "textures"
+		props.customindex = "textures_index"
+
+		#Texture edit
+		box = self.layout.box()
+
+		textureIndex = scene.textures_index
+		curTexture = curResModule.textures[textureIndex]
+
+		box.prop(curTexture, "is_memfix", text="Memfix")
+		box.prop(curTexture, "is_noload", text="Noload")
+		box.prop(curTexture, "is_bumpcoord", text="Bympcoord")
+
+		split = box.split(factor=0.3)
+		split.prop(curTexture, "is_someint", text="?Someint?")
+		col = split.column()
+		col.prop(curTexture, "someint")
+
+		col.enabled = curTexture.is_someint
+
+class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_materials_panel"
+	bl_label = "Материалы"
+	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+
+		currentRes = int(mytool.selectedResModule)
+		curResModule = mytool.resModules[currentRes]
+
+		box = self.layout.box()
+
+		rows = 2
+		row = box.row()
+		row.template_list("CUSTOM_UL_items", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
+
+		col = row.column(align=True)
+
+		props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
+		props.action = 'ADD'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "materials"
+		props.customindex = "materials_index"
+
+		props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
+		props.action = 'REMOVE'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "materials"
+		props.customindex = "materials_index"
+
+		col.separator()
+
+		props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
+		props.action = 'UP'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "materials"
+		props.customindex = "materials_index"
+
+		props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
+		props.action = 'DOWN'
+		props.bname = "resModules"
+		props.bindex = currentRes
+		props.pname = "materials"
+		props.customindex = "materials_index"
+
+		#Material edit
+		box = self.layout.box()
+
+		textureIndex = scene.materials_index
+		curMaterial = curResModule.materials[textureIndex]
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_reflect", text="Reflect")
+		col = split.column()
+		col.prop(curMaterial, "reflect")
+		col.enabled = curMaterial.is_reflect
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_specular", text="Specular")
+		col = split.column()
+		col.prop(curMaterial, "specular")
+		col.enabled = curMaterial.is_specular
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_transp", text="Transparency")
+		col = split.column()
+		col.prop(curMaterial, "transp")
+		col.enabled = curMaterial.is_transp
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_rot", text="Rotation")
+		col = split.column()
+		col.prop(curMaterial, "rot")
+		col.enabled = curMaterial.is_rot
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_col", text="Color")
+		col = split.column()
+		col.prop(curMaterial, "col")
+		col.enabled = curMaterial.is_col
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_tex", text="Texture TEX")
+		col = split.column()
+		col.prop(curMaterial, "tex")
+		col.enabled = curMaterial.is_tex
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_ttx", text="Texture TTX")
+		col = split.column()
+		col.prop(curMaterial, "ttx")
+		col.enabled = curMaterial.is_ttx
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_itx", text="Texture ITX")
+		col = split.column()
+		col.prop(curMaterial, "itx")
+		col.enabled = curMaterial.is_itx
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_att", text="Att")
+		col = split.column()
+		col.prop(curMaterial, "att")
+		col.enabled = curMaterial.is_att
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_msk", text="Maskfile")
+		col = split.column()
+		col.prop(curMaterial, "msk")
+		col.enabled = curMaterial.is_msk
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_power", text="Power")
+		col = split.column()
+		col.prop(curMaterial, "power")
+		col.enabled = curMaterial.is_power
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_coord", text="Coord")
+		col = split.column()
+		col.prop(curMaterial, "coord")
+		col.enabled = curMaterial.is_coord
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_env", text="Env")
+		col = split.column()
+		col.prop(curMaterial, "envId")
+		col.prop(curMaterial, "env")
+		col.enabled = curMaterial.is_env
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_rotPoint", text="Rotation Center")
+		col = split.column()
+		col.prop(curMaterial, "rotPoint")
+		col.enabled = curMaterial.is_rotPoint
+
+		split = box.split(factor=0.3)
+		split.prop(curMaterial, "is_move", text="Movement")
+		col = split.column()
+		col.prop(curMaterial, "move")
+		col.enabled = curMaterial.is_move
+
+		box.prop(curMaterial, "is_noz", text="No Z")
+		box.prop(curMaterial, "is_nof", text="No F")
+		box.prop(curMaterial, "is_notile", text="No tiling")
+		box.prop(curMaterial, "is_notileu", text="No tiling U")
+		box.prop(curMaterial, "is_notilev", text="No tiling V")
+		box.prop(curMaterial, "is_alphamirr", text="Alphamirr")
+		box.prop(curMaterial, "is_bumpcoord", text="Bympcoord")
+		box.prop(curMaterial, "is_usecol", text="UseCol")
+		box.prop(curMaterial, "is_wave", text="Wave")
+
+
+
+
 class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_misc_panel"
 	bl_label = "О плагине"
@@ -2574,6 +2924,10 @@ _classes = (
 	OBJECT_PT_b3d_pob_edit_panel,
 	OBJECT_PT_b3d_pfb_edit_panel,
 	OBJECT_PT_b3d_pvb_edit_panel,
+	OBJECT_PT_b3d_res_module_panel,
+	OBJECT_PT_b3d_maskfiles_panel,
+	OBJECT_PT_b3d_textures_panel,
+	OBJECT_PT_b3d_materials_panel,
 	OBJECT_PT_b3d_blocks_panel,
 	OBJECT_PT_b3d_func_panel,
 	OBJECT_PT_b3d_misc_panel,

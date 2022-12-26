@@ -39,14 +39,14 @@ class FloatBlock(bpy.types.PropertyGroup):
     value: FloatProperty()
 
 class MaskfileBlock(bpy.types.PropertyGroup):
-	name: StringProperty()
+	value: StringProperty()
 
 	is_noload: BoolProperty(default=False)
 	is_someint: BoolProperty(default=False)
 	someint: IntProperty(default=0)
 
 class TextureBlock(bpy.types.PropertyGroup):
-	name: StringProperty()
+	value: StringProperty()
 
 	is_memfix: BoolProperty(default=False)
 	is_noload: BoolProperty(default=False)
@@ -55,7 +55,7 @@ class TextureBlock(bpy.types.PropertyGroup):
 	someint: IntProperty()
 
 class MaterialBlock(bpy.types.PropertyGroup):
-	name: StringProperty()
+	value: StringProperty()
 
 	is_reflect: BoolProperty(default=False)
 	reflect: FloatProperty(default=0.0)
@@ -74,7 +74,11 @@ class MaterialBlock(bpy.types.PropertyGroup):
 
 	is_tex: BoolProperty(default=False)
 	tex: IntProperty(default=0)
+
+	is_ttx: BoolProperty(default=False)
 	ttx: IntProperty(default=0)
+
+	is_itx: BoolProperty(default=False)
 	itx: IntProperty(default=0)
 
 	is_att: BoolProperty(default=False)
@@ -110,7 +114,7 @@ class MaterialBlock(bpy.types.PropertyGroup):
 	is_wave: BoolProperty(default=False)
 
 class ResBlock(bpy.types.PropertyGroup):
-    name: StringProperty()
+    value: StringProperty()
     textures: CollectionProperty(type=TextureBlock)
     materials: CollectionProperty(type=MaterialBlock)
     maskfiles: CollectionProperty(type=MaskfileBlock)

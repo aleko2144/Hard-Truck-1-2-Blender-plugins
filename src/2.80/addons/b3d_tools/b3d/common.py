@@ -117,6 +117,28 @@ class Vector3F():
             self.z = 0
 
 
+def getColPropertyByName(colProperty, value):
+    result = None
+    for item in colProperty:
+        if item.value == value:
+            result = item
+            break
+    return result
+
+def getColPropertyIndexByName(colProperty, value):
+    result = -1
+    for idx, item in enumerate(colProperty):
+        if item.value == value:
+            result = idx
+            break
+    return result
+
+
+def existsColPropertyByName(colProperty, value):
+    for item in colProperty:
+        if item.value == value:
+            return True
+    return False
 
 def createMaterials(resModule, palette, texturePath, imageFormat):
     materialList = resModule.materials
@@ -129,7 +151,7 @@ def createMaterial(resModule, palette, texturepath, mat, imageFormat):
 
     textureList = resModule.textures
 
-    newMat = bpy.data.materials.new(name="{}_{}".format(resModule.name, mat.name))
+    newMat = bpy.data.materials.new(name="{}_{}".format(resModule.value, mat.value))
     newMat.use_nodes = True
     bsdf = newMat.node_tree.nodes["Principled BSDF"]
 
@@ -141,9 +163,11 @@ def createMaterial(resModule, palette, texturepath, mat, imageFormat):
         texColor.outputs[0].default_value = hex_to_rgb(R,G,B)
         newMat.node_tree.links.new(bsdf.inputs['Base Color'], texColor.outputs['Color'])
 
-    if (mat.is_tex and (int(mat.tex) > 0 or int(mat.ttx) > 0 or int(mat.itx) > 0)):
+    if (mat.is_tex and int(mat.tex) > 0) \
+    or (mat.is_ttx and int(mat.ttx) > 0) \
+    or (mat.is_itx and int(mat.itx) > 0):
         texidx = mat.tex | mat.ttx | mat.itx
-        path = textureList[texidx-1].name
+        path = textureList[texidx-1].value
         texImage = newMat.node_tree.nodes.new("ShaderNodeTexImage")
         texImage.image = bpy.data.images.load(os.path.join(texturepath, "{}.{}".format(path, imageFormat)))
         newMat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])

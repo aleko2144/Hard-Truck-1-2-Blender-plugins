@@ -67,6 +67,8 @@ from .common import (
     ShowMessageBox,
     Vector3F,
     createMaterials,
+    getColPropertyByName,
+    getColPropertyIndexByName,
     getUsedFaces,
     getUsedFace,
     getUsedVerticesAndTransform,
@@ -346,31 +348,12 @@ def parseRAW(file, context, op, filepath):
     b3dObj2 = bpy.data.objects.new(basename2, b3dMesh2)
     context.collection.objects.link(b3dObj2)
 
+def importTextures(filepath, resModules, op):
 
-def read(file, context, op, filepath):
-    if file.read(3) == b'b3d':
-        log.info("correct file")
-    else:
-        log.error("b3d error")
-
-    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
-
-    scene = context.scene
-    mytool = scene.my_tool
-
-    #skip to materials list
-    file.seek(21,1)
-    Imgs = []
-    math = []
     commonPalette = []
-    materials = []
 
     noextPath, ext = os.path.splitext(filepath)
-    basepath = os.path.dirname(filepath)
-    basename = os.path.basename(filepath)[:-4] #cut extension
 
-
-    #Пути
     resPath = ''
     if len(op.res_location) > 0 and os.path.exists(op.res_location):
         resPath = op.res_location
@@ -380,17 +363,27 @@ def read(file, context, op, filepath):
     res_basepath = os.path.dirname(resPath)
     res_basename = os.path.basename(resPath)[:-4] #cut extension
 
-    # commonPath = os.path.join(bpy.context.preferences.addons['import_b3d'].preferences.COMMON_RES_Path, r"COMMON")
+    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
 
-    blocksToImport = op.blocks_to_import
+    resIndex = getColPropertyIndexByName(resModules, res_basename)
+    resModule = None
+    print(resIndex)
+    if resIndex >= 0:
+        resModule = resModules[resIndex]
+    if resModule:
+        #delete old materials
+        for m in [cn.value for cn in resModule.materials]:
+            mat = bpy.data.materials["{}_{}".format(res_basename, m)]
+            if mat:
+                bpy.data.materials.remove(mat)
+        #delete RES module
+        print("Removing resModule " + str(resIndex))
+        resModules.remove(resIndex)
+        commonResIndex = getColPropertyIndexByName(resModules, "common")
+        resModules.remove(commonResIndex)
 
-    resModules = getattr(mytool, "resModules")
     resModule = resModules.add()
-    resModule.name = res_basename
-
-    usedBlocks = {}
-    for block in blocksToImport:
-        usedBlocks[block.name] = block.state
+    resModule.value = res_basename
 
     if op.to_import_textures:
         if op.to_unpack_res:
@@ -417,10 +410,12 @@ def read(file, context, op, filepath):
 
         #1. Получить общую для большинства палитру Common.plm
         if os.path.exists(commonResPath):
-            commonResModule = resModules.add()
-            commonResModule.name = "common"
-            unpackRES(commonResModule, commonResPath)
-            commonPalette = parsePLM(palettePath)
+            commonResModule = getColPropertyByName(resModules, "common")
+            if not commonResModule:
+                commonResModule = resModules.add()
+                commonResModule.value = "common"
+                unpackRES(commonResModule, commonResPath)
+                commonPalette = parsePLM(palettePath)
         else:
             log.warning("Failed to unpack COMMON.RES")
 
@@ -434,9 +429,55 @@ def read(file, context, op, filepath):
                 if reTXR.search(path):
                     TXRtoTGA32(fullpath)
 
-
         #3. Парсинг и добавление материалов
         createMaterials(resModule, commonPalette, texturePath, op.textures_format)
+
+def read(file, context, op, filepath):
+    if file.read(3) == b'b3d':
+        log.info("correct file")
+    else:
+        log.error("b3d error")
+
+    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+
+    scene = context.scene
+    mytool = scene.my_tool
+
+    #skip to materials list
+    file.seek(21,1)
+    Imgs = []
+    math = []
+    materials = []
+
+    resModules = getattr(mytool, "resModules")
+
+    importTextures(filepath, resModules, op)
+
+
+    noextPath, ext = os.path.splitext(filepath)
+    basepath = os.path.dirname(filepath)
+    basename = os.path.basename(filepath)[:-4] #cut extension
+
+
+    #Пути
+    resPath = ''
+    if len(op.res_location) > 0 and os.path.exists(op.res_location):
+        resPath = op.res_location
+    else:
+        resPath = os.path.join(noextPath + ".res")
+
+    res_basepath = os.path.dirname(resPath)
+    res_basename = os.path.basename(resPath)[:-4] #cut extension
+
+    resModule = getColPropertyByName(resModules, res_basename)
+
+    # commonPath = os.path.join(bpy.context.preferences.addons['import_b3d'].preferences.COMMON_RES_Path, r"COMMON")
+
+    blocksToImport = op.blocks_to_import
+
+    usedBlocks = {}
+    for block in blocksToImport:
+        usedBlocks[block.name] = block.state
 
     # Parsing b3d
     material_textures = []
@@ -906,7 +947,7 @@ def read(file, context, op, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.name, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -917,7 +958,7 @@ def read(file, context, op, filepath):
                                 # op.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.name, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
                             b3dMesh.materials.append(mat)
 
 
@@ -1635,7 +1676,7 @@ def read(file, context, op, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.name, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1645,7 +1686,7 @@ def read(file, context, op, filepath):
                                 # op.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.name, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
                             b3dMesh.materials.append(mat)
 
                 createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
@@ -2033,7 +2074,7 @@ def read(file, context, op, filepath):
                 createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
                 if op.to_import_textures:
-                    mat = bpy.data.materials["{}_{}".format(resModule.name, resModule.materials[int(texNum)].name)]
+                    mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texNum)].value)]
                     b3dMesh.materials.append(mat)
 
 
@@ -2421,15 +2462,11 @@ def saveMaterial(resModule, materialStr):
     params = nameSplit[1:]
 
     material = resModule.materials.add()
-    material.name = name
+    material.value = name
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
-        if paramName in ["tex", "ttx", "itx"]:
-            setattr(material, "is_tex", True)
-            setattr(material, paramName, int(params[i+1]))
-            i+=1
-        elif paramName in ["col", "att", "msk", "power", "coord"]:
+        if paramName in ["col", "att", "msk", "power", "coord", "tex", "ttx", "itx"]:
             setattr(material, "is_" + paramName, True)
             setattr(material, paramName, int(params[i+1]))
             i+=1
@@ -2461,7 +2498,7 @@ def saveMaskfile(resModule, maskfileStr):
     name = rawName.split("\\")[-1][:-4]
 
     maskfile = resModule.maskfiles.add()
-    maskfile.name = name
+    maskfile.value = name
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
@@ -2487,7 +2524,7 @@ def saveTexture(resModule, textueStr):
     log.debug(name)
 
     texture = resModule.textures.add()
-    texture.name = name
+    texture.value = name
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
@@ -2505,7 +2542,7 @@ def saveTexture(resModule, textueStr):
         i+=1
 
 
-def unpackRES(resModule, filepath, saveOnDisk = True):
+def unpackRES(resModule, filepath, saveOnDisk = True, ):
     log.info("Unpacking {}:".format(filepath))
 
     # filename, resExtension = os.path.splitext(filepath)

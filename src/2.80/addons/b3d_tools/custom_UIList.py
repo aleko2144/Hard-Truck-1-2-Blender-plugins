@@ -49,6 +49,81 @@ from bpy.types import (Operator,
 #   Operators
 # -------------------------------------------------------------------
 
+def action_invoke(self, context, event, arr_bname = False):
+    scn = context.scene
+    idx = getattr(scn, self.customindex)
+    mytool = scn.my_tool
+
+    if arr_bname:
+        param = getattr(getattr(mytool, self.bname)[self.bindex], self.pname)
+    else:
+        param = getattr(getattr(mytool, self.bname), self.pname)
+
+    try:
+        item = param[idx]
+    except IndexError:
+        pass
+    else:
+        if self.action == 'DOWN' and idx < len(param) - 1:
+            item_next = param[idx+1].name
+            param.move(idx, idx+1)
+            idx += 1
+            info = 'Item "%s" moved to position %d' % (item.name, idx + 1)
+            self.report({'INFO'}, info)
+
+        elif self.action == 'UP' and idx >= 1:
+            item_prev = param[idx-1].name
+            param.move(idx, idx-1)
+            idx -= 1
+            info = 'Item "%s" moved to position %d' % (item.name, idx + 1)
+            self.report({'INFO'}, info)
+
+        elif self.action == 'REMOVE':
+            info = 'Item "%s" removed from list' % (param[idx].name)
+            idx -= 1
+            param.remove(idx)
+            self.report({'INFO'}, info)
+
+    if self.action == 'ADD':
+        if context.object:
+            item = param.add()
+            # item.name = context.object.name
+            # item.obj = context.object
+            item['value'] = 0.0
+            idx = len(param)-1
+            # info = '"%s" added to list' % (item.name)
+            # self.report({'INFO'}, info)
+        else:
+            pass
+            # self.report({'INFO'}, "Nothing selected in the Viewport")
+    return {"FINISHED"}
+
+class CUSTOM_OT_actions_arrbname(Operator):
+    """Move items up and down, add and remove"""
+    bl_idname = "custom.list_action_arrbname"
+    bl_label = "List Actions"
+    bl_description = "Move items up and down, add and remove"
+    bl_options = {'REGISTER'}
+
+    action: bpy.props.EnumProperty(
+        items=(
+            ('UP', "Up", ""),
+            ('DOWN', "Down", ""),
+            ('REMOVE', "Remove", ""),
+            ('ADD', "Add", "")))
+
+    bname: bpy.props.StringProperty()
+
+    bindex: bpy.props.IntProperty(default=-1)
+
+    pname: bpy.props.StringProperty()
+
+    customindex: bpy.props.StringProperty()
+
+    def invoke(self, context, event):
+        return action_invoke(self, context, event, True)
+
+
 class CUSTOM_OT_actions(Operator):
     """Move items up and down, add and remove"""
     bl_idname = "custom.list_action"
@@ -67,51 +142,10 @@ class CUSTOM_OT_actions(Operator):
 
     pname: bpy.props.StringProperty()
 
+    customindex: bpy.props.StringProperty()
+
     def invoke(self, context, event):
-        scn = context.scene
-        idx = scn.custom_index
-        mytool = scn.my_tool
-
-        param = getattr(getattr(mytool, self.bname), self.pname)
-
-        try:
-            item = param[idx]
-        except IndexError:
-            pass
-        else:
-            if self.action == 'DOWN' and idx < len(param) - 1:
-                item_next = param[idx+1].name
-                param.move(idx, idx+1)
-                scn.custom_index += 1
-                info = 'Item "%s" moved to position %d' % (item.name, scn.custom_index + 1)
-                self.report({'INFO'}, info)
-
-            elif self.action == 'UP' and idx >= 1:
-                item_prev = param[idx-1].name
-                param.move(idx, idx-1)
-                scn.custom_index -= 1
-                info = 'Item "%s" moved to position %d' % (item.name, scn.custom_index + 1)
-                self.report({'INFO'}, info)
-
-            elif self.action == 'REMOVE':
-                info = 'Item "%s" removed from list' % (param[idx].name)
-                scn.custom_index -= 1
-                param.remove(idx)
-                self.report({'INFO'}, info)
-
-        if self.action == 'ADD':
-            if context.object:
-                item = param.add()
-                # item.name = context.object.name
-                # item.obj = context.object
-                item['value'] = 0.0
-                scn.custom_index = len(param)-1
-                # info = '"%s" added to list' % (item.name)
-                # self.report({'INFO'}, info)
-            else:
-                pass
-                # self.report({'INFO'}, "Nothing selected in the Viewport")
-        return {"FINISHED"}
+        return action_invoke(self, context, event, False)
 
 
 class CUSTOM_OT_addViewportSelection(Operator):
@@ -360,7 +394,7 @@ class CUSTOM_PT_objectList(Panel):
 
         rows = 2
         row = layout.row()
-        row.template_list("CUSTOM_UL_items", "", scn, "custom", scn, "custom_index", rows=rows)
+        row.template_list("CUSTOM_UL_items", "float_list", scn, "custom", scn, "custom_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("custom.list_action", icon='ADD', text="").action = 'ADD'
@@ -368,24 +402,6 @@ class CUSTOM_PT_objectList(Panel):
         col.separator()
         col.operator("custom.list_action", icon='TRIA_UP', text="").action = 'UP'
         col.operator("custom.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
-
-        # row = layout.row()
-        # col = row.column(align=True)
-        # row = col.row(align=True)
-        # row.operator("custom.print_items", icon="LINENUMBERS_ON")
-        # row = col.row(align=True)
-        # row.operator("custom.clear_list", icon="X")
-        # row.operator("custom.remove_duplicates", icon="GHOST_ENABLED")
-
-        # row = layout.row()
-        # col = row.column(align=True)
-        # row = col.row(align=True)
-        # row.operator("custom.add_viewport_selection", icon="HAND") #LINENUMBERS_OFF, ANIM
-        # row = col.row(align=True)
-        # row.operator("custom.select_items", icon="VIEW3D", text="Select Item in 3D View")
-        # row.operator("custom.select_items", icon="GROUP", text="Select All Items in 3D View").select_all = True
-        # row = col.row(align=True)
-        # row.operator("custom.delete_object", icon="X")
 
 
 # -------------------------------------------------------------------
@@ -405,6 +421,7 @@ class CUSTOM_PG_objectCollection(PropertyGroup):
 
 classes = (
     CUSTOM_OT_actions,
+    CUSTOM_OT_actions_arrbname,
     CUSTOM_OT_addViewportSelection,
     CUSTOM_OT_printItems,
     CUSTOM_OT_clearList,
@@ -424,6 +441,9 @@ def register():
     # Custom scene properties
     bpy.types.Scene.custom = CollectionProperty(type=CUSTOM_PG_objectCollection)
     bpy.types.Scene.custom_index = IntProperty()
+    bpy.types.Scene.textures_index = IntProperty()
+    bpy.types.Scene.materials_index = IntProperty()
+    bpy.types.Scene.maskfiles_index = IntProperty()
 
 
 def unregister():
@@ -433,6 +453,10 @@ def unregister():
 
     del bpy.types.Scene.custom
     del bpy.types.Scene.custom_index
+    del bpy.types.Scene.textures_index
+    del bpy.types.Scene.materials_index
+    del bpy.types.Scene.maskfiles_index
+
 
 
 if __name__ == "__main__":

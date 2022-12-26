@@ -543,19 +543,23 @@ def drawFieldByType(l_self, context, obj, zclass):
             props.action = 'ADD'
             props.bname = bname
             props.pname = pname
+            props.customindex = "custom_index"
             props = col.operator("custom.list_action", icon='REMOVE', text="")
             props.action = 'REMOVE'
             props.bname = bname
             props.pname = pname
+            props.customindex = "custom_index"
             col.separator()
             props = col.operator("custom.list_action", icon='TRIA_UP', text="")
             props.action = 'UP'
             props.bname = bname
             props.pname = pname
+            props.customindex = "custom_index"
             props = col.operator("custom.list_action", icon='TRIA_DOWN', text="")
             props.action = 'DOWN'
             props.bname = bname
             props.pname = pname
+            props.customindex = "custom_index"
 
 
             # row = box.row()
