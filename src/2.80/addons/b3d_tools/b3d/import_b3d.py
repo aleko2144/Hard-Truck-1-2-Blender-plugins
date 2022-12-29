@@ -1592,11 +1592,14 @@ def read(file, context, op, filepath):
                         scale_v = struct.unpack("<f", file.read(4))[0]
                         l_vertexes.append((sprite_center[0], sprite_center[1]-scale_u*scale_base, sprite_center[2]+scale_v*scale_base))
                         l_faces.append(curface)
-                        curface += 1
                         if format & 0b10:
                             vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
+                            poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
                             for j in range(uvCount-1):
-                                poly_block_uvs[j][face] = struct.unpack("<2f",file.read(8))
+                                poly_block_uvs[j][curface] = struct.unpack("<2f",file.read(8))
+                        else:
+                            poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
+                        curface += 1
 
 
                     #Save materials for faces
@@ -2267,8 +2270,7 @@ def read(file, context, op, filepath):
                 objString[len(objString)-1] = b3dObj.name
 
             elif (type == 40):
-                data = []
-                data1 = []
+                l_params = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
@@ -2277,9 +2279,10 @@ def read(file, context, op, filepath):
 
                 unknown1 = struct.unpack("<i",file.read(4))[0]
                 unknown2 = struct.unpack("<i",file.read(4))[0]
-                num = struct.unpack("<i",file.read(4))[0]
-                for i in range(num):
-                    data1.append(struct.unpack("f", file.read(4))[0])
+                cnt = struct.unpack("<i",file.read(4))[0]
+
+                for i in range(cnt):
+                    l_params.append(struct.unpack("f",file.read(4))[0])
 
                 if not usedBlocks[str(type)]:
                     continue
@@ -2294,6 +2297,7 @@ def read(file, context, op, filepath):
                 b3dObj[prop(b_40.Name2)] = name2
                 b3dObj[prop(b_40.Unk_Int1)] = unknown1
                 b3dObj[prop(b_40.Unk_Int2)] = unknown2
+                b3dObj[prop(b_40.Unk_List)] = l_params
 
                 b3dObj.location = bounding_sphere[:3]
                 context.collection.objects.link(b3dObj)

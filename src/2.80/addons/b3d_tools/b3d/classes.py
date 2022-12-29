@@ -1690,7 +1690,12 @@ class b_40():
 		'description': '',
 		'default': 0
 	}
- 	#todo check
+	Unk_List = {
+		'prop': 'list1',
+		'type': fieldType.LIST,
+		'name': 'Неизв. параметры',
+		'description': '',
+	}
 
 
 perFaceBlock_8 = createTypeClass(pfb_8)

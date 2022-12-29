@@ -21,10 +21,16 @@ from bpy.types import UIList
 # log = logging.getLogger("common")
 # log.setLevel(logging.DEBUG)
 
+def getNonCopyName(name):
+    reIsCopy = re.compile(r'\.[0-9]*$')
+    matchInd = reIsCopy.search(name)
+    result = name
+    if matchInd:
+        result = name[:matchInd.span()[0]]
+    return result
 
 def isRootObj(obj):
     return obj.parent is None and obj.name[-4:] == '.b3d'
-
 
 def isEmptyName(name):
     reIsEmpty = re.compile(r'.*empty name.*')
@@ -139,6 +145,16 @@ def existsColPropertyByName(colProperty, value):
         if item.value == value:
             return True
     return False
+
+def getMaterialIndexInRES(matName):
+    resModules = bpy.context.scene.my_tool.resModules
+    delimiterInd = matName.find("_")
+    resModuleName = matName[:delimiterInd]
+    materialName = matName[delimiterInd+1:]
+    curModule = getColPropertyByName(resModules, resModuleName)
+    curMaterialInd = getColPropertyIndexByName(curModule.materials, materialName)
+    return curMaterialInd
+
 
 def createMaterials(resModule, palette, texturePath, imageFormat):
     materialList = resModule.materials
