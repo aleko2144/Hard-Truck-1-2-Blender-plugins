@@ -2160,7 +2160,7 @@ def read(file, context, op, filepath):
                 b3dObj[prop(b_36.R)] = bounding_sphere[3]
                 b3dObj[prop(b_36.Name1)] = name1
                 b3dObj[prop(b_36.Name2)] = name2
-                b3dObj[prop(b_36.MType)] = format
+                b3dObj[prop(b_36.MType)] = formatRaw
 
                 b3dObj.parent = context.scene.objects[objString[-2]]
                 context.collection.objects.link(b3dObj)
@@ -2232,7 +2232,7 @@ def read(file, context, op, filepath):
                 b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_37.R)] = bounding_sphere[3]
                 b3dObj[prop(b_37.Name1)] = groupName
-                b3dObj[prop(b_37.SType)] = format
+                b3dObj[prop(b_37.SType)] = formatRaw
 
                 b3dObj.parent = context.scene.objects[objString[-2]]
                 context.collection.objects.link(b3dObj)

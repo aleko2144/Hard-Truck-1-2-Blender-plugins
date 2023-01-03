@@ -687,7 +687,6 @@ def getFromAttributes(context, obj, attrs, bname, index):
 
     mytool = context.scene.my_tool
 
-
     if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
         and getattr(getattr(mytool, bname), "show_"+obj['prop']):
 
