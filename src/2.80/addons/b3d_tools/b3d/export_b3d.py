@@ -274,7 +274,14 @@ def export(file, generate_pro_file):
 	# curRoot = objs[0]
 	curRoot = bpy.context.object
 
-	rChild = curRoot.children
+	allObjs = curRoot.children
+
+	spaces = [cn for cn in allObjs if cn['block_type'] == 24]
+	other = [cn for cn in allObjs if cn['block_type'] != 24]
+
+	rChild = []
+	rChild.extend(spaces)
+	rChild.extend(other)
 
 	resModules = bpy.context.scene.my_tool.resModules
 	curModule = getColPropertyByName(resModules, curRoot.name[:-4])
@@ -299,10 +306,10 @@ def export(file, generate_pro_file):
 			elif obj['block_type'] == 21:
 				curMaxCnt = obj[prop(b_21.GroupCnt)]
 			exportBlock(obj, True, curLevel, curMaxCnt, [0], {}, file)
+
 			file.write(struct.pack("<i", 444))
 
 		obj = rChild[-1]
-
 		if obj['block_type'] == 10 or obj['block_type'] == 9:
 			curMaxCnt = 2
 		elif obj['block_type'] == 21:
@@ -488,7 +495,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 		blChildren = list(block.children)
 
-		blChildren.sort(key=lambda cn: cn['level_group'])
+		# blChildren.sort(key=lambda cn: cn['level_group'])
 		# blChildren.sort(key=lambda cn: cn.name, reverse=True)
 
 		writeName(objName, file)
@@ -554,7 +561,6 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8]]
 			for ch in allChildren:
 				obj = bpy.data.objects[ch.name]
-				print(obj.name)
 				someProps = getMeshProps(obj)
 				passToMesh[obj.name] = {
 					"offset": offset,
@@ -643,6 +649,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				log.info("{}_{}_".format(obj.name, poly.material_index))
 				l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name)
 				formatRaw = format_flags_attrs[poly.index].value
+				# formatRaw = 0 #temporary
 				file.write(struct.pack("<i", formatRaw))
 				file.write(struct.pack("<f", 1.0)) # TODO: not consts
 				file.write(struct.pack("<i", 32767)) # TODO: not consts
@@ -664,12 +671,12 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 				for i, vert in enumerate(poly.vertices):
 					file.write(struct.pack("<i", offset + vert))
-					for j in range(uvCount):
-						file.write(struct.pack("<f", uvs[i][0]))
-						file.write(struct.pack("<f", 1 - uvs[i][1]))
+					for k in range(uvCount):
+						file.write(struct.pack("<f", uvs[vert][0]))
+						file.write(struct.pack("<f", 1 - uvs[vert][1]))
 					if useNormals:
 						if normalSwitch:
-							file.write(struct.pack("<3f", *normals[i]))
+							file.write(struct.pack("<3f", *normals[vert]))
 						else:
 							file.write(struct.pack("<f", 1.0))
 
@@ -681,6 +688,8 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			file.write(struct.pack("<f", block[prop(b_9.Unk_R)]))
 
 			file.write(struct.pack("<i", len(block.children)))
+
+			blChildren.sort(key=lambda cn: cn['level_group'])
 
 			toProcessChild = True
 			curMaxCnt = 2
@@ -696,7 +705,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			file.write(struct.pack("<i", len(block.children)))
 
 			blChildren.sort(key=lambda cn: cn['level_group'])
-			log.debug(["{}_{}".format(cn['level_group'], cn.name) for cn in blChildren])
+			# log.debug(["{}_{}".format(cn['level_group'], cn.name) for cn in blChildren])
 
 			toProcessChild = True
 			curMaxCnt = 2
@@ -849,6 +858,8 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			file.write(struct.pack("<i", block[prop(b_21.Unk_Int2)]))
 
 			file.write(struct.pack("<i", len(block.children)))
+
+			blChildren.sort(key=lambda cn: cn['level_group'])
 
 			toProcessChild = True
 			curMaxCnt = block[prop(b_21.GroupCnt)]
@@ -1062,6 +1073,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				normalSwitch = False
 				l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name)
 				formatRaw = format_flags_attrs[poly.index].value
+				# formatRaw = 0
 				file.write(struct.pack("<i", formatRaw))
 				file.write(struct.pack("<f", 1.0)) # TODO: not consts
 				file.write(struct.pack("<i", 32767)) # TODO: not consts
@@ -1083,12 +1095,12 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 				for i, vert in enumerate(poly.vertices):
 					file.write(struct.pack("<i", offset + vert))
-					for j in range(uvCount):
-						file.write(struct.pack("<f", uvs[i][0]))
-						file.write(struct.pack("<f", 1 - uvs[i][1]))
+					for k in range(uvCount):
+						file.write(struct.pack("<f", uvs[vert][0]))
+						file.write(struct.pack("<f", 1 - uvs[vert][1]))
 					if useNormals:
 						if normalSwitch:
-							file.write(struct.pack("<3f", *normals[i]))
+							file.write(struct.pack("<3f", *normals[vert]))
 						else:
 							file.write(struct.pack("<f", 1.0))
 
@@ -1119,6 +1131,11 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 				offset += len(someProps[0])
 
+			#temporary
+			# if isSecondUvs:
+			# 	formatRaw = 258
+			# else:
+			# 	formatRaw = 2
 
 			extraUvCount = formatRaw >> 8
 			format = formatRaw & 0xFF
@@ -1128,13 +1145,9 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			elif format == 3:
 				normalSwitch = False
 
+
+
 			file.write(struct.pack("<i", formatRaw))
-
-			# if isSecondUvs:
-			# 	file.write(struct.pack("<i", 258))
-			# else:
-			# 	file.write(struct.pack("<i", 2))
-
 			file.write(struct.pack("<i", offset)) #Vertex count
 
 			for mesh in passToMesh.values():
@@ -1183,9 +1196,9 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				offset += len(someProps[0])
 
 			# if isSecondUvs:
-			# 	file.write(struct.pack("<i", 258))
+			# 	formatRaw = 258
 			# else:
-			# 	file.write(struct.pack("<i", 2))
+			# 	formatRaw = 2
 
 			extraUvCount = formatRaw >> 8
 			format = formatRaw & 0xFF
@@ -1439,7 +1452,7 @@ def forChild(object, root, file):
 
 				#type 8
 
-				if object['BType'] == 8:
+				if object['BType'] ==8:
 					export08(object, verticesL, file, faces, uvs)
 				else:
 					export35(object, verticesL, file, faces, uvs)
