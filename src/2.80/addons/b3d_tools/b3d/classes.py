@@ -1397,21 +1397,21 @@ class b_33():
 		'default': 0.0
 	}
 	Use_Lights = {
-		'prop': 'int1',
+		'prop': 'useLight',
 		'type': fieldType.INT,
 		'name': 'Исп. свет',
 		'description': '',
 		'default': 0
 	}
 	Light_Type = {
-		'prop': 'int2',
+		'prop': 'lType',
 		'type': fieldType.INT,
 		'name': 'Тип света',
 		'description': '',
 		'default': 0
 	}
 	Flag = {
-		'prop': 'int2',
+		'prop': 'flag',
 		'type': fieldType.INT,
 		'name': 'Флаг',
 		'description': '',
