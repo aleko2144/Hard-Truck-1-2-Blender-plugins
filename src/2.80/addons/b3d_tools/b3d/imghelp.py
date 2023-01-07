@@ -4,12 +4,7 @@ from .common import unmaskShort
 import logging
 import sys
 
-
 from ..common import log
-
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-# log = logging.getLogger("imghelp")
-# log.setLevel(logging.DEBUG)
 
 def parsePLM(filepath):
     colors = []

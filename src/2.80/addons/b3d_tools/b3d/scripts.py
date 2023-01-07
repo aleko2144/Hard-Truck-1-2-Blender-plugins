@@ -15,14 +15,12 @@ from ..common import (
 from .common import (
     getPolygonsBySelectedVertices,
     getSelectedVertices,
-	isRootObj
+	isRootObj,
+    isMeshBlock
 )
 from .classes import (
     fieldType, b_common
 )
-
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-# log = logging.getLogger("common")
 
 reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
 reb3dMesh = re.compile(r'.*b3dcopy.*')
@@ -183,7 +181,7 @@ def applyTransform(root):
             stack.append([directChild, prevSpace, prevSpaceCopy])
 
 
-def applyRemoveTransforms():
+def applyRemoveTransforms(self):
     toRemove = False
     for obj in (bpy.data.objects):
         if reb3dSpace.search(obj.name):
@@ -191,8 +189,10 @@ def applyRemoveTransforms():
             break
     if toRemove:
         removeTransforms()
+        self.report({'INFO'}, "Transforms removed")
     else:
         applyTransforms()
+        self.report({'INFO'}, "Transforms applied")
 
 def removeTransforms():
     spaces = [cn for cn in bpy.data.objects if reb3dSpace.search(cn.name)]
@@ -215,15 +215,17 @@ def removeTransforms():
     bpy.ops.object.delete()
 
 
-def showHideObjByType(type):
+def showHideObjByType(self, type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
     hiddenObj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type and cn.hide_get()]
     if len(objs) == len(hiddenObj):
         for obj in objs:
             obj.hide_set(False)
+        self.report({'INFO'}, "{} (block {}) objects are shown".format(len(objs), type))
     else:
         for obj in objs:
             obj.hide_set(True)
+        self.report({'INFO'}, "{} (block {}) objects are hidden".format(len(objs)))
 
 def showHideObjTreeByType(type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
@@ -298,33 +300,6 @@ def getHierarchyRoots(root):
     res.extend(roots)
 
     return res
-
-
-# def getNBlockHierarchy(root, block_type, rootnum=0, curlevel=0, arr=[]):
-#     for obj in root.children:
-#         if obj['block_type'] == block_type:
-#             print("block_type block")
-#             arr.append([rootnum, curlevel, obj])
-#             getNBlockHierarchy(obj, block_type, rootnum, curlevel+1, arr)
-#             rootnum+=1
-#         elif obj['block_type'] == 18:
-#             print("ref block")
-#             refObj = bpy.data.objects[obj[prop(b_18.Add_Name)]]
-#             arr.append([rootnum, curlevel, refObj])
-#             getNBlockHierarchy(refObj, block_type, rootnum, curlevel+1, arr)
-#             rootnum+=1
-#         getNBlockHierarchy(obj, block_type, rootnum, curlevel, arr)
-
-def isMeshBlock(obj):
-    # 18 - for correct transform apply
-    return obj.get("block_type") is not None \
-        and (obj["block_type"]==8 or obj["block_type"]==35\
-        or obj["block_type"]==28 \
-        # or obj["block_type"]==18
-        )
-
-def isRefBlock(obj):
-    return obj.get("block_type") is not None and obj["block_type"]==18
 
 
 def processLOD(root, state, explevel = 0, curlevel = -1):
@@ -829,14 +804,10 @@ def createCustomAttribute(mesh, values, zclass, zobj):
     elif ctype == 'pfb':
         domain = 'FACE'
 
-    # log.debug(domain)
-    # log.debug(zobj['type'])
     if zobj['type'] == fieldType.FLOAT:
         ztype = 'FLOAT'
         mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
         attr = mesh.attributes[zobj['prop']].data
-        # log.debug(len(attr))
-        # log.debug(len(values))
         for i in range(len(attr)):
             setattr(attr[i], "value", values[i])
 
@@ -844,8 +815,6 @@ def createCustomAttribute(mesh, values, zclass, zobj):
         ztype = 'FLOAT_VECTOR'
         mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
         attr = mesh.attributes[zobj['prop']].data
-        # log.debug(len(attr))
-        # log.debug(len(values))
         for i in range(len(attr)):
             setattr(attr[i], "vector", values[i])
 
@@ -853,8 +822,6 @@ def createCustomAttribute(mesh, values, zclass, zobj):
         ztype = 'INT'
         mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
         attr = mesh.attributes[zobj['prop']].data
-        # log.debug(len(attr))
-        # log.debug(len(values))
         for i in range(len(attr)):
             setattr(attr[i], "value", values[i])
 
@@ -862,7 +829,5 @@ def createCustomAttribute(mesh, values, zclass, zobj):
         ztype = 'INT'
         mesh.attributes.new(name=zobj['prop'], type=ztype, domain=domain)
         attr = mesh.attributes[zobj['prop']].data
-        # log.debug(len(attr))
-        # log.debug(len(values))
         for i in range(len(attr)):
             setattr(attr[i], "value", values[i])

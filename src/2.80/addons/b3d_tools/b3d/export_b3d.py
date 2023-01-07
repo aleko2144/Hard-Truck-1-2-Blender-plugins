@@ -78,6 +78,7 @@ from .common import (
 	getMaterialIndexInRES,
 	getNonCopyName,
 	isRootObj,
+	getRootObj,
 	isEmptyName
 )
 
@@ -272,9 +273,15 @@ def export(file, generate_pro_file):
 
 	objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
 	# curRoot = objs[0]
-	curRoot = bpy.context.object
+	obj = bpy.context.object
+	curRoot = getRootObj(obj)
 
-	allObjs = curRoot.children
+	allObjs = []
+
+	if isRootObj(obj):
+		allObjs = curRoot.children
+	else:
+		allObjs = [obj]
 
 	spaces = [cn for cn in allObjs if cn['block_type'] == 24]
 	other = [cn for cn in allObjs if cn['block_type'] != 24]

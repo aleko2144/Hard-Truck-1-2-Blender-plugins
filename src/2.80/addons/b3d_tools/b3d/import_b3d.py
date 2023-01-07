@@ -64,8 +64,6 @@ from .scripts import (
 from .imghelp import TXRtoTGA32
 from .imghelp import parsePLM
 from .common import (
-    ShowMessageBox,
-    Vector3F,
     createMaterials,
     getColPropertyByName,
     getColPropertyIndexByName,
@@ -96,9 +94,6 @@ import bmesh
 
 from ..common import log
 
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-# log = logging.getLogger("import_b3d")
-# log.setLevel(logging.DEBUG)
 
 def thread_import_b3d(self, files, context):
     for b3dfile in files:
@@ -348,15 +343,15 @@ def parseRAW(file, context, op, filepath):
     b3dObj2 = bpy.data.objects.new(basename2, b3dMesh2)
     context.collection.objects.link(b3dObj2)
 
-def importTextures(filepath, resModules, op):
+def importTextures(filepath, resModules, self):
 
     commonPalette = []
 
     noextPath, ext = os.path.splitext(filepath)
 
     resPath = ''
-    if len(op.res_location) > 0 and os.path.exists(op.res_location):
-        resPath = op.res_location
+    if len(self.res_location) > 0 and os.path.exists(self.res_location):
+        resPath = self.res_location
     else:
         resPath = os.path.join(noextPath + ".res")
 
@@ -373,7 +368,7 @@ def importTextures(filepath, resModules, op):
     if resModule:
         #delete old materials
         for m in [cn.value for cn in resModule.materials]:
-            mat = bpy.data.materials["{}_{}".format(res_basename, m)]
+            mat = bpy.data.materials.get("{}_{}".format(res_basename, m))
             if mat:
                 bpy.data.materials.remove(mat)
         #delete RES module
@@ -385,19 +380,17 @@ def importTextures(filepath, resModules, op):
     resModule = resModules.add()
     resModule.value = res_basename
 
-    if op.to_import_textures:
-        if op.to_unpack_res:
+    if self.to_import_textures:
+        if self.to_unpack_res:
             unpackRES(resModule, resPath, True)
         else:
             unpackRES(resModule, resPath, False)
 
-    if op.to_import_textures and not os.path.exists(commonResPath):
-        # ShowMessageBox("Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.",
-        # "COMMON.res wrong path",
-        # "ERROR")
-        op.to_import_textures = False
+    if self.to_import_textures and not os.path.exists(commonResPath):
+        self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
+        self.to_import_textures = False
 
-    if op.to_import_textures and os.path.exists(commonResPath):
+    if self.to_import_textures and os.path.exists(commonResPath):
         # commonPath = os.path.join(r"D:\_PROJECTS\DB2\Hard Truck 2", r"COMMON")
         # commonResPath = os.path.join(commonPath, r"COMMON.RES")
         commonPath = os.path.join(os.path.dirname(commonResPath))
@@ -421,7 +414,7 @@ def importTextures(filepath, resModules, op):
 
         #2. Распаковка .RES и конвертация .txr и .msk в .tga 32bit
         # txrFolder = os.path.join(texturePath, "txr")
-        if op.to_convert_txr:
+        if self.to_convert_txr:
             folder_content = os.listdir(texturePath)
             reTXR = re.compile(r'\.txr')
             for path in folder_content:
@@ -430,9 +423,9 @@ def importTextures(filepath, resModules, op):
                     TXRtoTGA32(fullpath)
 
         #3. Парсинг и добавление материалов
-        createMaterials(resModule, commonPalette, texturePath, op.textures_format)
+        createMaterials(resModule, commonPalette, texturePath, self.textures_format)
 
-def read(file, context, op, filepath):
+def read(file, context, self, filepath):
     if file.read(3) == b'b3d':
         log.info("correct file")
     else:
@@ -451,8 +444,7 @@ def read(file, context, op, filepath):
 
     resModules = getattr(mytool, "resModules")
 
-    importTextures(filepath, resModules, op)
-
+    importTextures(filepath, resModules, self)
 
     noextPath, ext = os.path.splitext(filepath)
     basepath = os.path.dirname(filepath)
@@ -461,8 +453,8 @@ def read(file, context, op, filepath):
 
     #Пути
     resPath = ''
-    if len(op.res_location) > 0 and os.path.exists(op.res_location):
-        resPath = op.res_location
+    if len(self.res_location) > 0 and os.path.exists(self.res_location):
+        resPath = self.res_location
     else:
         resPath = os.path.join(noextPath + ".res")
 
@@ -473,7 +465,7 @@ def read(file, context, op, filepath):
 
     # commonPath = os.path.join(bpy.context.preferences.addons['import_b3d'].preferences.COMMON_RES_Path, r"COMMON")
 
-    blocksToImport = op.blocks_to_import
+    blocksToImport = self.blocks_to_import
 
     usedBlocks = {}
     for block in blocksToImport:
@@ -941,7 +933,7 @@ def read(file, context, op, filepath):
                 realName = b3dObj.name
                 objString[len(objString)-1] = b3dObj.name
 
-                if op.to_import_textures:
+                if self.to_import_textures:
                     #For assignMaterialByVertices just-in-case
                     # bpy.ops.object.mode_set(mode = 'OBJECT')
                     #Set appropriate meaterials
@@ -953,9 +945,9 @@ def read(file, context, op, filepath):
 
                             for vertArr in texnums[texnum]:
                                 newVertArr = getUsedFace(vertArr, oldNewTransf)
-                                # op.lock.acquire()
+                                # self.lock.acquire()
                                 assignMaterialByVertices(b3dObj, newVertArr, lastIndex)
-                                # op.lock.release()
+                                # self.lock.release()
                     else:
                         for texnum in texnums:
                             mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
@@ -1673,7 +1665,7 @@ def read(file, context, op, filepath):
                                 uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
                                 customUV.data[loop].uv = uvsMesh
 
-                if op.to_import_textures:
+                if self.to_import_textures:
                     #For assignMaterialByVertices just-in-case
                     # bpy.ops.object.mode_set(mode = 'OBJECT')
                     #Set appropriate meaterials
@@ -1684,9 +1676,9 @@ def read(file, context, op, filepath):
                             lastIndex = len(b3dMesh.materials)-1
 
                             for vertArr in texnums[texnum]:
-                                # op.lock.acquire()
+                                # self.lock.acquire()
                                 assignMaterialByVertices(b3dObj, vertArr, lastIndex)
-                                # op.lock.release()
+                                # self.lock.release()
                     else:
                         for texnum in texnums:
                             mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
@@ -2076,7 +2068,7 @@ def read(file, context, op, filepath):
                 createCustomAttribute(b3dMesh, curNormalsOff, pvb_35, pvb_35.Normal_Switch)
                 createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
-                if op.to_import_textures:
+                if self.to_import_textures:
                     mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texNum)].value)]
                     b3dMesh.materials.append(mat)
 

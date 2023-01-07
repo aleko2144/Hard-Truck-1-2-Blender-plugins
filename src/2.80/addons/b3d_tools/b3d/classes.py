@@ -19,6 +19,26 @@ from bpy.types import (Panel,
 
 from ..common import log
 
+# Dynamic block exmaple
+# block_5 = type("block_5", (bpy.types.PropertyGroup,), {
+#     '__annotations__': {
+#         'name': StringProperty(
+#                 name="Имя блока",
+#                 default="",
+#                 maxlen=30,
+#             ),
+#         'XYZ': FloatVectorProperty(
+#                 name='Координаты блока',
+#                 description='',
+#                 default=(0.0, 0.0, 0.0)
+#             ),
+#         'R': FloatProperty(
+#                 name = "Радиус",
+#                 description = "",
+
+#             )
+#     }
+# })
 
 class fieldType(enum.Enum):
 	STRING = 1
@@ -449,25 +469,6 @@ class b_5():
         'default': 0.0
     }
 
-# block_5 = type("block_5", (bpy.types.PropertyGroup,), {
-#     '__annotations__': {
-#         'name': StringProperty(
-#                 name="Имя блока",
-#                 default="",
-#                 maxlen=30,
-#             ),
-#         'XYZ': FloatVectorProperty(
-#                 name='Координаты блока',
-#                 description='',
-#                 default=(0.0, 0.0, 0.0)
-#             ),
-#         'R': FloatProperty(
-#                 name = "Радиус",
-#                 description = "",
-
-#             )
-#     }
-# })
 
 class b_6():
 	XYZ = {

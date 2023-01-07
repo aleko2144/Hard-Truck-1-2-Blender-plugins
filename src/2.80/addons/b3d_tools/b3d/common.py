@@ -7,20 +7,6 @@ import re
 
 from ..common import log
 
-from bpy.props import (
-    FloatProperty,
-    IntProperty,
-    FloatVectorProperty,
-    BoolProperty,
-    StringProperty,
-    PointerProperty
-)
-from bpy.types import UIList
-
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-# log = logging.getLogger("common")
-# log.setLevel(logging.DEBUG)
-
 def getNonCopyName(name):
     reIsCopy = re.compile(r'\.[0-9]*$')
     matchInd = reIsCopy.search(name)
@@ -32,17 +18,26 @@ def getNonCopyName(name):
 def isRootObj(obj):
     return obj.parent is None and obj.name[-4:] == '.b3d'
 
+def getRootObj(obj):
+    result = obj
+    while not isRootObj(result):
+        result = result.parent
+    return result
+
 def isEmptyName(name):
     reIsEmpty = re.compile(r'.*empty name.*')
     return reIsEmpty.search(name)
 
-def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+def isMeshBlock(obj):
+    # 18 - for correct transform apply
+    return obj.get("block_type") is not None \
+        and (obj["block_type"]==8 or obj["block_type"]==35\
+        or obj["block_type"]==28 \
+        # or obj["block_type"]==18
+        )
 
-    def draw(self, context):
-        self.layout.label(text=message)
-
-    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
-
+def isRefBlock(obj):
+    return obj.get("block_type") is not None and obj["block_type"]==18
 
 def unmaskShort(num):
     bits = [int(digit) for digit in bin(num)[2:]]
@@ -105,24 +100,6 @@ class HTMaterial():
         self.usecol = False # bool
         self.wave = False # bool
 
-class Vector3F():
-
-    def __init__(self, file=None, tuple=None):
-        if file != None:
-            tpl = struct.unpack("<3f", file.read(12))
-            self.x = tpl[0]
-            self.y = tpl[1]
-            self.z = tpl[2]
-        elif tuple != None:
-            self.x = tuple[0]
-            self.y = tuple[1]
-            self.z = tuple[2]
-        else:
-            self.x = 0
-            self.y = 0
-            self.z = 0
-
-
 def getColPropertyByName(colProperty, value):
     result = None
     for item in colProperty:
@@ -138,7 +115,6 @@ def getColPropertyIndexByName(colProperty, value):
             result = idx
             break
     return result
-
 
 def existsColPropertyByName(colProperty, value):
     for item in colProperty:

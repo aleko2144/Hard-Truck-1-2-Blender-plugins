@@ -111,18 +111,6 @@ class ImportB3D(Operator, ImportHelper):
         wm.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
-
-    # def thread_import_b3d(self, files, context):
-    #     for b3dfile in files:
-    #         filepath = os.path.join(self.directory, b3dfile.name)
-
-    #         print('Importing file', filepath)
-    #         t = time.mktime(datetime.datetime.now().timetuple())
-    #         with open(filepath, 'rb') as file:
-    #             import_b3d.read(file, context, self, filepath)
-    #         t = time.mktime(datetime.datetime.now().timetuple()) - t
-    #         print('Finished importing in', t, 'seconds')
-
     def execute(self, context):
         evens = [cn for i,cn in enumerate(self.files) if i%2==0]
         odds = [cn for i,cn in enumerate(self.files) if i%2==1]
@@ -138,17 +126,6 @@ class ImportB3D(Operator, ImportHelper):
 
         t1.join()
         t2.join()
-
-        # for b3dfile in self.files:
-        #     filepath = os.path.join(self.directory, b3dfile.name)
-
-        #     print('Importing file', filepath)
-        #     t = time.mktime(datetime.datetime.now().timetuple())
-        #     with open(filepath, 'rb') as file:
-        #         import_b3d.read(file, context, self, filepath)
-        #     t = time.mktime(datetime.datetime.now().timetuple()) - t
-        #     print('Finished importing in', t, 'seconds')
-
 
         tt = time.mktime(datetime.datetime.now().timetuple()) - tt
         print('All imported in', tt, 'seconds')

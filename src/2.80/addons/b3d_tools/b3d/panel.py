@@ -1648,7 +1648,7 @@ class ApplyTransformsOperator(bpy.types.Operator):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		applyRemoveTransforms()
+		applyRemoveTransforms(self)
 
 		return {'FINISHED'}
 
@@ -1661,7 +1661,7 @@ class ShowHideCollisionsOperator(bpy.types.Operator):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		showHideObjByType(23)
+		showHideObjByType(self, 23)
 
 		return {'FINISHED'}
 
@@ -1707,6 +1707,7 @@ class ShowLODOperator(bpy.types.Operator):
 
 		for obj in objs:
 			showLOD(obj)
+		self.report({'INFO'}, "{} LOD objects(block 10) are shown".format(len(objs)))
 
 		return {'FINISHED'}
 
@@ -1726,6 +1727,7 @@ class HideLODOperator(bpy.types.Operator):
 
 		for obj in objs:
 			hideLOD(obj)
+		self.report({'INFO'}, "{} LOD objects(block 10) are hidden".format(len(objs)))
 
 		return {'FINISHED'}
 
@@ -1748,6 +1750,8 @@ class ShowConditionalsOperator(bpy.types.Operator):
 
 		for obj in objs:
 			showConditionals(obj, self.group)
+		self.report({'INFO'}, "{} Conditional objects(block 21) are shown".format(len(objs)))
+
 
 		return {'FINISHED'}
 
@@ -1769,6 +1773,7 @@ class HideConditionalsOperator(bpy.types.Operator):
 
 		for obj in objs:
 			hideConditionals(obj, self.group)
+		self.report({'INFO'}, "{} Conditional objects(block 21) are hidden".format(len(objs)))
 
 		return {'FINISHED'}
 
@@ -2484,12 +2489,9 @@ class OBJECT_PT_b3d_blocks_panel(bpy.types.Panel):
 
 	def draw(self, context):
 		layout = self.layout
-		# print(dir(context))
 		mytool = context.scene.my_tool
 
 		type = mytool.addBlocks_enum
-
-		# print(dir(mytool))
 
 		layout.prop(mytool, "addBlocks_enum")
 
@@ -2617,16 +2619,17 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 		box = self.layout.box()
 
 		maskfiles_index = scene.maskfiles_index
-		curMaskfile = curResModule.maskfiles[maskfiles_index]
+		if len(curResModule.maskfiles):
+			curMaskfile = curResModule.maskfiles[maskfiles_index]
 
-		box.prop(curMaskfile, "is_noload", text="Noload")
+			box.prop(curMaskfile, "is_noload", text="Noload")
 
-		split = box.split(factor=0.3)
-		split.prop(curMaskfile, "is_someint", text="?Someint?")
-		col = split.column()
-		col.prop(curMaskfile, "someint")
+			split = box.split(factor=0.3)
+			split.prop(curMaskfile, "is_someint", text="?Someint?")
+			col = split.column()
+			col.prop(curMaskfile, "someint")
 
-		col.enabled = curMaskfile.is_someint
+			col.enabled = curMaskfile.is_someint
 
 
 class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
@@ -2691,18 +2694,19 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 		box = self.layout.box()
 
 		textureIndex = scene.textures_index
-		curTexture = curResModule.textures[textureIndex]
+		if (len(curResModule.textures)):
+			curTexture = curResModule.textures[textureIndex]
 
-		box.prop(curTexture, "is_memfix", text="Memfix")
-		box.prop(curTexture, "is_noload", text="Noload")
-		box.prop(curTexture, "is_bumpcoord", text="Bympcoord")
+			box.prop(curTexture, "is_memfix", text="Memfix")
+			box.prop(curTexture, "is_noload", text="Noload")
+			box.prop(curTexture, "is_bumpcoord", text="Bympcoord")
 
-		split = box.split(factor=0.3)
-		split.prop(curTexture, "is_someint", text="?Someint?")
-		col = split.column()
-		col.prop(curTexture, "someint")
+			split = box.split(factor=0.3)
+			split.prop(curTexture, "is_someint", text="?Someint?")
+			col = split.column()
+			col.prop(curTexture, "someint")
 
-		col.enabled = curTexture.is_someint
+			col.enabled = curTexture.is_someint
 
 class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_materials_panel"
@@ -2766,108 +2770,109 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 		box = self.layout.box()
 
 		textureIndex = scene.materials_index
-		curMaterial = curResModule.materials[textureIndex]
+		if (len(curResModule.materials)):
+			curMaterial = curResModule.materials[textureIndex]
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_reflect", text="Reflect")
-		col = split.column()
-		col.prop(curMaterial, "reflect")
-		col.enabled = curMaterial.is_reflect
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_reflect", text="Reflect")
+			col = split.column()
+			col.prop(curMaterial, "reflect")
+			col.enabled = curMaterial.is_reflect
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_specular", text="Specular")
-		col = split.column()
-		col.prop(curMaterial, "specular")
-		col.enabled = curMaterial.is_specular
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_specular", text="Specular")
+			col = split.column()
+			col.prop(curMaterial, "specular")
+			col.enabled = curMaterial.is_specular
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_transp", text="Transparency")
-		col = split.column()
-		col.prop(curMaterial, "transp")
-		col.enabled = curMaterial.is_transp
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_transp", text="Transparency")
+			col = split.column()
+			col.prop(curMaterial, "transp")
+			col.enabled = curMaterial.is_transp
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_rot", text="Rotation")
-		col = split.column()
-		col.prop(curMaterial, "rot")
-		col.enabled = curMaterial.is_rot
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_rot", text="Rotation")
+			col = split.column()
+			col.prop(curMaterial, "rot")
+			col.enabled = curMaterial.is_rot
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_col", text="Color")
-		col = split.column()
-		col.prop(curMaterial, "col")
-		col.enabled = curMaterial.is_col
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_col", text="Color")
+			col = split.column()
+			col.prop(curMaterial, "col")
+			col.enabled = curMaterial.is_col
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_tex", text="Texture TEX")
-		col = split.column()
-		col.prop(curMaterial, "tex")
-		col.enabled = curMaterial.is_tex
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_tex", text="Texture TEX")
+			col = split.column()
+			col.prop(curMaterial, "tex")
+			col.enabled = curMaterial.is_tex
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_ttx", text="Texture TTX")
-		col = split.column()
-		col.prop(curMaterial, "ttx")
-		col.enabled = curMaterial.is_ttx
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_ttx", text="Texture TTX")
+			col = split.column()
+			col.prop(curMaterial, "ttx")
+			col.enabled = curMaterial.is_ttx
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_itx", text="Texture ITX")
-		col = split.column()
-		col.prop(curMaterial, "itx")
-		col.enabled = curMaterial.is_itx
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_itx", text="Texture ITX")
+			col = split.column()
+			col.prop(curMaterial, "itx")
+			col.enabled = curMaterial.is_itx
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_att", text="Att")
-		col = split.column()
-		col.prop(curMaterial, "att")
-		col.enabled = curMaterial.is_att
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_att", text="Att")
+			col = split.column()
+			col.prop(curMaterial, "att")
+			col.enabled = curMaterial.is_att
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_msk", text="Maskfile")
-		col = split.column()
-		col.prop(curMaterial, "msk")
-		col.enabled = curMaterial.is_msk
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_msk", text="Maskfile")
+			col = split.column()
+			col.prop(curMaterial, "msk")
+			col.enabled = curMaterial.is_msk
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_power", text="Power")
-		col = split.column()
-		col.prop(curMaterial, "power")
-		col.enabled = curMaterial.is_power
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_power", text="Power")
+			col = split.column()
+			col.prop(curMaterial, "power")
+			col.enabled = curMaterial.is_power
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_coord", text="Coord")
-		col = split.column()
-		col.prop(curMaterial, "coord")
-		col.enabled = curMaterial.is_coord
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_coord", text="Coord")
+			col = split.column()
+			col.prop(curMaterial, "coord")
+			col.enabled = curMaterial.is_coord
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_env", text="Env")
-		col = split.column()
-		col.prop(curMaterial, "envId")
-		col.prop(curMaterial, "env")
-		col.enabled = curMaterial.is_env
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_env", text="Env")
+			col = split.column()
+			col.prop(curMaterial, "envId")
+			col.prop(curMaterial, "env")
+			col.enabled = curMaterial.is_env
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_rotPoint", text="Rotation Center")
-		col = split.column()
-		col.prop(curMaterial, "rotPoint")
-		col.enabled = curMaterial.is_rotPoint
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_rotPoint", text="Rotation Center")
+			col = split.column()
+			col.prop(curMaterial, "rotPoint")
+			col.enabled = curMaterial.is_rotPoint
 
-		split = box.split(factor=0.3)
-		split.prop(curMaterial, "is_move", text="Movement")
-		col = split.column()
-		col.prop(curMaterial, "move")
-		col.enabled = curMaterial.is_move
+			split = box.split(factor=0.3)
+			split.prop(curMaterial, "is_move", text="Movement")
+			col = split.column()
+			col.prop(curMaterial, "move")
+			col.enabled = curMaterial.is_move
 
-		box.prop(curMaterial, "is_noz", text="No Z")
-		box.prop(curMaterial, "is_nof", text="No F")
-		box.prop(curMaterial, "is_notile", text="No tiling")
-		box.prop(curMaterial, "is_notileu", text="No tiling U")
-		box.prop(curMaterial, "is_notilev", text="No tiling V")
-		box.prop(curMaterial, "is_alphamirr", text="Alphamirr")
-		box.prop(curMaterial, "is_bumpcoord", text="Bympcoord")
-		box.prop(curMaterial, "is_usecol", text="UseCol")
-		box.prop(curMaterial, "is_wave", text="Wave")
+			box.prop(curMaterial, "is_noz", text="No Z")
+			box.prop(curMaterial, "is_nof", text="No F")
+			box.prop(curMaterial, "is_notile", text="No tiling")
+			box.prop(curMaterial, "is_notileu", text="No tiling U")
+			box.prop(curMaterial, "is_notilev", text="No tiling V")
+			box.prop(curMaterial, "is_alphamirr", text="Alphamirr")
+			box.prop(curMaterial, "is_bumpcoord", text="Bympcoord")
+			box.prop(curMaterial, "is_usecol", text="UseCol")
+			box.prop(curMaterial, "is_wave", text="Wave")
 
 
 
