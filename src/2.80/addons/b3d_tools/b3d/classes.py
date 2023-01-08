@@ -1498,7 +1498,13 @@ class b_34():
 		'description': '',
 		'default': 0.0
 	}
-	#todo check
+	UnkInt = {
+		'prop': 'int1',
+		'type': fieldType.INT,
+		'name': 'Неизв.',
+		'description': '',
+		'default': 0
+	}
 
 class b_35():
 	XYZ = {

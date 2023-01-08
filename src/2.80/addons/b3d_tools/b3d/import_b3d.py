@@ -403,12 +403,12 @@ def importTextures(filepath, resModules, self):
 
         #1. Получить общую для большинства палитру Common.plm
         if os.path.exists(commonResPath):
-            commonResModule = getColPropertyByName(resModules, "common")
-            if not commonResModule:
-                commonResModule = resModules.add()
-                commonResModule.value = "common"
-                unpackRES(commonResModule, commonResPath)
-                commonPalette = parsePLM(palettePath)
+            # commonResModule = getColPropertyByName(resModules, "common")
+            # if not commonResModule:
+            commonResModule = resModules.add()
+            commonResModule.value = "common"
+            unpackRES(commonResModule, commonResPath)
+            commonPalette = parsePLM(palettePath)
         else:
             log.warning("Failed to unpack COMMON.RES")
 
@@ -1356,16 +1356,13 @@ def read(file, context, self, filepath):
                 for i in range(vertsBlockNum):
                     vertsInBlock = struct.unpack("<i",file.read(4))[0]
 
-                    if (vertsInBlock == 3):
-                        faces.append([num+1,num+2,num+0])
-                        num+=3
-                    elif(vertsInBlock ==4):
-                        # faces.append([num+1,num+2,num+0,num+2,num+3,num+1])
-                        faces.append([num+0,num+1,num+2,num+3])
-                        num+=4
 
+                    face = []
                     for j in range(vertsInBlock):
+                        face.append(num)
+                        num+=1
                         l_vertexes.append(struct.unpack("<3f",file.read(12)))
+                    faces.append(face)
 
                 if not usedBlocks[str(type)]:
                     continue
@@ -1554,9 +1551,9 @@ def read(file, context, self, filepath):
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 sprite_center = struct.unpack("<3f",file.read(12))
 
-                cnt = struct.unpack("<i",file.read(4))[0]
+                polygonCount = struct.unpack("<i",file.read(4))[0]
 
-                for i in range(cnt):
+                for i in range(polygonCount):
 
                     formatRaw = struct.unpack("<i",file.read(4))[0]
                     format = formatRaw & 0xFFFF
@@ -1623,7 +1620,7 @@ def read(file, context, self, filepath):
                             if over_uv: #not empty
                                 overriden_uvs[u].append((over_uv[faces_new[t][0]], over_uv[faces_new[t][1]], over_uv[faces_new[t][2]]))
 
-                        # store face indexes for setting uv coords later
+                    # store face indexes for setting uv coords later
                         uv_indexes.append(faces_new[t])
                         formats.append(formatRaw)
                         unkFs.append(unkF)
@@ -1644,26 +1641,24 @@ def read(file, context, self, filepath):
                 Tr.join()
 
                 for u, uvMap in enumerate(vertex_block_uvs):
-                    if len(uvMap):
-                        customUV = b3dMesh.uv_layers.new()
-                        customUV.name = "UVmapVert{}".format(u)
-                        uvsMesh = []
+                    customUV = b3dMesh.uv_layers.new()
+                    customUV.name = "UVmapVert{}".format(u)
+                    uvsMesh = []
 
-                        for i, texpoly in enumerate(b3dMesh.polygons):
-                            for j,loop in enumerate(texpoly.loop_indices):
-                                uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                                customUV.data[loop].uv = uvsMesh
+                    for i, texpoly in enumerate(b3dMesh.polygons):
+                        for j,loop in enumerate(texpoly.loop_indices):
+                            uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                            customUV.data[loop].uv = uvsMesh
 
                 for u, uvOver in enumerate(overriden_uvs):
-                    if len(uvOver):
-                        customUV = b3dMesh.uv_layers.new()
-                        customUV.name = "UVmapPoly{}".format(u)
-                        uvsMesh = []
+                    customUV = b3dMesh.uv_layers.new()
+                    customUV.name = "UVmapPoly{}".format(u)
+                    uvsMesh = []
 
-                        for i, texpoly in enumerate(b3dMesh.polygons):
-                            for j,loop in enumerate(texpoly.loop_indices):
-                                uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
-                                customUV.data[loop].uv = uvsMesh
+                    for i, texpoly in enumerate(b3dMesh.polygons):
+                        for j,loop in enumerate(texpoly.loop_indices):
+                            uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
+                            customUV.data[loop].uv = uvsMesh
 
                 if self.to_import_textures:
                     #For assignMaterialByVertices just-in-case
@@ -1869,9 +1864,12 @@ def read(file, context, self, filepath):
                 file.read(4) #skipped Int
                 num = struct.unpack("<i",file.read(4))[0]
                 l_coords = []
+
+                unknown1 = 0
+
                 for i in range(num):
                     l_coords.append(struct.unpack("<3f",file.read(12)))
-                    unknown1 = struct.unpack("<f",file.read(4))
+                    unknown1 = struct.unpack("<i",file.read(4))[0]
 
                 if not usedBlocks[str(type)]:
                     continue
@@ -1896,6 +1894,7 @@ def read(file, context, self, filepath):
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_34.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_34.R)] = bounding_sphere[3]
+                b3dObj[prop(b_34.UnkInt)] = unknown1
 
                 b3dObj.parent = context.scene.objects[objString[-2]]
                 context.collection.objects.link(b3dObj)

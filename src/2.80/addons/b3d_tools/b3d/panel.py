@@ -1674,7 +1674,7 @@ class ShowHideRoomBordersOperator(bpy.types.Operator):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		showHideObjByType(30)
+		showHideObjByType(self, 30)
 
 		return {'FINISHED'}
 
@@ -1687,7 +1687,7 @@ class ShowHideGeneratorsOperator(bpy.types.Operator):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		showHideObjByType(40)
+		showHideObjByType(self, 40)
 
 		return {'FINISHED'}
 

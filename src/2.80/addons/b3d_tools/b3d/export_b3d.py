@@ -312,7 +312,7 @@ def export(file, generate_pro_file):
 				curMaxCnt = 2
 			elif obj['block_type'] == 21:
 				curMaxCnt = obj[prop(b_21.GroupCnt)]
-			exportBlock(obj, True, curLevel, curMaxCnt, [0], {}, file)
+			exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
 			file.write(struct.pack("<i", 444))
 
@@ -321,7 +321,7 @@ def export(file, generate_pro_file):
 			curMaxCnt = 2
 		elif obj['block_type'] == 21:
 			curMaxCnt = obj[prop(b_21.GroupCnt)]
-		exportBlock(obj, True, curLevel, curMaxCnt, [0], {}, file)
+		exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
 	# clone_node()
 	# forChild(bpy.data.objects['b3d_temporary'],True, file)
@@ -487,7 +487,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 	if objType != None:
 
-		log.debug("{}_{}_{}".format(curLevel, block['level_group'], block.name))
+		log.debug("{}_{}_{}_{}".format(block['block_type'], curLevel, block['level_group'], block.name))
 
 		if len(curGroups) <= curLevel:
 			curGroups.append(0)
@@ -565,7 +565,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			writeName(block[prop(b_6.Name2)], file)
 
 			offset = 0
-			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8]]
+			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
 			for ch in allChildren:
 				obj = bpy.data.objects[ch.name]
 				someProps = getMeshProps(obj)
@@ -603,7 +603,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			writeName(block[prop(b_7.Name1)], file)
 
 			offset = 0
-			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8]]
+			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
 			for ch in allChildren:
 				obj = bpy.data.objects[ch.name]
 				someProps = getMeshProps(obj)
@@ -648,12 +648,13 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			format_flags_attrs = obj.data.attributes[prop(pfb_8.Format_Flags)].data
 
+			mesh = block.data
+
 			for poly in polygons:
 				format = 0
 				uvCount = 0
 				useNormals = False
 				normalSwitch = False
-				log.info("{}_{}_".format(obj.name, poly.material_index))
 				l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name)
 				formatRaw = format_flags_attrs[poly.index].value
 				# formatRaw = 0 #temporary
@@ -676,11 +677,16 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					else:
 						normalSwitch = False
 
+				l_uvs = {}
+				for li in poly.loop_indices:
+					vi = mesh.loops[li].vertex_index
+					l_uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+
 				for i, vert in enumerate(poly.vertices):
 					file.write(struct.pack("<i", offset + vert))
 					for k in range(uvCount):
-						file.write(struct.pack("<f", uvs[vert][0]))
-						file.write(struct.pack("<f", 1 - uvs[vert][1]))
+						file.write(struct.pack("<f", l_uvs[vert][0]))
+						file.write(struct.pack("<f", 1 - l_uvs[vert][1]))
 					if useNormals:
 						if normalSwitch:
 							file.write(struct.pack("<3f", *normals[vert]))
@@ -968,6 +974,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			file.write(struct.pack("<3f", *sprite_center))
 
 
+			format_flags_attrs = obj.data.attributes[prop(pfb_28.Format_Flags)].data
 			someProps = getMeshProps(obj)
 
 			l_verts = someProps[0]
@@ -978,18 +985,21 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			log.debug(l_uvs)
 
-			if len(l_verts) != 4:
-				file.write(struct.pack("<f", 0)) #Vertex Count
-			else:
-				file.write(struct.pack("<f", 1)) # always 4 point plane
+			file.write(struct.pack("<i", len(l_polygons)))
 
-				file.write(struct.pack("<f", 2)) # format with UVs TODO: not consts
+			for poly in l_polygons:
+				verts = poly.vertices
+
+				formatRaw = format_flags_attrs[poly.index].value
+
+				file.write(struct.pack("<i", formatRaw)) # format with UVs TODO: not consts
 				file.write(struct.pack("<f", 1.0)) # TODO: not consts
 				file.write(struct.pack("<i", 32767)) # TODO: not consts
 				file.write(struct.pack("<i", getMaterialIndexInRES(l_material)))
-				for i, vert in enumerate(l_verts):
-					scale_u = sprite_center[1] - vert[1]
-					scale_v = vert[2] - sprite_center[2]
+				file.write(struct.pack("<i", len(verts)))
+				for i, vert in enumerate(verts):
+					scale_u = sprite_center[1] - l_verts[vert][1]
+					scale_v = l_verts[vert][2] - sprite_center[2]
 					file.write(struct.pack("<f", scale_u))
 					file.write(struct.pack("<f", scale_v))
 					#UVs
@@ -1050,10 +1060,21 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 		elif objType == 34:
 
+			log.debug(block[prop(b_34.XYZ)])
+
 			file.write(struct.pack("<3f", *block[prop(b_34.XYZ)]))
 			file.write(struct.pack("<f", block[prop(b_34.R)]))
 			file.write(struct.pack("<i", 0)) #skipped Int
-			file.write(struct.pack("<i", 0)) #Verts count
+			pointList = []
+			for sp in block.data.splines:
+				for point in sp.points:
+					pointList.append(point.co)
+			file.write(struct.pack("<i", len(pointList))) #Verts count
+			for point in pointList:
+				file.write(struct.pack("<f", point.x))
+				file.write(struct.pack("<f", point.y))
+				file.write(struct.pack("<f", point.z))
+				file.write(struct.pack("<i", block[prop(b_34.UnkInt)]))
 
 		elif objType == 35: #TODO: Texture coordinates are absent for moving texture(1)(mat_refl_road)(null))
 							#probably UVMapVert1 on road objects = tp import them too
@@ -1072,6 +1093,8 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			file.write(struct.pack("<i", len(polygons))) #Polygon count
 
 			format_flags_attrs = obj.data.attributes[prop(pfb_35.Format_Flags)].data
+
+			mesh = block.data
 
 			for poly in polygons:
 				format = 0
@@ -1100,11 +1123,16 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					else:
 						normalSwitch = False
 
+				l_uvs = {}
+				for li in poly.loop_indices:
+					vi = mesh.loops[li].vertex_index
+					l_uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+
 				for i, vert in enumerate(poly.vertices):
 					file.write(struct.pack("<i", offset + vert))
 					for k in range(uvCount):
-						file.write(struct.pack("<f", uvs[vert][0]))
-						file.write(struct.pack("<f", 1 - uvs[vert][1]))
+						file.write(struct.pack("<f", l_uvs[vert][0]))
+						file.write(struct.pack("<f", 1 - l_uvs[vert][1]))
 					if useNormals:
 						if normalSwitch:
 							file.write(struct.pack("<3f", *normals[vert]))
@@ -1122,7 +1150,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			writeName(block[prop(b_36.Name2)], file)
 
 			offset = 0
-			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8]]
+			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
 			for ch in allChildren:
 				obj = bpy.data.objects[ch.name]
 				print(obj.name)
@@ -1189,7 +1217,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 
 			offset = 0
-			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8]]
+			allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
 			for ch in allChildren:
 				obj = bpy.data.objects[ch.name]
 				someProps = getMeshProps(obj)
@@ -1281,7 +1309,12 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					l_extra['passToMesh'] = passToMesh
 				exportBlock(blChildren[-1], True, curLevel+1, curMaxCnt, curGroups, l_extra, file)
 
-		log.debug("{}_{}".format(curGroups, block.name))
+		# log.debug("{}_{}".format(curGroups, block.name))
+
+		# called from parent object with 0 children
+		if toProcessChild and len(blChildren) == 0 and curMaxCnt > 1:
+			for i in range(curMaxCnt-1):
+				file.write(struct.pack("<i",444))#Group Chunk
 
 		file.write(struct.pack("<i",555))#End Chunk
 

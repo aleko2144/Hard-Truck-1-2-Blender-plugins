@@ -129,6 +129,7 @@ class ImportB3D(Operator, ImportHelper):
 
         tt = time.mktime(datetime.datetime.now().timetuple()) - tt
         print('All imported in', tt, 'seconds')
+        self.report({'INFO'}, 'B3D imported')
 
         return {'FINISHED'}
 
@@ -210,6 +211,7 @@ class ExportB3D(Operator, ImportHelper):
         export_b3d.write(self.filepath+'.b3d', context, self, self.filepath, self.generate_pro_file, self.textures_path)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished exporting in', t, 'seconds')
+        self.report({'INFO'}, 'B3D exported')
         return {'FINISHED'}
 
 

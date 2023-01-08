@@ -225,7 +225,7 @@ def showHideObjByType(self, type):
     else:
         for obj in objs:
             obj.hide_set(True)
-        self.report({'INFO'}, "{} (block {}) objects are hidden".format(len(objs)))
+        self.report({'INFO'}, "{} (block {}) objects are hidden".format(len(objs), type))
 
 def showHideObjTreeByType(type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
