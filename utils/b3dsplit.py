@@ -13,6 +13,8 @@ args = sys.argv
 rootsFile = None
 rootsFromFile = False
 
+EMPTY_NAME = '~'
+
 if len(args) == 2:
     filename = args[1]
     outdir = os.path.dirname(filename)
@@ -62,7 +64,7 @@ def getHierarchyRoots(refObjs):
 def readName(file):
     objName = file.read(32)
     if (objName[0] == 0):
-        objName = "empty name"
+        objName = EMPTY_NAME
         #objname = "Untitled_0x" + str(hex(pos-36))
     else:
         objName = (objName.decode("cp1251").rstrip('\0'))
@@ -665,7 +667,7 @@ def read(file):
             curLevel = list(objs)
             objs = set()
 
-        spaces = [cn for cn in list(g_spaces) if cn != 'empty name']
+        spaces = [cn for cn in list(g_spaces) if cn != EMPTY_NAME]
         objs = list(g_objs)
 
         spaces.sort()

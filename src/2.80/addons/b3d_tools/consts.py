@@ -1,4 +1,6 @@
 
+EMPTY_NAME = '~'
+
 blockTypeList = [
     ('6566754', "b3d", "b3d"),
     ('00', "00", "2D фон"),

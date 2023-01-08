@@ -22,6 +22,8 @@ from .classes import (
     fieldType, b_common
 )
 
+from ..consts import EMPTY_NAME
+
 reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
 reb3dMesh = re.compile(r'.*b3dcopy.*')
 
@@ -134,7 +136,7 @@ def applyTransform(root):
 
             if not block.hide_get():
 
-                if spaceName == 'empty name':
+                if spaceName == EMPTY_NAME:
                     spaceName = prevSpace
 
                 spaceObj = bpy.data.objects.get(spaceName)

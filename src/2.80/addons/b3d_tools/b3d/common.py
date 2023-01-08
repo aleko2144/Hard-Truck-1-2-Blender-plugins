@@ -6,6 +6,7 @@ import sys
 import re
 
 from ..common import log
+from ..consts import EMPTY_NAME
 
 def getNonCopyName(name):
     reIsCopy = re.compile(r'\.[0-9]*$')
@@ -25,7 +26,7 @@ def getRootObj(obj):
     return result
 
 def isEmptyName(name):
-    reIsEmpty = re.compile(r'.*empty name.*')
+    reIsEmpty = re.compile(r'.*{}.*'.format(EMPTY_NAME))
     return reIsEmpty.search(name)
 
 def isMeshBlock(obj):

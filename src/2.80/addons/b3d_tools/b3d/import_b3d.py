@@ -55,6 +55,8 @@ from .classes import (
 	pvb_35
 )
 
+from ..consts import EMPTY_NAME
+
 from .scripts import (
     prop,
     createCustomAttribute
@@ -131,7 +133,7 @@ def onebyte(file):
 def readName(file):
     objName = file.read(32)
     if (objName[0] == 0):
-        objName = "empty name"
+        objName = EMPTY_NAME
         #objname = "Untitled_0x" + str(hex(pos-36))
     else:
         objName = (objName.decode("cp1251").rstrip('\0'))
