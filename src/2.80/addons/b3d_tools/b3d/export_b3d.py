@@ -495,7 +495,8 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 		#write Group Chunk
 		if block['level_group'] > curGroups[curLevel]:
 			log.debug('group ended')
-			file.write(struct.pack("<i",444))#Group Chunk
+			for i in range(block['level_group'] - curGroups[curLevel]):
+				file.write(struct.pack("<i",444))#Group Chunk
 			curGroups[curLevel] = block['level_group']
 
 		file.write(struct.pack("<i",333))#Begin Chunk
@@ -977,17 +978,23 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			format_flags_attrs = obj.data.attributes[prop(pfb_28.Format_Flags)].data
 			someProps = getMeshProps(obj)
 
+			mesh = block.data
+
 			l_verts = someProps[0]
-			l_uvs = someProps[1]
+			# l_uvs = someProps[1]
 			l_normals = someProps[2]
 			l_polygons = someProps[3]
 			l_material = obj.data.materials[obj.data.polygons[0].material_index].name
 
-			log.debug(l_uvs)
-
 			file.write(struct.pack("<i", len(l_polygons)))
 
 			for poly in l_polygons:
+
+				l_uvs = {}
+				for li in poly.loop_indices:
+					vi = mesh.loops[li].vertex_index
+					l_uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+
 				verts = poly.vertices
 
 				formatRaw = format_flags_attrs[poly.index].value
@@ -1003,8 +1010,8 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					file.write(struct.pack("<f", scale_u))
 					file.write(struct.pack("<f", scale_v))
 					#UVs
-					file.write(struct.pack("<f", l_uvs[i][0]))
-					file.write(struct.pack("<f", 1-l_uvs[i][1]))
+					file.write(struct.pack("<f", l_uvs[vert][0]))
+					file.write(struct.pack("<f", 1-l_uvs[vert][1]))
 
 		elif objType == 29:
 
