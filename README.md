@@ -1,7 +1,7 @@
 # Blender-VWI
 Плагины для форматов файлов игрового движка Virtual World Inventor.
 ##### Текущие планы
-* Доработка экспорта b3d.
+* Доработка экспорта b3d + .res.
 
 ## Поддерживаемые игры
 | Название игры | Название игры (международное) | Год выхода |
@@ -12,7 +12,8 @@
 ## Поддерживаемые форматы файлов
 | Расширение | Описание           | Импорт | Экспорт |
 |-----------|-----------------------|:----------:|:----------:|
-| .b3d + .res  | Модели, логика, различные объекты   | Да   | Нет  |
+| .b3d | Модели, логика, различные объекты   | Да   | Да  |
+| .b3d + .res  | Модели, логика, различные объекты + текстуры   | Да   | Нет  |
 | .way  | Пути транспорта для ИИ   | Да   | Нет  |
 | .tch/.tech  | Параметры транспорта и динамических объектов   |      | Да  |
 
@@ -56,20 +57,19 @@ b3dsplit - извлечение из b3d-файла прочих моделей 
 Hard Truck classic games (VWI engine) import/export plugins for Blender.
 
 #### Roadmap
-* Export support
+* .b3d + .res export support
 
-## Supported games and formats
-
-1. Hard Truck: Road to Victory (1998)
-
-| Расширение | Описание           | Import |
+## Supported games
+| Title | Title (ENG) | Release year |
 |-----------|-----------------------|:----------:|
-| .b3d  | Models, game logic, various objects    | Yes  |
+| Дальнобойщики: Путь к победе | Hard Truck: Road to Victory | 1998 |
+| Дальнобойщики - 2 | Hard Truck 2 (King of the Road) | 2000 (2003)
 
-2. Hard Truck: King Of The Road (2003)
+## Supported formats
 
-| Расширение | Описание           | Import | Export |
+| Extension | Description           | Import | Export |
 |-----------|-----------------------|:----------:|:----------:|
-| .b3d  | Models, game logic, various objects   | Yes   | No  |
+| .b3d  | Models, game logic, various objects   | Yes   | Yes  |
+| .b3d + .res  | Models, game logic, various objects + textures   | Yes   | No  |
 | .way  | AI paths   | Yes  | No  |
 | .tch/.tech  | Transport parameters |      | Yes |
