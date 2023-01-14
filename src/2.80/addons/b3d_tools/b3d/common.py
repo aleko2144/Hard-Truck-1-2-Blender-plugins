@@ -4,6 +4,7 @@ import bpy
 import logging
 import sys
 import re
+import time
 
 from ..common import log
 from ..consts import EMPTY_NAME
@@ -245,3 +246,80 @@ def getSelectedVertices(obj):
             selectedVertices.append(v)
 
     return selectedVertices
+
+
+def getAllChildren(obj):
+    allChildren = []
+    # if len((obj.children)):
+    currentObjs = [obj]
+    if currentObjs:
+        nextChildren = []
+
+        for obj in currentObjs:
+            # if obj.children:
+            nextChildren.extend(obj.children)
+        currentObjs = nextChildren
+        # if currentObjs:
+        allChildren.extend(currentObjs)
+    return allChildren
+
+def referenceablesCallback(scene, context):
+
+    mytool = context.scene.my_tool
+    rootObj = getRootObj(context.object)
+
+    referenceables = [cn for cn in rootObj.children if cn.get('block_type') != 24]
+
+    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(referenceables)]
+
+    print("fetched referenceables")
+
+    return enumProperties
+
+def spacesCallback(scene, context):
+
+    mytool = context.scene.my_tool
+    rootObj = getRootObj(context.object)
+
+    spaces = [cn for cn in bpy.data.objects if cn.get('block_type') == 24 and getRootObj(cn) == rootObj]
+
+    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(spaces)]
+
+    print("fetched spaces")
+
+    return enumProperties
+
+def resMaterialsCallback(scene, context):
+
+	mytool = context.scene.my_tool
+	rootObj = getRootObj(context.object)
+	moduleName = rootObj.name[:-4]
+
+	resModules = mytool.resModules
+	curModule = getColPropertyByName(resModules, moduleName)
+
+	enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(curModule.materials)]
+
+	return enumProperties
+
+def roomsCallback(scene, context):
+
+    mytool = context.scene.my_tool
+    rootObj = getRootObj(context.object)
+
+    rooms = [cn for cn in rootObj.children if cn.name[:5] == 'room_']
+
+    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(rooms)]
+
+    return enumProperties
+
+
+def modulesCallback(scene, context):
+
+    mytool = context.scene.my_tool
+
+    modules = [cn for cn in bpy.data.objects if isRootObj(cn)]
+
+    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(modules)]
+
+    return enumProperties

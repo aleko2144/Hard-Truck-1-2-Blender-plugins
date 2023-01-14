@@ -7,6 +7,7 @@ if "bpy" in locals():
     import importlib
 
     importlib.reload(common)
+    importlib.reload(class_descr)
     importlib.reload(classes)
     importlib.reload(import_b3d)
     importlib.reload(export_b3d)
@@ -17,6 +18,7 @@ else:
     import bpy
     from . import (
         common,
+        class_descr,
         classes,
         import_b3d,
         export_b3d,
@@ -27,6 +29,7 @@ else:
 
 def register():
     print("registering addon")
+    class_descr.register()
     classes.register()
     menus.register()
     panel.register()
@@ -37,3 +40,4 @@ def unregister():
     panel.unregister()
     menus.unregister()
     classes.unregister()
+    class_descr.unregister()

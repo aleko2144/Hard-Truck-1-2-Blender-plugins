@@ -19,7 +19,7 @@ from math import sin
 import bpy_extras.mesh_utils
 
 
-from .classes import (
+from .class_descr import (
 	b_1,
 	b_2,
 	b_3,
@@ -65,8 +65,7 @@ from .classes import (
 )
 
 from .scripts import (
-    prop,
-	getAllChildren
+	prop
 )
 
 from ..common import (
@@ -79,7 +78,8 @@ from .common import (
 	getNonCopyName,
 	isRootObj,
 	getRootObj,
-	isEmptyName
+	isEmptyName,
+	getAllChildren
 )
 
 from bpy_extras.io_utils import (

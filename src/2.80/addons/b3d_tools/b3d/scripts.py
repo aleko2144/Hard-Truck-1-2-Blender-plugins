@@ -5,7 +5,7 @@ import logging
 import sys
 import re
 
-from .classes import (
+from .class_descr import (
     b_18,
     b_21
 )
@@ -16,9 +16,11 @@ from .common import (
     getPolygonsBySelectedVertices,
     getSelectedVertices,
 	isRootObj,
-    isMeshBlock
+    isMeshBlock,
+    getRootObj,
+    getAllChildren
 )
-from .classes import (
+from .class_descr import (
     fieldType, b_common
 )
 
@@ -70,21 +72,6 @@ class Graph:
 def prop(obj):
     return obj['prop']
 
-
-
-def getAllChildren(obj):
-    allChildren = []
-    currentObjs = [obj]
-    while(1):
-        nextChildren = []
-        if len(currentObjs) > 0:
-            for obj in currentObjs:
-                nextChildren.extend(obj.children)
-            currentObjs = nextChildren
-            allChildren.extend(currentObjs)
-        else:
-            break
-    return allChildren
 
 def applyTransforms():
     roots = [cn for cn in bpy.data.objects if isRootObj(cn)]
@@ -482,7 +469,10 @@ def drawFieldByType(l_self, context, obj, zclass):
     or ftype == fieldType.INT \
     or ftype == fieldType.FLOAT \
     or ftype == fieldType.ENUM \
-    or ftype == fieldType.LIST:
+    or ftype == fieldType.LIST \
+    or ftype == fieldType.MATERIAL_IND \
+    or ftype == fieldType.SPACE_NAME \
+    or ftype == fieldType.REFERENCEABLE:
 
         box = l_self.layout.box()
         box.prop(getattr(mytool, bname), "show_"+pname)
@@ -503,7 +493,10 @@ def drawFieldByType(l_self, context, obj, zclass):
         elif ftype == fieldType.FLOAT:
             col.prop(getattr(mytool, bname), pname)
 
-        elif ftype == fieldType.ENUM:
+        elif ftype == fieldType.ENUM \
+        or ftype == fieldType.MATERIAL_IND \
+        or ftype == fieldType.SPACE_NAME \
+        or ftype == fieldType.REFERENCEABLE:
             col.prop(getattr(mytool, bname), pname)
 
         elif ftype == fieldType.LIST:
@@ -567,6 +560,7 @@ def drawFieldByType(l_self, context, obj, zclass):
             col.enabled = True
         else:
             col.enabled = False
+
     elif ftype == fieldType.V_FORMAT:
         box = l_self.layout.box()
         box.prop(getattr(mytool, bname), "show_{}".format(pname))
@@ -598,14 +592,43 @@ def getObjsByType(context, object, zclass):
         if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
             and getattr(getattr(mytool, bname), "show_"+obj['prop']):
 
-            if obj['type'] == fieldType.FLOAT or obj['type'] == fieldType.RAD:
-                getattr(mytool, bname)[obj['prop']] = float(object[obj['prop']])
+            if obj['type'] == fieldType.FLOAT \
+            or obj['type'] == fieldType.RAD:
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    float(object[obj['prop']])
+                )
 
             elif obj['type'] == fieldType.INT:
-                getattr(mytool, bname)[obj['prop']] = int(object[obj['prop']])
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    int(object[obj['prop']])
+                )
 
             elif obj['type'] == fieldType.STRING:
                 getattr(mytool, bname)[obj['prop']] = str(object[obj['prop']])
+
+            elif obj['type'] == fieldType.SPACE_NAME \
+            or obj['type'] == fieldType.REFERENCEABLE \
+            or obj['type'] == fieldType.MATERIAL_IND:
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    str(object[obj['prop']])
+                )
+
+            elif obj['type'] == fieldType.ENUM:
+
+                if obj['subtype'] == fieldType.INT \
+                or obj['subtype'] == fieldType.STRING \
+                or obj['subtype'] == fieldType.FLOAT:
+                    setattr(
+                        getattr(mytool, bname),
+                        obj['prop'],
+                        str(object[obj['prop']])
+                    )
 
             elif obj['type'] == fieldType.LIST:
 
@@ -619,7 +642,11 @@ def getObjsByType(context, object, zclass):
                 # getattr(mytool, bname)[obj['prop']] = str(object[obj['prop']])
 
             else:
-                getattr(mytool, bname)[obj['prop']] = object[obj['prop']]
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    object[obj['prop']]
+                )
 
 def setAllObjsByType(context, object, zclass):
     setObjsByType(context, object, b_common)
@@ -636,16 +663,34 @@ def setObjsByType(context, object, zclass):
             and getattr(getattr(mytool, bname), "show_"+obj['prop']):
 
             if obj['type'] == fieldType.FLOAT or obj['type'] == fieldType.RAD:
-                object[obj['prop']] = float(getattr(mytool, bname)[obj['prop']])
+                object[obj['prop']] = float(getattr(getattr(mytool, bname), obj['prop']))
 
-            elif obj['type'] == fieldType.INT:
-                object[obj['prop']] = int(getattr(mytool, bname)[obj['prop']])
+            elif obj['type'] == fieldType.INT \
+            or obj['type'] == fieldType.MATERIAL_IND:
+                object[obj['prop']] = int(getattr(getattr(mytool, bname), obj['prop']))
+
+
 
             elif obj['type'] == fieldType.STRING:
-                object[obj['prop']] = str(getattr(mytool, bname)[obj['prop']])
+                object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
+
+            elif obj['type'] == fieldType.SPACE_NAME \
+            or obj['type'] == fieldType.REFERENCEABLE:
+                object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
+
+            elif obj['type'] == fieldType.ENUM:
+
+                if obj['subtype'] == fieldType.INT:
+                    object[obj['prop']] = int(getattr(getattr(mytool, bname), obj['prop']))
+
+                elif obj['subtype'] == fieldType.STRING:
+                    object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
+
+                elif obj['subtype'] == fieldType.FLOAT:
+                    object[obj['prop']] = float(getattr(getattr(mytool, bname), obj['prop']))
 
             elif obj['type'] == fieldType.COORD:
-                xyz = getattr(mytool, bname)[obj['prop']]
+                xyz = getattr(getattr(mytool, bname), obj['prop'])
                 object[obj['prop']] = (xyz[0],xyz[1],xyz[2])
 
             elif obj['type'] == fieldType.LIST:
@@ -658,7 +703,7 @@ def setObjsByType(context, object, zclass):
                 object[obj['prop']] = arr
 
             else:
-                object[obj['prop']] = getattr(mytool, bname)[obj['prop']]
+                object[obj['prop']] = getattr(getattr(mytool, bname), obj['prop'])
 
 def getFromAttributes(context, obj, attrs, bname, index):
 
@@ -833,3 +878,4 @@ def createCustomAttribute(mesh, values, zclass, zobj):
         attr = mesh.attributes[zobj['prop']].data
         for i in range(len(attr)):
             setattr(attr[i], "value", values[i])
+

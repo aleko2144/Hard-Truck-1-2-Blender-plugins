@@ -50,7 +50,7 @@ from .classes import (
 	block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,block_common,\
 	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35
 )
-from .classes import (
+from .class_descr import (
 	b_1,b_2,b_3,b_4,b_5,b_6,b_7,b_8,b_9,b_10,\
 	b_11,b_12,b_13,b_14,b_15,b_16,b_17,b_18,b_20,\
 	b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
@@ -78,7 +78,6 @@ from bpy.types import (Panel,
 
 
 
-
 # ------------------------------------------------------------------------
 #	store properties in the active scene
 # ------------------------------------------------------------------------
@@ -91,6 +90,7 @@ def resModuleCallback(scene, context):
 	enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(resModules)]
 
 	return enumProperties
+
 
 
 class PanelSettings(bpy.types.PropertyGroup):

@@ -10,7 +10,7 @@ import pdb
 import logging
 from pathlib import Path
 
-from .classes import (
+from .class_descr import (
 	b_1,
 	b_2,
 	b_3,

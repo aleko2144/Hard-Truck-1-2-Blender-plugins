@@ -23,7 +23,7 @@ from bpy.types import (
     AddonPreferences
 )
 
-from .classes import ActiveBlock
+from .class_descr import ActiveBlock
 from . import (
     import_b3d
 )

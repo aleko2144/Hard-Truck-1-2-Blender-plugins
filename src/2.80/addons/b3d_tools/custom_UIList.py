@@ -419,7 +419,7 @@ class CUSTOM_PG_objectCollection(PropertyGroup):
 #   Register & Unregister
 # -------------------------------------------------------------------
 
-classes = (
+_classes = (
     CUSTOM_OT_actions,
     CUSTOM_OT_actions_arrbname,
     CUSTOM_OT_addViewportSelection,
@@ -435,7 +435,7 @@ classes = (
 
 def register():
     from bpy.utils import register_class
-    for cls in classes:
+    for cls in _classes:
         register_class(cls)
 
     # Custom scene properties
@@ -448,7 +448,7 @@ def register():
 
 def unregister():
     from bpy.utils import unregister_class
-    for cls in classes[::-1]:
+    for cls in _classes[::-1]:
         unregister_class(cls)
 
     del bpy.types.Scene.custom
