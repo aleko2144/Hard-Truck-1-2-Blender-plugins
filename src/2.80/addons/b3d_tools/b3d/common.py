@@ -250,17 +250,16 @@ def getSelectedVertices(obj):
 
 def getAllChildren(obj):
     allChildren = []
-    # if len((obj.children)):
     currentObjs = [obj]
-    if currentObjs:
+    while(1):
         nextChildren = []
-
-        for obj in currentObjs:
-            # if obj.children:
-            nextChildren.extend(obj.children)
-        currentObjs = nextChildren
-        # if currentObjs:
-        allChildren.extend(currentObjs)
+        if len(currentObjs) > 0:
+            for obj in currentObjs:
+                nextChildren.extend(obj.children)
+            currentObjs = nextChildren
+            allChildren.extend(currentObjs)
+        else:
+            break
     return allChildren
 
 def referenceablesCallback(scene, context):
