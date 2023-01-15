@@ -326,17 +326,21 @@ def parseRAW(file, context, op, filepath):
     b3dMesh1 = bpy.data.meshes.new(basename1)
     b3dMesh2 = bpy.data.meshes.new(basename2)
 
-    Ev = threading.Event()
-    Tr = threading.Thread(target=b3dMesh1.from_pydata, args = (vertexes,[],faces1))
-    Tr.start()
-    Ev.set()
-    Tr.join()
+    b3dMesh1.from_pydata(vertexes,[],faces1)
 
-    Ev = threading.Event()
-    Tr = threading.Thread(target=b3dMesh2.from_pydata, args = (vertexes,[],faces2))
-    Tr.start()
-    Ev.set()
-    Tr.join()
+    # Ev = threading.Event()
+    # Tr = threading.Thread(target=b3dMesh1.from_pydata, args = (vertexes,[],faces1))
+    # Tr.start()
+    # Ev.set()
+    # Tr.join()
+
+    b3dMesh2.from_pydata(vertexes,[],faces2)
+
+    # Ev = threading.Event()
+    # Tr = threading.Thread(target=b3dMesh2.from_pydata, args = (vertexes,[],faces2))
+    # Tr.start()
+    # Ev.set()
+    # Tr.join()
 
 
     b3dObj1 = bpy.data.objects.new(basename1, b3dMesh1)
@@ -499,6 +503,10 @@ def read(file, context, self, filepath):
     #
     vertex_block_uvs = []
     poly_block_uvs = []
+    # 30 block
+    borders = {}
+    currentRoomName = ""
+
 
     uv = []
 
@@ -867,11 +875,13 @@ def read(file, context, self, filepath):
                     curNormals.append(l_normals[newOldTransf[i]])
                     curNormalsOff.append(l_normals_off[newOldTransf[i]])
 
-                Ev = threading.Event()
-                Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
-                Tr.start()
-                Ev.set()
-                Tr.join()
+                b3dMesh.from_pydata(curVertexes,[],curFaces)
+
+                # Ev = threading.Event()
+                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
+                # Tr.start()
+                # Ev.set()
+                # Tr.join()
 
                 # newIndices = getUserVertices(curFaces)
 
@@ -1253,6 +1263,8 @@ def read(file, context, self, filepath):
             elif (type == 19):
 
                 childCnt = struct.unpack("i",file.read(4))[0]
+
+                currentRoomName = "{}:{}".format(res_basename, objName)
 
                 if not usedBlocks[str(type)]:
                     continue
@@ -1636,11 +1648,13 @@ def read(file, context, self, filepath):
 
                 b3dMesh = (bpy.data.meshes.new(objName))
 
-                Ev = threading.Event()
-                Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces_all))
-                Tr.start()
-                Ev.set()
-                Tr.join()
+                b3dMesh.from_pydata(l_vertexes,[],l_faces_all)
+
+                # Ev = threading.Event()
+                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces_all))
+                # Tr.start()
+                # Ev.set()
+                # Tr.join()
 
                 for u, uvMap in enumerate(vertex_block_uvs):
                     customUV = b3dMesh.uv_layers.new()
@@ -1741,44 +1755,88 @@ def read(file, context, self, filepath):
                 if not usedBlocks[str(type)]:
                     continue
 
-                b3dMesh = (bpy.data.meshes.new(objName))
+                splitted = connectedRoomName.split(":")
+                moduleName = ""
+                roomName = ""
+
+                if len(splitted) == 2:
+                    moduleName = splitted[0]
+                    roomName = splitted[1]
+                elif len(splitted) == 1:
+                    moduleName = res_basename
+                    roomName = splitted[0]
+
+                fullRoomName = "{}:{}".format(moduleName, roomName)
+
+                sortedRooms = sorted([currentRoomName, fullRoomName])
+
+
+                borderName = "|".join(sortedRooms)
+
+
+                if not borderName in borders:
+                    borders[borderName] = {
+                        "bounding_point": bounding_sphere[0:3],
+                        "bounding_rad": bounding_sphere[3],
+                        "points": [None]*4
+                    }
+
+
+                    if sortedRooms[0] == currentRoomName:
+                        borders[borderName]["points"] = [
+                            (p1[0], p1[1], p1[2]),
+                            (p1[0], p1[1], p2[2]),
+                            (p2[0], p2[1], p2[2]),
+                            (p2[0], p2[1], p1[2]),
+                        ]
+                    else:
+                        borders[borderName]["points"] = [
+                            (p1[0], p1[1], p2[2]),
+                            (p1[0], p1[1], p1[2]),
+                            (p2[0], p2[1], p1[2]),
+                            (p2[0], p2[1], p2[2]),
+                        ]
+
+
+
+                # b3dMesh = (bpy.data.meshes.new(objName))
                 #0-x
                 #1-y
                 #2-z
 
-                l_vertexes = [
-                    (p1[0], p1[1], p1[2]),
-                    (p1[0], p1[1], p2[2]),
-                    (p2[0], p2[1], p2[2]),
-                    (p2[0], p2[1], p1[2]),
-                ]
+                # l_vertexes = [
+                #     (p1[0], p1[1], p1[2]),
+                #     (p1[0], p1[1], p2[2]),
+                #     (p2[0], p2[1], p2[2]),
+                #     (p2[0], p2[1], p1[2]),
+                # ]
 
-                l_faces = [
-                    (0,1,2),
-                    (2,3,0)
-                ]
+                # l_faces = [
+                #     (0,1,2),
+                #     (2,3,0)
+                # ]
 
-                Ev = threading.Event()
-                Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces))
-                Tr.start()
-                Ev.set()
-                Tr.join()
+                # Ev = threading.Event()
+                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces))
+                # Tr.start()
+                # Ev.set()
+                # Tr.join()
 
 
-                b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
-                b3dObj['pos'] = pos
-                b3dObj[prop(b_30.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_30.R)] = bounding_sphere[3]
-                b3dObj[prop(b_30.Name)] = connectedRoomName
-                b3dObj[prop(b_30.XYZ1)] = p1
-                b3dObj[prop(b_30.XYZ2)] = p2
+                # b3dObj = bpy.data.objects.new(objName, b3dMesh)
+                # b3dObj['block_type'] = type
+                # b3dObj['level_group'] = levelGroups[lvl - 1]
+                # b3dObj['pos'] = pos
+                # b3dObj[prop(b_30.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_30.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_30.Name)] = connectedRoomName
+                # b3dObj[prop(b_30.XYZ1)] = p1
+                # b3dObj[prop(b_30.XYZ2)] = p2
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                # b3dObj.parent = context.scene.objects[objString[-2]]
+                # context.collection.objects.link(b3dObj)
+                # realName = b3dObj.name
+                # objString[len(objString)-1] = b3dObj.name
 
             elif (type == 31):
 
@@ -2012,11 +2070,13 @@ def read(file, context, self, filepath):
                     curNormals.append(l_normals[newOldTransf[i]])
                     curNormalsOff.append(l_normals_off[newOldTransf[i]])
 
-                Ev = threading.Event()
-                Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
-                Tr.start()
-                Ev.set()
-                Tr.join()
+                b3dMesh.from_pydata(curVertexes,[],curFaces)
+
+                # Ev = threading.Event()
+                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
+                # Tr.start()
+                # Ev.set()
+                # Tr.join()
 
                 # newIndices = getUserVertices(curFaces)
 
@@ -2305,7 +2365,65 @@ def read(file, context, self, filepath):
 
             t2 = time.perf_counter()
 
-            log.info("Time: {} | Block #{}: {}".format(t2-t1, type, realName))
+            log.info("Time: {:.6f} | Block #{}: {}".format(t2-t1, type, realName))
+
+    #create room borders
+    for key in borders.keys():
+
+        border = borders[key]
+
+        b3dMesh = (bpy.data.meshes.new("{}_mesh".format(key)))
+        #0-x
+        #1-y
+        #2-z
+
+        points = border["points"]
+
+        l_vertexes = [
+            points[0],
+            points[1],
+            points[2],
+            points[3],
+        ]
+
+        l_faces = [
+            (0,1,2,3)
+        ]
+
+        b3dMesh.from_pydata(l_vertexes,[],l_faces)
+
+        # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces))
+        # Tr.start()
+        # Tr.join()
+        roomNames = key.split("|")
+        splitted1 = roomNames[0].split(":")
+        splitted2 = roomNames[1].split(":")
+
+        res_name1 = splitted1[0]
+        room_name1 = splitted1[1]
+
+        res_name2 = splitted2[0]
+        room_name2 = splitted2[1]
+
+        b3dObj = bpy.data.objects.new(key, b3dMesh)
+        b3dObj['block_type'] = 30
+        b3dObj['level_group'] = 0
+        # b3dObj['pos'] = pos
+        b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
+        b3dObj[prop(b_30.R)] = border["bounding_rad"]
+        b3dObj[prop(b_30.ResModule1)] = res_name1
+        b3dObj[prop(b_30.RoomName1)] = room_name1
+        b3dObj[prop(b_30.ResModule2)] = res_name2
+        b3dObj[prop(b_30.RoomName2)] = room_name2
+        # b3dObj[prop(b_30.Name)] = connectedRoomName
+        # b3dObj[prop(b_30.XYZ1)] = p1
+        # b3dObj[prop(b_30.XYZ2)] = p2
+
+        b3dObj.parent = None
+        context.collection.objects.link(b3dObj)
+        # realName = b3dObj.name
+        # objString[len(objString)-1] = b3dObj.name
+
 
 def readWayTxt(file, context, op, filepath):
     b3dObj = 0

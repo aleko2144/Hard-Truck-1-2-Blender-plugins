@@ -262,7 +262,23 @@ def getAllChildren(obj):
             break
     return allChildren
 
-def referenceablesCallback(scene, context):
+def getMytoolBlockName(zclass):
+    bname = ''
+    btype, bnum = zclass.__name__.split('_')
+    if btype == 'b':
+        bname = 'block{}'.format(bnum)
+    elif btype == 'pfb':
+        bname = 'perFaceBlock{}'.format(bnum)
+    elif btype == 'pvb':
+        bname = 'perVertBlock{}'.format(bnum)
+
+    return [bname, bnum]
+
+def referenceablesCallback(self, context):
+
+    # print(dir(scene))
+    # print(context.object)
+    # print(dir(context))
 
     mytool = context.scene.my_tool
     rootObj = getRootObj(context.object)
@@ -275,7 +291,7 @@ def referenceablesCallback(scene, context):
 
     return enumProperties
 
-def spacesCallback(scene, context):
+def spacesCallback(self, context):
 
     mytool = context.scene.my_tool
     rootObj = getRootObj(context.object)
@@ -288,7 +304,7 @@ def spacesCallback(scene, context):
 
     return enumProperties
 
-def resMaterialsCallback(scene, context):
+def resMaterialsCallback(self, context):
 
 	mytool = context.scene.my_tool
 	rootObj = getRootObj(context.object)
@@ -301,19 +317,25 @@ def resMaterialsCallback(scene, context):
 
 	return enumProperties
 
-def roomsCallback(scene, context):
+def roomsCallback(bname, pname):
+    def callback_func(self, context):
 
-    mytool = context.scene.my_tool
-    rootObj = getRootObj(context.object)
+        enumProperties = []
 
-    rooms = [cn for cn in rootObj.children if cn.name[:5] == 'room_']
+        mytool = context.scene.my_tool
+        resModule = getattr(getattr(mytool, bname), pname)
 
-    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(rooms)]
+        rootObj = bpy.data.objects.get('{}.b3d'.format(resModule))
+        if rootObj:
+            rooms = [cn for cn in rootObj.children if cn.get('block_type') == 19]
 
-    return enumProperties
+            enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(rooms)]
+
+        return enumProperties
+    return callback_func
 
 
-def modulesCallback(scene, context):
+def modulesCallback(self, context):
 
     mytool = context.scene.my_tool
 

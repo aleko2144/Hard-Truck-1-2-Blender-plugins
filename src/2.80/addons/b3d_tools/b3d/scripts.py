@@ -18,7 +18,8 @@ from .common import (
 	isRootObj,
     isMeshBlock,
     getRootObj,
-    getAllChildren
+    getAllChildren,
+    getMytoolBlockName
 )
 from .class_descr import (
     fieldType, b_common
@@ -450,16 +451,10 @@ def drawFieldsByType(l_self, context, zclass):
 
 def drawFieldByType(l_self, context, obj, zclass):
 
-    bname = ''
-    btype, bnum = zclass.__name__.split('_')
-    if btype == 'b':
-        bname = 'block{}'.format(bnum)
-    elif btype == 'pfb':
-        bname = 'perFaceBlock{}'.format(bnum)
-    elif btype == 'pvb':
-        bname = 'perVertBlock{}'.format(bnum)
+    bname, bnum = getMytoolBlockName(zclass)
 
     ftype = obj['type']
+    subtype = obj.get('subtype')
     pname = obj['prop']
     mytool = context.scene.my_tool
 
@@ -469,10 +464,8 @@ def drawFieldByType(l_self, context, obj, zclass):
     or ftype == fieldType.INT \
     or ftype == fieldType.FLOAT \
     or ftype == fieldType.ENUM \
-    or ftype == fieldType.LIST \
-    or ftype == fieldType.MATERIAL_IND \
-    or ftype == fieldType.SPACE_NAME \
-    or ftype == fieldType.REFERENCEABLE:
+    or ftype == fieldType.ENUM_STR \
+    or ftype == fieldType.LIST:
 
         box = l_self.layout.box()
         box.prop(getattr(mytool, bname), "show_"+pname)
@@ -493,11 +486,16 @@ def drawFieldByType(l_self, context, obj, zclass):
         elif ftype == fieldType.FLOAT:
             col.prop(getattr(mytool, bname), pname)
 
-        elif ftype == fieldType.ENUM \
-        or ftype == fieldType.MATERIAL_IND \
-        or ftype == fieldType.SPACE_NAME \
-        or ftype == fieldType.REFERENCEABLE:
+        elif ftype == fieldType.ENUM:
             col.prop(getattr(mytool, bname), pname)
+
+        elif ftype == fieldType.ENUM_STR:
+            col.prop(getattr(mytool, bname), '{}_switch'.format(pname))
+
+            if(getattr(getattr(mytool, bname), '{}_switch'.format(pname))):
+                col.prop(getattr(mytool, bname), '{}_enum'.format(pname))
+            else:
+                col.prop(getattr(mytool, bname), pname)
 
         elif ftype == fieldType.LIST:
             collect = getattr(mytool, bname)
@@ -581,8 +579,11 @@ def getAllObjsByType(context, object, zclass):
 
 def getObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    btype = zclass.__name__.split('_')[1]
-    bname = "block{}".format(btype)
+
+    bname, bnum = getMytoolBlockName(zclass)
+
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "block{}".format(btype)
     mytool = context.scene.my_tool
     for property in attrs:
         obj = zclass.__dict__[property]
@@ -610,25 +611,19 @@ def getObjsByType(context, object, zclass):
             elif obj['type'] == fieldType.STRING:
                 getattr(mytool, bname)[obj['prop']] = str(object[obj['prop']])
 
-            elif obj['type'] == fieldType.SPACE_NAME \
-            or obj['type'] == fieldType.REFERENCEABLE \
-            or obj['type'] == fieldType.MATERIAL_IND:
+            elif obj['type'] == fieldType.ENUM \
+            or obj['type'] == fieldType.ENUM_STR:
+                # if obj['subtype'] == fieldType.INT \
+                # or obj['subtype'] == fieldType.STRING \
+                # or obj['subtype'] == fieldType.FLOAT \
+                # or obj['subtype'] == fieldType.SPACE_NAME \
+                # or obj['subtype'] == fieldType.REFERENCEABLE \
+                # or obj['subtype'] == fieldType.MATERIAL_IND:
                 setattr(
                     getattr(mytool, bname),
                     obj['prop'],
                     str(object[obj['prop']])
                 )
-
-            elif obj['type'] == fieldType.ENUM:
-
-                if obj['subtype'] == fieldType.INT \
-                or obj['subtype'] == fieldType.STRING \
-                or obj['subtype'] == fieldType.FLOAT:
-                    setattr(
-                        getattr(mytool, bname),
-                        obj['prop'],
-                        str(object[obj['prop']])
-                    )
 
             elif obj['type'] == fieldType.LIST:
 
@@ -654,8 +649,10 @@ def setAllObjsByType(context, object, zclass):
 
 def setObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    btype = zclass.__name__.split('_')[1]
-    bname = "block{}".format(btype)
+
+    bname, bnum = getMytoolBlockName(zclass)
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "block{}".format(btype)
     mytool = context.scene.my_tool
     for property in attrs:
         obj = zclass.__dict__[property]
@@ -665,18 +662,18 @@ def setObjsByType(context, object, zclass):
             if obj['type'] == fieldType.FLOAT or obj['type'] == fieldType.RAD:
                 object[obj['prop']] = float(getattr(getattr(mytool, bname), obj['prop']))
 
-            elif obj['type'] == fieldType.INT \
-            or obj['type'] == fieldType.MATERIAL_IND:
+            elif obj['type'] == fieldType.INT:
                 object[obj['prop']] = int(getattr(getattr(mytool, bname), obj['prop']))
 
-
+            # elif obj['type'] == fieldType.MATERIAL_IND:
+            #     object[obj['prop']] = int(getattr(getattr(mytool, bname), obj['prop']))
 
             elif obj['type'] == fieldType.STRING:
                 object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
 
-            elif obj['type'] == fieldType.SPACE_NAME \
-            or obj['type'] == fieldType.REFERENCEABLE:
-                object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
+            # elif obj['type'] == fieldType.SPACE_NAME \
+            # or obj['type'] == fieldType.REFERENCEABLE:
+            #     object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
 
             elif obj['type'] == fieldType.ENUM:
 
@@ -688,6 +685,9 @@ def setObjsByType(context, object, zclass):
 
                 elif obj['subtype'] == fieldType.FLOAT:
                     object[obj['prop']] = float(getattr(getattr(mytool, bname), obj['prop']))
+
+            elif obj['type'] == fieldType.ENUM_STR:
+                object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
 
             elif obj['type'] == fieldType.COORD:
                 xyz = getattr(getattr(mytool, bname), obj['prop'])
@@ -771,8 +771,11 @@ def setFromAttributes(context, obj, attrs, bname, index):
 
 def getPerFaceByType(context, object, zclass):
     zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    btype = zclass.__name__.split('_')[1]
-    bname = "perFaceBlock{}".format(btype)
+
+    bname, bnum = getMytoolBlockName(zclass)
+
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "perFaceBlock{}".format(btype)
     mesh = object.data
     bpy.ops.object.mode_set(mode = 'OBJECT')
     polygons = getPolygonsBySelectedVertices(object)
@@ -789,8 +792,11 @@ def getPerFaceByType(context, object, zclass):
 
 def getPerVertexByType(context, object, zclass):
     zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    btype = zclass.__name__.split('_')[1]
-    bname = "perVertBlock{}".format(btype)
+
+    bname, bnum = getMytoolBlockName(zclass)
+
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "perVertBlock{}".format(btype)
     mesh = object.data
     bpy.ops.object.mode_set(mode = 'OBJECT')
     vertices = getSelectedVertices(object)
@@ -808,8 +814,11 @@ def getPerVertexByType(context, object, zclass):
 
 def setPerVertexByType(context, object, zclass):
     zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    btype = zclass.__name__.split('_')[1]
-    bname = "perVertBlock{}".format(btype)
+
+    bname, bnum = getMytoolBlockName(zclass)
+
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "perVertBlock{}".format(btype)
     mesh = object.data
 
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -826,8 +835,11 @@ def setPerVertexByType(context, object, zclass):
 
 def setPerFaceByType(context, object, zclass):
     zattrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    btype = zclass.__name__.split('_')[1]
-    bname = "perFaceBlock{}".format(btype)
+
+    bname, bnum = getMytoolBlockName(zclass)
+
+    # btype = zclass.__name__.split('_')[1]
+    # bname = "perFaceBlock{}".format(btype)
     mesh = object.data
 
     bpy.ops.object.mode_set(mode = 'OBJECT')

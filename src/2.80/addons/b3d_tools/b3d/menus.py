@@ -28,6 +28,10 @@ from . import (
     import_b3d
 )
 
+from .export_b3d import (
+    B3DExporter
+)
+
 
 class HTImportPreferences(AddonPreferences):
     bl_idname = "b3d_tools"
@@ -87,7 +91,8 @@ class ImportB3D(Operator, ImportHelper):
             ('0', 'Custom select', 'Custom select'),
             ('1', 'Select all', 'Select all'),
             ('2', 'Select none', 'Select none'),
-        ]
+        ],
+        default='1'
     )
 
     blocks_to_import: CollectionProperty(type=ActiveBlock)
@@ -205,10 +210,10 @@ class ExportB3D(Operator, ImportHelper):
     )
 
     def execute(self, context):
-        from . import export_b3d
         print('Exporting file', self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple())
-        export_b3d.write(self.filepath+'.b3d', context, self, self.filepath, self.generate_pro_file, self.textures_path)
+        exporter = B3DExporter()
+        exporter.write(self.filepath+'.b3d', context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished exporting in', t, 'seconds')
         self.report({'INFO'}, 'B3D exported')

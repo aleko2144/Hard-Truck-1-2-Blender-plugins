@@ -65,11 +65,31 @@ from .class_descr import (
 from .common import (
 	resMaterialsCallback,
 	spacesCallback,
-	referenceablesCallback
+	referenceablesCallback,
+	roomsCallback,
+	modulesCallback,
+	getMytoolBlockName
 )
+
+
+def setStrValue(bname, pname):
+    def callback_func(self, context):
+
+        mytool = context.scene.my_tool
+        setattr(
+            getattr(mytool, bname),
+            '{}'.format(pname),
+            getattr(getattr(mytool, bname), '{}_enum'.format(pname))
+        )
+
+    return callback_func
 
 def createTypeClass(zclass):
 	attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+	bname, bnum = getMytoolBlockName(zclass)
+
+	block_num = zclass.__name__.split('_')[1]
 	attributes = {
 		'__annotations__' : {
 
@@ -77,7 +97,7 @@ def createTypeClass(zclass):
 	}
 	for attr in attrs:
 		obj = zclass.__dict__[attr]
-		propName = obj['prop']
+		pname = obj['prop']
 		prop = None
 
 		lockProp = BoolProperty(
@@ -91,21 +111,17 @@ def createTypeClass(zclass):
 		or obj['type'] == fieldType.RAD \
 		or obj['type'] == fieldType.FLOAT \
 		or obj['type'] == fieldType.INT \
-		or obj['type'] == fieldType.ENUM \
-		or obj['type'] == fieldType.LIST \
-		or obj['type'] == fieldType.MATERIAL_IND \
-		or obj['type'] == fieldType.SPACE_NAME \
-		or obj['type'] == fieldType.REFERENCEABLE:
+		or obj['type'] == fieldType.LIST:
 
 
-			attributes['__annotations__']["show_"+propName] = lockProp
+			attributes['__annotations__']["show_"+pname] = lockProp
 
 			if obj['type'] == fieldType.STRING:
 				prop = StringProperty(
 					name = obj['name'],
 					description = obj['description'],
 					default = obj['default'],
-					maxlen = 30
+					maxlen = 32
 				)
 
 			elif obj['type'] == fieldType.COORD:
@@ -129,14 +145,6 @@ def createTypeClass(zclass):
 					default = obj['default']
 				)
 
-			elif obj['type'] == fieldType.ENUM:
-				prop = EnumProperty(
-					name = obj['name'],
-					description = obj['description'],
-					default = obj['default'],
-					items = obj['items']
-				)
-
 			elif obj['type'] == fieldType.LIST:
 				prop = CollectionProperty(
 					name = obj['name'],
@@ -144,60 +152,102 @@ def createTypeClass(zclass):
 					type = FloatBlock
 				)
 
-			elif obj['type'] == fieldType.MATERIAL_IND:
-				prop = EnumProperty(
-					name = obj['name'],
-					description = obj['description'],
-					items = resMaterialsCallback
+			attributes['__annotations__'][pname] = prop
+
+		elif obj['type'] == fieldType.ENUM \
+		or obj['type'] == fieldType.ENUM_STR:
+
+			attributes['__annotations__']["show_"+pname] = lockProp
+			enum_callback = None
+
+			if obj.get('subtype') == fieldType.SPACE_NAME:
+				enum_callback = spacesCallback
+			elif obj.get('subtype') == fieldType.REFERENCEABLE:
+				enum_callback = referenceablesCallback
+			elif obj.get('subtype') == fieldType.MATERIAL_IND:
+				enum_callback = resMaterialsCallback
+			elif obj.get('subtype') == fieldType.ROOM:
+				enum_callback = roomsCallback(bname, '{}_res'.format(pname))
+			elif obj.get('subtype') == fieldType.RES_MODULE:
+				enum_callback = modulesCallback
+
+			if obj['type'] == fieldType.ENUM:
+				prop = None
+				if enum_callback == None:
+					prop = EnumProperty(
+						name = obj['name'],
+						description = obj['description'],
+						default = obj['default'],
+						items = obj['items']
+					)
+				else:
+					prop = EnumProperty(
+						name = obj['name'],
+						description = obj['description'],
+						items = enum_callback
+					)
+
+				attributes['__annotations__'][pname] = prop
+
+			elif obj['type'] == fieldType.ENUM_STR:
+				prop = None
+				prop_enum = None
+				prop_switch = None
+
+				prop_switch = BoolProperty(
+					name = 'Use dropdown',
+					description = 'Выбор из Dropdown списка',
+					default = False
 				)
 
-			elif obj['type'] == fieldType.SPACE_NAME:
-				prop = EnumProperty(
+				prop_enum = EnumProperty(
 					name = obj['name'],
 					description = obj['description'],
-					items = spacesCallback
+					items = enum_callback,
+					update = setStrValue(bname, pname)
 				)
 
-			elif obj['type'] == fieldType.REFERENCEABLE:
-				prop = EnumProperty(
+				prop = StringProperty(
 					name = obj['name'],
 					description = obj['description'],
-					items = referenceablesCallback
+					maxlen = 32
 				)
 
-			attributes['__annotations__'][propName] = prop
+				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
+				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
+				attributes['__annotations__']['{}'.format(pname)] = prop
 
 		elif obj['type'] == fieldType.V_FORMAT:
 
-			attributes['__annotations__']["show_{}".format(propName)] = lockProp
+			attributes['__annotations__']["show_{}".format(pname)] = lockProp
 
 			prop1 = BoolProperty(
 				name = 'Смещенная триангуляция',
 				description = 'Порядок в котором считываются вертексы, зависит от этой переменной',
 				default = True
 			)
-			attributes['__annotations__']['{}_{}'.format(propName, 'triang_offset')] = prop1
+			attributes['__annotations__']['{}_{}'.format(pname, 'triang_offset')] = prop1
 
 			prop2 = BoolProperty(
 				name = 'Использовать UV',
 				description = 'Когда активен, при экспорте записывает UV.',
 				default = True
 			)
-			attributes['__annotations__']['{}_{}'.format(propName, 'use_uvs')] = prop2
+			attributes['__annotations__']['{}_{}'.format(pname, 'use_uvs')] = prop2
 
 			prop3 = BoolProperty(
 				name = 'Использовать нормали',
 				description = 'Когда активен, при экспорте записывает нормали.',
 				default = True
 			)
-			attributes['__annotations__']['{}_{}'.format(propName, 'use_normals')] = prop3
+			attributes['__annotations__']['{}_{}'.format(pname, 'use_normals')] = prop3
 
 			prop4 = BoolProperty(
 				name = 'Выключатель нормалей',
 				description = 'Когда активен, использует float для вкл./выкл. нормалей. Когда неактивен использует float vector для обычных нормалей. Игнорируется если пункт "Использовать нормали" неактивен',
 				default = True
 			)
-			attributes['__annotations__']['{}_{}'.format(propName, 'normal_flag')] = prop4
+			attributes['__annotations__']['{}_{}'.format(pname, 'normal_flag')] = prop4
 
 	newclass = type("{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
 	return newclass

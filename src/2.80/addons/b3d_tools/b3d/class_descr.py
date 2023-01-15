@@ -55,10 +55,13 @@ class fieldType(enum.Enum):
 	FLOAT = 5
 	ENUM = 6
 	LIST = 7
-	V_FORMAT = 8
-	MATERIAL_IND = 9
-	SPACE_NAME = 10
-	REFERENCEABLE = 11
+	ENUM_STR = 8
+	V_FORMAT = 20
+	MATERIAL_IND = 21
+	SPACE_NAME = 22
+	REFERENCEABLE = 23
+	ROOM = 24
+	RES_MODULE = 25
 
 
 class ActiveBlock(bpy.types.PropertyGroup):
@@ -333,7 +336,8 @@ class b_4():
 	}
 	Name1 = {
 		'prop': 'name1',
-		'type': fieldType.SPACE_NAME,
+		'type': fieldType.ENUM_STR,
+		'subtype': fieldType.SPACE_NAME,
 		'name': 'Трансформация',
 		'description': ''
 	}
@@ -845,13 +849,15 @@ class b_18():
 	}
 	Space_Name = {
         'prop': 'space_name',
-        'type': fieldType.SPACE_NAME,
+        'type': fieldType.ENUM,
+		'subtype': fieldType.SPACE_NAME,
         'name': 'Название трансформации (24)',
         'description': ''
     }
 	Add_Name = {
         'prop': 'add_name',
-        'type': fieldType.REFERENCEABLE,
+		'type': fieldType.ENUM,
+        'subtype': fieldType.REFERENCEABLE,
         'name': 'Название переносимого блока',
         'description': ''
     }
@@ -1207,27 +1213,52 @@ class b_30():
 		'description': '',
 		'default': 0.0
 	}
-	Name = {
-		'prop': 'name',
-		'type': fieldType.STRING,
-		'name': 'Название комнаты',
+	ResModule1 = {
+		'prop': '1_roomName_res',
+		'type': fieldType.ENUM_STR,
+		'subtype': fieldType.RES_MODULE,
+		'name': '1. модуль',
 		'description': '',
 		'default': ''
 	}
-	XYZ1 = {
-		'prop': 'XYZ1',
-		'type': fieldType.COORD,
-		'name': 'Координаты 1. точки',
+	RoomName1 = {
+		'prop': '1_roomName',
+		'type': fieldType.ENUM_STR,
+		'subtype': fieldType.ROOM,
+		'name': 'Название 1. комнаты',
 		'description': '',
-		'default': (0.0, 0.0, 0.0)
+		'default': ''
 	}
-	XYZ2 = {
-		'prop': 'XYZ2',
-		'type': fieldType.COORD,
-		'name': 'Координаты 2. точки',
+	ResModule2 = {
+		'prop': '2_roomName_res',
+		'type': fieldType.ENUM_STR,
+		'subtype': fieldType.RES_MODULE,
+		'name': '2. модуль',
 		'description': '',
-		'default': (0.0, 0.0, 0.0)
+		'default': ''
 	}
+	RoomName2 = {
+		'prop': '2_roomName',
+		'type': fieldType.ENUM_STR,
+		'subtype': fieldType.ROOM,
+		'name': 'Название 2. комнаты',
+		'description': '',
+		'default': ''
+	}
+	# XYZ1 = {
+	# 	'prop': 'XYZ1',
+	# 	'type': fieldType.COORD,
+	# 	'name': 'Координаты 1. точки',
+	# 	'description': '',
+	# 	'default': (0.0, 0.0, 0.0)
+	# }
+	# XYZ2 = {
+	# 	'prop': 'XYZ2',
+	# 	'type': fieldType.COORD,
+	# 	'name': 'Координаты 2. точки',
+	# 	'description': '',
+	# 	'default': (0.0, 0.0, 0.0)
+	# }
 
 class b_31():
 	XYZ = {
@@ -1429,7 +1460,8 @@ class b_35():
 	}
 	TexNum = {
 		'prop': 'texnum',
-		'type': fieldType.MATERIAL_IND,
+		'type': fieldType.ENUM,
+		'subtype': fieldType.MATERIAL_IND,
 		'name': 'Номер текстуры',
 		'description': '',
 	}
