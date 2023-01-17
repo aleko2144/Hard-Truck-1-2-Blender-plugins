@@ -1600,8 +1600,8 @@ def read(file, context, self, filepath):
                             poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
                             for j in range(uvCount-1):
                                 poly_block_uvs[j][curface] = struct.unpack("<2f",file.read(8))
-                        else:
-                            poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
+                        # else:
+                        #     poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
                         curface += 1
 
 
@@ -1657,24 +1657,26 @@ def read(file, context, self, filepath):
                 # Tr.join()
 
                 for u, uvMap in enumerate(vertex_block_uvs):
-                    customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVmapVert{}".format(u)
-                    uvsMesh = []
+                    if len(uvMap):
+                        customUV = b3dMesh.uv_layers.new()
+                        customUV.name = "UVmapVert{}".format(u)
+                        uvsMesh = []
 
-                    for i, texpoly in enumerate(b3dMesh.polygons):
-                        for j,loop in enumerate(texpoly.loop_indices):
-                            uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                            customUV.data[loop].uv = uvsMesh
+                        for i, texpoly in enumerate(b3dMesh.polygons):
+                            for j,loop in enumerate(texpoly.loop_indices):
+                                uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                                customUV.data[loop].uv = uvsMesh
 
                 for u, uvOver in enumerate(overriden_uvs):
-                    customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVmapPoly{}".format(u)
-                    uvsMesh = []
+                    if len(uvOver):
+                        customUV = b3dMesh.uv_layers.new()
+                        customUV.name = "UVmapPoly{}".format(u)
+                        uvsMesh = []
 
-                    for i, texpoly in enumerate(b3dMesh.polygons):
-                        for j,loop in enumerate(texpoly.loop_indices):
-                            uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
-                            customUV.data[loop].uv = uvsMesh
+                        for i, texpoly in enumerate(b3dMesh.polygons):
+                            for j,loop in enumerate(texpoly.loop_indices):
+                                uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
+                                customUV.data[loop].uv = uvsMesh
 
                 if self.to_import_textures:
                     #For assignMaterialByVertices just-in-case
