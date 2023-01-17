@@ -19,6 +19,8 @@ if len(args) == 2:
     filename = args[1]
     outdir = os.path.dirname(filename)
 elif len(args) == 3:
+    filename = args[1]
+    outdir = os.path.dirname(filename)
     rootsFromFile = True
     rootsFile = args[2]
 else:
