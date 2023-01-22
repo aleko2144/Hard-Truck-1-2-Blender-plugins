@@ -68,7 +68,7 @@ from .common import (
 	referenceablesCallback,
 	roomsCallback,
 	modulesCallback,
-	getMytoolBlockName
+	getMytoolBlockNameByClass
 )
 
 
@@ -87,7 +87,7 @@ def setStrValue(bname, pname):
 def createTypeClass(zclass):
 	attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
 
-	bname, bnum = getMytoolBlockName(zclass)
+	bname, bnum = getMytoolBlockNameByClass(zclass)
 
 	block_num = zclass.__name__.split('_')[1]
 	attributes = {

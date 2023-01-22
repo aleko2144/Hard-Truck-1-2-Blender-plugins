@@ -262,7 +262,7 @@ def getAllChildren(obj):
             break
     return allChildren
 
-def getMytoolBlockName(zclass):
+def getMytoolBlockNameByClass(zclass):
     bname = ''
     btype, bnum = zclass.__name__.split('_')
     if btype == 'b':
@@ -274,11 +274,19 @@ def getMytoolBlockName(zclass):
 
     return [bname, bnum]
 
-def referenceablesCallback(self, context):
 
-    # print(dir(scene))
-    # print(context.object)
-    # print(dir(context))
+def getMytoolBlockName(btype, bnum):
+    bname = ''
+    if btype == 'b':
+        bname = 'block{}'.format(bnum)
+    elif btype == 'pfb':
+        bname = 'perFaceBlock{}'.format(bnum)
+    elif btype == 'pvb':
+        bname = 'perVertBlock{}'.format(bnum)
+
+    return bname
+
+def referenceablesCallback(self, context):
 
     mytool = context.scene.my_tool
     rootObj = getRootObj(context.object)
