@@ -40,7 +40,7 @@ from .scripts import (
 	setPerFaceByType,
 	getPerVertexByType,
 	setPerVertexByType,
-	showSphere,
+	showHideSphere,
 
 )
 
@@ -940,8 +940,6 @@ class GetValuesOperator(bpy.types.Operator):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		global block_type
-		global lenStr
 		object = bpy.context.object
 		block_type = object['block_type']
 
@@ -1358,8 +1356,8 @@ class AddBlocksOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
-class ShowSphereOperator(bpy.types.Operator):
-	bl_idname = "b3d.show_sphere_operator"
+class ShowHideSphereOperator(bpy.types.Operator):
+	bl_idname = "wm.show_hide_sphere_operator"
 	bl_label = "Показать/Скрыть сферу"
 	bl_description = "Показывает/скрывает сферу"
 
@@ -1371,11 +1369,38 @@ class ShowSphereOperator(bpy.types.Operator):
 
 		obj = context.object
 
-		showSphere(context, obj, self.pname)
+		showHideSphere(context, obj, self.pname)
 
-		self.report({'INFO'}, "Sphere shown")
+		self.report({'INFO'}, "Sphere shown or hidden")
 
 		return {'FINISHED'}
+
+class GetValuesModalOperator(bpy.types.Operator):
+	bl_idname = "wm.get_block_values_modal_operator"
+	bl_label = "Обновление панели"
+	bl_description = "Обновляет значения в b3d панели"
+
+	# @classmethod
+	# def poll(cls, context):
+	# 	return context.object is not None and context.object.get('block_type') is not None
+
+	def modal(self, context, event):
+		if event.type == 'LEFTMOUSE':
+			if context.object is not None:
+				obj = context.object
+				if context.object.get('block_type') is not None:
+					block_type = obj.get('block_type')
+
+					zclass = getClassDefByType(block_type)
+					if zclass is not None:
+						getAllObjsByType(context, obj, zclass)
+
+		return {'PASS_THROUGH'}
+
+	def execute(self, context):
+		wm = context.window_manager
+		wm.modal_handler_add(self)
+		return {'RUNNING_MODAL'}
 
 
 # ------------------------------------------------------------------------
@@ -2008,7 +2033,8 @@ _classes = (
 	ShowConditionalsOperator,
 	HideConditionalsOperator,
 	AddBlocksOperator,
-	ShowSphereOperator,
+	ShowHideSphereOperator,
+	GetValuesModalOperator,
 
 	OBJECT_PT_b3d_add_panel,
 	OBJECT_PT_b3d_edit_panel,
@@ -2024,13 +2050,22 @@ _classes = (
 	OBJECT_PT_b3d_misc_panel,
 )
 
+# @bpy.app.handlers.persistent
+def load_handler(scene):
+	print('invoking modal operator')
+	bpy.ops.wm.get_block_values_modal_operator()
+
 def register():
 	for cls in _classes:
 		bpy.utils.register_class(cls)
 	bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=PanelSettings)
+
+	bpy.app.handlers.load_post.append(load_handler)
 
 def unregister():
 	del bpy.types.Scene.my_tool
 	for cls in _classes[::-1]:
 		bpy.utils.unregister_class(cls)
 
+	if load_handler in bpy.app.handlers.load_post:
+		bpy.app.handlers.load_post.remove(load_handler)

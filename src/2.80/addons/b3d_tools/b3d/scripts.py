@@ -442,7 +442,7 @@ def createRadDriver(srcObj, bname, pname):
 
     d.expression = v1.name
 
-def showSphere(context, root, pname):
+def showHideSphere(context, root, pname):
 
     objName = "{}||{}||{}".format(root.name, pname, 'temp')
 
@@ -523,7 +523,7 @@ def drawFieldByType(l_self, context, obj, zclass):
         box = l_self.layout.box()
         col = box.column()
 
-        props = col.operator("b3d.show_sphere_operator")
+        props = col.operator("wm.show_hide_sphere_operator")
         props.pname = pname
 
     elif ftype == fieldType.STRING \
