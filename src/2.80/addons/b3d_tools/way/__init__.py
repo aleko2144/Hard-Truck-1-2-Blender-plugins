@@ -59,7 +59,7 @@ class PanelSettings1(PropertyGroup):
 	#	)
 
 	addWBlockType_enum = EnumProperty(
-		name="Тип блока",
+		name="Block type",
 		items=[ ('VDAT', "VDAT", ""), #
 				('WDTH', "WDTH", ""), #
 				('RTEN', "RTEN", ""),
@@ -78,7 +78,7 @@ class PanelSettings1(PropertyGroup):
 		)
 
 	addWDBlockType_enum = EnumProperty(
-		name="Тип блока",
+		name="Block type",
 		items=[ ('way', "Way", ""),
 				('room', "Room", ""),
 				('rseg', "Road segment", ""),
@@ -88,58 +88,58 @@ class PanelSettings1(PropertyGroup):
 		)
 
 	attr_int_0 = IntProperty(
-		name = "Параметр 1",
-		description="Тип дороги",
+		name = "Param 1",
+		description="Road type",
 		default = 1,
 		min = 0
 		)
 
 	attr_dbl_0 = FloatProperty(
-		name = "Граница дороги",
+		name = "Road border",
 		description="A integer property",
 		default = 0,
 		min = 0
 		)
 
 	attr_int_1 = IntProperty(
-		name = "Параметр 3",
+		name = "Param 3",
 		description="-",
 		default = 1,
 		min = 0
 		)
 
 	wdth_dbl_0 = FloatProperty(
-		name = "Параметр 1",
+		name = "Param 1",
 		description="",
 		min = 0
 		)
 
 	wdth_dbl_1 = FloatProperty(
-		name = "Параметр 2",
+		name = "Param 2",
 		description="",
 		min = 0
 		)
 
 	flag_int = IntProperty(
-		name = "Флаг",
+		name = "Flag",
 		description="",
 		min = 0,
 		)
 
 	name_string = StringProperty(
-		name="Имя объекта",
+		name="Object name",
 		default="",
 		maxlen=20,
 		)
 ##########################################
 	mnam_string = StringProperty(
-		name="Имя карты",
+		name="Map name",
 		default="aa",
 		maxlen=2,
 		)
 
 	rnam_string = StringProperty(
-		name="Имя комнаты",
+		name="Room name",
 		default="room_aa_000",
 		maxlen=20,
 		)
@@ -151,42 +151,42 @@ class PanelSettings1(PropertyGroup):
 		)
 
 	wdth_val = FloatProperty(
-		name = "Ширина дороги",
+		name = "Road width",
 		description="",
 		default=14,
 		min = 0,
 		)
 
 	attr_1 = IntProperty(
-		name = "Тип дороги",
+		name = "Road type",
 		description="",
 		default = 1,
 		min = 0
 		)
 
 	attr_2 = FloatProperty(
-		name = "Граница дороги",
+		name = "Road border",
 		description="",
 		default = 0.1,
 		min = 0
 		)
 
 	attr_3 = IntProperty(
-		name = "Параметр 3",
+		name = "Param 3",
 		description="",
 		default = 1,
 		min = 0
 		)
 
 	flag_val = IntProperty(
-		name = "Флаг",
+		name = "Flag",
 		description="",
 		min = 0,
 		)
 
 class AddOperator1(bpy.types.Operator):
 	bl_idname = "wm.add_operator1"
-	bl_label = "Добавить блок на сцену"
+	bl_label = "Add block to scene"
 
 	def execute(self, context):
 		scene = context.scene
@@ -261,7 +261,7 @@ class AddOperator1(bpy.types.Operator):
 
 class SetValuesOperator1(bpy.types.Operator):
 	bl_idname = "wm.set_values_operator1"
-	bl_label = "Сохранить настройки блока"
+	bl_label = "Save block values"
 
 	def execute(self, context):
 		scene = context.scene
@@ -282,7 +282,7 @@ class SetValuesOperator1(bpy.types.Operator):
 
 class AddOperator11(bpy.types.Operator):
 	bl_idname = "wm.add_operator11"
-	bl_label = "Добавить объект на сцену"
+	bl_label = "Add object to scene"
 
 	def execute(self, context):
 		scene = context.scene
@@ -350,7 +350,7 @@ class AddOperator11(bpy.types.Operator):
 
 class OBJECT_PT_way_add_panel(Panel):
 	bl_idname = "OBJECT_PT_way_add_panel"
-	bl_label = "Добавление блоков"
+	bl_label = "Add blocks"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "way Tools"
@@ -367,7 +367,7 @@ class OBJECT_PT_way_add_panel(Panel):
 		global blockW_type
 		blockW_type = waytool.addWBlockType_enum
 
-		self.layout.label(text="Тип блока:")
+		self.layout.label(text="Block type:")
 		layout.prop(waytool, "addWBlockType_enum", text="")
 
 		if blockW_type == "ATTR":
@@ -395,7 +395,7 @@ class OBJECT_PT_way_add_panel(Panel):
 
 class GetValuesOperator1(bpy.types.Operator):
 	bl_idname = "wm.get_values_operator1"
-	bl_label = "Получить настройки блока"
+	bl_label = "Get block values"
 
 	def execute(self, context):
 		scene = context.scene
@@ -428,7 +428,7 @@ class GetValuesOperator1(bpy.types.Operator):
 
 class OBJECT_PT_way_edit_panel(Panel):
 	bl_idname = "OBJECT_PT_way_edit_panel"
-	bl_label = "Редактирование блоков"
+	bl_label = "Block edit"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "way Tools"
@@ -471,7 +471,7 @@ class OBJECT_PT_way_edit_panel(Panel):
 
 class OBJECT_PT_way_misc_panel(Panel):
 	bl_idname = "OBJECT_PT_way_misc_panel"
-	bl_label = "О плагине"
+	bl_label = "About add-on"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "way Tools"
@@ -486,12 +486,12 @@ class OBJECT_PT_way_misc_panel(Panel):
 		scene = context.scene
 		waytool = scene.way_tool
 
-		self.layout.label(text="Автор плагина: aleko2144")
+		self.layout.label(text="Plugin author: aleko2144")
 		self.layout.label(text="vk.com/rnr_mods")
 
 class OBJECT_PT_blocks_panel(Panel):
 	bl_idname = "OBJECT_PT_blocks_panel"
-	bl_label = "Создание блоков"
+	bl_label = "Adding blocks"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "way Tools"

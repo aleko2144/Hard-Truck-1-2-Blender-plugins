@@ -146,428 +146,64 @@ class PanelSettings(bpy.types.PropertyGroup):
 	resModules: CollectionProperty(type=ResBlock)
 
 	selectedResModule: EnumProperty(
-        name="RES модуль",
-        description="Выбранный RES модуль",
+        name="RES module",
+        description="Selected RES module",
         items=resModuleCallback
 	)
 
 	conditionGroup : bpy.props.IntProperty(
-		name='Номер условия',
-		description='Номер условия(группа обьекта), который надо скрыть/отобразить. Если -1, то берутся все доступные номера. При слишком большом числе берётся ближайшее подходящее.',
+		name='Event number',
+		description='Event number(object group), that should be shown/hidden. If -1, then all events are chosen. If event number is too big, closest suitable number is chosen.',
 		default=-1,
 		min=-1
 	)
 
-	coordinates : bpy.props.FloatVectorProperty(
-		name='Координаты блока',
-		description='',
-		default=(0.0, 0.0, 0.0)
-	)
-
 	BlockName_string : bpy.props.StringProperty(
-		name="Имя блока",
+		name="Block name",
 		default="",
 		maxlen=30,
 		)
 
 	addBlockType_enum : bpy.props.EnumProperty(
-		name="Тип блока",
+		name="Block type",
 		items= consts.blockTypeList
 		)
 
-
-	CollisionType_enum : bpy.props.EnumProperty(
-		name="Тип коллизии",
-		items=consts.collisionTypeList,
-		)
-
 	Radius : bpy.props.FloatProperty(
-		name = "Радиус блока",
-		description = "Дальность прорисовки блока",
+		name = "Block rad",
+		description = "Block rendering distance",
 		default = 1.0,
-		)
-
-	Radius1 : bpy.props.FloatProperty(
-		name = "Радиус блока",
-		description = "Дальность прорисовки блока",
-		default = 1.0,
-		)
-
-	LOD_Distance : bpy.props.FloatProperty(
-		name = "Дальность отображения LOD",
-		description = "Маскимальная дальность отображения LOD",
-		default = 10.0,
-		)
-
-	LOD_Distance1 : bpy.props.FloatProperty(
-		name = "Дальность отображения LOD",
-		description = "Маскимальная дальность отображения LOD",
-		default = 10.0,
-		)
-
-	Intensity : bpy.props.FloatProperty(
-		name = "Интенсивность освещения",
-		description = "Яркость источника света",
-		default = 1.0,
-		min = 0.0,
-		)
-
-	Intensity1 : bpy.props.FloatProperty(
-		name = "Интенсивность освещения",
-		description = "Яркость источника света",
-		default = 1.0,
-		min = 0.0,
-		)
-
-	R : bpy.props.FloatProperty(
-		name = "R",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-
-	G : bpy.props.FloatProperty(
-		name = "G",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-
-	B : bpy.props.FloatProperty(
-		name = "B",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-
-	R1 : bpy.props.FloatProperty(
-		name = "R",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-
-	G1 : bpy.props.FloatProperty(
-		name = "G",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-
-	B1 : bpy.props.FloatProperty(
-		name = "B",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-
-	RadiusLight : bpy.props.FloatProperty(
-		name = "Радиус освещения",
-		description = "",
-		default = 1,
-		min = 0.0,
-		)
-
-	RadiusLight1 : bpy.props.FloatProperty(
-		name = "Радиус освещения",
-		description = "",
-		default = 1,
-		min = 0.0,
-		)
-
-	LType_enum : bpy.props.EnumProperty(
-		name= "Тип источника света",
-		items = consts.lTypeList,
-		)
-
-	SType_enum : bpy.props.EnumProperty(
-		name= "Тип записи вершин",
-		items = consts.sTypeList,
-		)
-
-	MType_enum : bpy.props.EnumProperty(
-		name="Тип записи полигонов (35)",
-		items=consts.mTypeList,
-		)
-
-	texNum_int : bpy.props.IntProperty(
-		name = "Номер текстуры",
-		description="Номер используемой текстуры.",
-		)
-
-	addBlockName_string : bpy.props.StringProperty(
-		name="Присоединённый блок",
-		description="Имя блока, который будет приписан к текущему блоку, например: hit_BmwM5 приписан к BmwM5 (05)",
-		default="",
-		maxlen=30,
-		)
-
-	addBlockName1_string : bpy.props.StringProperty(
-		name="Присоединённый блок",
-		description="Имя блока, который будет приписан к текущему блоку, например: hit_BmwM5 приписан к BmwM5 (05)",
-		default="",
-		maxlen=30,
-		)
-
-	addSpaceName_string : bpy.props.StringProperty(
-		name="Используемый локатор",
-		description="Имя блока, который будет использоваться в качестве локатора для привязанного блока, например: AirportSpace и Airport",
-		default="",
-		maxlen=30,
-		)
-
-	addSpaceName1_string : bpy.props.StringProperty(
-		name="Используемый локатор",
-		description="Имя блока, который будет использоваться в качестве локатора для привязанного блока, например: AirportSpace и Airport",
-		default="",
-		maxlen=30,
-		)
-
-	add24Flag_enum : bpy.props.EnumProperty(
-		name="Флаг",
-		items=[ ('0', "0", "Присоединённый объект не будет отображаться"),
-				('1', "1", "Присоединённый объект будет отображаться"),
-				]
-		)
-
-	add24Flag_enum1 : bpy.props.EnumProperty(
-		name="Флаг",
-		items=[ ('0', "0", "Присоединённый объект не будет отображаться"),
-				('1', "1", "Присоединённый объект будет отображаться"),
-				]
-		)
-
-	TGType_int : bpy.props.IntProperty(
-		name = "Тип модели дерева",
-		description="",
-		)
-
-	Scale : bpy.props.FloatProperty(
-		name = "Масштаб генератора",
-		description="",
-		min=0.0,
-		default=9.5,
-		)
-
-	generatorType_enum : bpy.props.EnumProperty(
-		name="Тип генератора",
-		items=consts.generatorTypeList,
-		)
-
-	groupsNum_int : bpy.props.IntProperty(
-		name = "Кол-во групп",
-		description="Кол-во переключаемых групп.",
-		)
-
-	groupsNum1_int : bpy.props.IntProperty(
-		name = "Кол-во групп",
-		description="Кол-во переключаемых групп.",
-		)
-
-	Refer_bool = bpy.props.BoolProperty(
-		name="refer",
-		description="",
-		default = False
-		)
-
-	Type21_enum : bpy.props.EnumProperty(
-		name="Имя 21 блока",
-		items=consts.conditionBlockTypeList,
-		)
-
-	addGroupName_string : bpy.props.StringProperty(
-		name="Имя группы",
-		description="Имя переключаемой группы",
-		default="",
-		maxlen=30,
-		)
-
-	T14_enum : bpy.props.EnumProperty(
-		name="Преднастройки",
-		items=[ ('car', "Для транспорта", ""),
-				('trl', "Для полуприцепа", ""),
-				('trl_cyc', "Для полуприцепа-цистерны", ""),
-				('clk', "Для коллизии", ""),
-				]
-		)
-
-	T28_radius : bpy.props.FloatProperty(
-		name = "Радиус спрайта",
-		description = "Радиус плоскости спрайта",
-		default = 1.0,
-		min = 0.01,
-		)
-
-	T28_radius1 : bpy.props.FloatProperty(
-		name = "Радиус спрайта",
-		description = "Радиус плоскости спрайта",
-		default = 1.0,
-		min = 0.01,
-		)
-
-	CH : bpy.props.FloatProperty(
-		name = "Высота коллизии",
-		description = "Высота плоскости коллизии",
-		)
-
-	CH1 : bpy.props.FloatProperty(
-		name = "Высота коллизии",
-		description = "Высота плоскости коллизии",
-		)
-
-	RSound : bpy.props.FloatProperty(
-		name = "Радиус звука",
-		description = "Радиус звука",
-		default = 10.0,
-		min = 0.0,
-		)
-
-	RSound1 : bpy.props.FloatProperty(
-		name = "Радиус звука",
-		description = "Радиус звука",
-		default = 10.0,
-		min = 0.0,
-		)
-
-	addSoundName_string : bpy.props.StringProperty(
-		name="Присоединённый звуковой файл",
-		description="Имя звукового файла, который будет использоваться данным блоком",
-		default="",
-		maxlen=30,
-		)
-
-	addSoundName1_string : bpy.props.StringProperty(
-		name="Присоединённый звуковой файл",
-		description="Имя звукового файла, который будет использоваться данным блоком",
-		default="",
-		maxlen=30,
-		)
-
-	SLevel : bpy.props.FloatProperty(
-		name = "Уровень громкости звука",
-		description = "Уровень громкости звука",
-		default = 1.0,
-		min = 0.0,
-		max = 1.0,
-		)
-
-	SLevel1 : bpy.props.FloatProperty(
-		name = "Уровень громкости звука",
-		description = "Уровень громкости звука",
-		default = 1.0,
-		min = 0.0,
-		max = 1.0,
-		)
-
-	addRoomName_string : bpy.props.StringProperty(
-		name="Присоединённая комната",
-		description="Имя комнаты, которая будет загружена",
-		default="",
-		maxlen=30,
-		)
-
-	FType_enum : bpy.props.EnumProperty(
-		name="Тип записи полигонов (08)",
-		items=(('0', "Тип 0", "С нормалями"),
-			   ('1', "Тип 1", "Без нормалей"),
-			   ('2', "Тип 2", "С нормалями, UV разрывная"),
-			   ('128', "Тип 128", ""),
-			   ('144', "Тип 144", ""),
-			   ),
-		)
-
-	Faces_enum : bpy.props.EnumProperty(
-		name="Тип блока полигонов",
-		items=(('8', "8", ""),
-			   ('35', "35", ""),
-			   ),
-		)
-
-	addBlockMeshType_enum : bpy.props.EnumProperty(
-		name="Тип записи модели",
-		items=[ ('auto', "Автоматический", "Экспортер сам определит, какой блок использовать (8, 35 или оба)"),
-				('manual', "Ручной", "Будет записан блок, который выбран в настройках"),
-			   ]
-		)
-
-	addMeshType_enum : bpy.props.EnumProperty(
-		name="Тип записи полигонов",
-		items=[ ('uv0', "Обычный", ""),
-				('uv1', "С разрывной UV", ""),
-			   ]
-		)
-
-	materialName_string : bpy.props.StringProperty(
-		name="Имя материала",
-		description="Имя материала, который будет использоваться генератором",
-		default="",
-		maxlen=10,
-		)
-
-	routeName_string : bpy.props.StringProperty(
-		name="Имя участка карты",
-		description="Имя участка карты, который будет загружен",
-		default="",
-		maxlen=2,
-		)
-
-	triggerType_enum : bpy.props.EnumProperty(
-		name="Тип триггера",
-		items=(('loader', "Загрузчик", "Загрузчик участков карты"),
-			   ('radar0', "Радар 0", "Event 0"),
-			   ('radar1', "Радар 1", "Event 1"),
-			   ),
-		)
-
-	addBlockName4_string : bpy.props.StringProperty(
-		name="Родительский блок",
-		description="",
-		default="",
-		maxlen=30,
-		)
-
-	speed_limit : bpy.props.FloatProperty(
-		name = "Ограничение скорости",
-		description = "",
-		default = 60.0,
-		min = 0.0,
 		)
 
 	addBlocks_enum : bpy.props.EnumProperty(
-		name="Тип сборки",
-		items=[ ('room', "Комната", "Комната с коллизией"),
-				#('07', "07", "Меш (ДБ1)"),
+		name="Assembly type",
+		items=[ ('room', "Room", "Room"),
+				#('07', "07", "Mesh (HT1)"),
 				#('10', "10", "LOD"),
-				#('12', "12", "Плоскость коллизии"),
-				#('14', "14", "Блок, связанный с автомобилями"),
-				#('18', "18", "Связка локатора и 3D-модели, например: FiatWheel0Space и Single0Wheel14"),
-				#('19', "19", "Контейнер, в отличие от блока типа 05, не имеет возможности привязки"),
-				#('20', "20", "Плоская коллизия"),
-				#('21', "21", "Контейнер с обработкой событий"),
-				#('23', "23", "Объёмная коллизия"),
-				#('24', "24", "Локатор"),
-				#('28', "28", "3D-спрайт"),
-				#('33', "33", "Источник света"),
-				#('37', "37", "Меш"),
-				#('40', "40", "Генератор объектов"),
+				#('12', "12", "Unk"),
+				#('14', "14", "Car trigger"),
+				#('18', "18", "Connector"),
+				#('19', "19", "Room container"),
+				#('20', "20", "2D collision"),
+				#('21', "21", "Event container"),
+				#('23', "23", "3D collision"),
+				#('24', "24", "Locator"),
+				#('28', "28", "2D-sprite"),
+				#('33', "33", "Light source"),
+				#('37', "37", "Mesh"),
+				#('40', "40", "Object generator"),
 			   ]
 		)
 
 	addRoomNameIndex_string : bpy.props.StringProperty(
-		name="Имя комнаты",
+		name="Room name",
 		description="",
 		default="aa_000",
 		maxlen=30,
 		)
 
 	mirrorType_enum : bpy.props.EnumProperty(
-		name="Тип блока",
+		name="Block type",
 		items=[ ('x', "x", ""),
 				('y', "y", ""),
 				('z', "z", ""),
@@ -596,7 +232,7 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 class AddOperator(bpy.types.Operator):
 	bl_idname = "wm.add_operator"
-	bl_label = "Добавить блок на сцену"
+	bl_label = "Add block to scene"
 
 	def execute(self, context):
 		scene = context.scene
@@ -902,7 +538,7 @@ class AddOperator(bpy.types.Operator):
 
 class GetVertexValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.get_vertex_values_operator"
-	bl_label = "Получить настройки блока"
+	bl_label = "Get block values"
 
 	def execute(self, context):
 		object = bpy.context.selected_objects[0]
@@ -917,7 +553,7 @@ class GetVertexValuesOperator(bpy.types.Operator):
 
 class GetFaceValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.get_face_values_operator"
-	bl_label = "Получить настройки блока"
+	bl_label = "Get block values"
 
 	def execute(self, context):
 		object = bpy.context.selected_objects[0]
@@ -934,7 +570,7 @@ class GetFaceValuesOperator(bpy.types.Operator):
 
 class GetValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.get_block_values_operator"
-	bl_label = "Получить настройки блока"
+	bl_label = "Get block values"
 
 	def execute(self, context):
 		scene = context.scene
@@ -952,7 +588,7 @@ class GetValuesOperator(bpy.types.Operator):
 
 class SetFaceValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.set_face_values_operator"
-	bl_label = "Сохранить настройки блока"
+	bl_label = "Save block values"
 
 	def execute(self, context):
 		curtype = bpy.context.object['block_type']
@@ -974,7 +610,7 @@ class SetFaceValuesOperator(bpy.types.Operator):
 
 class SetVertexValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.set_vertex_values_operator"
-	bl_label = "Сохранить настройки блока"
+	bl_label = "Save block values"
 
 	def execute(self, context):
 		curtype = bpy.context.object['block_type']
@@ -994,7 +630,7 @@ class SetVertexValuesOperator(bpy.types.Operator):
 
 class SetValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.set_block_values_operator"
-	bl_label = "Сохранить настройки блока"
+	bl_label = "Save block values"
 
 	def execute(self, context):
 		scene = context.scene
@@ -1030,7 +666,7 @@ class SetValuesOperator(bpy.types.Operator):
 
 class DelValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.del_block_values_operator"
-	bl_label = "Удалить настройки блока"
+	bl_label = "Delete block values"
 
 	def execute(self, context):
 		scene = context.scene
@@ -1051,7 +687,7 @@ class DelValuesOperator(bpy.types.Operator):
 
 class FixUVOperator(bpy.types.Operator):
 	bl_idname = "wm.fix_uv_operator"
-	bl_label = "Исправить UV для экспорта"
+	bl_label = "Fix UV for export"
 
 	def execute(self, context):
 
@@ -1090,7 +726,7 @@ class FixUVOperator(bpy.types.Operator):
 
 class FixVertsOperator(bpy.types.Operator):
 	bl_idname = "wm.fix_verts_operator"
-	bl_label = "Исправить меш для экспорта"
+	bl_label = "Fix mesh for export"
 
 	def execute(self, context):
 
@@ -1112,7 +748,7 @@ class FixVertsOperator(bpy.types.Operator):
 
 class MirrorAndFlipObjectsOperator(bpy.types.Operator):
 	bl_idname = "wm.mirror_objects_operator"
-	bl_label = "Отзеркалить объекты"
+	bl_label = "Mirror objects"
 
 	def execute(self, context):
 		scene = context.scene
@@ -1161,8 +797,8 @@ class MirrorAndFlipObjectsOperator(bpy.types.Operator):
 
 class ApplyTransformsOperator(bpy.types.Operator):
 	bl_idname = "wm.apply_transforms_operator"
-	bl_label = "Расположить/Убрать обьекты"
-	bl_description = "Создаёт копии обьектов и располагает по местам(блок 24) указанным в блоке 18"
+	bl_label = "Arrange/Remove objects"
+	bl_description = "Creates copies of objects and arrange them at places(24) specified in connector(18)"
 
 	def execute(self, context):
 		scene = context.scene
@@ -1174,8 +810,8 @@ class ApplyTransformsOperator(bpy.types.Operator):
 
 class ShowHideCollisionsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_collisions_operator"
-	bl_label = "Отобразить/Скрыть коллизии"
-	bl_description = "Если скрыты все коллизии(23), показывает их. Иначе - скрывает."
+	bl_label = "Show/Hide collisions"
+	bl_description = "If all 3d collisions(23) are hidden, shows them. otherwise - hide."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1187,8 +823,8 @@ class ShowHideCollisionsOperator(bpy.types.Operator):
 
 class ShowHideRoomBordersOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_room_borders_operator"
-	bl_label = "Отобразить/Скрыть границы комнат"
-	bl_description = "Если скрыты все границы комнат(30), показывает их. Иначе - скрывает."
+	bl_label = "Show/Hide portals"
+	bl_description = "If all portals(30) are hidden, shows them. Otherwise - hide."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1200,8 +836,8 @@ class ShowHideRoomBordersOperator(bpy.types.Operator):
 
 class ShowHideGeneratorsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_generator_operator"
-	bl_label = "Отобразить/Скрыть генераторы обьектов"
-	bl_description = "Если скрыты все генераторы обьектов(40), показывает их. Иначе - скрывает."
+	bl_label = "Show/Hide generator blocks"
+	bl_description = "If all generator blocks(40) are hidden, shows them. Otherwise - hide."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1213,9 +849,9 @@ class ShowHideGeneratorsOperator(bpy.types.Operator):
 
 class ShowLODOperator(bpy.types.Operator):
 	bl_idname = "wm.show_lod_operator"
-	bl_label = "Отобразить LOD модели"
-	bl_description = "Показывает LOD(10) выделенного обьекта. " + \
-					"Если нет активного обьекта показывает LOD у всех обьектов сцены"
+	bl_label = "Show LOD"
+	bl_description = "Shows LOD(10) of selected object. " + \
+					"If there is no active object, show LOD of all scene objects."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1233,9 +869,9 @@ class ShowLODOperator(bpy.types.Operator):
 
 class HideLODOperator(bpy.types.Operator):
 	bl_idname = "wm.hide_lod_operator"
-	bl_label = "Скрыть LOD модели"
-	bl_description = "Скрывает LOD(10) выделенного обьекта. " + \
-					"Если нет активного обьекта скрывает LOD у всех обьектов сцены"
+	bl_label = "Hide LOD"
+	bl_description = "Hides LOD(10) of selected object. " + \
+					"If there is no active object, hide LOD of all scene objects."
 
 	def execute(self, context):
 		scene = context.scene
@@ -1253,9 +889,9 @@ class HideLODOperator(bpy.types.Operator):
 
 class ShowConditionalsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_conditional_operator"
-	bl_label = "Отобразить обьекты с условием"
-	bl_description = "Показывает выбранное условие блока 21 выделенного обьекта. " + \
-					"Если нет активного обьекта показывает выбранное условие блока 21 у всех обьектов сцены"
+	bl_label = "Show events"
+	bl_description = "Show event from selected event block(21). " + \
+					"If there is no active event block, show event of all scene event objects(21)"
 
 	group : bpy.props.IntProperty()
 
@@ -1276,9 +912,9 @@ class ShowConditionalsOperator(bpy.types.Operator):
 
 class HideConditionalsOperator(bpy.types.Operator):
 	bl_idname = "wm.hide_conditional_operator"
-	bl_label = "Скрыть обьекты с условием"
-	bl_description = "Скрывает выбранное условие блока 21 выделенного обьекта. " + \
-					"Если нет активного обьекта скрывает выбранное условие блока 21 у всех обьектов сцены"
+	bl_label = "Hide events"
+	bl_description = "Hide event from selected event block(21). " + \
+					"If there is no active event block, hide event of all scene event objects(21)"
 
 	group : bpy.props.IntProperty()
 
@@ -1298,7 +934,7 @@ class HideConditionalsOperator(bpy.types.Operator):
 
 class AddBlocksOperator(bpy.types.Operator):
 	bl_idname = "wm.add1_operator"
-	bl_label = "Добавить сборку блоков на сцену"
+	bl_label = "Add block assembly to scene"
 
 	def execute(self, context):
 		scene = context.scene
@@ -1358,8 +994,8 @@ class AddBlocksOperator(bpy.types.Operator):
 
 class ShowHideSphereOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_sphere_operator"
-	bl_label = "Показать/Скрыть сферу"
-	bl_description = "Показывает/скрывает сферу"
+	bl_label = "Show/Hide sphere"
+	bl_description = "Shows/Hides sphere"
 
 	pname: bpy.props.StringProperty()
 
@@ -1377,8 +1013,8 @@ class ShowHideSphereOperator(bpy.types.Operator):
 
 class GetValuesModalOperator(bpy.types.Operator):
 	bl_idname = "wm.get_block_values_modal_operator"
-	bl_label = "Обновление панели"
-	bl_description = "Обновляет значения в b3d панели"
+	bl_label = "Automatically get block values on object select"
+	bl_description = "Updates values in b3d panel"
 
 	# @classmethod
 	# def poll(cls, context):
@@ -1409,7 +1045,7 @@ class GetValuesModalOperator(bpy.types.Operator):
 
 class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_add_panel"
-	bl_label = "Добавление блоков"
+	bl_label = "Add blocks"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -1430,7 +1066,7 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 		global block_type
 		block_type = int(mytool.addBlockType_enum)
 
-		self.layout.label(text="Тип блока:")
+		self.layout.label(text="Block type:")
 		layout.prop(mytool, "addBlockType_enum", text="")
 		layout.prop(mytool, "BlockName_string")
 
@@ -1443,7 +1079,7 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pfb_edit_panel"
-	bl_label = "Параметры полигона"
+	bl_label = "Polygon params"
 	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1480,7 +1116,7 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pvb_edit_panel"
-	bl_label = "Параметры вершины"
+	bl_label = "Vertex params"
 	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1515,7 +1151,7 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_edit_panel"
-	bl_label = "Редактирование блоков"
+	bl_label = "Block edit"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -1535,7 +1171,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pob_edit_panel"
-	bl_label = "Параметры обьекта"
+	bl_label = "Object params"
 	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1591,7 +1227,7 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_blocks_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_blocks_panel"
-	bl_label = "Сборки блоков"
+	bl_label = "Blocks assembly"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -1617,7 +1253,7 @@ class OBJECT_PT_b3d_blocks_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_func_panel"
-	bl_label = "Дополнительные функции"
+	bl_label = "Additional options"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -1654,7 +1290,7 @@ class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_res_module_panel"
-	bl_label = "Игровые ресурсы"
+	bl_label = "RES resources"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -1672,7 +1308,7 @@ class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_maskfiles_panel"
-	bl_label = "MSK-файлы"
+	bl_label = "MSK-files"
 	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1746,7 +1382,7 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_textures_panel"
-	bl_label = "Текстуры"
+	bl_label = "Textures"
 	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1822,7 +1458,7 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_materials_panel"
-	bl_label = "Материалы"
+	bl_label = "Materials"
 	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1988,7 +1624,7 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_misc_panel"
-	bl_label = "О плагине"
+	bl_label = "About add-on"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -2003,7 +1639,7 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		self.layout.label(text="Автор плагина: aleko2144")
+		self.layout.label(text="Add-on author: aleko2144")
 		self.layout.label(text="vk.com/rnr_mods")
 # ------------------------------------------------------------------------
 # register and unregister

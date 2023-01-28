@@ -21,24 +21,25 @@ from ..common import log
 
 from ..consts import (
 	collisionTypeList,
-	generatorTypeList
+	generatorTypeList,
+	b24FlagList
 )
 
 # Dynamic block exmaple
 # block_5 = type("block_5", (bpy.types.PropertyGroup,), {
 #     '__annotations__': {
 #         'name': StringProperty(
-#                 name="Имя блока",
+#                 name="Block name",
 #                 default="",
 #                 maxlen=30,
 #             ),
 #         'XYZ': FloatVectorProperty(
-#                 name='Координаты блока',
+#                 name='Block border coord',
 #                 description='',
 #                 default=(0.0, 0.0, 0.0)
 #             ),
 #         'R': FloatProperty(
-#                 name = "Радиус",
+#                 name = "Block border rad",
 #                 description = "",
 
 #             )
@@ -160,14 +161,14 @@ class pvb_8():
 	Normal_Switch = {
 		'prop': 'normal_switch',
 		'type': fieldType.FLOAT,
-		'name': 'Выключатель нормали',
+		'name': 'Normal switcher',
 		'description': '',
 		'default': 0.0
 	}
 	Custom_Normal = {
 		'prop': 'custom_normal',
 		'type': fieldType.COORD,
-		'name': 'Кастомная нормаль',
+		'name': 'Custom normal',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
@@ -177,14 +178,14 @@ class pvb_35():
 	Normal_Switch = {
 		'prop': 'normal_switch',
 		'type': fieldType.FLOAT,
-		'name': 'Выключатель нормали',
+		'name': 'Normal switcher',
 		'description': '',
 		'default': 0.0
 	}
 	Custom_Normal = {
 		'prop': 'custom_normal',
 		'type': fieldType.COORD,
-		'name': 'Кастомная нормаль',
+		'name': 'Custom normal',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
@@ -197,14 +198,14 @@ class pfb_8():
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
@@ -217,14 +218,14 @@ class pfb_28():
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
@@ -238,14 +239,14 @@ class pfb_35():
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
@@ -255,7 +256,7 @@ class b_common():
 	LevelGroup = {
 		'prop': 'level_group',
 		'type': fieldType.INT,
-		'name': 'Группа блока',
+		'name': 'Block group',
 		'description': '',
 		'default': 0
 	}
@@ -264,14 +265,14 @@ class b_1():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Неизв. название 1',
+		'name': 'Unk. name 1',
 		'description': '',
 		'default': ''
 	}
 	Name2 = {
 		'prop': 'name2',
 		'type': fieldType.STRING,
-		'name': 'Неизв. название 2',
+		'name': 'Unk. name 2',
 		'description': '',
 		'default': ''
 	}
@@ -280,14 +281,14 @@ class b_2():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -298,14 +299,14 @@ class b_2():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -314,14 +315,14 @@ class b_3():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -334,14 +335,14 @@ class b_4():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -353,13 +354,13 @@ class b_4():
 		'prop': 'name1',
 		'type': fieldType.ENUM_STR,
 		'subtype': fieldType.SPACE_NAME,
-		'name': 'Трансформация',
+		'name': 'Place',
 		'description': ''
 	}
 	Name2 = {
 		'prop': 'name2',
 		'type': fieldType.STRING,
-		'name': 'Название 2',
+		'name': 'Name 2',
 		'description': '',
 		'default': ''
 	}
@@ -368,21 +369,21 @@ class b_5():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Имя блока',
+		'name': 'Block name',
 		'description': '',
 		'default': ''
 	}
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -396,14 +397,14 @@ class b_6():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -414,14 +415,14 @@ class b_6():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Название 1',
+		'name': 'Name 1',
 		'description': '',
 		'default': ''
 	}
 	Name2 = {
 		'prop': 'name2',
 		'type': fieldType.STRING,
-		'name': 'Название 2',
+		'name': 'Name 2',
 		'description': '',
 		'default': ''
 	}
@@ -430,14 +431,14 @@ class b_7():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -448,7 +449,7 @@ class b_7():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Название группы',
+		'name': 'Group name',
 		'description': '',
 		'default': ''
 	}
@@ -457,14 +458,14 @@ class b_8():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -477,14 +478,14 @@ class b_9():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -495,14 +496,14 @@ class b_9():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -511,14 +512,14 @@ class b_10():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -529,14 +530,14 @@ class b_10():
 	LOD_XYZ = {
 		'prop': 'LOD_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Центр LOD',
+		'name': 'LOD coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	LOD_R = {
 		'prop': 'LOD_R',
 		'type': fieldType.RAD,
-		'name': 'Радиус LOD',
+		'name': 'LOD rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -545,14 +546,14 @@ class b_11():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -563,14 +564,14 @@ class b_11():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -579,14 +580,14 @@ class b_12():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -597,35 +598,35 @@ class b_12():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -633,14 +634,14 @@ class b_13():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -651,21 +652,21 @@ class b_13():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -673,14 +674,14 @@ class b_14():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -691,35 +692,35 @@ class b_14():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -727,14 +728,14 @@ class b_15():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -745,21 +746,21 @@ class b_15():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -767,14 +768,14 @@ class b_16():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -785,49 +786,49 @@ class b_16():
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_XYZ2 = {
 		'prop': 'unk_XYZ2',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 2',
+		'name': 'Unk. coord 2',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float2 = {
 		'prop': 'float2',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 3',
+		'name': 'Unk. 3',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 4',
+		'name': 'Unk. 4',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -835,14 +836,14 @@ class b_17():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -853,49 +854,49 @@ class b_17():
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_XYZ2 = {
 		'prop': 'unk_XYZ2',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 2',
+		'name': 'Unk. coord 2',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float2 = {
 		'prop': 'float2',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 3',
+		'name': 'Unk. 3',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 4',
+		'name': 'Unk. 4',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -903,14 +904,14 @@ class b_18():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -922,14 +923,14 @@ class b_18():
         'prop': 'space_name',
         'type': fieldType.ENUM,
 		'subtype': fieldType.SPACE_NAME,
-        'name': 'Название трансформации (24)',
+        'name': 'Place name (24)',
         'description': ''
     }
 	Add_Name = {
         'prop': 'add_name',
 		'type': fieldType.ENUM,
         'subtype': fieldType.REFERENCEABLE,
-        'name': 'Название переносимого блока',
+        'name': 'Transfer block name',
         'description': ''
     }
 
@@ -937,14 +938,14 @@ class b_20():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -955,21 +956,21 @@ class b_20():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
@@ -977,14 +978,14 @@ class b_21():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -995,14 +996,14 @@ class b_21():
 	GroupCnt = {
 		'prop': 'group_cnt',
 		'type': fieldType.INT,
-		'name': 'Количество групп',
+		'name': 'Group count',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
@@ -1011,14 +1012,14 @@ class b_22():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1029,14 +1030,14 @@ class b_22():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1045,7 +1046,7 @@ class b_23():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
@@ -1053,7 +1054,7 @@ class b_23():
 		'prop': 'CType',
 		'type': fieldType.ENUM,
 		'subtype': fieldType.INT,
-		'name': 'Тип поверхности',
+		'name': 'Surface type',
 		'description': '',
 		'default': 0,
 		'items': collisionTypeList
@@ -1061,80 +1062,82 @@ class b_23():
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 
 class b_24():
 	Flag = {
 		'prop': 'flag',
-		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'type': fieldType.ENUM,
+		'subtype': fieldType.INT,
+		'name': 'Show flag',
 		'description': '',
-		'default': 0
+		'default': 0,
+		'items': b24FlagList
 	}
 
 class b_25():
 	XYZ = {
 		'prop': 'XYZ',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Name = {
 		'prop': 'name',
 		'type': fieldType.STRING,
-		'name': 'Название 1',
+		'name': 'Name 1',
 		'description': '',
 		'default': ''
 	}
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_XYZ2 = {
 		'prop': 'unk_XYZ2',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 2',
+		'name': 'Unk. coord 2',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float2 = {
 		'prop': 'float2',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float3 = {
 		'prop': 'float3',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 3',
+		'name': 'Unk. 3',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float4 = {
 		'prop': 'float4',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 4',
+		'name': 'Unk. 4',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float5 = {
 		'prop': 'float5',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 5',
+		'name': 'Unk. 5',
 		'description': '',
 		'default': 0.0
 	}
@@ -1143,14 +1146,14 @@ class b_26():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1161,21 +1164,21 @@ class b_26():
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_XYZ2 = {
 		'prop': 'unk_XYZ2',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 2',
+		'name': 'Unk. coord 2',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_XYZ3 = {
 		'prop': 'unk_XYZ3',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 3',
+		'name': 'Unk. coord 3',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
@@ -1184,14 +1187,14 @@ class b_27():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1202,21 +1205,21 @@ class b_27():
 	Flag = {
 		'prop': 'flag',
 		'type': fieldType.INT,
-		'name': 'Флаг',
+		'name': 'Flag',
 		'description': '',
 		'default': 0
 	}
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Material = {
 		'prop': 'material',
 		'type': fieldType.INT,
-		'name': 'Материал',
+		'name': 'Material',
 		'description': '',
 		'default': 0
 	}
@@ -1225,14 +1228,14 @@ class b_28():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1243,7 +1246,7 @@ class b_28():
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Sprite center coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
@@ -1253,14 +1256,14 @@ class b_29():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1271,28 +1274,28 @@ class b_29():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты',
+		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Неизв. радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1301,14 +1304,14 @@ class b_30():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1320,7 +1323,7 @@ class b_30():
 		'prop': '1_roomName_res',
 		'type': fieldType.ENUM_STR,
 		'subtype': fieldType.RES_MODULE,
-		'name': '1. модуль',
+		'name': '1. module',
 		'description': '',
 		'default': ''
 	}
@@ -1328,7 +1331,7 @@ class b_30():
 		'prop': '1_roomName',
 		'type': fieldType.ENUM_STR,
 		'subtype': fieldType.ROOM,
-		'name': 'Название 1. комнаты',
+		'name': '1. room',
 		'description': '',
 		'default': ''
 	}
@@ -1336,7 +1339,7 @@ class b_30():
 		'prop': '2_roomName_res',
 		'type': fieldType.ENUM_STR,
 		'subtype': fieldType.RES_MODULE,
-		'name': '2. модуль',
+		'name': '2. module',
 		'description': '',
 		'default': ''
 	}
@@ -1344,7 +1347,7 @@ class b_30():
 		'prop': '2_roomName',
 		'type': fieldType.ENUM_STR,
 		'subtype': fieldType.ROOM,
-		'name': 'Название 2. комнаты',
+		'name': '2. room',
 		'description': '',
 		'default': ''
 	}
@@ -1353,14 +1356,14 @@ class b_31():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1371,35 +1374,35 @@ class b_31():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
 		'prop': 'unk_R',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_XYZ2 = {
 		'prop': 'unk_XYZ2',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
@@ -1409,14 +1412,14 @@ class b_33():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1427,77 +1430,77 @@ class b_33():
 	Use_Lights = {
 		'prop': 'useLight',
 		'type': fieldType.INT,
-		'name': 'Исп. свет',
+		'name': 'Use lights',
 		'description': '',
 		'default': 0
 	}
 	Light_Type = {
 		'prop': 'lType',
 		'type': fieldType.INT,
-		'name': 'Тип света',
+		'name': 'Light type',
 		'description': '',
 		'default': 0
 	}
 	Flag = {
 		'prop': 'flag',
 		'type': fieldType.INT,
-		'name': 'Флаг',
+		'name': 'Flag',
 		'description': '',
 		'default': 0
 	}
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 1',
+		'name': 'Unk. coord 1',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_XYZ2 = {
 		'prop': 'unk_XYZ2',
 		'type': fieldType.COORD,
-		'name': 'Неизв. координаты 2',
+		'name': 'Unk. coord 2',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизв. 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float2 = {
 		'prop': 'float2',
 		'type': fieldType.FLOAT,
-		'name': 'Неизв. 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0.0
 	}
 	Light_R = {
 		'prop': 'light_radius',
 		'type': fieldType.FLOAT,
-		'name': 'Радиус света',
+		'name': 'Light rad',
 		'description': '',
 		'default': 0.0
 	}
 	Intens = {
 		'prop': 'intensity',
 		'type': fieldType.FLOAT,
-		'name': 'Интенсивность',
+		'name': 'Light intensity',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float3 = {
 		'prop': 'float3',
 		'type': fieldType.FLOAT,
-		'name': 'Неизв. 3',
+		'name': 'Unk. 3',
 		'description': '',
 		'default': 0.0
 	}
 	Unk_Float4 = {
 		'prop': 'float4',
 		'type': fieldType.FLOAT,
-		'name': 'Неизв. 4',
+		'name': 'Unk. 4',
 		'description': '',
 		'default': 0.0
 	}
@@ -1514,14 +1517,14 @@ class b_34():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1532,7 +1535,7 @@ class b_34():
 	UnkInt = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизв.',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
@@ -1541,14 +1544,14 @@ class b_35():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1559,7 +1562,7 @@ class b_35():
 	MType = {
 		'prop': 'mType',
 		'type': fieldType.INT,
-		'name': 'Переменная 1',
+		'name': 'Type',
 		'description': '',
 		'default': 0
 	}
@@ -1567,7 +1570,7 @@ class b_35():
 		'prop': 'texnum',
 		'type': fieldType.ENUM,
 		'subtype': fieldType.MATERIAL_IND,
-		'name': 'Номер текстуры',
+		'name': 'Texture',
 		'description': '',
 	}
 
@@ -1575,14 +1578,14 @@ class b_36():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1593,21 +1596,21 @@ class b_36():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Название 1',
+		'name': 'Name 1',
 		'description': '',
 		'default': ''
 	}
 	Name2 = {
 		'prop': 'name2',
 		'type': fieldType.STRING,
-		'name': 'Название 2',
+		'name': 'Name 2',
 		'description': '',
 		'default': ''
 	}
 	MType = {
 		'prop': 'MType',
 		'type': fieldType.INT,
-		'name': 'Переменная 1',
+		'name': 'Type',
 		'description': '',
 		'default': 0
 	}
@@ -1616,14 +1619,14 @@ class b_37():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1634,14 +1637,14 @@ class b_37():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Название 1',
+		'name': 'Name 1',
 		'description': '',
 		'default': ''
 	}
 	SType = {
 		'prop': 'SType',
 		'type': fieldType.INT,
-		'name': 'Переменная 1',
+		'name': 'Type',
 		'description': '',
 		'default': 0
 	}
@@ -1650,14 +1653,14 @@ class b_39():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1668,35 +1671,35 @@ class b_39():
 	Color_R = {
 		'prop': 'color_r',
 		'type': fieldType.INT,
-		'name': 'Радиус цвета',
+		'name': 'Color rad',
 		'description': '',
 		'default': 0
 	}
 	Unk_Float1 = {
 		'prop': 'float1',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0.0
 	}
 	Fog_Start = {
 		'prop': 'fog_start',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 3',
+		'name': 'Unk. 3',
 		'description': '',
 		'default': 0.0
 	}
 	Fog_End = {
 		'prop': 'fog_end',
 		'type': fieldType.FLOAT,
-		'name': 'Неизвестная 4',
+		'name': 'Unk. 4',
 		'description': '',
 		'default': 0.0
 	}
 	Color_Id = {
 		'prop': 'color_id',
 		'type': fieldType.INT,
-		'name': 'ID цвета',
+		'name': 'Color ID',
 		'description': '',
 		'default': 0
 	}
@@ -1705,14 +1708,14 @@ class b_40():
 	XYZ = {
 		'prop': 'b3d_border_center',
 		'type': fieldType.COORD,
-		'name': 'Координаты блока',
+		'name': 'Block border coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	R = {
 		'prop': 'b3d_border_rad',
 		'type': fieldType.RAD,
-		'name': 'Радиус',
+		'name': 'Block border rad',
 		'description': '',
 		'default': 0.0
 	}
@@ -1723,7 +1726,7 @@ class b_40():
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
-		'name': 'Название 1',
+		'name': 'Name 1',
 		'description': '',
 		'default': ''
 	}
@@ -1731,7 +1734,7 @@ class b_40():
 		'prop': 'name2',
 		'type': fieldType.ENUM,
 		'subtype': fieldType.STRING,
-		'name': 'Тип генератора',
+		'name': 'Generator type',
 		'description': '',
 		'default': '$$TreeGenerator',
 		'items': generatorTypeList
@@ -1739,21 +1742,21 @@ class b_40():
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 1',
+		'name': 'Unk. 1',
 		'description': '',
 		'default': 0
 	}
 	Unk_Int2 = {
 		'prop': 'int2',
 		'type': fieldType.INT,
-		'name': 'Неизвестная 2',
+		'name': 'Unk. 2',
 		'description': '',
 		'default': 0
 	}
 	Unk_List = {
 		'prop': 'list1',
 		'type': fieldType.LIST,
-		'name': 'Неизв. параметры',
+		'name': 'Unk. params',
 		'description': '',
 	}
 

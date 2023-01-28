@@ -490,9 +490,9 @@ def drawCommon(l_self, obj):
 	lenStr = str(len(obj.children))
 
 	box = l_self.layout.box()
-	box.label(text="Тип блока: " + str(block_type))
-	box.label(text="Кол-во вложенных блоков: " + lenStr)
-	box.label(text="Группа блока: " + str(level_group))
+	box.label(text="Block type: " + str(block_type))
+	box.label(text="Children block count: " + lenStr)
+	box.label(text="Block group: " + str(level_group))
 
 def drawAllFieldsByType(l_self, context, zclass):
     if zclass.__name__.split('_')[0] == 'b':

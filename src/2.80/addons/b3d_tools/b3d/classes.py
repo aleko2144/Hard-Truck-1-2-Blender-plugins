@@ -101,8 +101,8 @@ def createTypeClass(zclass):
 		prop = None
 
 		lockProp = BoolProperty(
-			name = "Вкл./Выкл.",
-			description = "Включить/выключить параметр для редактирования",
+			name = "On./Off.",
+			description = "Enable/Disable param for editing",
 			default = True
 		)
 
@@ -196,7 +196,7 @@ def createTypeClass(zclass):
 
 				prop_switch = BoolProperty(
 					name = 'Use dropdown',
-					description = 'Выбор из Dropdown списка',
+					description = 'Dropdown selection',
 					default = False
 				)
 
@@ -222,29 +222,29 @@ def createTypeClass(zclass):
 			attributes['__annotations__']["show_{}".format(pname)] = lockProp
 
 			prop1 = BoolProperty(
-				name = 'Смещенная триангуляция',
-				description = 'Порядок в котором считываются вертексы, зависит от этой переменной',
+				name = 'Triangulation offset',
+				description = 'Order in which vertexes are read depends on that',
 				default = True
 			)
 			attributes['__annotations__']['{}_{}'.format(pname, 'triang_offset')] = prop1
 
 			prop2 = BoolProperty(
-				name = 'Использовать UV',
-				description = 'Когда активен, при экспорте записывает UV.',
+				name = 'Use UV',
+				description = 'If active, writes UV during export.',
 				default = True
 			)
 			attributes['__annotations__']['{}_{}'.format(pname, 'use_uvs')] = prop2
 
 			prop3 = BoolProperty(
-				name = 'Использовать нормали',
-				description = 'Когда активен, при экспорте записывает нормали.',
+				name = 'Use normals',
+				description = 'If active, writes normal during export.',
 				default = True
 			)
 			attributes['__annotations__']['{}_{}'.format(pname, 'use_normals')] = prop3
 
 			prop4 = BoolProperty(
-				name = 'Выключатель нормалей',
-				description = 'Когда активен, использует float для вкл./выкл. нормалей. Когда неактивен использует float vector для обычных нормалей. Игнорируется если пункт "Использовать нормали" неактивен',
+				name = 'Normal switch',
+				description = 'If active, use <float> for en(dis)abling normals. If not active use <float vector> for common normals. Is ignored if "Use normals" is inactive',
 				default = True
 			)
 			attributes['__annotations__']['{}_{}'.format(pname, 'normal_flag')] = prop4
