@@ -26,7 +26,13 @@ from .class_descr import (
     fieldType, b_common
 )
 
-from ..consts import EMPTY_NAME
+from ..consts import (
+    BLOCK_TYPE,
+    EMPTY_NAME,
+    LEVEL_GROUP,
+    TRANSF_COLLECTION,
+    TEMP_COLLECTION
+)
 
 reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
 reb3dMesh = re.compile(r'.*b3dcopy.*')
@@ -87,23 +93,28 @@ def applyTransforms():
 
 def applyTransform(root):
 
+    transfCollection = bpy.data.collections.get(TRANSF_COLLECTION)
+    if transfCollection is None:
+        transfCollection = bpy.data.collections.new(TRANSF_COLLECTION)
+        bpy.context.scene.collection.children.link(transfCollection)
+
     if bpy.data.objects.get('b3dCenterSpace') is None:
         b3dObj = bpy.data.objects.new('b3dCenterSpace', None)
-        b3dObj['block_type'] = 24
+        b3dObj[BLOCK_TYPE] = 24
         b3dObj.rotation_euler[0] = 0.0
         b3dObj.rotation_euler[1] = 0.0
         b3dObj.rotation_euler[2] = 0.0
         b3dObj.location = (0.0, 0.0, 0.0)
-        bpy.context.collection.objects.link(b3dObj)
+        transfCollection.objects.link(b3dObj)
 
     if bpy.data.objects.get('b3dCenterSpace' + '_b3dSpaceCopy') is None:
         b3dObj = bpy.data.objects.new('b3dCenterSpace' + '_b3dSpaceCopy', None)
-        b3dObj['block_type'] = 24
+        b3dObj[BLOCK_TYPE] = 24
         b3dObj.rotation_euler[0] = 0.0
         b3dObj.rotation_euler[1] = 0.0
         b3dObj.rotation_euler[2] = 0.0
         b3dObj.location = (0.0, 0.0, 0.0)
-        bpy.context.collection.objects.link(b3dObj)
+        transfCollection.objects.link(b3dObj)
 
     stack = [[root, 'b3dCenterSpace', 'b3dCenterSpace' + '_b3dSpaceCopy']]
 
@@ -113,13 +124,13 @@ def applyTransform(root):
         prevSpaceObj = bpy.data.objects.get(prevSpace)
         prevSpaceCopyObj = bpy.data.objects.get(prevSpaceCopy)
 
-        log.debug("{} {}".format(block['block_type'], block.name))
+        log.debug("{} {}".format(block[BLOCK_TYPE], block.name))
         log.debug(prevSpace)
         log.debug(prevSpaceCopy)
 
-        if block['block_type'] == 18:
-            objName = block["add_name"]
-            spaceName = block["space_name"]
+        if block[BLOCK_TYPE] == 18:
+            objName = block[prop(b_18.Add_Name)]
+            spaceName = block[prop(b_18.Space_Name)]
 
             destObj = bpy.data.objects.get(objName)
 
@@ -149,7 +160,7 @@ def applyTransform(root):
                     spaceCopy.rotation_euler[2] = spaceObj.rotation_euler[2]
                     spaceCopy.location = spaceObj.location
                     spaceCopy.name = spaceObj.name + "_b3dSpaceCopy"
-                    bpy.context.collection.objects.link(spaceCopy)
+                    transfCollection.objects.link(spaceCopy)
                 stack.append([destObj, spaceObj.name, spaceCopy.name])
             # else:
             #     stack.append([destObj, prevSpace, prevSpaceCopy])
@@ -165,7 +176,7 @@ def applyTransform(root):
             newmesh.parent = prevSpaceCopyObj
             newmesh.name = "{}_b3dcopy".format(block.name)
             # log.info("Linking {}".format(newmesh.name))
-            bpy.context.collection.objects.link(newmesh)
+            transfCollection.objects.link(newmesh)
             # newmesh.hide_set(False)
 
         for directChild in block.children:
@@ -239,12 +250,12 @@ def getHierarchyRoots(root):
     while globalRoot.parent is not None:
         globalRoot = globalRoot.parent
 
-    blocks18 = [cn for cn in bpy.data.objects if cn['block_type'] is not None and cn['block_type'] == 18]
+    blocks18 = [cn for cn in bpy.data.objects if cn[BLOCK_TYPE] is not None and cn[BLOCK_TYPE] == 18]
     ref_set = set()
     for cn in blocks18:
         #out refs
-        if bpy.data.objects.get(cn['add_name']) is not None:
-            ref_set.add(cn['add_name'])
+        if bpy.data.objects.get(cn[prop(b_18.Add_Name)]) is not None:
+            ref_set.add(cn[prop(b_18.Add_Name)])
 
         #in refs
         temp = cn
@@ -255,8 +266,8 @@ def getHierarchyRoots(root):
     referenceables = list(ref_set)
     referenceables.sort()
 
-    other = [cn.name for cn in globalRoot.children if cn['block_type'] is not None \
-        and (cn['block_type'] == 4 or cn['block_type'] == 5 or cn['block_type'] == 19) \
+    other = [cn.name for cn in globalRoot.children if cn[BLOCK_TYPE] is not None \
+        and (cn[BLOCK_TYPE] == 4 or cn[BLOCK_TYPE] == 5 or cn[BLOCK_TYPE] == 19) \
         and cn.name not in referenceables ]
 
     noDubGraph = {}
@@ -265,9 +276,9 @@ def getHierarchyRoots(root):
         noDubGraph[r] = set()
 
     for r in referenceables:
-        references = [cn for cn in getAllChildren(bpy.data.objects[r]) if cn['block_type'] is not None and cn['block_type'] == 18]
+        references = [cn for cn in getAllChildren(bpy.data.objects[r]) if cn[BLOCK_TYPE] is not None and cn[BLOCK_TYPE] == 18]
         for refObj in references:
-            noDubGraph[r].add(refObj['add_name'])
+            noDubGraph[r].add(refObj[prop(b_18.Add_Name)])
 
     for r in referenceables:
         graph[r] = list(noDubGraph[r])
@@ -277,7 +288,7 @@ def getHierarchyRoots(root):
     closestRoot = root
     if closestRoot != globalRoot:
         if closestRoot.name not in graph:
-            while (closestRoot.parent['block_type'] is not None and closestRoot.parent['block_type'] != 5 \
+            while (closestRoot.parent[BLOCK_TYPE] is not None and closestRoot.parent[BLOCK_TYPE] != 5 \
             and closestRoot.parent.name not in graph) or closestRoot.parent is None: # closest or global
                 closestRoot = closestRoot.parent
     else:
@@ -300,14 +311,14 @@ def processLOD(root, state, explevel = 0, curlevel = -1):
     while stack:
         block, clevel, isActive = stack.pop()
 
-        if block['block_type'] == 18:
-            refObj = bpy.data.objects.get(block['add_name'])
+        if block[BLOCK_TYPE] == 18:
+            refObj = bpy.data.objects.get(block[prop(b_18.Add_Name)])
             if refObj is not None:
                 stack.append([refObj, clevel, isActive])
                 if isActive:
                     block.hide_set(state)
 
-        if block['block_type'] == 10:
+        if block[BLOCK_TYPE] == 10:
             clevel += 1
 
         if isActive and isMeshBlock(block):
@@ -317,7 +328,7 @@ def processLOD(root, state, explevel = 0, curlevel = -1):
         for directChild in block.children:
             log.debug("Processing {}".format(directChild.name))
             if clevel == explevel:
-                if directChild['level_group'] == 1:
+                if directChild[LEVEL_GROUP] == 1:
                     stack.append([directChild, clevel, True])
                 else:
                     stack.append([directChild, -1, isActive])
@@ -360,14 +371,14 @@ def processCond(root, group, state):
 
         l_group = group
 
-        if block['block_type'] == 18:
-            refObj = bpy.data.objects.get(block['add_name'])
+        if block[BLOCK_TYPE] == 18:
+            refObj = bpy.data.objects.get(block[prop(b_18.Add_Name)])
             if refObj is not None:
                 stack.append([refObj, clevel+1, glevel, groupMax, isActive])
                 if isActive:
                     block.hide_set(state)
 
-        if block['block_type'] == 21:
+        if block[BLOCK_TYPE] == 21:
             glevel += 1
             clevel = 1
             groupMax = block[prop(b_21.GroupCnt)]
@@ -385,7 +396,7 @@ def processCond(root, group, state):
             elif glevel > 1:
                 nextState = isActive and True
             if clevel == 1:
-                if directChild['level_group'] == l_group or l_group == -1:
+                if directChild[LEVEL_GROUP] == l_group or l_group == -1:
                     stack.append([directChild, clevel+1, glevel, groupMax, nextState])
                 else:
                     stack.append([directChild, clevel+1, glevel, groupMax, False])
@@ -444,6 +455,11 @@ def createRadDriver(srcObj, bname, pname):
 
 def showHideSphere(context, root, pname):
 
+    transfCollection = bpy.data.collections.get(TEMP_COLLECTION)
+    if transfCollection is None:
+        transfCollection = bpy.data.collections.new(TEMP_COLLECTION)
+        bpy.context.scene.collection.children.link(transfCollection)
+
     objName = "{}||{}||{}".format(root.name, pname, 'temp')
 
     b3dObj = bpy.data.objects.get(objName)
@@ -452,7 +468,7 @@ def showHideSphere(context, root, pname):
         bpy.data.objects.remove(b3dObj, do_unlink=True)
     else:
 
-        bnum = root.get('block_type')
+        bnum = root.get(BLOCK_TYPE)
 
         centerName = "{}_center".format(pname)
         radName = "{}_rad".format(pname)
@@ -468,7 +484,7 @@ def showHideSphere(context, root, pname):
         b3dObj.location = center
         b3dObj.parent = root.parent
 
-        context.collection.objects.link(b3dObj)
+        transfCollection.objects.link(b3dObj)
 
         # center driver
         bname = getMytoolBlockName('b', bnum)
@@ -481,11 +497,11 @@ def showHideSphere(context, root, pname):
 def drawCommon(l_self, obj):
 	block_type = None
 	level_group = None
-	if 'block_type' in obj:
-		block_type = obj['block_type']
+	if BLOCK_TYPE in obj:
+		block_type = obj[BLOCK_TYPE]
 
-	if 'level_group' in obj:
-		level_group = obj['level_group']
+	if LEVEL_GROUP in obj:
+		level_group = obj[LEVEL_GROUP]
 
 	lenStr = str(len(obj.children))
 
@@ -502,144 +518,122 @@ def drawAllFieldsByType(l_self, context, zclass):
         drawFieldsByType(l_self, context, zclass)
 
 def drawFieldsByType(l_self, context, zclass):
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "block{}".format(btype)
 
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    boxes = {}
     for attr in attrs:
         obj = zclass.__dict__[attr]
-        drawFieldByType(l_self, context, obj, zclass)
+        bname, bnum = getMytoolBlockNameByClass(zclass)
 
-def drawFieldByType(l_self, context, obj, zclass):
+        ftype = obj['type']
+        subtype = obj.get('subtype')
+        curGroupName = obj.get('group')
+        pname = obj['prop']
+        mytool = context.scene.my_tool
+        curLayout = l_self.layout
 
-    bname, bnum = getMytoolBlockNameByClass(zclass)
+        if curGroupName is not None:
+            if boxes.get(curGroupName) is None:
+                boxes[curGroupName] = l_self.layout.box()
+            curLayout = boxes[curGroupName]
 
-    ftype = obj['type']
-    subtype = obj.get('subtype')
-    pname = obj['prop']
-    mytool = context.scene.my_tool
 
-    if ftype == fieldType.SPHERE_EDIT:
-        box = l_self.layout.box()
-        col = box.column()
+        if ftype == fieldType.SPHERE_EDIT:
+            box = curLayout.box()
+            col = box.column()
 
-        props = col.operator("wm.show_hide_sphere_operator")
-        props.pname = pname
+            props = col.operator("wm.show_hide_sphere_operator")
+            props.pname = pname
 
-    elif ftype == fieldType.STRING \
-    or ftype == fieldType.COORD \
-    or ftype == fieldType.RAD \
-    or ftype == fieldType.INT \
-    or ftype == fieldType.FLOAT \
-    or ftype == fieldType.ENUM \
-    or ftype == fieldType.ENUM_STR \
-    or ftype == fieldType.LIST:
+        elif ftype == fieldType.STRING \
+        or ftype == fieldType.COORD \
+        or ftype == fieldType.RAD \
+        or ftype == fieldType.INT \
+        or ftype == fieldType.FLOAT \
+        or ftype == fieldType.ENUM \
+        or ftype == fieldType.ENUM_STR \
+        or ftype == fieldType.LIST:
 
-        box = l_self.layout.box()
-        box.prop(getattr(mytool, bname), "show_"+pname)
+            box = curLayout.box()
+            box.prop(getattr(mytool, bname), "show_"+pname)
 
-        col = box.column()
-        if ftype == fieldType.STRING:
-            col.prop(getattr(mytool, bname), pname)
-
-        elif ftype == fieldType.COORD:
-            col.prop(getattr(mytool, bname), pname)
-
-        elif ftype == fieldType.RAD:
-            col.prop(getattr(mytool, bname), pname)
-
-        elif ftype == fieldType.INT:
-            col.prop(getattr(mytool, bname), pname)
-
-        elif ftype == fieldType.FLOAT:
-            col.prop(getattr(mytool, bname), pname)
-
-        elif ftype == fieldType.ENUM:
-            col.prop(getattr(mytool, bname), pname)
-
-        elif ftype == fieldType.ENUM_STR:
-            col.prop(getattr(mytool, bname), '{}_switch'.format(pname))
-
-            if(getattr(getattr(mytool, bname), '{}_switch'.format(pname))):
-                col.prop(getattr(mytool, bname), '{}_enum'.format(pname))
-            else:
+            col = box.column()
+            if ftype == fieldType.STRING:
                 col.prop(getattr(mytool, bname), pname)
 
-        elif ftype == fieldType.LIST:
-            collect = getattr(mytool, bname)
+            elif ftype == fieldType.COORD:
+                col.prop(getattr(mytool, bname), pname)
 
-            scn = bpy.context.scene
+            elif ftype == fieldType.RAD:
+                col.prop(getattr(mytool, bname), pname)
 
-            rows = 2
-            row = box.row()
-            row.template_list("CUSTOM_UL_items", "", collect, pname, scn, "custom_index", rows=rows)
+            elif ftype == fieldType.INT:
+                col.prop(getattr(mytool, bname), pname)
 
-            col = row.column(align=True)
-            props = col.operator("custom.list_action", icon='ADD', text="")
-            props.action = 'ADD'
-            props.bname = bname
-            props.pname = pname
-            props.customindex = "custom_index"
-            props = col.operator("custom.list_action", icon='REMOVE', text="")
-            props.action = 'REMOVE'
-            props.bname = bname
-            props.pname = pname
-            props.customindex = "custom_index"
-            col.separator()
-            props = col.operator("custom.list_action", icon='TRIA_UP', text="")
-            props.action = 'UP'
-            props.bname = bname
-            props.pname = pname
-            props.customindex = "custom_index"
-            props = col.operator("custom.list_action", icon='TRIA_DOWN', text="")
-            props.action = 'DOWN'
-            props.bname = bname
-            props.pname = pname
-            props.customindex = "custom_index"
+            elif ftype == fieldType.FLOAT:
+                col.prop(getattr(mytool, bname), pname)
 
+            elif ftype == fieldType.ENUM:
+                col.prop(getattr(mytool, bname), pname)
 
-            # row = box.row()
-            # col = row.column(align=True)
-            # row = col.row(align=True)
-            # row.operator("custom.print_items", icon="LINENUMBERS_ON")
-            # row = col.row(align=True)
-            # row.operator("custom.clear_list", icon="X")
-            # row.operator("custom.remove_duplicates", icon="GHOST_ENABLED")
+            elif ftype == fieldType.ENUM_STR:
+                col.prop(getattr(mytool, bname), '{}_switch'.format(pname))
 
-            # row = box.row()
-            # col = row.column(align=True)
-            # row = col.row(align=True)
-            # row.operator("custom.add_viewport_selection", icon="HAND") #LINENUMBERS_OFF, ANIM
-            # row = col.row(align=True)
-            # row.operator("custom.select_items", icon="VIEW3D", text="Select Item in 3D View")
-            # row.operator("custom.select_items", icon="GROUP", text="Select All Items in 3D View").select_all = True
-            # row = col.row(align=True)
-            # row.operator("custom.delete_object", icon="X")
+                if(getattr(getattr(mytool, bname), '{}_switch'.format(pname))):
+                    col.prop(getattr(mytool, bname), '{}_enum'.format(pname))
+                else:
+                    col.prop(getattr(mytool, bname), pname)
 
-            # collect = getattr(getattr(mytool, bname), pname)
-            # print(dir(collect))
-            # for item in collect.items():
-            #     print(item)
-            #     col.prop(item, "value")
+            elif ftype == fieldType.LIST:
+                collect = getattr(mytool, bname)
 
-        if getattr(getattr(mytool, bname), "show_"+pname):
-            col.enabled = True
-        else:
-            col.enabled = False
+                scn = bpy.context.scene
 
-    elif ftype == fieldType.V_FORMAT:
-        box = l_self.layout.box()
-        box.prop(getattr(mytool, bname), "show_{}".format(pname))
-        col1 = box.column()
-        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'triang_offset'))
-        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_uvs'))
-        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_normals'))
-        col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'normal_flag'))
+                rows = 2
+                row = box.row()
+                row.template_list("CUSTOM_UL_items", "", collect, pname, scn, "custom_index", rows=rows)
 
-        if getattr(getattr(mytool, bname), "show_"+pname):
-            col1.enabled = True
-        else:
-            col1.enabled = False
+                col = row.column(align=True)
+                props = col.operator("custom.list_action", icon='ADD', text="")
+                props.action = 'ADD'
+                props.bname = bname
+                props.pname = pname
+                props.customindex = "custom_index"
+                props = col.operator("custom.list_action", icon='REMOVE', text="")
+                props.action = 'REMOVE'
+                props.bname = bname
+                props.pname = pname
+                props.customindex = "custom_index"
+                col.separator()
+                props = col.operator("custom.list_action", icon='TRIA_UP', text="")
+                props.action = 'UP'
+                props.bname = bname
+                props.pname = pname
+                props.customindex = "custom_index"
+                props = col.operator("custom.list_action", icon='TRIA_DOWN', text="")
+                props.action = 'DOWN'
+                props.bname = bname
+                props.pname = pname
+                props.customindex = "custom_index"
+
+            if getattr(getattr(mytool, bname), "show_"+pname):
+                col.enabled = True
+            else:
+                col.enabled = False
+
+        elif ftype == fieldType.V_FORMAT:
+            box = curLayout.box()
+            box.prop(getattr(mytool, bname), "show_{}".format(pname))
+            col1 = box.column()
+            col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'triang_offset'))
+            col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_uvs'))
+            col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_normals'))
+            col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'normal_flag'))
+
+            if getattr(getattr(mytool, bname), "show_"+pname):
+                col1.enabled = True
+            else:
+                col1.enabled = False
 
 def getAllObjsByType(context, object, zclass):
     getObjsByType(context, object, b_common)
@@ -650,13 +644,10 @@ def getObjsByType(context, object, zclass):
 
     bname, bnum = getMytoolBlockNameByClass(zclass)
 
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "block{}".format(btype)
     mytool = context.scene.my_tool
     for property in attrs:
         obj = zclass.__dict__[property]
 
-        # print(dir(getattr(mytool, bname)))
         if obj['type'] != fieldType.SPHERE_EDIT:
             if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
                 and getattr(getattr(mytool, bname), "show_"+obj['prop']):
@@ -681,12 +672,6 @@ def getObjsByType(context, object, zclass):
 
                 elif obj['type'] == fieldType.ENUM \
                 or obj['type'] == fieldType.ENUM_STR:
-                    # if obj['subtype'] == fieldType.INT \
-                    # or obj['subtype'] == fieldType.STRING \
-                    # or obj['subtype'] == fieldType.FLOAT \
-                    # or obj['subtype'] == fieldType.SPACE_NAME \
-                    # or obj['subtype'] == fieldType.REFERENCEABLE \
-                    # or obj['subtype'] == fieldType.MATERIAL_IND:
                     setattr(
                         getattr(mytool, bname),
                         obj['prop'],
@@ -702,7 +687,6 @@ def getObjsByType(context, object, zclass):
                         item = col.add()
                         item.index = i
                         item.value = obj
-                    # getattr(mytool, bname)[obj['prop']] = str(object[obj['prop']])
 
                 else:
                     setattr(
@@ -719,8 +703,6 @@ def setObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
 
     bname, bnum = getMytoolBlockNameByClass(zclass)
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "block{}".format(btype)
     mytool = context.scene.my_tool
     for property in attrs:
         obj = zclass.__dict__[property]
@@ -843,8 +825,6 @@ def getPerFaceByType(context, object, zclass):
 
     bname, bnum = getMytoolBlockNameByClass(zclass)
 
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "perFaceBlock{}".format(btype)
     mesh = object.data
     bpy.ops.object.mode_set(mode = 'OBJECT')
     polygons = getPolygonsBySelectedVertices(object)
@@ -864,12 +844,9 @@ def getPerVertexByType(context, object, zclass):
 
     bname, bnum = getMytoolBlockNameByClass(zclass)
 
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "perVertBlock{}".format(btype)
     mesh = object.data
     bpy.ops.object.mode_set(mode = 'OBJECT')
     vertices = getSelectedVertices(object)
-    # log.debug(vertices)
     indexes = [cn.index for cn in vertices]
 
     if len(indexes) > 0:
@@ -886,8 +863,6 @@ def setPerVertexByType(context, object, zclass):
 
     bname, bnum = getMytoolBlockNameByClass(zclass)
 
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "perVertBlock{}".format(btype)
     mesh = object.data
 
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -907,8 +882,6 @@ def setPerFaceByType(context, object, zclass):
 
     bname, bnum = getMytoolBlockNameByClass(zclass)
 
-    # btype = zclass.__name__.split('_')[1]
-    # bname = "perFaceBlock{}".format(btype)
     mesh = object.data
 
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -924,7 +897,6 @@ def setPerFaceByType(context, object, zclass):
     bpy.ops.object.mode_set(mode = 'EDIT')
 
 def createCustomAttribute(mesh, values, zclass, zobj):
-    # attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
     ctype, btype = zclass.__name__.split('_')
     domain = ''
     if ctype == 'pvb':

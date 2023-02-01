@@ -25,6 +25,7 @@ if "bpy" in locals():
 	# importlib.reload(material_UIList)
 	importlib.reload(custom_UIList)
 	importlib.reload(common)
+	importlib.reload(consts)
 	importlib.reload(way)
 	importlib.reload(tch)
 	importlib.reload(b3d)
@@ -35,6 +36,7 @@ else:
 		# material_UIList,
 		custom_UIList,
 		common,
+		consts,
 		way,
 		tch,
 		b3d

@@ -61,11 +61,17 @@ from .class_descr import (
 	pfb_28,
 	pfb_35,
 	pvb_8,
-	pvb_35
+	pvb_35,
+	b_common
 )
 
 from .scripts import (
 	prop
+)
+
+from ..consts import (
+	LEVEL_GROUP,
+	BLOCK_TYPE
 )
 
 from ..common import (
@@ -244,7 +250,7 @@ class B3DExporter:
 
 		self.borders = {}
 
-		borderBlocks = [cn for cn in bpy.data.objects if cn.get('block_type') == 30 \
+		borderBlocks = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 30 \
 			and (cn.get(prop(b_30.ResModule1)) == self.currentRes or cn.get(prop(b_30.ResModule2)) == self.currentRes)]
 
 		for bb in borderBlocks:
@@ -327,8 +333,8 @@ class B3DExporter:
 		else:
 			allObjs = [obj]
 
-		spaces = [cn for cn in allObjs if cn['block_type'] == 24]
-		other = [cn for cn in allObjs if cn['block_type'] != 24]
+		spaces = [cn for cn in allObjs if cn[BLOCK_TYPE] == 24]
+		other = [cn for cn in allObjs if cn[BLOCK_TYPE] != 24]
 
 		rChild = []
 		rChild.extend(spaces)
@@ -355,18 +361,18 @@ class B3DExporter:
 		# prevLevel = 0
 		if len(rChild) > 0:
 			for obj in rChild[:-1]:
-				if obj['block_type'] == 10 or obj['block_type'] == 9:
+				if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
 					curMaxCnt = 2
-				elif obj['block_type'] == 21:
+				elif obj[BLOCK_TYPE] == 21:
 					curMaxCnt = obj[prop(b_21.GroupCnt)]
 				self.exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
 				file.write(struct.pack("<i", 444))
 
 			obj = rChild[-1]
-			if obj['block_type'] == 10 or obj['block_type'] == 9:
+			if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
 				curMaxCnt = 2
-			elif obj['block_type'] == 21:
+			elif obj[BLOCK_TYPE] == 21:
 				curMaxCnt = obj[prop(b_21.GroupCnt)]
 			self.exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
@@ -388,6 +394,19 @@ class B3DExporter:
 		file.seek(20,0)
 		file.write(struct.pack("<i", cp_eof - cp_data_blocks))
 
+	def commonSort(self, curCenter, arr):
+		def dist(curCenter, obj):
+			center = obj.get('b3d_border_center')
+			rad = obj.get('b3d_border_rad')
+			if center is None or rad is None or rad < 0.0001:
+				return 0
+			else:
+				return (sum(map(lambda xx,yy : (xx-yy)**2,curCenter,center)))**0.5
+
+		newList = [(obj, dist(curCenter, obj)) for obj in arr]
+		newList.sort(key= lambda x: (x[0].get(LEVEL_GROUP), x[1]))
+		return list(map(lambda x: x[0], newList))
+
 	def exportBlock(self, obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 		toProcessChild = False
@@ -396,29 +415,39 @@ class B3DExporter:
 		block = obj
 
 		objName = getNonCopyName(block.name)
-		objType = block.get('block_type')
+		objType = block.get(BLOCK_TYPE)
 
 		passToMesh = {}
 
 		if objType != None:
 
-			log.debug("{}_{}_{}_{}".format(block['block_type'], curLevel, block['level_group'], block.name))
+			log.debug("{}_{}_{}_{}".format(block[BLOCK_TYPE], curLevel, block[LEVEL_GROUP], block.name))
 
 			if len(curGroups) <= curLevel:
 				curGroups.append(0)
 
 			#write Group Chunk
-			if block['level_group'] > curGroups[curLevel]:
+			if block[LEVEL_GROUP] > curGroups[curLevel]:
 				log.debug('group ended')
-				for i in range(block['level_group'] - curGroups[curLevel]):
+				for i in range(block[LEVEL_GROUP] - curGroups[curLevel]):
 					file.write(struct.pack("<i",444))#Group Chunk
-				curGroups[curLevel] = block['level_group']
+				curGroups[curLevel] = block[LEVEL_GROUP]
 
 			file.write(struct.pack("<i",333))#Begin Chunk
 
 			blChildren = list(block.children)
 
-			# blChildren.sort(key=lambda cn: cn['level_group'])
+			curCenter = None
+			curCenter = list(block.location)
+			# if block.get('b3d_border_center') is not None:
+			# 	curCenter = block.get('b3d_border_center')
+			# else:
+			# 	curCenter = [0,0,0]
+
+			# blChildren = self.appendDistances(curCenter, blChildren)
+			blChildren = self.commonSort(curCenter, blChildren)
+
+			# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
 			# blChildren.sort(key=lambda cn: cn.name, reverse=True)
 
 			if objType == 30:
@@ -485,7 +514,7 @@ class B3DExporter:
 				writeName(block[prop(b_6.Name2)], file)
 
 				offset = 0
-				allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
+				allChildren = [cn for cn in getAllChildren(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
 				for ch in allChildren:
 					obj = bpy.data.objects[ch.name]
 					someProps = getMeshProps(obj)
@@ -523,7 +552,7 @@ class B3DExporter:
 				writeName(block[prop(b_7.Name1)], file)
 
 				offset = 0
-				allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
+				allChildren = [cn for cn in getAllChildren(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
 				for ch in allChildren:
 					obj = bpy.data.objects[ch.name]
 					someProps = getMeshProps(obj)
@@ -622,7 +651,7 @@ class B3DExporter:
 
 				file.write(struct.pack("<i", len(block.children)))
 
-				blChildren.sort(key=lambda cn: cn['level_group'])
+				# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
 
 				toProcessChild = True
 				curMaxCnt = 2
@@ -637,8 +666,8 @@ class B3DExporter:
 
 				file.write(struct.pack("<i", len(block.children)))
 
-				blChildren.sort(key=lambda cn: cn['level_group'])
-				# log.debug(["{}_{}".format(cn['level_group'], cn.name) for cn in blChildren])
+				# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
+				# log.debug(["{}_{}".format(cn[LEVEL_GROUP], cn.name) for cn in blChildren])
 
 				toProcessChild = True
 				curMaxCnt = 2
@@ -796,7 +825,7 @@ class B3DExporter:
 
 				file.write(struct.pack("<i", len(block.children)))
 
-				blChildren.sort(key=lambda cn: cn['level_group'])
+				# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
 
 				toProcessChild = True
 				curMaxCnt = block[prop(b_21.GroupCnt)]
@@ -1108,7 +1137,7 @@ class B3DExporter:
 				writeName(block[prop(b_36.Name2)], file)
 
 				offset = 0
-				allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
+				allChildren = [cn for cn in getAllChildren(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
 				for ch in allChildren:
 					obj = bpy.data.objects[ch.name]
 					someProps = getMeshProps(obj)
@@ -1174,7 +1203,7 @@ class B3DExporter:
 
 
 				offset = 0
-				allChildren = [cn for cn in getAllChildren(block) if cn.get('block_type') and cn.get('block_type') in [35, 8, 28]]
+				allChildren = [cn for cn in getAllChildren(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
 				for ch in allChildren:
 					obj = bpy.data.objects[ch.name]
 					someProps = getMeshProps(obj)
@@ -1439,7 +1468,7 @@ def getMeshProps(obj):
 # def forChild(object, root, file):
 # 	if (not root):
 # 		try:
-# 			type = object['block_type']
+# 			type = object[BLOCK_TYPE]
 # 			print(object.name)
 
 # 			if type != 444 and type != 370:
@@ -2927,7 +2956,7 @@ def getMeshProps(obj):
 # 	for child in object.children:
 # 		forChild(child,False,file)
 # 	if (not root):
-# 		if object['block_type'] != 444:
+# 		if object[BLOCK_TYPE] != 444:
 # 			file.write(struct.pack("<i",555)) #CloseCase
 
 	#if (not root):

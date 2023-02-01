@@ -33,7 +33,6 @@ from .scripts import (
 	prop,
 	drawCommon,
 	drawAllFieldsByType,
-	drawFieldByType,
 	getAllObjsByType,
 	setAllObjsByType,
 	getPerFaceByType,
@@ -256,137 +255,137 @@ class AddOperator(bpy.types.Operator):
 		elif block_type == 0:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 1:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_1)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 2:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_2)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 3:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_3)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 4:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos #(0.0,0.0,0.0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_4)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 5:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos #(0.0,0.0,0.0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_5)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 6:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos #(0.0,0.0,0.0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_6)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 7:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos #(0.0,0.0,0.0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_7)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 8:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos #(0.0,0.0,0.0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_8)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 9:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos #(0.0,0.0,0.0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_9)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 10:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_10)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 11:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_11)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 12:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_12)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 13:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_13)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 14:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_14)
 
 		elif block_type == 15:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_15)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 16:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_16)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 17:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_17)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 18:
 			object = bpy.data.objects.new(object_name, None)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			object.location=cursor_pos
 			setAllObjsByType(context, object, b_18)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 19:
 			object = bpy.data.objects.new(object_name, None)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			object.location=cursor_pos
 			bpy.context.scene.objects.link(object)
 
@@ -406,12 +405,12 @@ class AddOperator(bpy.types.Operator):
 			curveData.bevel_depth = 0.01
 			object = bpy.data.objects.new(object_name, curveData)
 			object.location = (0,0,0)
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_20)
 			context.scene.objects.link(object)
 
 		elif block_type == 21:
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			object.location=cursor_pos
 			setAllObjsByType(context, object, b_20)
 			bpy.context.scene.objects.link(object)
@@ -419,70 +418,70 @@ class AddOperator(bpy.types.Operator):
 		elif block_type == 22:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_22)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 23:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_23)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 24:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_24)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 25:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_25)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 26:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_26)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 27:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_27)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 28:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_28)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 29:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_29)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 30:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_30)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 31:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_31)
 			bpy.context.scene.objects.link(object)
 
@@ -496,42 +495,42 @@ class AddOperator(bpy.types.Operator):
 		elif block_type == 34:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_34)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 35:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_35)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 36:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_36)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 37:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_37)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 39:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_39)
 			bpy.context.scene.objects.link(object)
 
 		elif block_type == 40:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_40)
 			bpy.context.scene.objects.link(object)
 		return {'FINISHED'}
@@ -542,7 +541,7 @@ class GetVertexValuesOperator(bpy.types.Operator):
 
 	def execute(self, context):
 		object = bpy.context.selected_objects[0]
-		block_type = object['block_type']
+		block_type = object[consts.BLOCK_TYPE]
 
 		if block_type == 8:
 			getPerVertexByType(context, object, pvb_8)
@@ -557,7 +556,7 @@ class GetFaceValuesOperator(bpy.types.Operator):
 
 	def execute(self, context):
 		object = bpy.context.selected_objects[0]
-		block_type = object['block_type']
+		block_type = object[consts.BLOCK_TYPE]
 
 		if block_type == 8:
 			getPerFaceByType(context, object, pfb_8)
@@ -577,7 +576,7 @@ class GetValuesOperator(bpy.types.Operator):
 		mytool = scene.my_tool
 
 		object = bpy.context.object
-		block_type = object['block_type']
+		block_type = object[consts.BLOCK_TYPE]
 
 		zclass = getClassDefByType(block_type)
 
@@ -591,13 +590,13 @@ class SetFaceValuesOperator(bpy.types.Operator):
 	bl_label = "Save block values"
 
 	def execute(self, context):
-		curtype = bpy.context.object['block_type']
-		objects = [cn for cn in bpy.context.selected_objects if cn['block_type'] is not None and cn['block_type'] == curtype]
+		curtype = bpy.context.object[consts.BLOCK_TYPE]
+		objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
 
 		for i in range(len(objects)):
 
 			object = objects[i]
-			block_type = object['block_type']
+			block_type = object[consts.BLOCK_TYPE]
 
 			if block_type == 8:
 				setPerFaceByType(context, object, pfb_8)
@@ -613,13 +612,13 @@ class SetVertexValuesOperator(bpy.types.Operator):
 	bl_label = "Save block values"
 
 	def execute(self, context):
-		curtype = bpy.context.object['block_type']
-		objects = [cn for cn in bpy.context.selected_objects if cn['block_type'] is not None and cn['block_type'] == curtype]
+		curtype = bpy.context.object[consts.BLOCK_TYPE]
+		objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
 
 		for i in range(len(objects)):
 
 			object = objects[i]
-			block_type = object['block_type']
+			block_type = object[consts.BLOCK_TYPE]
 
 			if block_type == 8:
 				setPerVertexByType(context, object, pvb_8)
@@ -642,20 +641,20 @@ class SetValuesOperator(bpy.types.Operator):
 
 		active_obj = bpy.context.object
 
-		curtype = active_obj['block_type']
+		curtype = active_obj[consts.BLOCK_TYPE]
 
-		objects = [cn for cn in bpy.context.selected_objects if cn['block_type'] is not None and cn['block_type'] == curtype]
+		objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
 
 		for i in range(len(objects)):
 
 			object = objects[i]
 
-			if 'block_type' in object:
-				block_type = object['block_type']
+			if consts.BLOCK_TYPE in object:
+				block_type = object[consts.BLOCK_TYPE]
 			else:
 				block_type = 0
 
-			object['block_type'] = block_type
+			object[consts.BLOCK_TYPE] = block_type
 
 			zclass = getClassDefByType(block_type)
 
@@ -680,8 +679,8 @@ class DelValuesOperator(bpy.types.Operator):
 
 			object = bpy.context.selected_objects[i]
 
-			if 'block_type' in object:
-				del object['block_type']
+			if consts.BLOCK_TYPE in object:
+				del object[consts.BLOCK_TYPE]
 
 		return {'FINISHED'}
 
@@ -950,7 +949,7 @@ class AddBlocksOperator(bpy.types.Operator):
 		def type05(name, radius, add_name):
 			object_name = name
 			object = bpy.data.objects.new(object_name, None)
-			object['block_type'] = 5
+			object[consts.BLOCK_TYPE] = 5
 			object.location=cursor_pos
 			object['node_radius'] = radius
 			object['add_name'] = add_name
@@ -960,7 +959,7 @@ class AddBlocksOperator(bpy.types.Operator):
 		def type19(name):
 			object_name = name
 			object = bpy.data.objects.new(object_name, None)
-			object['block_type'] = 19
+			object[consts.BLOCK_TYPE] = 19
 			object.location=cursor_pos
 			bpy.context.scene.objects.link(object)
 			object.select = True
@@ -1018,14 +1017,14 @@ class GetValuesModalOperator(bpy.types.Operator):
 
 	# @classmethod
 	# def poll(cls, context):
-	# 	return context.object is not None and context.object.get('block_type') is not None
+	# 	return context.object is not None and context.object.get(consts.BLOCK_TYPE) is not None
 
 	def modal(self, context, event):
 		if event.type == 'LEFTMOUSE':
 			if context.object is not None:
 				obj = context.object
-				if context.object.get('block_type') is not None:
-					block_type = obj.get('block_type')
+				if context.object.get(consts.BLOCK_TYPE) is not None:
+					block_type = obj.get(consts.BLOCK_TYPE)
 
 					zclass = getClassDefByType(block_type)
 					if zclass is not None:
@@ -1036,6 +1035,7 @@ class GetValuesModalOperator(bpy.types.Operator):
 	def execute(self, context):
 		wm = context.window_manager
 		wm.modal_handler_add(self)
+		self.report({'INFO'}, "Block settings will be applied automatically")
 		return {'RUNNING_MODAL'}
 
 
@@ -1098,8 +1098,8 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 
 		if object is not None:
 
-			if 'block_type' in object:
-				block_type = object['block_type']
+			if consts.BLOCK_TYPE in object:
+				block_type = object[consts.BLOCK_TYPE]
 			else:
 				block_type = None
 
@@ -1135,8 +1135,8 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 
 		if object is not None:
 
-			if 'block_type' in object:
-				block_type = object['block_type']
+			if consts.BLOCK_TYPE in object:
+				block_type = object[consts.BLOCK_TYPE]
 			else:
 				block_type = None
 
@@ -1197,13 +1197,13 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 
 			level_group = None
 
-			if 'block_type' in object:
-				block_type = object['block_type']
+			if consts.BLOCK_TYPE in object:
+				block_type = object[consts.BLOCK_TYPE]
 			else:
 				block_type = None
 
-			if 'level_group' in object:
-				level_group = object['level_group']
+			if consts.LEVEL_GROUP in object:
+				level_group = object[consts.LEVEL_GROUP]
 			else:
 				level_group = None
 
@@ -1641,6 +1641,28 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 
 		self.layout.label(text="Add-on author: aleko2144")
 		self.layout.label(text="vk.com/rnr_mods")
+
+
+
+class OBJECT_PT_b3d_usage_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_settings_panel"
+	bl_label = "About add-on"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+
+		layout.operator("wm.get_block_values_modal_operator")
+
 # ------------------------------------------------------------------------
 # register and unregister
 # ------------------------------------------------------------------------
@@ -1672,6 +1694,7 @@ _classes = (
 	ShowHideSphereOperator,
 	GetValuesModalOperator,
 
+	OBJECT_PT_b3d_usage_panel,
 	OBJECT_PT_b3d_add_panel,
 	OBJECT_PT_b3d_edit_panel,
 	OBJECT_PT_b3d_pob_edit_panel,

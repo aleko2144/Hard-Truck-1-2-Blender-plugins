@@ -55,7 +55,12 @@ from .class_descr import (
 	pvb_35
 )
 
-from ..consts import EMPTY_NAME
+from ..consts import (
+    EMPTY_NAME,
+    LEVEL_GROUP,
+    BLOCK_TYPE,
+    BORDER_COLLECTION
+)
 
 from .scripts import (
     prop,
@@ -513,7 +518,7 @@ def read(file, context, self, filepath):
     b3dName = os.path.basename(filepath)
 
     b3dObj = bpy.data.objects.new(b3dName, None)
-    b3dObj['block_type'] = 0
+    b3dObj[BLOCK_TYPE] = 0
     context.collection.objects.link(b3dObj) # root object
 
     objString = [b3dName]
@@ -563,8 +568,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
 
                 b3dObj.parent = context.scene.objects[objString[-2]]
@@ -580,8 +585,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_1.Name1)] = name1
                 b3dObj[prop(b_1.Name2)] = name2
@@ -601,8 +606,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_2.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_2.R)] = bounding_sphere[3]
@@ -623,8 +628,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_3.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_3.R)] = bounding_sphere[3]
@@ -645,8 +650,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_4.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_4.R)] = bounding_sphere[3]
@@ -668,8 +673,8 @@ def read(file, context, self, filepath):
                 if not usedBlocks[str(type)]:
                     continue
                 b3dObj = bpy.data.objects.new(objName, None) #create empty
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = pos
                 b3dObj[prop(b_5.XYZ)] = (bounding_sphere[0:3])
                 b3dObj[prop(b_5.R)] = (bounding_sphere[3])
@@ -702,8 +707,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_6.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_6.R)] = bounding_sphere[3]
@@ -743,8 +748,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = pos
                 b3dObj[prop(b_7.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_7.R)] = bounding_sphere[3]
@@ -935,8 +940,8 @@ def read(file, context, self, filepath):
                 #Create Object
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = pos
                 b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_8.R)] = bounding_sphere[3]
@@ -977,8 +982,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_9.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_9.R)] = bounding_sphere[3]
@@ -1000,8 +1005,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_10.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_10.R)] = bounding_sphere[3]
@@ -1023,8 +1028,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_11.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_11.R)] = bounding_sphere[3]
@@ -1051,8 +1056,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_12.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_12.R)] = bounding_sphere[3]
@@ -1081,8 +1086,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_13.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_13.R)] = bounding_sphere[3]
@@ -1113,8 +1118,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_14.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_14.R)] = bounding_sphere[3]
@@ -1143,8 +1148,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_15.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_15.R)] = bounding_sphere[3]
@@ -1177,8 +1182,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_16.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_16.R)] = bounding_sphere[3]
@@ -1216,8 +1221,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_17.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_17.R)] = bounding_sphere[3]
@@ -1246,8 +1251,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_18.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_18.R)] = bounding_sphere[3]
@@ -1270,8 +1275,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
 
                 b3dObj.parent = context.scene.objects[objString[-2]]
@@ -1317,8 +1322,8 @@ def read(file, context, self, filepath):
                 # create Object
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 b3dObj.location = (0,0,0)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_20.R)] = bounding_sphere[3]
@@ -1342,8 +1347,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_21.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_21.R)] = bounding_sphere[3]
@@ -1385,8 +1390,8 @@ def read(file, context, self, filepath):
                 b3dMesh.from_pydata(l_vertexes,[],faces)
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_23.Unk_Int1)] = unknown1
                 b3dObj[prop(b_23.Surface)] = ctype
@@ -1446,8 +1451,8 @@ def read(file, context, self, filepath):
 
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj.rotation_euler[0] = x_d
                 b3dObj.rotation_euler[1] = y_d
@@ -1472,8 +1477,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_25.XYZ)] = unknown1
                 b3dObj[prop(b_25.Name)] = name
@@ -1504,8 +1509,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_26.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_26.R)] = bounding_sphere[3]
@@ -1530,8 +1535,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_27.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_27.R)] = bounding_sphere[3]
@@ -1702,8 +1707,8 @@ def read(file, context, self, filepath):
                 createCustomAttribute(b3dMesh, unkInts, pfb_28, pfb_28.Unk_Int2)
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_28.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_28.R)] = bounding_sphere[3]
@@ -1731,8 +1736,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_29.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_29.R)] = bounding_sphere[3]
@@ -1826,8 +1831,8 @@ def read(file, context, self, filepath):
 
 
                 # b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                # b3dObj['block_type'] = type
-                # b3dObj['level_group'] = levelGroups[lvl - 1]
+                # b3dObj[BLOCK_TYPE] = type
+                # b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 # b3dObj['pos'] = pos
                 # b3dObj[prop(b_30.XYZ)] = bounding_sphere[0:3]
                 # b3dObj[prop(b_30.R)] = bounding_sphere[3]
@@ -1855,8 +1860,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_31.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_31.R)] = bounding_sphere[3]
@@ -1895,8 +1900,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_33.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_33.R)] = bounding_sphere[3]
@@ -1951,8 +1956,8 @@ def read(file, context, self, filepath):
                 curveData.bevel_depth = 0.01
 
                 b3dObj = bpy.data.objects.new(objName, curveData)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_34.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_34.R)] = bounding_sphere[3]
@@ -2138,8 +2143,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj.parent = context.scene.objects[objString[-2]]
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_35.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_35.R)] = bounding_sphere[3]
@@ -2208,8 +2213,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = pos
                 b3dObj[prop(b_36.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_36.R)] = bounding_sphere[3]
@@ -2281,8 +2286,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None) #create empty
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = pos
                 b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_37.R)] = bounding_sphere[3]
@@ -2308,8 +2313,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_39.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_39.R)] = bounding_sphere[3]
@@ -2343,8 +2348,8 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj['block_type'] = type
-                b3dObj['level_group'] = levelGroups[lvl - 1]
+                b3dObj[BLOCK_TYPE] = type
+                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_40.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_40.R)] = bounding_sphere[3]
@@ -2369,7 +2374,12 @@ def read(file, context, self, filepath):
 
             log.info("Time: {:.6f} | Block #{}: {}".format(t2-t1, type, realName))
 
-    #create room borders
+    #create room borders(30)
+    transfCollection = bpy.data.collections.get(BORDER_COLLECTION)
+    if transfCollection is None:
+        transfCollection = bpy.data.collections.new(BORDER_COLLECTION)
+        bpy.context.scene.collection.children.link(transfCollection)
+
     for key in borders.keys():
 
         border = borders[key]
@@ -2408,8 +2418,8 @@ def read(file, context, self, filepath):
         room_name2 = splitted2[1]
 
         b3dObj = bpy.data.objects.new(key, b3dMesh)
-        b3dObj['block_type'] = 30
-        b3dObj['level_group'] = 0
+        b3dObj[BLOCK_TYPE] = 30
+        b3dObj[LEVEL_GROUP] = 0
         # b3dObj['pos'] = pos
         b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
         b3dObj[prop(b_30.R)] = border["bounding_rad"]
@@ -2422,7 +2432,7 @@ def read(file, context, self, filepath):
         # b3dObj[prop(b_30.XYZ2)] = p2
 
         b3dObj.parent = None
-        context.collection.objects.link(b3dObj)
+        transfCollection.objects.link(b3dObj)
         # realName = b3dObj.name
         # objString[len(objString)-1] = b3dObj.name
 
@@ -2752,11 +2762,9 @@ def unpackRES(resModule, filepath, saveOnDisk = True, ):
                         if id == "TEXTUREFILES":
                             for rawString in rawStrings:
                                 saveTexture(resModule, rawString)
-                                # unpacked.textures.append(name)
                         if id == "MASKFILES":
                             for rawString in rawStrings:
                                 saveMaskfile(resModule, rawString)
-                                # unpacked.maskfiles.append(name)
                 else:
                     log.info("Skip category")
             else:

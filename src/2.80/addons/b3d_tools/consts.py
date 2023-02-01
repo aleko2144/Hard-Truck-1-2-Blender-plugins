@@ -1,6 +1,16 @@
 
 EMPTY_NAME = '~'
 
+LEVEL_GROUP = 'level_group'
+
+BLOCK_TYPE = 'block_type'
+
+TRANSF_COLLECTION = 'Transformed objects'
+
+TEMP_COLLECTION = 'Temporary objects'
+
+BORDER_COLLECTION = 'Border objects'
+
 blockTypeList = [
     ('6566754', "b3d", "b3d"),
     ('00', "00", "2D background"),

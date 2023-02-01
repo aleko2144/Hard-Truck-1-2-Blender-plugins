@@ -7,7 +7,10 @@ import re
 import time
 
 from ..common import log
-from ..consts import EMPTY_NAME
+from ..consts import (
+    BLOCK_TYPE,
+    EMPTY_NAME
+)
 
 def getNonCopyName(name):
     reIsCopy = re.compile(r'\.[0-9]*$')
@@ -291,11 +294,9 @@ def referenceablesCallback(self, context):
     mytool = context.scene.my_tool
     rootObj = getRootObj(context.object)
 
-    referenceables = [cn for cn in rootObj.children if cn.get('block_type') != 24]
+    referenceables = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) != 24]
 
     enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(referenceables)]
-
-    print("fetched referenceables")
 
     return enumProperties
 
@@ -304,11 +305,9 @@ def spacesCallback(self, context):
     mytool = context.scene.my_tool
     rootObj = getRootObj(context.object)
 
-    spaces = [cn for cn in bpy.data.objects if cn.get('block_type') == 24 and getRootObj(cn) == rootObj]
+    spaces = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 24 and getRootObj(cn) == rootObj]
 
     enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(spaces)]
-
-    print("fetched spaces")
 
     return enumProperties
 
@@ -335,7 +334,7 @@ def roomsCallback(bname, pname):
 
         rootObj = bpy.data.objects.get('{}.b3d'.format(resModule))
         if rootObj:
-            rooms = [cn for cn in rootObj.children if cn.get('block_type') == 19]
+            rooms = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) == 19]
 
             enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(rooms)]
 
