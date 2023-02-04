@@ -265,11 +265,14 @@ def getAllChildren(obj):
             break
     return allChildren
 
-def getMytoolBlockNameByClass(zclass):
+def getMytoolBlockNameByClass(zclass, multipleClass = True):
     bname = ''
     btype, bnum = zclass.__name__.split('_')
     if btype == 'b':
-        bname = 'block{}'.format(bnum)
+        if multipleClass:
+            bname = 'block{}'.format(bnum)
+        else:
+            bname = 'sBlock{}'.format(bnum)
     elif btype == 'pfb':
         bname = 'perFaceBlock{}'.format(bnum)
     elif btype == 'pvb':
@@ -278,10 +281,13 @@ def getMytoolBlockNameByClass(zclass):
     return [bname, bnum]
 
 
-def getMytoolBlockName(btype, bnum):
+def getMytoolBlockName(btype, bnum, multipleClass = False):
     bname = ''
     if btype == 'b':
-        bname = 'block{}'.format(bnum)
+        if multipleClass:
+            bname = 'block{}'.format(bnum)
+        else:
+            bname = 'sBlock{}'.format(bnum)
     elif btype == 'pfb':
         bname = 'perFaceBlock{}'.format(bnum)
     elif btype == 'pvb':

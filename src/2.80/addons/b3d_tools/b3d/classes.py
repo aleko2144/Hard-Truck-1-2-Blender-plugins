@@ -92,11 +92,10 @@ def setCustObjValue(subtype, bname, pname):
 
 	return callback_func
 
-
-def createTypeClass(zclass):
+def createTypeClass(zclass, multipleEdit = True):
 	attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
 
-	bname, bnum = getMytoolBlockNameByClass(zclass)
+	bname, bnum = getMytoolBlockNameByClass(zclass, multipleEdit)
 
 	block_num = zclass.__name__.split('_')[1]
 	attributes = {
@@ -109,11 +108,12 @@ def createTypeClass(zclass):
 		pname = obj['prop']
 		prop = None
 
-		lockProp = BoolProperty(
-			name = "On./Off.",
-			description = "Enable/Disable param for editing",
-			default = True
-		)
+		if multipleEdit: # lock switches only for multiple edit
+			lockProp = BoolProperty(
+				name = "On./Off.",
+				description = "Enable/Disable param for editing",
+				default = True
+			)
 
 		if obj['type'] == fieldType.STRING \
 		or obj['type'] == fieldType.COORD \
@@ -122,10 +122,10 @@ def createTypeClass(zclass):
 		or obj['type'] == fieldType.INT \
 		or obj['type'] == fieldType.LIST:
 
+			if multipleEdit: # lock switches only for multiple edit
+				attributes['__annotations__']["show_"+pname] = lockProp
 
-			# attributes['__annotations__']["show_"+pname] = lockProp
-
-			if obj['type'] == fieldType.STRING:
+			if obj['type'] == fieldType.STRING and multipleEdit:
 				prop = StringProperty(
 					name = obj['name'],
 					description = obj['description'],
@@ -133,21 +133,21 @@ def createTypeClass(zclass):
 					maxlen = 32
 				)
 
-			elif obj['type'] == fieldType.COORD:
+			elif obj['type'] == fieldType.COORD and multipleEdit:
 				prop = FloatVectorProperty(
 					name = obj['name'],
 					description = obj['description'],
 					default = obj['default']
 				)
 
-			elif obj['type'] == fieldType.RAD or obj['type'] == fieldType.FLOAT:
+			elif (obj['type'] == fieldType.RAD or obj['type'] == fieldType.FLOAT) and multipleEdit:
 				prop = FloatProperty(
 					name = obj['name'],
 					description = obj['description'],
 					default = obj['default']
 				)
 
-			elif obj['type'] == fieldType.INT:
+			elif obj['type'] == fieldType.INT and multipleEdit:
 				prop = IntProperty(
 					name = obj['name'],
 					description = obj['description'],
@@ -166,7 +166,10 @@ def createTypeClass(zclass):
 		elif obj['type'] == fieldType.ENUM \
 		or obj['type'] == fieldType.ENUM_DYN:
 
-			# attributes['__annotations__']["show_"+pname] = lockProp
+
+			if multipleEdit: # lock switches only for multiple edit
+				attributes['__annotations__']["show_"+pname] = lockProp
+
 			enum_callback = None
 			subtype = obj.get('subtype')
 
@@ -182,14 +185,14 @@ def createTypeClass(zclass):
 				enum_callback = modulesCallback
 
 			if obj['type'] == fieldType.ENUM:
-				# prop = None
+				prop = None
 				prop_enum = None
 				prop_switch = None
 
 				prop_switch = BoolProperty(
 					name = 'Use dropdown',
 					description = 'Dropdown selection',
-					default = True
+					default = False
 				)
 
 				prop_enum = EnumProperty(
@@ -200,15 +203,19 @@ def createTypeClass(zclass):
 					update = setCustObjValue(subtype, bname, pname)
 				)
 
-				# prop = EnumProperty(
-				# 	name = obj['name'],
-				# 	description = obj['description'],
-				# 	default = obj['default'],
-				# 	items = obj['items']
-				# )
+				if multipleEdit:
+					prop = EnumProperty(
+						name = obj['name'],
+						description = obj['description'],
+						default = obj['default'],
+						items = obj['items']
+					)
 
 				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
 				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
+
+				if multipleEdit:
+					attributes['__annotations__']['{}'.format(pname)] = prop
 
 			elif obj['type'] == fieldType.ENUM_DYN:
 				# prop = None
@@ -218,7 +225,7 @@ def createTypeClass(zclass):
 				prop_switch = BoolProperty(
 					name = 'Use dropdown',
 					description = 'Dropdown selection',
-					default = True
+					default = False
 				)
 
 				prop_enum = EnumProperty(
@@ -228,17 +235,22 @@ def createTypeClass(zclass):
 					update = setCustObjValue(subtype, bname, pname)
 				)
 
-				# prop = StringProperty(
-				# 	name = obj['name'],
-				# 	description = obj['description'],
-				# 	maxlen = 32
-				# )
+
+				if multipleEdit:
+					if subtype == fieldType.STRING:
+						prop = StringProperty(
+							name = obj['name'],
+							description = obj['description'],
+							maxlen = 32
+						)
 
 				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
 				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
-				# attributes['__annotations__']['{}'.format(pname)] = prop
 
-		elif obj['type'] == fieldType.V_FORMAT:
+				if multipleEdit:
+					attributes['__annotations__']['{}'.format(pname)] = prop
+
+		elif obj['type'] == fieldType.V_FORMAT: # currently only available in vertex edit
 
 			attributes['__annotations__']["show_{}".format(pname)] = lockProp
 
@@ -270,7 +282,10 @@ def createTypeClass(zclass):
 			)
 			attributes['__annotations__']['{}_{}'.format(pname, 'normal_flag')] = prop4
 
-	newclass = type("{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
+	if multipleEdit:
+		newclass = type("{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
+	else:
+		newclass = type("s_{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
 	return newclass
 
 
@@ -280,6 +295,44 @@ perFaceBlock_35 = createTypeClass(pfb_35)
 
 perVertBlock_8 = createTypeClass(pvb_8)
 perVertBlock_35 = createTypeClass(pvb_35)
+
+s_block_1 = createTypeClass(b_1, False)
+s_block_2 = createTypeClass(b_2, False)
+s_block_3 = createTypeClass(b_3, False)
+s_block_4 = createTypeClass(b_4, False)
+s_block_5 = createTypeClass(b_5, False)
+s_block_6 = createTypeClass(b_6, False)
+s_block_7 = createTypeClass(b_7, False)
+s_block_8 = createTypeClass(b_8, False)
+s_block_9 = createTypeClass(b_9, False)
+s_block_10 = createTypeClass(b_10, False)
+s_block_11 = createTypeClass(b_11, False)
+s_block_12 = createTypeClass(b_12, False)
+s_block_13 = createTypeClass(b_13, False)
+s_block_14 = createTypeClass(b_14, False)
+s_block_15 = createTypeClass(b_15, False)
+s_block_16 = createTypeClass(b_16, False)
+s_block_17 = createTypeClass(b_17, False)
+s_block_18 = createTypeClass(b_18, False)
+s_block_20 = createTypeClass(b_20, False)
+s_block_21 = createTypeClass(b_21, False)
+s_block_22 = createTypeClass(b_22, False)
+s_block_23 = createTypeClass(b_23, False)
+s_block_24 = createTypeClass(b_24, False)
+s_block_25 = createTypeClass(b_25, False)
+s_block_26 = createTypeClass(b_26, False)
+s_block_27 = createTypeClass(b_27, False)
+s_block_28 = createTypeClass(b_28, False)
+s_block_29 = createTypeClass(b_29, False)
+s_block_30 = createTypeClass(b_30, False)
+s_block_31 = createTypeClass(b_31, False)
+s_block_33 = createTypeClass(b_33, False)
+s_block_34 = createTypeClass(b_34, False)
+s_block_35 = createTypeClass(b_35, False)
+s_block_36 = createTypeClass(b_36, False)
+s_block_37 = createTypeClass(b_37, False)
+s_block_39 = createTypeClass(b_39, False)
+s_block_40 = createTypeClass(b_40, False)
 
 block_common = createTypeClass(b_common)
 block_1 = createTypeClass(b_1)
@@ -321,6 +374,44 @@ block_39 = createTypeClass(b_39)
 block_40 = createTypeClass(b_40)
 
 _classes = (
+	s_block_1,
+	s_block_2,
+	s_block_3,
+	s_block_4,
+	s_block_5,
+	s_block_6,
+	s_block_7,
+	s_block_8,
+	s_block_9,
+	s_block_10,
+	s_block_11,
+	s_block_12,
+	s_block_13,
+	s_block_14,
+	s_block_15,
+	s_block_16,
+	s_block_17,
+	s_block_18,
+	s_block_20,
+	s_block_21,
+	s_block_22,
+	s_block_23,
+	s_block_24,
+	s_block_25,
+	s_block_26,
+	s_block_27,
+	s_block_28,
+	s_block_29,
+	s_block_30,
+	s_block_31,
+	s_block_33,
+	s_block_34,
+	s_block_35,
+	s_block_36,
+	s_block_37,
+	s_block_39,
+	s_block_40,
+
 	block_1,
 	block_2,
 	block_3,
@@ -359,9 +450,11 @@ _classes = (
 	block_39,
 	block_40,
 	block_common,
+
 	perFaceBlock_8,
 	perFaceBlock_28,
 	perFaceBlock_35,
+
 	perVertBlock_8,
 	perVertBlock_35
 )

@@ -48,9 +48,15 @@ from .scripts import (
 from .classes import (
 	block_1,block_2,block_3,block_4,block_5,block_6,block_7,block_8,block_9,block_10,\
 	block_11,block_12,block_13,block_14,block_15,block_16,block_17,block_18,block_20,\
-	block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,block_30,\
-	block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,block_common,\
-	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35
+	block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,\
+	block_30,block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,\
+
+	block_common,perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35,\
+
+	s_block_1,s_block_2,s_block_3,s_block_4,s_block_5,s_block_6,s_block_7,s_block_8,s_block_9,s_block_10,\
+	s_block_11,s_block_12,s_block_13,s_block_14,s_block_15,s_block_16,s_block_17,s_block_18,s_block_20,\
+	s_block_21,s_block_22,s_block_23,s_block_24,s_block_25,s_block_26,s_block_27,s_block_28,s_block_29,\
+	s_block_30,s_block_31,s_block_33,s_block_34,s_block_35,s_block_36,s_block_37,s_block_39,s_block_40,\
 )
 from .class_descr import (
 	getClassDefByType,
@@ -97,6 +103,44 @@ def resModuleCallback(scene, context):
 
 
 class PanelSettings(bpy.types.PropertyGroup):
+
+	sBlock1: PointerProperty(type=s_block_1)
+	sBlock2: PointerProperty(type=s_block_2)
+	sBlock3: PointerProperty(type=s_block_3)
+	sBlock4: PointerProperty(type=s_block_4)
+	sBlock5: PointerProperty(type=s_block_5)
+	sBlock6: PointerProperty(type=s_block_6)
+	sBlock7: PointerProperty(type=s_block_7)
+	sBlock8: PointerProperty(type=s_block_8)
+	sBlock9: PointerProperty(type=s_block_9)
+	sBlock10: PointerProperty(type=s_block_10)
+	sBlock11: PointerProperty(type=s_block_11)
+	sBlock12: PointerProperty(type=s_block_12)
+	sBlock13: PointerProperty(type=s_block_13)
+	sBlock14: PointerProperty(type=s_block_14)
+	sBlock15: PointerProperty(type=s_block_15)
+	sBlock16: PointerProperty(type=s_block_16)
+	sBlock17: PointerProperty(type=s_block_17)
+	sBlock18: PointerProperty(type=s_block_18)
+	sBlock20: PointerProperty(type=s_block_20)
+	sBlock21: PointerProperty(type=s_block_21)
+	sBlock22: PointerProperty(type=s_block_22)
+	sBlock23: PointerProperty(type=s_block_23)
+	sBlock24: PointerProperty(type=s_block_24)
+	sBlock25: PointerProperty(type=s_block_25)
+	sBlock26: PointerProperty(type=s_block_26)
+	sBlock27: PointerProperty(type=s_block_27)
+	sBlock28: PointerProperty(type=s_block_28)
+	sBlock29: PointerProperty(type=s_block_29)
+	sBlock30: PointerProperty(type=s_block_30)
+	sBlock31: PointerProperty(type=s_block_31)
+	sBlock33: PointerProperty(type=s_block_33)
+	sBlock34: PointerProperty(type=s_block_34)
+	sBlock35: PointerProperty(type=s_block_35)
+	sBlock36: PointerProperty(type=s_block_36)
+	sBlock37: PointerProperty(type=s_block_37)
+	sBlock39: PointerProperty(type=s_block_39)
+	sBlock40: PointerProperty(type=s_block_40)
 
 	block1: PointerProperty(type=block_1)
 	block2: PointerProperty(type=block_2)
@@ -1121,7 +1165,7 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pfb_edit_panel"
-	bl_label = "Polygon params"
+	bl_label = "Multiple polygons edit"
 	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1158,7 +1202,7 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pvb_edit_panel"
-	bl_label = "Vertex params"
+	bl_label = "Multiple vertexes edit"
 	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1213,7 +1257,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 
 class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pob_edit_panel"
-	bl_label = "Object params"
+	bl_label = "Multiple block edit"
 	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
@@ -1237,24 +1281,17 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 		# 	for i in range(1):
 		if object is not None:
 
-			level_group = None
-
 			if consts.BLOCK_TYPE in object:
 				block_type = object[consts.BLOCK_TYPE]
 			else:
 				block_type = None
 
-			if consts.LEVEL_GROUP in object:
-				level_group = object[consts.LEVEL_GROUP]
-			else:
-				level_group = None
-
 			lenStr = str(len(object.children))
 
 			zclass = getClassDefByType(block_type)
 
-			# layout.operator("wm.get_block_values_operator")
-			# layout.operator("wm.set_block_values_operator")
+			layout.operator("wm.get_block_values_operator")
+			layout.operator("wm.set_block_values_operator")
 
 			if zclass is not None:
 				drawAllFieldsByType(self, context, zclass)
@@ -1263,9 +1300,55 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 			# 	self.layout.label(text="Выбранный объект не имеет типа.")
 			# 	self.layout.label(text="Чтобы указать его, нажмите на кнопку сохранения настроек.")
 
-			layout.operator("wm.del_block_values_operator")
-			layout.operator("wm.fix_uv_operator")
-			layout.operator("wm.fix_verts_operator")
+			# layout.operator("wm.del_block_values_operator")
+			# layout.operator("wm.fix_uv_operator")
+			# layout.operator("wm.fix_verts_operator")
+
+class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_pob_single_edit_panel"
+	bl_label = "Single block edit"
+	bl_parent_id = "OBJECT_PT_b3d_edit_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		mytool = context.scene.my_tool
+
+		type(context)
+		#for i in range(len(bpy.context.selected_objects)):
+
+		object = bpy.context.object
+
+		# if len(bpy.context.selected_objects):
+		# 	for i in range(1):
+		if object is not None:
+
+			if consts.BLOCK_TYPE in object:
+				block_type = object[consts.BLOCK_TYPE]
+			else:
+				block_type = None
+
+			lenStr = str(len(object.children))
+
+			zclass = getClassDefByType(block_type)
+
+			if zclass is not None:
+				drawAllFieldsByType(self, context, zclass, False)
+
+			# else:
+			# 	self.layout.label(text="Выбранный объект не имеет типа.")
+			# 	self.layout.label(text="Чтобы указать его, нажмите на кнопку сохранения настроек.")
+
+			# layout.operator("wm.del_block_values_operator")
+			# layout.operator("wm.fix_uv_operator")
+			# layout.operator("wm.fix_verts_operator")
 
 class OBJECT_PT_b3d_blocks_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_blocks_panel"
@@ -1742,6 +1825,7 @@ _classes = (
 	OBJECT_PT_b3d_usage_panel,
 	OBJECT_PT_b3d_add_panel,
 	OBJECT_PT_b3d_edit_panel,
+	OBJECT_PT_b3d_pob_single_edit_panel,
 	OBJECT_PT_b3d_pob_edit_panel,
 	OBJECT_PT_b3d_pfb_edit_panel,
 	OBJECT_PT_b3d_pvb_edit_panel,

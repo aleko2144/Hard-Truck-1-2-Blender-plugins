@@ -198,7 +198,8 @@ borderSphereGroup = 'border_sphere'
 	# 'description': ''
 
 # fieldType.ENUM_DYN - dynamic
-	# 'subtype': fieldType.SPACE_NAME,
+	# 'subtype': fieldType.STRING
+	# 'callback': fieldType.SPACE_NAME,
 	# 'name': 'Name',
 	# 'description': ''
 
