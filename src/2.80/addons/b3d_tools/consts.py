@@ -57,7 +57,7 @@ blockTypeList = [
 collisionTypeList = [
     ('0', "standart", ""),
     ('1', "asphalt", ""),
-    ('2', "earth", ""),
+    ('2', "grass", ""),
     ('3', "swamp (hard to pass)", ""),
     ('4', "swamp (easy to pass)", ""),
     ('5', "wet asphalt", ""),

@@ -250,7 +250,7 @@ def getHierarchyRoots(root):
     while globalRoot.parent is not None:
         globalRoot = globalRoot.parent
 
-    blocks18 = [cn for cn in bpy.data.objects if cn[BLOCK_TYPE] is not None and cn[BLOCK_TYPE] == 18]
+    blocks18 = [cn for cn in bpy.data.objects if cn[BLOCK_TYPE] is not None and cn[BLOCK_TYPE] == 18 and getRootObj(cn) == globalRoot]
     ref_set = set()
     for cn in blocks18:
         #out refs
@@ -436,9 +436,11 @@ def createCenterDriver(srcObj, bname, pname):
 
         v = d.variables.new()
         v.name = 'location{}'.format(i)
-        v.targets[0].id_type = 'SCENE'
-        v.targets[0].id = bpy.context.scene
-        v.targets[0].data_path = 'my_tool.{}.{}[{}]'.format(bname, pname, i)
+        # v.targets[0].id_type = 'SCENE'
+        # v.targets[0].id = bpy.context.scene
+        # v.targets[0].data_path = 'my_tool.{}.{}[{}]'.format(bname, pname, i)
+        v.targets[0].id = bpy.context.object
+        v.targets[0].data_path = '["{}"][{}]'.format(pname, i)
 
         d.expression = v.name
 
@@ -447,9 +449,11 @@ def createRadDriver(srcObj, bname, pname):
 
     v1 = d.variables.new()
     v1.name = 'rad'
-    v1.targets[0].id_type = 'SCENE'
-    v1.targets[0].id = bpy.context.scene
-    v1.targets[0].data_path = 'my_tool.{}.{}'.format(bname, pname)
+    # v1.targets[0].id_type = 'SCENE'
+    # v1.targets[0].id = bpy.context.scene
+    # v1.targets[0].data_path = 'my_tool.{}.{}'.format(bname, pname)
+    v1.targets[0].id = bpy.context.object
+    v1.targets[0].data_path = '["{}"]'.format(pname)
 
     d.expression = v1.name
 
@@ -525,10 +529,11 @@ def drawFieldsByType(l_self, context, zclass):
         obj = zclass.__dict__[attr]
         bname, bnum = getMytoolBlockNameByClass(zclass)
 
-        ftype = obj['type']
+        ftype = obj.get('type')
         subtype = obj.get('subtype')
         curGroupName = obj.get('group')
-        pname = obj['prop']
+        propText = obj.get('name')
+        pname = obj.get('prop')
         mytool = context.scene.my_tool
         curLayout = l_self.layout
 
@@ -551,38 +556,30 @@ def drawFieldsByType(l_self, context, zclass):
         or ftype == fieldType.INT \
         or ftype == fieldType.FLOAT \
         or ftype == fieldType.ENUM \
-        or ftype == fieldType.ENUM_STR \
+        or ftype == fieldType.ENUM_DYN \
         or ftype == fieldType.LIST:
 
             box = curLayout.box()
-            box.prop(getattr(mytool, bname), "show_"+pname)
+            # box.prop(getattr(mytool, bname), "show_"+pname)
 
             col = box.column()
-            if ftype == fieldType.STRING:
-                col.prop(getattr(mytool, bname), pname)
+            if ftype in [
+                fieldType.STRING,
+                fieldType.COORD,
+                fieldType.RAD,
+                fieldType.INT,
+                fieldType.FLOAT
+            ]:
+                col.prop(context.object, '["{}"]'.format(pname), text=propText)
 
-            elif ftype == fieldType.COORD:
-                col.prop(getattr(mytool, bname), pname)
-
-            elif ftype == fieldType.RAD:
-                col.prop(getattr(mytool, bname), pname)
-
-            elif ftype == fieldType.INT:
-                col.prop(getattr(mytool, bname), pname)
-
-            elif ftype == fieldType.FLOAT:
-                col.prop(getattr(mytool, bname), pname)
-
-            elif ftype == fieldType.ENUM:
-                col.prop(getattr(mytool, bname), pname)
-
-            elif ftype == fieldType.ENUM_STR:
+            elif ftype in [fieldType.ENUM_DYN, fieldType.ENUM]:
                 col.prop(getattr(mytool, bname), '{}_switch'.format(pname))
 
                 if(getattr(getattr(mytool, bname), '{}_switch'.format(pname))):
                     col.prop(getattr(mytool, bname), '{}_enum'.format(pname))
                 else:
-                    col.prop(getattr(mytool, bname), pname)
+                    # col.prop(getattr(mytool, bname), pname)
+                    col.prop(context.object, '["{}"]'.format(pname), text=propText)
 
             elif ftype == fieldType.LIST:
                 collect = getattr(mytool, bname)
@@ -590,6 +587,12 @@ def drawFieldsByType(l_self, context, zclass):
                 scn = bpy.context.scene
 
                 rows = 2
+
+                row = box.row()
+                props = row.operator("wm.get_prop_value_operator")
+                props.pname = pname
+                props = row.operator("wm.set_prop_value_operator")
+                props.pname = pname
                 row = box.row()
                 row.template_list("CUSTOM_UL_items", "", collect, pname, scn, "custom_index", rows=rows)
 
@@ -616,32 +619,53 @@ def drawFieldsByType(l_self, context, zclass):
                 props.pname = pname
                 props.customindex = "custom_index"
 
-            if getattr(getattr(mytool, bname), "show_"+pname):
-                col.enabled = True
-            else:
-                col.enabled = False
+            # if getattr(getattr(mytool, bname), "show_"+pname):
+            #     col.enabled = True
+            # else:
+            #     col.enabled = False
 
         elif ftype == fieldType.V_FORMAT:
             box = curLayout.box()
-            box.prop(getattr(mytool, bname), "show_{}".format(pname))
+            # box.prop(getattr(mytool, bname), "show_{}".format(pname))
             col1 = box.column()
             col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'triang_offset'))
             col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_uvs'))
             col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_normals'))
             col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'normal_flag'))
 
-            if getattr(getattr(mytool, bname), "show_"+pname):
-                col1.enabled = True
-            else:
-                col1.enabled = False
+            # if getattr(getattr(mytool, bname), "show_"+pname):
+            #     col1.enabled = True
+            # else:
+            #     col1.enabled = False
 
 def getAllObjsByType(context, object, zclass):
     getObjsByType(context, object, b_common)
     getObjsByType(context, object, zclass)
 
+def getObjByProp(context, object, zclass, pname):
+
+    attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    bname, bnum = getMytoolBlockNameByClass(zclass)
+
+    mytool = context.scene.my_tool
+    for property in attrs:
+        obj = zclass.__dict__[property]
+
+        if obj['prop'] == pname:
+
+            if obj['type'] == fieldType.LIST:
+
+                col = getattr(getattr(mytool, bname), obj['prop'])
+
+                col.clear()
+                for i, obj in enumerate(object[obj['prop']]):
+                    item = col.add()
+                    item.index = i
+                    item.value = obj
+
+
 def getObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-
     bname, bnum = getMytoolBlockNameByClass(zclass)
 
     mytool = context.scene.my_tool
@@ -649,55 +673,75 @@ def getObjsByType(context, object, zclass):
         obj = zclass.__dict__[property]
 
         if obj['type'] != fieldType.SPHERE_EDIT:
-            if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
-                and getattr(getattr(mytool, bname), "show_"+obj['prop']):
+            # if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
+            #     and getattr(getattr(mytool, bname), "show_"+obj['prop']):
 
-                if obj['type'] == fieldType.FLOAT \
-                or obj['type'] == fieldType.RAD:
-                    setattr(
-                        getattr(mytool, bname),
-                        obj['prop'],
-                        float(object[obj['prop']])
-                    )
+            if obj['type'] == fieldType.FLOAT \
+            or obj['type'] == fieldType.RAD:
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    float(object[obj['prop']])
+                )
 
-                elif obj['type'] == fieldType.INT:
-                    setattr(
-                        getattr(mytool, bname),
-                        obj['prop'],
-                        int(object[obj['prop']])
-                    )
+            elif obj['type'] == fieldType.INT:
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    int(object[obj['prop']])
+                )
 
-                elif obj['type'] == fieldType.STRING:
-                    getattr(mytool, bname)[obj['prop']] = str(object[obj['prop']])
+            elif obj['type'] == fieldType.STRING:
+                getattr(mytool, bname)[obj['prop']] = str(object[obj['prop']])
 
-                elif obj['type'] == fieldType.ENUM \
-                or obj['type'] == fieldType.ENUM_STR:
-                    setattr(
-                        getattr(mytool, bname),
-                        obj['prop'],
-                        str(object[obj['prop']])
-                    )
+            elif obj['type'] == fieldType.ENUM \
+            or obj['type'] == fieldType.ENUM_DYN:
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    str(object[obj['prop']])
+                )
 
-                elif obj['type'] == fieldType.LIST:
+            elif obj['type'] == fieldType.LIST:
 
-                    col = getattr(getattr(mytool, bname), obj['prop'])
+                col = getattr(getattr(mytool, bname), obj['prop'])
 
-                    col.clear()
-                    for i, obj in enumerate(object[obj['prop']]):
-                        item = col.add()
-                        item.index = i
-                        item.value = obj
+                col.clear()
+                for i, obj in enumerate(object[obj['prop']]):
+                    item = col.add()
+                    item.index = i
+                    item.value = obj
 
-                else:
-                    setattr(
-                        getattr(mytool, bname),
-                        obj['prop'],
-                        object[obj['prop']]
-                    )
+            else:
+                setattr(
+                    getattr(mytool, bname),
+                    obj['prop'],
+                    object[obj['prop']]
+                )
 
 def setAllObjsByType(context, object, zclass):
     setObjsByType(context, object, b_common)
     setObjsByType(context, object, zclass)
+
+def setObjByProp(context, object, zclass, pname):
+
+    attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    bname, bnum = getMytoolBlockNameByClass(zclass)
+
+    mytool = context.scene.my_tool
+    for property in attrs:
+        obj = zclass.__dict__[property]
+
+        if obj['prop'] == pname:
+
+            if obj['type'] == fieldType.LIST:
+                collect = getattr(getattr(mytool, bname), obj['prop'])
+
+                arr = []
+                for item in list(collect):
+                    arr.append(item.value)
+
+                object[obj['prop']] = arr
 
 def setObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
@@ -707,8 +751,8 @@ def setObjsByType(context, object, zclass):
     for property in attrs:
         obj = zclass.__dict__[property]
         if obj['type'] != fieldType.SPHERE_EDIT:
-            if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
-                and getattr(getattr(mytool, bname), "show_"+obj['prop']):
+            # if getattr(getattr(mytool, bname), "show_"+obj['prop']) is not None \
+            #     and getattr(getattr(mytool, bname), "show_"+obj['prop']):
 
                 if obj['type'] == fieldType.FLOAT or obj['type'] == fieldType.RAD:
                     object[obj['prop']] = float(getattr(getattr(mytool, bname), obj['prop']))
@@ -737,7 +781,7 @@ def setObjsByType(context, object, zclass):
                     elif obj['subtype'] == fieldType.FLOAT:
                         object[obj['prop']] = float(getattr(getattr(mytool, bname), obj['prop']))
 
-                elif obj['type'] == fieldType.ENUM_STR:
+                elif obj['type'] == fieldType.ENUM_DYN:
                     object[obj['prop']] = str(getattr(getattr(mytool, bname), obj['prop']))
 
                 elif obj['type'] == fieldType.COORD:

@@ -330,7 +330,7 @@ def roomsCallback(bname, pname):
         enumProperties = []
 
         mytool = context.scene.my_tool
-        resModule = getattr(getattr(mytool, bname), pname)
+        resModule = context.object.path_resolve('["{}"]'.format(pname))
 
         rootObj = bpy.data.objects.get('{}.b3d'.format(resModule))
         if rootObj:

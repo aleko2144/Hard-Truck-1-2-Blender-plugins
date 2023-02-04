@@ -40,7 +40,8 @@ from .scripts import (
 	getPerVertexByType,
 	setPerVertexByType,
 	showHideSphere,
-
+	getObjByProp,
+	setObjByProp
 )
 
 
@@ -585,6 +586,26 @@ class GetValuesOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+class GetPropValueOperator(bpy.types.Operator):
+	bl_idname = "wm.get_prop_value_operator"
+	bl_label = "Get param value"
+
+	pname: StringProperty()
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+
+		object = bpy.context.object
+		block_type = object[consts.BLOCK_TYPE]
+
+		zclass = getClassDefByType(block_type)
+
+		if zclass is not None:
+			getObjByProp(context, object, zclass, self.pname)
+
+		return {'FINISHED'}
+
 class SetFaceValuesOperator(bpy.types.Operator):
 	bl_idname = "wm.set_face_values_operator"
 	bl_label = "Save block values"
@@ -660,6 +681,27 @@ class SetValuesOperator(bpy.types.Operator):
 
 			if zclass is not None:
 				setAllObjsByType(context, object, zclass)
+
+		return {'FINISHED'}
+
+
+class SetPropValueOperator(bpy.types.Operator):
+	bl_idname = "wm.set_prop_value_operator"
+	bl_label = "Save param value"
+
+	pname: StringProperty()
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+
+		object = bpy.context.object
+		block_type = object[consts.BLOCK_TYPE]
+
+		zclass = getClassDefByType(block_type)
+
+		if zclass is not None:
+			setObjByProp(context, object, zclass, self.pname)
 
 		return {'FINISHED'}
 
@@ -1110,9 +1152,9 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 			if block_type == 35:
 				drawAllFieldsByType(self, context, pfb_35)
 
-
-		layout.operator("wm.get_face_values_operator")
-		layout.operator("wm.set_face_values_operator")
+			if block_type in [8, 28, 35]:
+				layout.operator("wm.get_face_values_operator")
+				layout.operator("wm.set_face_values_operator")
 
 class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pvb_edit_panel"
@@ -1145,9 +1187,9 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
 			if block_type == 35:
 				drawAllFieldsByType(self, context, pvb_35)
 
-
-		layout.operator("wm.get_vertex_values_operator")
-		layout.operator("wm.set_vertex_values_operator")
+			if block_type in [8, 28, 35]:
+				layout.operator("wm.get_vertex_values_operator")
+				layout.operator("wm.set_vertex_values_operator")
 
 class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_edit_panel"
@@ -1211,8 +1253,8 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 
 			zclass = getClassDefByType(block_type)
 
-			layout.operator("wm.get_block_values_operator")
-			layout.operator("wm.set_block_values_operator")
+			# layout.operator("wm.get_block_values_operator")
+			# layout.operator("wm.set_block_values_operator")
 
 			if zclass is not None:
 				drawAllFieldsByType(self, context, zclass)
@@ -1672,12 +1714,15 @@ _classes = (
 	AddOperator,
 	# getters
 	GetValuesOperator,
+	GetPropValueOperator,
 	GetFaceValuesOperator,
 	GetVertexValuesOperator,
 	# setters
 	SetValuesOperator,
+	SetPropValueOperator,
 	SetFaceValuesOperator,
 	SetVertexValuesOperator,
+	# others
 	DelValuesOperator,
 	FixUVOperator,
 	FixVertsOperator,

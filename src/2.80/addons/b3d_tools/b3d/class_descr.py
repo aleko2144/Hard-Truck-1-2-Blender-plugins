@@ -59,7 +59,7 @@ class fieldType(enum.Enum):
 	FLOAT = 5
 	ENUM = 6
 	LIST = 7
-	ENUM_STR = 8
+	ENUM_DYN = 8
 
 	V_FORMAT = 21
 	MATERIAL_IND = 22
@@ -197,7 +197,7 @@ borderSphereGroup = 'border_sphere'
 	# 'name': 'Name',
 	# 'description': ''
 
-# fieldType.ENUM_STR - dynamic
+# fieldType.ENUM_DYN - dynamic
 	# 'subtype': fieldType.SPACE_NAME,
 	# 'name': 'Name',
 	# 'description': ''
@@ -421,8 +421,9 @@ class b_4():
 	}
 	Name1 = {
 		'prop': 'name1',
-		'type': fieldType.ENUM_STR,
-		'subtype': fieldType.SPACE_NAME,
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+		'callback': fieldType.SPACE_NAME,
 		'name': 'Place',
 		'description': ''
 	}
@@ -578,18 +579,25 @@ class b_9():
 		'type': fieldType.SPHERE_EDIT
 	}
 	Unk_XYZ = {
-		'prop': 'unk_XYZ',
+		'prop': 'b3d_b9_center',
+		'group': 'b9_group',
 		'type': fieldType.COORD,
 		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	Unk_R = {
-		'prop': 'unk_R',
+		'prop': 'b3d_b9_rad',
+		'group': 'b9_group',
 		'type': fieldType.RAD,
 		'name': 'Unk. rad',
 		'description': '',
 		'default': 0.0
+	}
+	Set_B9 = {
+		'prop': 'b3d_b9',
+		'group': 'b9_group',
+		'type': fieldType.SPHERE_EDIT
 	}
 
 class b_10():
@@ -615,18 +623,25 @@ class b_10():
 		'type': fieldType.SPHERE_EDIT
 	}
 	LOD_XYZ = {
-		'prop': 'LOD_XYZ',
+		'prop': 'b3d_LOD_center',
+		'group': 'LOD_group',
 		'type': fieldType.COORD,
 		'name': 'LOD coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
 	LOD_R = {
-		'prop': 'LOD_R',
+		'prop': 'b3d_LOD_rad',
+		'group': 'LOD_group',
 		'type': fieldType.RAD,
 		'name': 'LOD rad',
 		'description': '',
 		'default': 0.0
+	}
+	Set_LOD = {
+		'prop': 'b3d_LOD',
+		'group': 'LOD_group',
+		'type': fieldType.SPHERE_EDIT
 	}
 
 class b_11():
@@ -1032,15 +1047,17 @@ class b_18():
 	}
 	Space_Name = {
         'prop': 'space_name',
-        'type': fieldType.ENUM,
-		'subtype': fieldType.SPACE_NAME,
+        'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+		'callback': fieldType.SPACE_NAME,
         'name': 'Place name (24)',
         'description': ''
     }
 	Add_Name = {
         'prop': 'add_name',
-		'type': fieldType.ENUM,
-        'subtype': fieldType.REFERENCEABLE,
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+        'callback': fieldType.REFERENCEABLE,
         'name': 'Transfer block name',
         'description': ''
     }
@@ -1456,32 +1473,40 @@ class b_30():
 	}
 	ResModule1 = {
 		'prop': '1_roomName_res',
-		'type': fieldType.ENUM_STR,
-		'subtype': fieldType.RES_MODULE,
+		'group': 'resModule1',
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+		'callback': fieldType.RES_MODULE,
 		'name': '1. module',
 		'description': '',
 		'default': ''
 	}
 	RoomName1 = {
 		'prop': '1_roomName',
-		'type': fieldType.ENUM_STR,
-		'subtype': fieldType.ROOM,
+		'group': 'resModule1',
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+		'callback': fieldType.ROOM,
 		'name': '1. room',
 		'description': '',
 		'default': ''
 	}
 	ResModule2 = {
 		'prop': '2_roomName_res',
-		'type': fieldType.ENUM_STR,
-		'subtype': fieldType.RES_MODULE,
+		'group': 'resModule2',
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+		'callback': fieldType.RES_MODULE,
 		'name': '2. module',
 		'description': '',
 		'default': ''
 	}
 	RoomName2 = {
 		'prop': '2_roomName',
-		'type': fieldType.ENUM_STR,
-		'subtype': fieldType.ROOM,
+		'group': 'resModule2',
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.STRING,
+		'callback': fieldType.ROOM,
 		'name': '2. room',
 		'description': '',
 		'default': ''
@@ -1715,8 +1740,9 @@ class b_35():
 	}
 	TexNum = {
 		'prop': 'texnum',
-		'type': fieldType.ENUM,
-		'subtype': fieldType.MATERIAL_IND,
+		'type': fieldType.ENUM_DYN,
+		'subtype': fieldType.INT,
+		'callback': fieldType.MATERIAL_IND,
 		'name': 'Texture',
 		'description': '',
 	}

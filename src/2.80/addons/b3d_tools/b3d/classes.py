@@ -72,17 +72,26 @@ from .common import (
 )
 
 
-def setStrValue(bname, pname):
-    def callback_func(self, context):
+def setCustObjValue(subtype, bname, pname):
+	def callback_func(self, context):
 
-        mytool = context.scene.my_tool
-        setattr(
-            getattr(mytool, bname),
-            '{}'.format(pname),
-            getattr(getattr(mytool, bname), '{}_enum'.format(pname))
-        )
+		mytool = context.scene.my_tool
+		result = getattr(getattr(mytool, bname), '{}_enum'.format(pname))
+		if subtype == fieldType.INT:
+			result = int(result)
+		elif subtype == fieldType.FLOAT:
+			result = float(result)
+		elif subtype == fieldType.FLOAT:
+			result = str(result)
 
-    return callback_func
+		setattr(
+			bpy.context.object,
+			'["{}"]'.format(pname),
+			result
+		)
+
+	return callback_func
+
 
 def createTypeClass(zclass):
 	attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
@@ -114,7 +123,7 @@ def createTypeClass(zclass):
 		or obj['type'] == fieldType.LIST:
 
 
-			attributes['__annotations__']["show_"+pname] = lockProp
+			# attributes['__annotations__']["show_"+pname] = lockProp
 
 			if obj['type'] == fieldType.STRING:
 				prop = StringProperty(
@@ -155,67 +164,79 @@ def createTypeClass(zclass):
 			attributes['__annotations__'][pname] = prop
 
 		elif obj['type'] == fieldType.ENUM \
-		or obj['type'] == fieldType.ENUM_STR:
+		or obj['type'] == fieldType.ENUM_DYN:
 
-			attributes['__annotations__']["show_"+pname] = lockProp
+			# attributes['__annotations__']["show_"+pname] = lockProp
 			enum_callback = None
+			subtype = obj.get('subtype')
 
-			if obj.get('subtype') == fieldType.SPACE_NAME:
+			if obj.get('callback') == fieldType.SPACE_NAME:
 				enum_callback = spacesCallback
-			elif obj.get('subtype') == fieldType.REFERENCEABLE:
+			elif obj.get('callback') == fieldType.REFERENCEABLE:
 				enum_callback = referenceablesCallback
-			elif obj.get('subtype') == fieldType.MATERIAL_IND:
+			elif obj.get('callback') == fieldType.MATERIAL_IND:
 				enum_callback = resMaterialsCallback
-			elif obj.get('subtype') == fieldType.ROOM:
+			elif obj.get('callback') == fieldType.ROOM:
 				enum_callback = roomsCallback(bname, '{}_res'.format(pname))
-			elif obj.get('subtype') == fieldType.RES_MODULE:
+			elif obj.get('callback') == fieldType.RES_MODULE:
 				enum_callback = modulesCallback
 
 			if obj['type'] == fieldType.ENUM:
-				prop = None
-				if enum_callback == None:
-					prop = EnumProperty(
-						name = obj['name'],
-						description = obj['description'],
-						default = obj['default'],
-						items = obj['items']
-					)
-				else:
-					prop = EnumProperty(
-						name = obj['name'],
-						description = obj['description'],
-						items = enum_callback
-					)
-
-				attributes['__annotations__'][pname] = prop
-
-			elif obj['type'] == fieldType.ENUM_STR:
-				prop = None
+				# prop = None
 				prop_enum = None
 				prop_switch = None
 
 				prop_switch = BoolProperty(
 					name = 'Use dropdown',
 					description = 'Dropdown selection',
-					default = False
+					default = True
+				)
+
+				prop_enum = EnumProperty(
+					name = obj['name'],
+					description = obj['description'],
+					items = obj['items'],
+					default = obj['default'],
+					update = setCustObjValue(subtype, bname, pname)
+				)
+
+				# prop = EnumProperty(
+				# 	name = obj['name'],
+				# 	description = obj['description'],
+				# 	default = obj['default'],
+				# 	items = obj['items']
+				# )
+
+				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
+				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
+
+			elif obj['type'] == fieldType.ENUM_DYN:
+				# prop = None
+				prop_enum = None
+				prop_switch = None
+
+				prop_switch = BoolProperty(
+					name = 'Use dropdown',
+					description = 'Dropdown selection',
+					default = True
 				)
 
 				prop_enum = EnumProperty(
 					name = obj['name'],
 					description = obj['description'],
 					items = enum_callback,
-					update = setStrValue(bname, pname)
+					update = setCustObjValue(subtype, bname, pname)
 				)
 
-				prop = StringProperty(
-					name = obj['name'],
-					description = obj['description'],
-					maxlen = 32
-				)
+				# prop = StringProperty(
+				# 	name = obj['name'],
+				# 	description = obj['description'],
+				# 	maxlen = 32
+				# )
 
 				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
 				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
-				attributes['__annotations__']['{}'.format(pname)] = prop
+				# attributes['__annotations__']['{}'.format(pname)] = prop
 
 		elif obj['type'] == fieldType.V_FORMAT:
 

@@ -572,10 +572,10 @@ def read(file, context, self, filepath):
                 b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dName
+                objString[-1] = b3dObj.name
 
             elif (type == 1):
                 name1 = readName(file) #?
@@ -591,10 +591,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_1.Name1)] = name1
                 b3dObj[prop(b_1.Name2)] = name2
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
 
             elif (type == 2):	#контейнер хз
@@ -614,10 +614,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_2.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_2.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
 
             elif (type == 3):	#
@@ -634,10 +634,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_3.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_3.R)] = bounding_sphere[3]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
 
             elif (type == 4):	#похоже на контейнер 05 совмещенный с 12
@@ -658,10 +658,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_4.Name1)] = name1
                 b3dObj[prop(b_4.Name2)] = name2
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 5): #общий контейнер
 
@@ -680,10 +680,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_5.R)] = (bounding_sphere[3])
                 b3dObj[prop(b_5.Name1)] = name
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 6):
                 vertexes = []
@@ -715,10 +715,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_6.Name1)] = name1
                 b3dObj[prop(b_6.Name2)] = name2
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 7):	#25? xyzuv TailLight? похоже на "хвост" движения	mesh
                 format = 0
@@ -755,10 +755,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_7.R)] = bounding_sphere[3]
                 b3dObj[prop(b_7.Name1)] = groupName
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 8):	#тоже фейсы		face
                 faces = []
@@ -945,10 +945,10 @@ def read(file, context, self, filepath):
                 b3dObj['pos'] = pos
                 b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_8.R)] = bounding_sphere[3]
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
                 if self.to_import_textures:
                     #For assignMaterialByVertices just-in-case
@@ -990,10 +990,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_9.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_9.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 10): #контейнер, хз о чем LOD
 
@@ -1013,10 +1013,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_10.LOD_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_10.LOD_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
 
             elif (type == 11):
@@ -1036,10 +1036,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_11.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_11.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 12):
 
@@ -1067,10 +1067,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_12.Unk_Int2)] = unknown2
                 b3dObj[prop(b_12.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 13):
 
@@ -1095,10 +1095,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_13.Unk_Int2)] = unknown2
                 b3dObj[prop(b_13.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 14): #sell_ ?
 
@@ -1129,10 +1129,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_14.Unk_Int2)] = unknown2
                 b3dObj[prop(b_14.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 15):
 
@@ -1157,10 +1157,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_15.Unk_Int2)] = unknown2
                 b3dObj[prop(b_15.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 16):
 
@@ -1196,10 +1196,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_13.Unk_List)] = l_params
 
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 17):
 
@@ -1234,10 +1234,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_17.Unk_Int2)] = unknown2
                 b3dObj[prop(b_17.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 18):	#контейнер "применить к"
 
@@ -1259,10 +1259,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_18.Add_Name)] = add_name
                 b3dObj[prop(b_18.Space_Name)] = space_name
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
 
             elif (type == 19):
@@ -1279,10 +1279,10 @@ def read(file, context, self, filepath):
                 b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
 
             elif (type == 20):
@@ -1331,10 +1331,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_20.Unk_Int2)] = unknown2
                 b3dObj[prop(b_20.Unk_List)] = unknowns
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 21): #testkey???
 
@@ -1354,10 +1354,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_21.R)] = bounding_sphere[3]
                 b3dObj[prop(b_21.GroupCnt)] = groupCnt
                 b3dObj[prop(b_21.Unk_Int2)] = unknown2
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 23): #colision mesh
 
@@ -1397,10 +1397,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_23.Surface)] = ctype
                 b3dObj[prop(b_23.Unk_List)] = unknowns
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 24): #настройки положения обьекта
 
@@ -1459,10 +1459,10 @@ def read(file, context, self, filepath):
                 b3dObj.rotation_euler[2] = z_d
                 b3dObj.location = sp_pos
                 b3dObj[prop(b_24.Flag)] = flag
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 25): #copSiren????/ контейнер
 
@@ -1490,10 +1490,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_25.Unk_Float4)] = unknown2[3]
                 b3dObj[prop(b_25.Unk_Float5)] = unknown2[4]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 26):
 
@@ -1518,10 +1518,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_26.Unk_XYZ2)] = unknown_sphere2
                 b3dObj[prop(b_26.Unk_XYZ3)] = unknown_sphere3
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 27):
 
@@ -1544,10 +1544,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_27.Unk_XYZ)] = unknown_sphere
                 b3dObj[prop(b_27.Material)] = materialId
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 28): #face
 
@@ -1714,10 +1714,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_28.R)] = bounding_sphere[3]
                 b3dObj[prop(b_28.Unk_XYZ)] = sprite_center
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 29):
 
@@ -1746,10 +1746,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_29.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_29.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 30):
 
@@ -1804,47 +1804,6 @@ def read(file, context, self, filepath):
                             (p2[0], p2[1], p2[2]),
                         ]
 
-
-
-                # b3dMesh = (bpy.data.meshes.new(objName))
-                #0-x
-                #1-y
-                #2-z
-
-                # l_vertexes = [
-                #     (p1[0], p1[1], p1[2]),
-                #     (p1[0], p1[1], p2[2]),
-                #     (p2[0], p2[1], p2[2]),
-                #     (p2[0], p2[1], p1[2]),
-                # ]
-
-                # l_faces = [
-                #     (0,1,2),
-                #     (2,3,0)
-                # ]
-
-                # Ev = threading.Event()
-                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces))
-                # Tr.start()
-                # Ev.set()
-                # Tr.join()
-
-
-                # b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                # b3dObj[BLOCK_TYPE] = type
-                # b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                # b3dObj['pos'] = pos
-                # b3dObj[prop(b_30.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_30.R)] = bounding_sphere[3]
-                # b3dObj[prop(b_30.Name)] = connectedRoomName
-                # b3dObj[prop(b_30.XYZ1)] = p1
-                # b3dObj[prop(b_30.XYZ2)] = p2
-
-                # b3dObj.parent = context.scene.objects[objString[-2]]
-                # context.collection.objects.link(b3dObj)
-                # realName = b3dObj.name
-                # objString[len(objString)-1] = b3dObj.name
-
             elif (type == 31):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1871,10 +1830,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_31.Unk_Int2)] = num2
                 b3dObj[prop(b_31.Unk_XYZ2)] = unknown
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 33): #lamp
 
@@ -1919,10 +1878,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_33.RGB)] = RGB
 
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 34): #lamp
                 num = 0
@@ -1963,10 +1922,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_34.R)] = bounding_sphere[3]
                 b3dObj[prop(b_34.UnkInt)] = unknown1
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 35): #mesh
 
@@ -2142,7 +2101,7 @@ def read(file, context, self, filepath):
 
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 b3dObj[BLOCK_TYPE] = type
                 b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
                 b3dObj['pos'] = str(pos)
@@ -2160,7 +2119,7 @@ def read(file, context, self, filepath):
                 # for face in b3dMesh.polygons:
                 #     face.use_smooth = True
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 36):
 
@@ -2189,7 +2148,6 @@ def read(file, context, self, filepath):
 
                 vertexCount = struct.unpack("<i",file.read(4))[0]
                 if format == 0:
-                    # objString[len(objString)-1] = objString[-2]
                     pass
                 else:
                     for i in range(vertexCount):
@@ -2222,10 +2180,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_36.Name2)] = name2
                 b3dObj[prop(b_36.MType)] = formatRaw
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 37):
 
@@ -2258,7 +2216,6 @@ def read(file, context, self, filepath):
                 if vertexCount > 0:
 
                     if format == 0:
-                        # objString[len(objString)-1] = objString[-2]
                         pass
                     else:
                         for i in range(vertexCount):
@@ -2294,10 +2251,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_37.Name1)] = groupName
                 b3dObj[prop(b_37.SType)] = formatRaw
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 39):
 
@@ -2324,10 +2281,10 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_39.Fog_End)] = fog_end
                 b3dObj[prop(b_39.Color_Id)] = colorId
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
+                b3dObj.parent = context.scene.objects.get(objString[-2])
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
-                objString[len(objString)-1] = b3dObj.name
+                objString[-1] = b3dObj.name
 
             elif (type == 40):
                 l_params = []
@@ -2363,8 +2320,8 @@ def read(file, context, self, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
 
-                b3dObj.parent = context.scene.objects[objString[-2]]
-                objString[len(objString)-1] = b3dObj.name
+                b3dObj.parent = context.scene.objects.get(objString[-2])
+                objString[-1] = b3dObj.name
 
             else:
                 log.warning('smthng wrng')
@@ -2433,8 +2390,6 @@ def read(file, context, self, filepath):
 
         b3dObj.parent = None
         transfCollection.objects.link(b3dObj)
-        # realName = b3dObj.name
-        # objString[len(objString)-1] = b3dObj.name
 
 
 def readWayTxt(file, context, op, filepath):
