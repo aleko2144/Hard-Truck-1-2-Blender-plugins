@@ -8,6 +8,7 @@ import time
 import bmesh
 import bpy
 import mathutils
+from mathutils import Vector
 import os.path
 from bpy.props import *
 from mathutils import Matrix
@@ -61,8 +62,7 @@ from .class_descr import (
 	pfb_28,
 	pfb_35,
 	pvb_8,
-	pvb_35,
-	b_common
+	pvb_35
 )
 
 from .scripts import (
@@ -85,7 +85,8 @@ from .common import (
 	isRootObj,
 	getRootObj,
 	isEmptyName,
-	getAllChildren
+	getAllChildren,
+	getLevelGroup
 )
 
 from bpy_extras.io_utils import (
@@ -240,215 +241,198 @@ def getRoomName(curResModule, roomString):
 
 	return result
 
-class B3DExporter:
+borders = {}
+currentRes = ''
+currentRoomName = ''
 
+def createBorderList():
+
+	global borders
+	global currentRes
 	borders = {}
-	currentRes = ''
-	currentRoomName = ''
 
-	def createBorderList(self):
+	borderBlocks = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 30 \
+		and (cn.get(prop(b_30.ResModule1)) == currentRes or cn.get(prop(b_30.ResModule2)) == currentRes)]
 
-		self.borders = {}
+	for bb in borderBlocks:
 
-		borderBlocks = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 30 \
-			and (cn.get(prop(b_30.ResModule1)) == self.currentRes or cn.get(prop(b_30.ResModule2)) == self.currentRes)]
+		border1 = '{}:{}'.format(bb[prop(b_30.ResModule1)], bb[prop(b_30.RoomName1)])
+		border2 = '{}:{}'.format(bb[prop(b_30.ResModule2)], bb[prop(b_30.RoomName2)])
 
-		for bb in borderBlocks:
-
-			border1 = '{}:{}'.format(bb[prop(b_30.ResModule1)], bb[prop(b_30.RoomName1)])
-			border2 = '{}:{}'.format(bb[prop(b_30.ResModule2)], bb[prop(b_30.RoomName2)])
-
-			if not border1 in self.borders:
-				self.borders[border1] = []
-				self.borders[border1].append(bb)
-			else:
-				self.borders[border1].append(bb)
-
-			if not border2 in self.borders:
-				self.borders[border2] = []
-				self.borders[border2].append(bb)
-			else:
-				self.borders[border2].append(bb)
-
-
-	def write(self, file, context, op, filepath):
-
-		global myFile_pro
-		myFile_pro = filepath
-		# if generate_pro_file == True:
-		# 	export_pro(myFile_pro, textures_path)
-
-		# global myFile
-		# myFile = filepath
-		self.export(filepath)
-
-	def export(self, filepath):
-		file = open(filepath, 'wb')
-
-		# global global_matrix
-		# global_matrix = axis_conversion(to_forward="-Z",
-		# 									to_up="Y",
-		# 									).to_4x4() * Matrix.Scale(1, 4)
-
-		# global generatePro
-		# generatePro = generate_pro_file
-
-		# global verNums
-		# verNums = []
-
-		#ba = bytearray(b'\x00' * 20)
-
-		#file.write(ba)
-
-		materials = []
-
-		for material in bpy.data.materials:
-			materials.append(material.name)
-
-		cp_materials = 0
-		cp_data_blocks = 0
-		cp_eof = 0
-
-		#Header
-
-		file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
-
-		file.write(struct.pack('<i',0)) #File Size
-		file.write(struct.pack('<i',0)) #Mat list offset
-		file.write(struct.pack('<i',0)) #Mat list Data Size
-		file.write(struct.pack('<i',0)) #Data Chunks Offset
-		file.write(struct.pack('<i',0)) #Data Chunks Size
-
-		cp_materials = int(file.tell()/4)
-
-		objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
-		# curRoot = objs[0]
-		obj = bpy.context.object
-		curRoot = getRootObj(obj)
-
-		allObjs = []
-
-		if isRootObj(obj):
-			allObjs = curRoot.children
+		if not border1 in borders:
+			borders[border1] = []
+			borders[border1].append(bb)
 		else:
-			allObjs = [obj]
+			borders[border1].append(bb)
 
-		spaces = [cn for cn in allObjs if cn[BLOCK_TYPE] == 24]
-		other = [cn for cn in allObjs if cn[BLOCK_TYPE] != 24]
+		if not border2 in borders:
+			borders[border2] = []
+			borders[border2].append(bb)
+		else:
+			borders[border2].append(bb)
 
-		rChild = []
-		rChild.extend(spaces)
-		rChild.extend(other)
 
-		resModules = bpy.context.scene.my_tool.resModules
-		curResName = curRoot.name[:-4]
-		curModule = getColPropertyByName(resModules, curResName)
+def write(file, context, op, filepath):
 
-		self.currentRes = curResName
-		self.createBorderList()
+	global myFile_pro
+	myFile_pro = filepath
 
-		file.write(struct.pack('<i', len(curModule.materials))) #Materials Count
-		for mat in curModule.materials:
-			writeName(mat.value, file)
+	export(filepath)
 
-		cp_data_blocks = int(file.tell()/4)
+def export(filepath):
 
-		curMaxCnt = 0
-		curLevel = 0
+	global currentRes
 
-		file.write(struct.pack("<i",111)) # Begin_Chunks
+	file = open(filepath, 'wb')
 
-		# prevLevel = 0
-		if len(rChild) > 0:
-			for obj in rChild[:-1]:
-				if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
-					curMaxCnt = 2
-				elif obj[BLOCK_TYPE] == 21:
-					curMaxCnt = obj[prop(b_21.GroupCnt)]
-				self.exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
+	materials = []
 
-				file.write(struct.pack("<i", 444))
+	for material in bpy.data.materials:
+		materials.append(material.name)
 
-			obj = rChild[-1]
+	cp_materials = 0
+	cp_data_blocks = 0
+	cp_eof = 0
+
+	#Header
+
+	file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
+
+	file.write(struct.pack('<i',0)) #File Size
+	file.write(struct.pack('<i',0)) #Mat list offset
+	file.write(struct.pack('<i',0)) #Mat list Data Size
+	file.write(struct.pack('<i',0)) #Data Chunks Offset
+	file.write(struct.pack('<i',0)) #Data Chunks Size
+
+	cp_materials = int(file.tell()/4)
+
+	objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+	# curRoot = objs[0]
+	obj = bpy.context.object
+	curRoot = getRootObj(obj)
+
+	allObjs = []
+
+	if isRootObj(obj):
+		allObjs = curRoot.children
+	else:
+		allObjs = [obj]
+
+	spaces = [cn for cn in allObjs if cn[BLOCK_TYPE] == 24]
+	other = [cn for cn in allObjs if cn[BLOCK_TYPE] != 24]
+
+	rChild = []
+	rChild.extend(spaces)
+	rChild.extend(other)
+
+	resModules = bpy.context.scene.my_tool.resModules
+	curResName = curRoot.name[:-4]
+	curModule = getColPropertyByName(resModules, curResName)
+
+	currentRes = curResName
+	createBorderList()
+
+	file.write(struct.pack('<i', len(curModule.materials))) #Materials Count
+	for mat in curModule.materials:
+		writeName(mat.value, file)
+
+	cp_data_blocks = int(file.tell()/4)
+
+	curMaxCnt = 0
+	curLevel = 0
+
+	file.write(struct.pack("<i",111)) # Begin_Chunks
+
+	# prevLevel = 0
+	if len(rChild) > 0:
+		for obj in rChild[:-1]:
 			if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
 				curMaxCnt = 2
 			elif obj[BLOCK_TYPE] == 21:
 				curMaxCnt = obj[prop(b_21.GroupCnt)]
-			self.exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
+			exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
-		# clone_node()
-		# forChild(bpy.data.objects['b3d_temporary'],True, file)
-		# delete_clone()
-		file.write(struct.pack("<i",222))#EOF
+			file.write(struct.pack("<i", 444))
 
-		cp_eof = int(file.tell()/4)
+		obj = rChild[-1]
+		if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
+			curMaxCnt = 2
+		elif obj[BLOCK_TYPE] == 21:
+			curMaxCnt = obj[prop(b_21.GroupCnt)]
+		exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
-		file.seek(4,0)
-		file.write(struct.pack("<i", cp_eof))
-		file.seek(8,0)
-		file.write(struct.pack("<i", cp_materials))
-		file.seek(12,0)
-		file.write(struct.pack("<i", cp_data_blocks - cp_materials))
-		file.seek(16,0)
-		file.write(struct.pack("<i", cp_data_blocks))
-		file.seek(20,0)
-		file.write(struct.pack("<i", cp_eof - cp_data_blocks))
+	file.write(struct.pack("<i",222))#EOF
 
-	def commonSort(self, curCenter, arr):
-		def dist(curCenter, obj):
-			center = obj.get('b3d_border_center')
-			rad = obj.get('b3d_border_rad')
-			if center is None or rad is None or rad < 0.0001:
-				return 0
-			else:
-				return (sum(map(lambda xx,yy : (xx-yy)**2,curCenter,center)))**0.5
+	cp_eof = int(file.tell()/4)
 
-		newList = [(obj, dist(curCenter, obj)) for obj in arr]
-		newList.sort(key= lambda x: (x[0].get(LEVEL_GROUP), x[1]))
-		return list(map(lambda x: x[0], newList))
+	file.seek(4,0)
+	file.write(struct.pack("<i", cp_eof))
+	file.seek(8,0)
+	file.write(struct.pack("<i", cp_materials))
+	file.seek(12,0)
+	file.write(struct.pack("<i", cp_data_blocks - cp_materials))
+	file.seek(16,0)
+	file.write(struct.pack("<i", cp_data_blocks))
+	file.seek(20,0)
+	file.write(struct.pack("<i", cp_eof - cp_data_blocks))
 
-	def exportBlock(self, obj, isLast, curLevel, maxGroups, curGroups, extra, file):
+def commonSort(curCenter, arr):
+	def dist(curCenter, obj):
+		center = obj.get('b3d_border_center')
+		rad = obj.get('b3d_border_rad')
+		if center is None or rad is None or rad < 0.0001:
+			return 0
+		else:
+			return (sum(map(lambda xx,yy : (xx-yy)**2,curCenter,center)))**0.5
 
-		toProcessChild = False
-		curMaxCnt = 0
+	newList = [(obj, dist(curCenter, obj)) for obj in arr]
+	newList.sort(key= lambda x: x[1])
+	return list(map(lambda x: x[0], newList))
 
-		block = obj
+def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
-		objName = getNonCopyName(block.name)
-		objType = block.get(BLOCK_TYPE)
+	global borders
+	global currentRes
+	global currentRoomName
 
-		passToMesh = {}
+	toProcessChild = False
+	curMaxCnt = 0
 
-		if objType != None:
+	block = obj
 
-			log.debug("{}_{}_{}_{}".format(block[BLOCK_TYPE], curLevel, block[LEVEL_GROUP], block.name))
+	objName = getNonCopyName(block.name)
+	objType = block.get(BLOCK_TYPE)
 
-			if len(curGroups) <= curLevel:
-				curGroups.append(0)
+	passToMesh = {}
 
-			#write Group Chunk
-			if block[LEVEL_GROUP] > curGroups[curLevel]:
-				log.debug('group ended')
-				for i in range(block[LEVEL_GROUP] - curGroups[curLevel]):
-					file.write(struct.pack("<i",444))#Group Chunk
-				curGroups[curLevel] = block[LEVEL_GROUP]
+	if objType != None:
+
+		log.debug("{}_{}_{}_{}".format(block[BLOCK_TYPE], curLevel, 0, block.name))
+
+		blChildren = list(block.children)
+
+		curCenter = None
+		curCenter = list(block.location)
+
+		if objType == 444:
+			if int(block.name[6]) > 0:
+				file.write(struct.pack("<i",444))#Group Chunk
+
+			blChildren = commonSort(curCenter, blChildren)
+
+			if(len(blChildren) > 0):
+				for i, ch in enumerate(blChildren[:-1]):
+
+					exportBlock(ch, False, curLevel+1, curMaxCnt, curGroups, extra, file)
+
+				exportBlock(blChildren[-1], True, curLevel+1, curMaxCnt, curGroups, extra, file)
+
+		else:
 
 			file.write(struct.pack("<i",333))#Begin Chunk
 
-			blChildren = list(block.children)
-
-			curCenter = None
-			curCenter = list(block.location)
-			# if block.get('b3d_border_center') is not None:
-			# 	curCenter = block.get('b3d_border_center')
-			# else:
-			# 	curCenter = [0,0,0]
-
-			# blChildren = self.appendDistances(curCenter, blChildren)
-			blChildren = self.commonSort(curCenter, blChildren)
-
-			# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
-			# blChildren.sort(key=lambda cn: cn.name, reverse=True)
+			if objType not in [9, 10, 21]:
+				blChildren = commonSort(curCenter, blChildren)
 
 			if objType == 30:
 				writeName('', file)
@@ -522,10 +506,6 @@ class B3DExporter:
 						"offset": offset,
 						"props": someProps
 					}
-					# passToMesh.append({
-					# 	"offset": offset,
-					# 	"props": someProps
-					# })
 					offset += len(someProps[0])
 
 				file.write(struct.pack("<i", offset)) #Vertex count
@@ -536,10 +516,6 @@ class B3DExporter:
 						file.write(struct.pack("<3f", *v))
 						file.write(struct.pack("<f", uvs[i][0]))
 						file.write(struct.pack("<f", 1 - uvs[i][1]))
-						# if obj.data.uv_layers.get('UVmapVert1'):
-						# 	file.write(struct.pack("<f", uvs[i][0]))
-						# 	file.write(struct.pack("<f", 1 - uvs[i][1]))
-						# file.write(struct.pack("<3f", *normals[i]))
 
 				file.write(struct.pack("<i", len(block.children)))
 
@@ -560,10 +536,6 @@ class B3DExporter:
 						"offset": offset,
 						"props": someProps
 					}
-					# passToMesh.append({
-					# 	"offset": offset,
-					# 	"props": someProps
-					# })
 					offset += len(someProps[0])
 
 				file.write(struct.pack("<i", offset)) #Vertex count
@@ -574,10 +546,6 @@ class B3DExporter:
 						file.write(struct.pack("<3f", *v))
 						file.write(struct.pack("<f", uvs[i][0]))
 						file.write(struct.pack("<f", 1 - uvs[i][1]))
-						# if obj.data.uv_layers.get('UVmapVert1'):
-						# 	file.write(struct.pack("<f", uvs[i][0]))
-						# 	file.write(struct.pack("<f", 1 - uvs[i][1]))
-						# file.write(struct.pack("<3f", *normals[i]))
 
 				file.write(struct.pack("<i", len(block.children)))
 
@@ -649,9 +617,11 @@ class B3DExporter:
 				file.write(struct.pack("<3f", *block[prop(b_9.Unk_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_9.Unk_R)]))
 
-				file.write(struct.pack("<i", len(block.children)))
+				childCnt = 0
+				for ch in block.children:
+					childCnt += len(ch.children)
 
-				# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
+				file.write(struct.pack("<i", childCnt))
 
 				toProcessChild = True
 				curMaxCnt = 2
@@ -664,10 +634,11 @@ class B3DExporter:
 				file.write(struct.pack("<3f", *block[prop(b_10.LOD_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_10.LOD_R)]))
 
-				file.write(struct.pack("<i", len(block.children)))
+				childCnt = 0
+				for ch in block.children:
+					childCnt += len(ch.children)
 
-				# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
-				# log.debug(["{}_{}".format(cn[LEVEL_GROUP], cn.name) for cn in blChildren])
+				file.write(struct.pack("<i", childCnt))
 
 				toProcessChild = True
 				curMaxCnt = 2
@@ -783,8 +754,8 @@ class B3DExporter:
 
 			elif objType == 19:
 
-				self.currentRoomName = '{}:{}'.format(self.currentRes, objName)
-				borderBlocks = self.borders[self.currentRoomName]
+				currentRoomName = '{}:{}'.format(currentRes, objName)
+				borderBlocks = borders[currentRoomName]
 				blChildren.extend(borderBlocks)
 
 				file.write(struct.pack("<i", len(blChildren)))
@@ -823,9 +794,11 @@ class B3DExporter:
 				file.write(struct.pack("<i", block[prop(b_21.GroupCnt)]))
 				file.write(struct.pack("<i", block[prop(b_21.Unk_Int2)]))
 
-				file.write(struct.pack("<i", len(block.children)))
+				childCnt = 0
+				for ch in block.children:
+					childCnt += len(ch.children)
 
-				# blChildren.sort(key=lambda cn: cn[LEVEL_GROUP])
+				file.write(struct.pack("<i", childCnt))
 
 				toProcessChild = True
 				curMaxCnt = block[prop(b_21.GroupCnt)]
@@ -921,7 +894,9 @@ class B3DExporter:
 
 			elif objType == 28: #must be 4 coord plane
 
-				sprite_center = block[prop(b_28.Unk_XYZ)]
+				# sprite_center = block[prop(b_28.Sprite_Center)]
+				sprite_center = 0.125 * sum((Vector(b) for b in block.bound_box), Vector())
+
 				file.write(struct.pack("<3f", *block[prop(b_28.XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_28.R)]))
 				file.write(struct.pack("<3f", *sprite_center))
@@ -987,17 +962,15 @@ class B3DExporter:
 				roomName1 = '{}:{}'.format(block[prop(b_30.ResModule1)], block[prop(b_30.RoomName1)])
 				roomName2 = '{}:{}'.format(block[prop(b_30.ResModule2)], block[prop(b_30.RoomName2)])
 				toImportSecondSide = False
-				if self.currentRoomName == roomName1:
+				if currentRoomName == roomName1:
 					toImportSecondSide = True
-				elif self.currentRoomName == roomName2:
+				elif currentRoomName == roomName2:
 					toImportSecondSide = False
 
 				if toImportSecondSide:
-					writeName(getRoomName(self.currentRes, roomName2), file)
+					writeName(getRoomName(currentRes, roomName2), file)
 				else:
-					writeName(getRoomName(self.currentRes, roomName1), file)
-
-				# writeName(block[prop(b_30.Name)], file)
+					writeName(getRoomName(currentRes, roomName1), file)
 
 				vertexes = [cn.co for cn in block.data.vertices]
 
@@ -1010,9 +983,6 @@ class B3DExporter:
 
 				file.write(struct.pack("<3f", *p1))
 				file.write(struct.pack("<3f", *p2))
-
-				# file.write(struct.pack("<3f", *block[prop(b_30.XYZ1)]))
-				# file.write(struct.pack("<3f", *block[prop(b_30.XYZ2)]))
 
 			elif objType == 31:
 
@@ -1289,29 +1259,15 @@ class B3DExporter:
 
 						if len(passToMesh) > 0:
 							l_extra['passToMesh'] = passToMesh
-						self.exportBlock(ch, False, curLevel+1, curMaxCnt, curGroups, l_extra, file)
+						exportBlock(ch, False, curLevel+1, curMaxCnt, curGroups, l_extra, file)
 
 					if len(passToMesh) > 0:
 						l_extra['passToMesh'] = passToMesh
-					self.exportBlock(blChildren[-1], True, curLevel+1, curMaxCnt, curGroups, l_extra, file)
-
-			# log.debug("{}_{}".format(curGroups, block.name))
-
-			# called from parent object with 0 children
-			if toProcessChild and len(blChildren) == 0 and curMaxCnt > 1:
-				for i in range(curMaxCnt-1):
-					file.write(struct.pack("<i",444))#Group Chunk
+					exportBlock(blChildren[-1], True, curLevel+1, curMaxCnt, curGroups, l_extra, file)
 
 			file.write(struct.pack("<i",555))#End Chunk
 
-			if isLast:
-				log.info("{}_{}".format(maxGroups, curGroups[curLevel]))
-				for i in range(maxGroups-1 - curGroups[curLevel]):
-					log.debug('not enough in group')
-					file.write(struct.pack("<i",444))#Group Chunk
-				curGroups[curLevel] = 0
-
-		return curLevel
+	return curLevel
 
 
 # def export08(object, verticesL, file, faces, uvs):

@@ -58,8 +58,7 @@ from .class_descr import (
 	pfb_28,
 	pfb_35,
 	pvb_8,
-	pvb_35,
-	b_common
+	pvb_35
 )
 
 from .common import (
@@ -334,7 +333,6 @@ s_block_37 = createTypeClass(b_37, False)
 s_block_39 = createTypeClass(b_39, False)
 s_block_40 = createTypeClass(b_40, False)
 
-block_common = createTypeClass(b_common)
 block_1 = createTypeClass(b_1)
 block_2 = createTypeClass(b_2)
 block_3 = createTypeClass(b_3)
@@ -449,7 +447,6 @@ _classes = (
 	block_37,
 	block_39,
 	block_40,
-	block_common,
 
 	perFaceBlock_8,
 	perFaceBlock_28,

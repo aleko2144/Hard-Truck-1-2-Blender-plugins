@@ -57,7 +57,6 @@ from .class_descr import (
 
 from ..consts import (
     EMPTY_NAME,
-    LEVEL_GROUP,
     BLOCK_TYPE,
     BORDER_COLLECTION
 )
@@ -527,18 +526,65 @@ def read(file, context, self, filepath):
 
         ex = openclose(file)
         if ex == ChunkType.END_CHUNK:
+
+            parentObj = context.scene.objects.get(objString[-2])
+            if parentObj.get(BLOCK_TYPE) in [9, 10, 21]:
+                del objString[-1]
+
             del objString[-1]
             levelGroups[lvl] = 0
             lvl-=1
+
         elif ex == ChunkType.END_CHUNKS:
             file.close()
             break
+
         elif ex == ChunkType.GROUP_CHUNK:
             if len(levelGroups) <= lvl:
                 for i in range(lvl+1-len(levelGroups)):
                     levelGroups.append(0)
+
             if lvl > 0:
+
+                log.debug(objString)
+
                 levelGroups[lvl] +=1
+                parentObj = context.scene.objects.get(objString[-1])
+                print(parentObj.name)
+                if parentObj.name[:6] != 'GROUP_':
+                    print('not group_chunk')
+                else:
+                    print('is group_chunk')
+
+                if parentObj.name[:6] == 'GROUP_':
+                    del objString[-1]
+                    parentObj = context.scene.objects.get(objString[-1])
+
+                if levelGroups[lvl] > 0:
+                    log.debug(parentObj.children)
+                    if len(parentObj.children) == 0:
+                        groupObjName = 'GROUP_{}'.format(0)
+                        log.debug(groupObjName)
+
+                        b3dObj = bpy.data.objects.new(groupObjName, None)
+                        b3dObj[BLOCK_TYPE] = 444
+
+                        b3dObj.parent = parentObj
+                        context.collection.objects.link(b3dObj)
+                        # objString.append(b3dObj.name)
+
+
+                groupObjName = 'GROUP_{}'.format(levelGroups[lvl])
+                log.debug(groupObjName)
+
+                b3dObj = bpy.data.objects.new(groupObjName, None)
+                b3dObj[BLOCK_TYPE] = 444
+
+                b3dObj.parent = context.scene.objects.get(objString[-1])
+                context.collection.objects.link(b3dObj)
+
+                objString.append(b3dObj.name)
+
             continue
         elif ex == ChunkType.BEGIN_CHUNK:
             lvl+=1
@@ -547,13 +593,33 @@ def read(file, context, self, filepath):
                     levelGroups.append(0)
 
             t1 = time.perf_counter()
-            objString.append(objString[-1])
+
+            parentObj = context.scene.objects.get(objString[-1])
+
+            if parentObj.get(BLOCK_TYPE) in [9, 10, 21]:
+
+                groupObjName = 'GROUP_{}'.format(0)
+                log.debug(groupObjName)
+
+                b3dObj = bpy.data.objects.new(groupObjName, None)
+                b3dObj[BLOCK_TYPE] = 444
+
+                b3dObj.parent = parentObj
+                context.collection.objects.link(b3dObj)
+
+                objString.append(b3dObj.name)
+
+            objString.append("")
+
             onlyName = readName(file)
             type = struct.unpack("<i",file.read(4))[0]
-            pos = file.tell()
             # objName = "{}_{}".format(str(type).zfill(2), onlyName)
             objName = onlyName
             realName = onlyName
+
+            parentObj = context.scene.objects.get(objString[-2])
+
+
 
             # log.debug("{}_{}".format(type, objName))
             # log.debug("{}_{}".format(lvl - 1, levelGroups))
@@ -569,10 +635,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -586,12 +650,10 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_1.Name1)] = name1
                 b3dObj[prop(b_1.Name2)] = name2
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -607,14 +669,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_2.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_2.R)] = bounding_sphere[3]
                 b3dObj[prop(b_2.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_2.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -629,12 +689,10 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_3.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_3.R)] = bounding_sphere[3]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -651,14 +709,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_4.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_4.R)] = bounding_sphere[3]
                 b3dObj[prop(b_4.Name1)] = name1
                 b3dObj[prop(b_4.Name2)] = name2
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -674,13 +730,11 @@ def read(file, context, self, filepath):
                     continue
                 b3dObj = bpy.data.objects.new(objName, None) #create empty
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = pos
                 b3dObj[prop(b_5.XYZ)] = (bounding_sphere[0:3])
                 b3dObj[prop(b_5.R)] = (bounding_sphere[3])
                 b3dObj[prop(b_5.Name1)] = name
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -708,14 +762,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_6.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_6.R)] = bounding_sphere[3]
                 b3dObj[prop(b_6.Name1)] = name1
                 b3dObj[prop(b_6.Name2)] = name2
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -749,13 +801,11 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = pos
                 b3dObj[prop(b_7.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_7.R)] = bounding_sphere[3]
                 b3dObj[prop(b_7.Name1)] = groupName
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -941,11 +991,9 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = pos
                 b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_8.R)] = bounding_sphere[3]
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -983,14 +1031,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_9.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_9.R)] = bounding_sphere[3]
                 b3dObj[prop(b_9.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_9.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1006,14 +1052,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_10.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_10.R)] = bounding_sphere[3]
                 b3dObj[prop(b_10.LOD_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_10.LOD_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1029,14 +1073,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_11.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_11.R)] = bounding_sphere[3]
                 b3dObj[prop(b_11.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_11.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1057,8 +1099,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_12.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_12.R)] = bounding_sphere[3]
                 b3dObj[prop(b_12.Unk_XYZ)] = unknown_sphere[0:3]
@@ -1067,7 +1107,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_12.Unk_Int2)] = unknown2
                 b3dObj[prop(b_12.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1087,15 +1127,13 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_13.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_13.R)] = bounding_sphere[3]
                 b3dObj[prop(b_13.Unk_Int1)] = unknown1
                 b3dObj[prop(b_13.Unk_Int2)] = unknown2
                 b3dObj[prop(b_13.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1119,8 +1157,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_14.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_14.R)] = bounding_sphere[3]
                 b3dObj[prop(b_14.Unk_XYZ)] = unknown_sphere[0:3]
@@ -1129,7 +1165,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_14.Unk_Int2)] = unknown2
                 b3dObj[prop(b_14.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1149,15 +1185,13 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_15.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_15.R)] = bounding_sphere[3]
                 b3dObj[prop(b_15.Unk_Int1)] = unknown1
                 b3dObj[prop(b_15.Unk_Int2)] = unknown2
                 b3dObj[prop(b_15.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1183,8 +1217,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_16.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_16.R)] = bounding_sphere[3]
                 b3dObj[prop(b_16.Unk_XYZ1)] = vector1
@@ -1196,7 +1228,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_13.Unk_List)] = l_params
 
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1222,8 +1254,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_17.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_17.R)] = bounding_sphere[3]
                 b3dObj[prop(b_17.Unk_XYZ1)] = vector1
@@ -1234,7 +1264,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_17.Unk_Int2)] = unknown2
                 b3dObj[prop(b_17.Unk_List)] = l_params
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1252,14 +1282,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_18.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_18.R)] = bounding_sphere[3]
                 b3dObj[prop(b_18.Add_Name)] = add_name
                 b3dObj[prop(b_18.Space_Name)] = space_name
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1276,10 +1304,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1323,15 +1349,13 @@ def read(file, context, self, filepath):
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 b3dObj.location = (0,0,0)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_20.R)] = bounding_sphere[3]
                 b3dObj[prop(b_20.Unk_Int1)] = unknown1
                 b3dObj[prop(b_20.Unk_Int2)] = unknown2
                 b3dObj[prop(b_20.Unk_List)] = unknowns
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1348,13 +1372,11 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_21.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_21.R)] = bounding_sphere[3]
                 b3dObj[prop(b_21.GroupCnt)] = groupCnt
                 b3dObj[prop(b_21.Unk_Int2)] = unknown2
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1391,13 +1413,11 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_23.Unk_Int1)] = unknown1
                 b3dObj[prop(b_23.Surface)] = ctype
                 b3dObj[prop(b_23.Unk_List)] = unknowns
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1452,14 +1472,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj.rotation_euler[0] = x_d
                 b3dObj.rotation_euler[1] = y_d
                 b3dObj.rotation_euler[2] = z_d
                 b3dObj.location = sp_pos
                 b3dObj[prop(b_24.Flag)] = flag
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1478,8 +1496,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_25.XYZ)] = unknown1
                 b3dObj[prop(b_25.Name)] = name
                 b3dObj[prop(b_25.Unk_XYZ1)] = unknown_sphere1
@@ -1490,7 +1506,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_25.Unk_Float4)] = unknown2[3]
                 b3dObj[prop(b_25.Unk_Float5)] = unknown2[4]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1510,15 +1526,13 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_26.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_26.R)] = bounding_sphere[3]
                 b3dObj[prop(b_26.Unk_XYZ1)] = unknown_sphere1
                 b3dObj[prop(b_26.Unk_XYZ2)] = unknown_sphere2
                 b3dObj[prop(b_26.Unk_XYZ3)] = unknown_sphere3
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1536,15 +1550,13 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_27.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_27.R)] = bounding_sphere[3]
                 b3dObj[prop(b_27.Flag)] = flag1
                 b3dObj[prop(b_27.Unk_XYZ)] = unknown_sphere
                 b3dObj[prop(b_27.Material)] = materialId
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1708,13 +1720,11 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_28.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_28.R)] = bounding_sphere[3]
-                b3dObj[prop(b_28.Unk_XYZ)] = sprite_center
+                b3dObj[prop(b_28.Sprite_Center)] = sprite_center
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1737,8 +1747,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_29.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_29.R)] = bounding_sphere[3]
                 b3dObj[prop(b_29.Unk_Int1)] = num0
@@ -1746,7 +1754,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_29.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_29.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1820,8 +1828,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_31.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_31.R)] = bounding_sphere[3]
                 b3dObj[prop(b_31.Unk_Int1)] = num
@@ -1830,7 +1836,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_31.Unk_Int2)] = num2
                 b3dObj[prop(b_31.Unk_XYZ2)] = unknown
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1860,8 +1866,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_33.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_33.R)] = bounding_sphere[3]
                 b3dObj[prop(b_33.Use_Lights)] = useLights
@@ -1878,7 +1882,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_33.RGB)] = RGB
 
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -1916,13 +1920,11 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_34.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_34.R)] = bounding_sphere[3]
                 b3dObj[prop(b_34.UnkInt)] = unknown1
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -2101,10 +2103,8 @@ def read(file, context, self, filepath):
 
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_35.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_35.R)] = bounding_sphere[3]
                 b3dObj[prop(b_35.MType)] = mType
@@ -2172,15 +2172,13 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = pos
                 b3dObj[prop(b_36.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_36.R)] = bounding_sphere[3]
                 b3dObj[prop(b_36.Name1)] = name1
                 b3dObj[prop(b_36.Name2)] = name2
                 b3dObj[prop(b_36.MType)] = formatRaw
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -2244,14 +2242,12 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None) #create empty
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = pos
                 b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_37.R)] = bounding_sphere[3]
                 b3dObj[prop(b_37.Name1)] = groupName
                 b3dObj[prop(b_37.SType)] = formatRaw
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -2271,8 +2267,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_39.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_39.R)] = bounding_sphere[3]
                 b3dObj[prop(b_39.Color_R)] = color_r
@@ -2281,7 +2275,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_39.Fog_End)] = fog_end
                 b3dObj[prop(b_39.Color_Id)] = colorId
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
@@ -2306,8 +2300,6 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[LEVEL_GROUP] = levelGroups[lvl - 1]
-                b3dObj['pos'] = str(pos)
                 b3dObj[prop(b_40.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_40.R)] = bounding_sphere[3]
                 b3dObj[prop(b_40.Name1)] = name1
@@ -2320,7 +2312,7 @@ def read(file, context, self, filepath):
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
 
-                b3dObj.parent = context.scene.objects.get(objString[-2])
+                b3dObj.parent = parentObj
                 objString[-1] = b3dObj.name
 
             else:
@@ -2376,8 +2368,6 @@ def read(file, context, self, filepath):
 
         b3dObj = bpy.data.objects.new(key, b3dMesh)
         b3dObj[BLOCK_TYPE] = 30
-        b3dObj[LEVEL_GROUP] = 0
-        # b3dObj['pos'] = pos
         b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
         b3dObj[prop(b_30.R)] = border["bounding_rad"]
         b3dObj[prop(b_30.ResModule1)] = res_name1

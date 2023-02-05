@@ -312,16 +312,6 @@ class pfb_35():
 		'default': 0
 	}
 
-
-class b_common():
-	LevelGroup = {
-		'prop': LEVEL_GROUP,
-		'type': fieldType.INT,
-		'name': 'Block group',
-		'description': '',
-		'default': 0
-	}
-
 class b_1():
 	Name1 = {
 		'prop': 'name1',
@@ -1390,7 +1380,7 @@ class b_28():
 		'group': borderSphereGroup,
 		'type': fieldType.SPHERE_EDIT
 	}
-	Unk_XYZ = {
+	Sprite_Center = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
 		'name': 'Sprite center coord',

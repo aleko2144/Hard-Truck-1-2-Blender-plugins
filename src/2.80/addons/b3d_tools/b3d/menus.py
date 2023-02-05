@@ -25,11 +25,7 @@ from bpy.types import (
 
 from .class_descr import ActiveBlock
 from . import (
-    import_b3d
-)
-
-from .export_b3d import (
-    B3DExporter
+    import_b3d, export_b3d
 )
 
 
@@ -212,8 +208,7 @@ class ExportB3D(Operator, ImportHelper):
     def execute(self, context):
         print('Exporting file', self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple())
-        exporter = B3DExporter()
-        exporter.write(self.filepath+'.b3d', context, self, self.filepath)
+        export_b3d.write(self.filepath+'.b3d', context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished exporting in', t, 'seconds')
         self.report({'INFO'}, 'B3D exported')

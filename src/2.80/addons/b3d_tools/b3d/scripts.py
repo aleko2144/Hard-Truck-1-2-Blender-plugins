@@ -20,16 +20,16 @@ from .common import (
     getRootObj,
     getAllChildren,
     getMytoolBlockNameByClass,
-    getMytoolBlockName
+    getMytoolBlockName,
+    getLevelGroup
 )
 from .class_descr import (
-    fieldType, b_common
+    fieldType
 )
 
 from ..consts import (
     BLOCK_TYPE,
     EMPTY_NAME,
-    LEVEL_GROUP,
     TRANSF_COLLECTION,
     TEMP_COLLECTION
 )
@@ -309,6 +309,7 @@ def processLOD(root, state, explevel = 0, curlevel = -1):
     stack = [[root, curlevel, False]]
 
     while stack:
+        blChildren = []
         block, clevel, isActive = stack.pop()
 
         if block[BLOCK_TYPE] == 18:
@@ -321,14 +322,26 @@ def processLOD(root, state, explevel = 0, curlevel = -1):
         if block[BLOCK_TYPE] == 10:
             clevel += 1
 
+        if block[BLOCK_TYPE] in [9, 10, 21]:
+            for ch in block.children:
+                blChildren.extend(ch.children)
+        else:
+            blChildren = block.children
+
         if isActive and isMeshBlock(block):
             block.hide_set(state)
 
+        for directChild in blChildren:
 
-        for directChild in block.children:
-            log.debug("Processing {}".format(directChild.name))
+            # if directChild[BLOCK_TYPE] == 444:
+            #     log.debug("Skipping {}".format(directChild.name))
+            #     for ch in directChild.children:
+            #         stack.append([ch, clevel, isActive])
+            #     continue
+
             if clevel == explevel:
-                if directChild[LEVEL_GROUP] == 1:
+                # if directChild[LEVEL_GROUP] == 1:
+                if getLevelGroup(directChild) == 1:
                     stack.append([directChild, clevel, True])
                 else:
                     stack.append([directChild, -1, isActive])
@@ -367,6 +380,7 @@ def processCond(root, group, state):
     stack = [[root, curlevel, globlevel, 0, False]]
 
     while stack:
+        blChildren = []
         block, clevel, glevel, groupMax, isActive = stack.pop()
 
         l_group = group
@@ -385,10 +399,17 @@ def processCond(root, group, state):
             if l_group > groupMax-1:
                 l_group = groupMax-1
 
+
+        if block[BLOCK_TYPE] in [9, 10, 21]:
+            for ch in block.children:
+                blChildren.extend(ch.children)
+        else:
+            blChildren = block.children
+
         if isActive and isMeshBlock(block):
             block.hide_set(state)
 
-        for directChild in block.children:
+        for directChild in blChildren:
             log.debug("Processing {}".format(directChild.name))
             nextState = False
             if glevel == 1:
@@ -396,7 +417,8 @@ def processCond(root, group, state):
             elif glevel > 1:
                 nextState = isActive and True
             if clevel == 1:
-                if directChild[LEVEL_GROUP] == l_group or l_group == -1:
+                # if directChild[LEVEL_GROUP] == l_group or l_group == -1:
+                if getLevelGroup(directChild) == l_group or l_group == -1:
                     stack.append([directChild, clevel+1, glevel, groupMax, nextState])
                 else:
                     stack.append([directChild, clevel+1, glevel, groupMax, False])
@@ -499,27 +521,22 @@ def showHideSphere(context, root, pname):
         createRadDriver(b3dObj, bname, radName)
 
 def drawCommon(l_self, obj):
-	block_type = None
-	level_group = None
-	if BLOCK_TYPE in obj:
-		block_type = obj[BLOCK_TYPE]
+    block_type = None
+    level_group = None
+    if BLOCK_TYPE in obj:
+        block_type = obj[BLOCK_TYPE]
 
-	if LEVEL_GROUP in obj:
-		level_group = obj[LEVEL_GROUP]
+    level_group = getLevelGroup(obj)
 
-	lenStr = str(len(obj.children))
+    lenStr = str(len(obj.children))
 
-	box = l_self.layout.box()
-	box.label(text="Block type: " + str(block_type))
-	box.label(text="Children block count: " + lenStr)
-	box.label(text="Block group: " + str(level_group))
+    box = l_self.layout.box()
+    box.label(text="Block type: " + str(block_type))
+    box.label(text="Children block count: " + lenStr)
+    box.label(text="Block group: " + str(level_group))
 
 def drawAllFieldsByType(l_self, context, zclass, multipleEdit = True):
-    if zclass.__name__.split('_')[0] == 'b':
-        drawFieldsByType(l_self, context, b_common, multipleEdit)
-        drawFieldsByType(l_self, context, zclass, multipleEdit)
-    else:
-        drawFieldsByType(l_self, context, zclass, multipleEdit)
+    drawFieldsByType(l_self, context, zclass, multipleEdit)
 
 def drawFieldsByType(l_self, context, zclass, multipleEdit = True):
 
@@ -673,7 +690,6 @@ def getObjByProp(context, object, zclass, pname):
                     item.value = obj
 
 def getAllObjsByType(context, object, zclass):
-    getObjsByType(context, object, b_common)
     getObjsByType(context, object, zclass)
 
 def getObjsByType(context, object, zclass):
@@ -752,8 +768,9 @@ def setObjByProp(context, object, zclass, pname):
                 object[obj['prop']] = arr
 
 def setAllObjsByType(context, object, zclass):
-    setObjsByType(context, object, b_common)
     setObjsByType(context, object, zclass)
+
+# def setObjsDefaultByType(context, object, zclass):
 
 def setObjsByType(context, object, zclass):
     attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]

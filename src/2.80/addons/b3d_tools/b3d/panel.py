@@ -17,7 +17,8 @@ from ..common import (
 from .. import consts
 
 from .common import (
-	isRootObj
+	isRootObj,
+	getMytoolBlockNameByClass
 )
 from .scripts import (
 	applyRemoveTransforms,
@@ -51,7 +52,7 @@ from .classes import (
 	block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,\
 	block_30,block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,\
 
-	block_common,perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35,\
+	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35,\
 
 	s_block_1,s_block_2,s_block_3,s_block_4,s_block_5,s_block_6,s_block_7,s_block_8,s_block_9,s_block_10,\
 	s_block_11,s_block_12,s_block_13,s_block_14,s_block_15,s_block_16,s_block_17,s_block_18,s_block_20,\
@@ -63,7 +64,7 @@ from .class_descr import (
 	b_1,b_2,b_3,b_4,b_5,b_6,b_7,b_8,b_9,b_10,\
 	b_11,b_12,b_13,b_14,b_15,b_16,b_17,b_18,b_20,\
 	b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
-	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,b_common, \
+	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,\
 	pfb_8, pfb_28, pfb_35, pvb_8, pvb_35,
 	ResBlock
 )
@@ -179,7 +180,6 @@ class PanelSettings(bpy.types.PropertyGroup):
 	block37: PointerProperty(type=block_37)
 	block39: PointerProperty(type=block_39)
 	block40: PointerProperty(type=block_40)
-	blockcommon: PointerProperty(type=block_common)
 
 	perFaceBlock8: PointerProperty(type=perFaceBlock_8)
 	perFaceBlock28: PointerProperty(type=perFaceBlock_28)
@@ -287,152 +287,44 @@ class AddOperator(bpy.types.Operator):
 		block_type = int(mytool.addBlockType_enum)
 
 		global cursor_pos
-		cursor_pos = bpy.context.scene.cursor_location
+		cursor_pos = bpy.context.scene.cursor.location
+
+		parentObj = bpy.context.object
 
 		object_name = mytool.BlockName_string
 
-		if block_type == 6566754:
-			object_name = "b3d"
-			object = bpy.data.objects.new(object_name, None)
-			object.location=(0.0,0.0,0.0)
-			bpy.context.scene.objects.link(object)
+		zclass = getClassDefByType(block_type)
 
-		elif block_type == 0:
+		if block_type in [
+			111,444,
+			0,1,2,3,4,5,
+			6,7,36,37, # vertexes
+			# 8, 35 - polygons
+			9,10,21,22, # groups
+			11,12,13,14,15,16,17,18,19,
+			# 20 - 2d collision
+			# 23 - 3d collision
+			# 28 - 2d sprite
+			# 30 - portal
+			24,25,26,27,29,31,33,34,39,40
+		]:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
 			object[consts.BLOCK_TYPE] = block_type
-			bpy.context.scene.objects.link(object)
+			if parentObj is not None and block_type != 111:
+				object.parent = parentObj
+			setAllObjsByType(context, object, zclass)
+			context.collection.objects.link(object)
 
-		elif block_type == 1:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_1)
-			bpy.context.scene.objects.link(object)
+		elif block_type == 28:
 
-		elif block_type == 2:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_2)
-			bpy.context.scene.objects.link(object)
+			bname, bnum = getMytoolBlockNameByClass(zclass)
 
-		elif block_type == 3:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_3)
-			bpy.context.scene.objects.link(object)
+			spriteCenter = getattr(mytool, bname)
 
-		elif block_type == 4:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos #(0.0,0.0,0.0)
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_4)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 5:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos #(0.0,0.0,0.0)
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_5)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 6:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos #(0.0,0.0,0.0)
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_6)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 7:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos #(0.0,0.0,0.0)
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_7)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 8:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos #(0.0,0.0,0.0)
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_8)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 9:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos #(0.0,0.0,0.0)
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_9)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 10:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_10)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 11:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_11)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 12:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_12)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 13:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_13)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 14:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_14)
-
-		elif block_type == 15:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_15)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 16:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_16)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 17:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_17)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 18:
-			object = bpy.data.objects.new(object_name, None)
-			object[consts.BLOCK_TYPE] = block_type
-			object.location=cursor_pos
-			setAllObjsByType(context, object, b_18)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 19:
-			object = bpy.data.objects.new(object_name, None)
-			object[consts.BLOCK_TYPE] = block_type
-			object.location=cursor_pos
-			bpy.context.scene.objects.link(object)
+			l_vertexes = [
+				()
+			]
 
 		elif block_type == 20:
 			points = [(0,0,0), (0,1,0)]
@@ -452,132 +344,8 @@ class AddOperator(bpy.types.Operator):
 			object.location = (0,0,0)
 			object[consts.BLOCK_TYPE] = block_type
 			setAllObjsByType(context, object, b_20)
-			context.scene.objects.link(object)
+			context.collection.objects.link(object)
 
-		elif block_type == 21:
-			object[consts.BLOCK_TYPE] = block_type
-			object.location=cursor_pos
-			setAllObjsByType(context, object, b_20)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 22:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_22)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 23:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_23)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 24:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_24)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 25:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_25)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 26:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_26)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 27:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_27)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 28:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_28)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 29:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_29)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 30:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_30)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 31:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_31)
-			bpy.context.scene.objects.link(object)
-
-
-		elif block_type == 33:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			setAllObjsByType(context, object, b_33)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 34:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_34)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 35:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_35)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 36:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_36)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 37:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_37)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 39:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_39)
-			bpy.context.scene.objects.link(object)
-
-		elif block_type == 40:
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
-			object[consts.BLOCK_TYPE] = block_type
-			setAllObjsByType(context, object, b_40)
-			bpy.context.scene.objects.link(object)
 		return {'FINISHED'}
 
 class GetVertexValuesOperator(bpy.types.Operator):
@@ -1096,42 +864,38 @@ class ShowHideSphereOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
-class GetValuesModalOperator(bpy.types.Operator):
-	bl_idname = "wm.get_block_values_modal_operator"
-	bl_label = "Automatically get block values on object select"
-	bl_description = "Updates values in b3d panel"
-
-	# @classmethod
-	# def poll(cls, context):
-	# 	return context.object is not None and context.object.get(consts.BLOCK_TYPE) is not None
-
-	def modal(self, context, event):
-		if event.type == 'LEFTMOUSE':
-			if context.object is not None:
-				obj = context.object
-				if context.object.get(consts.BLOCK_TYPE) is not None:
-					block_type = obj.get(consts.BLOCK_TYPE)
-
-					zclass = getClassDefByType(block_type)
-					if zclass is not None:
-						getAllObjsByType(context, obj, zclass)
-
-		return {'PASS_THROUGH'}
-
-	def execute(self, context):
-		wm = context.window_manager
-		wm.modal_handler_add(self)
-		self.report({'INFO'}, "Block settings will be applied automatically")
-		return {'RUNNING_MODAL'}
-
-
 # ------------------------------------------------------------------------
 # panels
 # ------------------------------------------------------------------------
 
 class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_add_panel"
-	bl_label = "Add blocks"
+	bl_label = "Block add"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		mytool = context.scene.my_tool
+
+		object = bpy.context.object
+
+		objectName = '' if object is None else object.name
+
+		box = layout.box()
+		box.label(text="Selected object: " + str(objectName))
+
+
+class OBJECT_PT_b3d_single_add_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_single_add_panel"
+	bl_label = "Single block"
+	bl_parent_id = "OBJECT_PT_b3d_add_panel"
 	bl_space_type = "VIEW_3D"
 	bl_region_type = getRegion()
 	bl_category = "b3d Tools"
@@ -1162,6 +926,33 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
 			drawAllFieldsByType(self, context, zclass)
 
 		layout.operator("wm.add_operator")
+
+class OBJECT_PT_b3d_template_add_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_template_add_panel"
+	bl_label = "Block template"
+	bl_parent_id = "OBJECT_PT_b3d_add_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+	#bl_context = "objectmode"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		mytool = context.scene.my_tool
+
+		type = mytool.addBlocks_enum
+
+		layout.prop(mytool, "addBlocks_enum")
+
+		if type == "room":
+			layout.prop(mytool, "addRoomNameIndex_string")
+			layout.prop(mytool, "Radius")
+
+		layout.operator("wm.add1_operator")
 
 class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_pfb_edit_panel"
@@ -1350,31 +1141,7 @@ class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
 			# layout.operator("wm.fix_uv_operator")
 			# layout.operator("wm.fix_verts_operator")
 
-class OBJECT_PT_b3d_blocks_panel(bpy.types.Panel):
-	bl_idname = "OBJECT_PT_b3d_blocks_panel"
-	bl_label = "Blocks assembly"
-	bl_space_type = "VIEW_3D"
-	bl_region_type = getRegion()
-	bl_category = "b3d Tools"
-	#bl_context = "objectmode"
 
-	@classmethod
-	def poll(self,context):
-		return context.object is not None
-
-	def draw(self, context):
-		layout = self.layout
-		mytool = context.scene.my_tool
-
-		type = mytool.addBlocks_enum
-
-		layout.prop(mytool, "addBlocks_enum")
-
-		if type == "room":
-			layout.prop(mytool, "addRoomNameIndex_string")
-			layout.prop(mytool, "Radius")
-
-		layout.operator("wm.add1_operator")
 
 class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_func_panel"
@@ -1767,27 +1534,6 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 		self.layout.label(text="Add-on author: aleko2144")
 		self.layout.label(text="vk.com/rnr_mods")
 
-
-
-class OBJECT_PT_b3d_usage_panel(bpy.types.Panel):
-	bl_idname = "OBJECT_PT_b3d_settings_panel"
-	bl_label = "About add-on"
-	bl_space_type = "VIEW_3D"
-	bl_region_type = getRegion()
-	bl_category = "b3d Tools"
-	#bl_context = "objectmode"
-
-	@classmethod
-	def poll(self,context):
-		return context.object is not None
-
-	def draw(self, context):
-		layout = self.layout
-		scene = context.scene
-		mytool = scene.my_tool
-
-		layout.operator("wm.get_block_values_modal_operator")
-
 # ------------------------------------------------------------------------
 # register and unregister
 # ------------------------------------------------------------------------
@@ -1820,10 +1566,10 @@ _classes = (
 	HideConditionalsOperator,
 	AddBlocksOperator,
 	ShowHideSphereOperator,
-	GetValuesModalOperator,
 
-	OBJECT_PT_b3d_usage_panel,
 	OBJECT_PT_b3d_add_panel,
+	OBJECT_PT_b3d_single_add_panel,
+	OBJECT_PT_b3d_template_add_panel,
 	OBJECT_PT_b3d_edit_panel,
 	OBJECT_PT_b3d_pob_single_edit_panel,
 	OBJECT_PT_b3d_pob_edit_panel,
@@ -1833,27 +1579,16 @@ _classes = (
 	OBJECT_PT_b3d_maskfiles_panel,
 	OBJECT_PT_b3d_textures_panel,
 	OBJECT_PT_b3d_materials_panel,
-	OBJECT_PT_b3d_blocks_panel,
 	OBJECT_PT_b3d_func_panel,
 	OBJECT_PT_b3d_misc_panel,
 )
-
-# @bpy.app.handlers.persistent
-def load_handler(scene):
-	print('invoking modal operator')
-	bpy.ops.wm.get_block_values_modal_operator()
 
 def register():
 	for cls in _classes:
 		bpy.utils.register_class(cls)
 	bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=PanelSettings)
 
-	bpy.app.handlers.load_post.append(load_handler)
-
 def unregister():
 	del bpy.types.Scene.my_tool
 	for cls in _classes[::-1]:
 		bpy.utils.unregister_class(cls)
-
-	if load_handler in bpy.app.handlers.load_post:
-		bpy.app.handlers.load_post.remove(load_handler)

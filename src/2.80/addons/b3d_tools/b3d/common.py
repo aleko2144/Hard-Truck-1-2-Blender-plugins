@@ -295,6 +295,15 @@ def getMytoolBlockName(btype, bnum, multipleClass = False):
 
     return bname
 
+def getLevelGroup(obj):
+    parent = obj.parent
+    # log.debug(parent)
+    if parent is None:
+        return 0
+    if parent.get(BLOCK_TYPE) == 444:
+        return int(parent.name[6]) #GROUP_n
+    return 0
+
 def referenceablesCallback(self, context):
 
     mytool = context.scene.my_tool
