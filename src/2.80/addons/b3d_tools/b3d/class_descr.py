@@ -657,15 +657,29 @@ class b_11():
 		'group': borderSphereGroup,
 		'type': fieldType.SPHERE_EDIT
 	}
-	Unk_XYZ = {
-		'prop': 'unk_XYZ',
+	Unk_XYZ1 = {
+		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
 		'name': 'Unk. coord',
 		'description': '',
 		'default': (0.0, 0.0, 0.0)
 	}
-	Unk_R = {
-		'prop': 'unk_R',
+	Unk_XYZ2 = {
+		'prop': 'unk_XYZ2',
+		'type': fieldType.COORD,
+		'name': 'Unk. coord',
+		'description': '',
+		'default': (0.0, 0.0, 0.0)
+	}
+	Unk_R1 = {
+		'prop': 'unk_R1',
+		'type': fieldType.RAD,
+		'name': 'Unk. rad',
+		'description': '',
+		'default': 0.0
+	}
+	Unk_R2 = {
+		'prop': 'unk_R1',
 		'type': fieldType.RAD,
 		'name': 'Unk. rad',
 		'description': '',

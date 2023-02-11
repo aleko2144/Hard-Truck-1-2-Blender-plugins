@@ -5,6 +5,7 @@ import logging
 import sys
 import re
 import time
+from mathutils import Vector
 
 from ..common import log
 from ..consts import (
@@ -294,6 +295,66 @@ def getMytoolBlockName(btype, bnum, multipleClass = False):
         bname = 'perVertBlock{}'.format(bnum)
 
     return bname
+
+def getPythagorLength(p1, p2):
+    return (sum(map(lambda xx,yy : (xx-yy)**2,p1,p2)))**0.5
+
+# https://b3d.interplanety.org/en/how-to-calculate-the-bounding-sphere-for-selected-objects/
+def getMultObjBoundingSphere(objnTransfs, mode='BBOX'):
+    # return the bounding sphere center and radius for objects (in global coordinates)
+    # if not isinstance(objects, list):
+    #     objects = [objects]
+    points_co_global = []
+    # if mode == 'GEOMETRY':
+    #     # GEOMETRY - by all vertices/points - more precis, more slow
+    #     for obj in objects:
+    #         points_co_global.extend([obj.matrix_world @ vertex.co for vertex in obj.data.vertices])
+    if mode == 'BBOX':
+        # BBOX - by object bounding boxes - less precis, quick
+        for objnTransf in objnTransfs:
+            obj = bpy.data.objects[objnTransf['obj']]
+            transf = bpy.data.objects[objnTransf['transf']]
+            points_co_global.extend([transf.matrix_world @ Vector(bbox) for bbox in obj.bound_box])
+
+    def get_center(l):
+        return (max(l) + min(l)) / 2 if l else 0.0
+
+    x, y, z = [[point_co[i] for point_co in points_co_global] for i in range(3)]
+    b_sphere_center = Vector([get_center(axis) for axis in [x, y, z]]) if (x and y and z) else None
+    b_sphere_radius = max(((point - b_sphere_center) for point in points_co_global)) if b_sphere_center else None
+    return [b_sphere_center, b_sphere_radius.length]
+
+# https://blender.stackexchange.com/questions/62040/get-center-of-geometry-of-an-object
+def getSingleCoundingSphere(obj, local = False):
+    center = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
+    p1 = obj.bound_box[0]
+    if not local:
+        center = obj.matrix_world @ center
+        p1 = obj.matrix_world @ Vector(obj.bound_box[0])
+    rad = getPythagorLength(center, p1)
+    return [center, rad]
+
+
+def recalcToLocalCoord(center, vertexes):
+    newVertexes = []
+    for vert in vertexes:
+        newVert = [0.0,0.0,0.0]
+        newVert[0] = vert[0] - center[0]
+        newVert[1] = vert[1] - center[1]
+        newVert[2] = vert[2] - center[2]
+        newVertexes.append(newVert)
+
+    return newVertexes
+
+def getCenterCoord(vertices):
+    if len(vertices) == 0:
+        return (0.0, 0.0, 0.0)
+    x = [p[0] for p in vertices]
+    y = [p[1] for p in vertices]
+    z = [p[2] for p in vertices]
+    centroid = (sum(x) / len(vertices), sum(y) / len(vertices), sum(z) / len(vertices))
+
+    return centroid
 
 def getLevelGroup(obj):
     parent = obj.parent

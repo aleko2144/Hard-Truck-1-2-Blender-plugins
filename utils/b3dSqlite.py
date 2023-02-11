@@ -25,7 +25,7 @@ else:
     print("Wrong number of parameters")
     print("")
     print('Usage: python b3dSqlite.py <path to b3d>')
-    print('<path to .b3d> - (obligatory) Path to .b3d file to export meshes')
+    print('<path to .b3d> - (obligatory) Path to .b3d file to fill SQLite')
     print('Tested with Python v.3.9.13')
     sys.exit()
 

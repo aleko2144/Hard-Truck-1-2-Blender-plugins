@@ -84,7 +84,6 @@ def prop(obj):
 def applyTransforms():
     roots = [cn for cn in bpy.data.objects if isRootObj(cn)]
     for root in roots:
-        log.debug(root.name)
         hroots = getHierarchyRoots(root)
         for hroot in hroots:
             obj = bpy.data.objects.get(hroot)
@@ -124,9 +123,9 @@ def applyTransform(root):
         prevSpaceObj = bpy.data.objects.get(prevSpace)
         prevSpaceCopyObj = bpy.data.objects.get(prevSpaceCopy)
 
-        log.debug("{} {}".format(block[BLOCK_TYPE], block.name))
-        log.debug(prevSpace)
-        log.debug(prevSpaceCopy)
+        # log.debug("{} {}".format(block[BLOCK_TYPE], block.name))
+        # log.debug(prevSpace)
+        # log.debug(prevSpaceCopy)
 
         if block[BLOCK_TYPE] == 18:
             objName = block[prop(b_18.Add_Name)]
@@ -267,7 +266,7 @@ def getHierarchyRoots(root):
     referenceables.sort()
 
     other = [cn.name for cn in globalRoot.children if cn[BLOCK_TYPE] is not None \
-        and (cn[BLOCK_TYPE] == 4 or cn[BLOCK_TYPE] == 5 or cn[BLOCK_TYPE] == 19) \
+        and (cn[BLOCK_TYPE] in [4, 5, 19]) \
         and cn.name not in referenceables ]
 
     noDubGraph = {}

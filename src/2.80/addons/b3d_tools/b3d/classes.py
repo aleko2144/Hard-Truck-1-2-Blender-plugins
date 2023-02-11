@@ -242,6 +242,11 @@ def createTypeClass(zclass, multipleEdit = True):
 							description = obj['description'],
 							maxlen = 32
 						)
+					if subtype == fieldType.INT:
+						prop = IntProperty(
+							name = obj['name'],
+							description = obj['description']
+						)
 
 				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
 				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum

@@ -79,7 +79,9 @@ from .common import (
     getUserVertices,
     readCString,
     transformVertices,
-    getPolygonsBySelectedVertices
+    getPolygonsBySelectedVertices,
+    recalcToLocalCoord,
+    getCenterCoord
 )
 
 import bpy
@@ -546,25 +548,17 @@ def read(file, context, self, filepath):
 
             if lvl > 0:
 
-                log.debug(objString)
-
                 levelGroups[lvl] +=1
                 parentObj = context.scene.objects.get(objString[-1])
-                print(parentObj.name)
-                if parentObj.name[:6] != 'GROUP_':
-                    print('not group_chunk')
-                else:
-                    print('is group_chunk')
 
                 if parentObj.name[:6] == 'GROUP_':
                     del objString[-1]
                     parentObj = context.scene.objects.get(objString[-1])
 
                 if levelGroups[lvl] > 0:
-                    log.debug(parentObj.children)
+
                     if len(parentObj.children) == 0:
                         groupObjName = 'GROUP_{}'.format(0)
-                        log.debug(groupObjName)
 
                         b3dObj = bpy.data.objects.new(groupObjName, None)
                         b3dObj[BLOCK_TYPE] = 444
@@ -573,9 +567,7 @@ def read(file, context, self, filepath):
                         context.collection.objects.link(b3dObj)
                         # objString.append(b3dObj.name)
 
-
                 groupObjName = 'GROUP_{}'.format(levelGroups[lvl])
-                log.debug(groupObjName)
 
                 b3dObj = bpy.data.objects.new(groupObjName, None)
                 b3dObj[BLOCK_TYPE] = 444
@@ -599,7 +591,6 @@ def read(file, context, self, filepath):
             if parentObj.get(BLOCK_TYPE) in [9, 10, 21]:
 
                 groupObjName = 'GROUP_{}'.format(0)
-                log.debug(groupObjName)
 
                 b3dObj = bpy.data.objects.new(groupObjName, None)
                 b3dObj[BLOCK_TYPE] = 444
@@ -930,6 +921,8 @@ def read(file, context, self, filepath):
                     curNormals.append(l_normals[newOldTransf[i]])
                     curNormalsOff.append(l_normals_off[newOldTransf[i]])
 
+                curVertexes = recalcToLocalCoord(bounding_sphere[:3], curVertexes)
+
                 b3dMesh.from_pydata(curVertexes,[],curFaces)
 
                 # Ev = threading.Event()
@@ -991,6 +984,7 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
+                b3dObj.location = bounding_sphere[0:3]
                 b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_8.R)] = bounding_sphere[3]
                 b3dObj.parent = parentObj
@@ -1065,7 +1059,10 @@ def read(file, context, self, filepath):
 
             elif (type == 11):
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                unknown_sphere = struct.unpack("<4f",file.read(16))
+                unknown_point1 = struct.unpack("<3f",file.read(12))
+                unknown_point2 = struct.unpack("<3f",file.read(12))
+                unknown_r1 = struct.unpack("<i",file.read(4))[0]
+                unknown_r2 = struct.unpack("<i",file.read(4))[0]
                 childCnt = struct.unpack("<i",file.read(4))[0]
 
                 if not usedBlocks[str(type)]:
@@ -1075,8 +1072,10 @@ def read(file, context, self, filepath):
                 b3dObj[BLOCK_TYPE] = type
                 b3dObj[prop(b_11.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_11.R)] = bounding_sphere[3]
-                b3dObj[prop(b_11.Unk_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_11.Unk_R)] = unknown_sphere[3]
+                b3dObj[prop(b_11.Unk_XYZ1)] = unknown_point1
+                b3dObj[prop(b_11.Unk_XYZ2)] = unknown_point2
+                b3dObj[prop(b_11.Unk_R1)] = unknown_r1
+                b3dObj[prop(b_11.Unk_R2)] = unknown_r2
 
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
@@ -1339,6 +1338,9 @@ def read(file, context, self, filepath):
                 # map coords to spline
                 polyline = curveData.splines.new('POLY')
                 polyline.points.add(len(coords)-1)
+
+                coords = recalcToLocalCoord(bounding_sphere[0:3], coords)
+
                 for i, coord in enumerate(coords):
                     x,y,z = coord
                     polyline.points[i].co = (x, y, z, 1)
@@ -1347,8 +1349,9 @@ def read(file, context, self, filepath):
 
                 # create Object
                 b3dObj = bpy.data.objects.new(objName, curveData)
-                b3dObj.location = (0,0,0)
+                # b3dObj.location = (0,0,0)
                 b3dObj[BLOCK_TYPE] = type
+                b3dObj.location = bounding_sphere[0:3]
                 b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_20.R)] = bounding_sphere[3]
                 b3dObj[prop(b_20.Unk_Int1)] = unknown1
@@ -1409,11 +1412,17 @@ def read(file, context, self, filepath):
                     continue
 
                 b3dMesh = (bpy.data.meshes.new(objName))
+
+                centroid = getCenterCoord(l_vertexes)
+
+                l_vertexes = recalcToLocalCoord(centroid, l_vertexes)
+
                 b3dMesh.from_pydata(l_vertexes,[],faces)
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_23.Unk_Int1)] = unknown1
+                b3dObj.location = centroid
+                b3dObj[prop(b_23.Unk_Int1)] = var1
                 b3dObj[prop(b_23.Surface)] = ctype
                 b3dObj[prop(b_23.Unk_List)] = unknowns
 
@@ -1476,6 +1485,7 @@ def read(file, context, self, filepath):
                 b3dObj.rotation_euler[1] = y_d
                 b3dObj.rotation_euler[2] = z_d
                 b3dObj.location = sp_pos
+                b3dObj.empty_display_type = 'ARROWS'
                 b3dObj[prop(b_24.Flag)] = flag
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
@@ -1665,6 +1675,8 @@ def read(file, context, self, filepath):
 
                 b3dMesh = (bpy.data.meshes.new(objName))
 
+                l_vertexes = recalcToLocalCoord(bounding_sphere[:3], l_vertexes)
+
                 b3dMesh.from_pydata(l_vertexes,[],l_faces_all)
 
                 # Ev = threading.Event()
@@ -1723,6 +1735,7 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_28.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_28.R)] = bounding_sphere[3]
                 b3dObj[prop(b_28.Sprite_Center)] = sprite_center
+                b3dObj.location = bounding_sphere[0:3]
 
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj) #добавляем в сцену обьект
@@ -2038,6 +2051,8 @@ def read(file, context, self, filepath):
                     curNormals.append(l_normals[newOldTransf[i]])
                     curNormalsOff.append(l_normals_off[newOldTransf[i]])
 
+                curVertexes = recalcToLocalCoord(bounding_sphere[:3], curVertexes)
+
                 b3dMesh.from_pydata(curVertexes,[],curFaces)
 
                 # Ev = threading.Event()
@@ -2105,6 +2120,7 @@ def read(file, context, self, filepath):
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj.parent = parentObj
                 b3dObj[BLOCK_TYPE] = type
+                b3dObj.location = bounding_sphere[0:3]
                 b3dObj[prop(b_35.XYZ)] = bounding_sphere[0:3]
                 b3dObj[prop(b_35.R)] = bounding_sphere[3]
                 b3dObj[prop(b_35.MType)] = mType
@@ -2309,6 +2325,8 @@ def read(file, context, self, filepath):
                 b3dObj[prop(b_40.Unk_List)] = l_params
 
                 b3dObj.location = bounding_sphere[:3]
+                b3dObj.empty_display_type = 'SPHERE'
+                b3dObj.empty_display_size = bounding_sphere[3]
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
 
@@ -2347,6 +2365,9 @@ def read(file, context, self, filepath):
             points[3],
         ]
 
+
+        l_vertexes = recalcToLocalCoord(border["bounding_point"], l_vertexes)
+
         l_faces = [
             (0,1,2,3)
         ]
@@ -2368,6 +2389,7 @@ def read(file, context, self, filepath):
 
         b3dObj = bpy.data.objects.new(key, b3dMesh)
         b3dObj[BLOCK_TYPE] = 30
+        b3dObj.location = border["bounding_point"]
         b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
         b3dObj[prop(b_30.R)] = border["bounding_rad"]
         b3dObj[prop(b_30.ResModule1)] = res_name1

@@ -288,7 +288,10 @@ def read(file):
 
             elif (type == 11):
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                unknown_sphere = struct.unpack("<4f",file.read(16))
+                unknown_point = struct.unpack("<3f",file.read(12))
+                unknown_point2 = struct.unpack("<3f",file.read(12))
+                unk1 = struct.unpack("<f",file.read(4))[0]
+                unk2 = struct.unpack("<f",file.read(4))[0]
                 childCnt = struct.unpack("<i",file.read(4))[0]
 
             elif (type == 12):

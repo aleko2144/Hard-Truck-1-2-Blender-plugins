@@ -86,7 +86,9 @@ from .common import (
 	getRootObj,
 	isEmptyName,
 	getAllChildren,
-	getLevelGroup
+	getLevelGroup,
+	getMultObjBoundingSphere,
+	getSingleCoundingSphere
 )
 
 from bpy_extras.io_utils import (
@@ -245,6 +247,101 @@ borders = {}
 currentRes = ''
 currentRoomName = ''
 
+
+meshesInEmpty = {}
+emptyToMeshKeys = {}
+uniqueArrays = {}
+createdBounders = {}
+
+def fillBoundingSphereLists():
+
+	global meshesInEmpty
+	global emptyToMeshKeys
+	global uniqueArrays
+	global createdBounders
+
+	# Getting 'empty' objects
+	objs = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) in [8, 28, 35]]
+
+	for obj in objs:
+		curMeshName = obj.name
+		curObj = obj.parent
+		while not isRootObj(curObj):
+			if curObj.get(BLOCK_TYPE) != 444:
+				if meshesInEmpty.get(curObj.name) is None:
+					meshesInEmpty[curObj.name] = []
+					meshesInEmpty[curObj.name].append({
+						"obj": curMeshName,
+						"transf": curMeshName
+					})
+				else:
+					meshesInEmpty[curObj.name].append({
+						"obj": curMeshName,
+						"transf": curMeshName
+					})
+
+			curObj = curObj.parent
+
+	#extend with 18 blocks
+	objs = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 18]
+
+	for obj in objs:
+		referenceableName = obj.get(prop(b_18.Add_Name))
+		spaceName = obj.get(prop(b_18.Space_Name))
+		curMeshList = meshesInEmpty.get(referenceableName)
+		# log.debug(curMeshList)
+		if curMeshList is not None:
+
+			# global coords for 18 blocks parents
+			globalTransfMeshList = [{
+				"obj": cn.get("obj"),
+				"transf": spaceName
+				# "transf": cn.get("transf")
+			} for cn in curMeshList]
+
+			curObj = obj.parent
+			while not isRootObj(curObj):
+				if curObj.get(BLOCK_TYPE) != 444:
+					if meshesInEmpty.get(curObj.name) is None:
+						meshesInEmpty[curObj.name] = []
+						meshesInEmpty[curObj.name].extend(globalTransfMeshList)
+					else:
+						meshesInEmpty[curObj.name].extend(globalTransfMeshList)
+
+				curObj = curObj.parent
+
+			# local coords for 18 block itself
+			curObj = obj
+			localTransfMeshList = [{
+				"obj": cn.get("obj"),
+				# "transf": spaceName
+				"transf": cn.get("transf")
+			} for cn in curMeshList]
+
+			if meshesInEmpty.get(curObj.name) is None:
+				meshesInEmpty[curObj.name] = []
+				meshesInEmpty[curObj.name].extend(localTransfMeshList)
+			else:
+				meshesInEmpty[curObj.name].extend(localTransfMeshList)
+
+	# meshesInEmptyStr = [str(cn) for cn in meshesInEmpty.values()]
+
+	# for m in meshesInEmptyStr:
+	# 	log.debug(m)
+
+	for emptyName in meshesInEmpty.keys():
+		meshesInEmpty[emptyName].sort(key= lambda x: "{}{}".format(str(x["obj"]), str(x["transf"])))
+
+		key = "||".join(["{}{}".format(str(cn["obj"]), str(cn["transf"])) for cn in meshesInEmpty[emptyName]])
+		emptyToMeshKeys[emptyName] = key
+		if not key in uniqueArrays:
+			uniqueArrays[key] = meshesInEmpty[emptyName]
+
+	for key in uniqueArrays.keys():
+		# objArr = [bpy.data.objects[cn] for cn in uniqueArrays[key]]
+		# createdBounders[key] = getMultObjBoundingSphere(objArr)
+		createdBounders[key] = getMultObjBoundingSphere(uniqueArrays[key])
+
 def createBorderList():
 
 	global borders
@@ -271,6 +368,48 @@ def createBorderList():
 		else:
 			borders[border2].append(bb)
 
+def writeMeshSphere(file, obj):
+
+	blockType = obj.get(BLOCK_TYPE)
+
+	if blockType in [
+		8,35,
+		28,30
+	]:
+		result = getSingleCoundingSphere(obj)
+		center = result[0]
+		rad = result[1]
+
+		file.write(struct.pack("<3f", *center))
+		file.write(struct.pack("<f", rad))
+
+def writeCalculatedSphere(file, obj):
+	global createdBounders
+	global emptyToMeshKeys
+
+	blockType = obj.get(BLOCK_TYPE)
+
+	center = (0.0, 0.0, 0.0)
+	rad = 0.0
+
+	# objects with children
+	if blockType in [
+		2,3,4,5,6,7,9,
+		10,11,18,19,21,24,
+		26,29,33,36,37,39
+	]:
+		key = emptyToMeshKeys.get(obj.name)
+		if key is not None:
+			result = createdBounders.get(key)
+			center = result[0]
+			rad = result[1]
+
+	file.write(struct.pack("<3f", *center))
+	file.write(struct.pack("<f", rad))
+
+def writeBoundSphere(file, center, rad):
+	file.write(struct.pack("<3f", *center))
+	file.write(struct.pack("<f", rad))
 
 def write(file, context, op, filepath):
 
@@ -282,6 +421,18 @@ def write(file, context, op, filepath):
 def export(filepath):
 
 	global currentRes
+
+	global meshesInEmpty
+	global emptyToMeshKeys
+	global uniqueArrays
+	global createdBounders
+
+	meshesInEmpty = {}
+	emptyToMeshKeys = {}
+	uniqueArrays = {}
+	createdBounders = {}
+
+	fillBoundingSphereLists()
 
 	file = open(filepath, 'wb')
 
@@ -318,8 +469,8 @@ def export(filepath):
 	else:
 		allObjs = [obj]
 
-	spaces = [cn for cn in allObjs if cn[BLOCK_TYPE] == 24]
-	other = [cn for cn in allObjs if cn[BLOCK_TYPE] != 24]
+	spaces = [cn for cn in allObjs if cn.get(BLOCK_TYPE) == 24]
+	other = [cn for cn in allObjs if cn.get(BLOCK_TYPE) != 24]
 
 	rChild = []
 	rChild.extend(spaces)
@@ -346,18 +497,18 @@ def export(filepath):
 	# prevLevel = 0
 	if len(rChild) > 0:
 		for obj in rChild[:-1]:
-			if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
+			if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
 				curMaxCnt = 2
-			elif obj[BLOCK_TYPE] == 21:
+			elif obj.get(BLOCK_TYPE) == 21:
 				curMaxCnt = obj[prop(b_21.GroupCnt)]
 			exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
 			file.write(struct.pack("<i", 444))
 
 		obj = rChild[-1]
-		if obj[BLOCK_TYPE] == 10 or obj[BLOCK_TYPE] == 9:
+		if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
 			curMaxCnt = 2
-		elif obj[BLOCK_TYPE] == 21:
+		elif obj.get(BLOCK_TYPE) == 21:
 			curMaxCnt = obj[prop(b_21.GroupCnt)]
 		exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
@@ -407,7 +558,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 	if objType != None:
 
-		log.debug("{}_{}_{}_{}".format(block[BLOCK_TYPE], curLevel, 0, block.name))
+		log.debug("{}_{}_{}_{}".format(block.get(BLOCK_TYPE), curLevel, 0, block.name))
 
 		blChildren = list(block.children)
 
@@ -451,8 +602,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 2:
 
-				file.write(struct.pack("<3f", *block[prop(b_2.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_2.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<3f", *block[prop(b_2.Unk_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_2.Unk_R)]))
 
@@ -462,8 +612,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 3:
 
-				file.write(struct.pack("<3f", *block[prop(b_3.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_3.R)]))
+				writeCalculatedSphere(file, block)
 
 				file.write(struct.pack("<i", len(block.children)))
 
@@ -471,8 +620,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 4:
 
-				file.write(struct.pack("<3f", *block[prop(b_4.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_4.R)]))
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_4.Name1)], file)
 				writeName(block[prop(b_4.Name2)], file)
 
@@ -482,8 +630,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 5:
 
-				file.write(struct.pack("<3f", *block[prop(b_5.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_5.R)]))
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_5.Name1)], file)
 
 				file.write(struct.pack("<i", len(block.children)))
@@ -492,8 +639,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 6:
 
-				file.write(struct.pack("<3f", *block[prop(b_6.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_6.R)]))
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_6.Name1)], file)
 				writeName(block[prop(b_6.Name2)], file)
 
@@ -511,7 +657,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				file.write(struct.pack("<i", offset)) #Vertex count
 
 				for mesh in passToMesh.values():
-					verts, uvs, normals, faces = mesh['props']
+					verts, uvs, normals, faces, local_verts = mesh['props']
 					for i, v in enumerate(verts):
 						file.write(struct.pack("<3f", *v))
 						file.write(struct.pack("<f", uvs[i][0]))
@@ -523,8 +669,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 7:
 
-				file.write(struct.pack("<3f", *block[prop(b_7.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_7.R)]))
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_7.Name1)], file)
 
 				offset = 0
@@ -541,7 +686,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				file.write(struct.pack("<i", offset)) #Vertex count
 
 				for mesh in passToMesh.values():
-					verts, uvs, normals, faces = mesh['props']
+					verts, uvs, normals, faces, local_verts = mesh['props']
 					for i, v in enumerate(verts):
 						file.write(struct.pack("<3f", *v))
 						file.write(struct.pack("<f", uvs[i][0]))
@@ -556,10 +701,9 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				l_passToMesh = extra['passToMesh'][block.name]
 
 				offset = l_passToMesh['offset']
-				verts, uvs, normals, polygons = l_passToMesh['props']
+				verts, uvs, normals, polygons, local_verts = l_passToMesh['props']
 
-				file.write(struct.pack("<3f", *block[prop(b_8.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_8.R)]))
+				writeMeshSphere(file, block)
 				# file.write(struct.pack("<i", 0)) # PolygonCount
 				file.write(struct.pack("<i", len(polygons))) #Polygon count
 
@@ -612,8 +756,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 9 or objType == 22:
 
-				file.write(struct.pack("<3f", *block[prop(b_9.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_9.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<3f", *block[prop(b_9.Unk_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_9.Unk_R)]))
 
@@ -629,8 +772,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 10:
 
-				file.write(struct.pack("<3f", *block[prop(b_10.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_10.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<3f", *block[prop(b_10.LOD_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_10.LOD_R)]))
 
@@ -645,10 +787,11 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 11:
 
-				file.write(struct.pack("<3f", *block[prop(b_11.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_11.R)]))
-				file.write(struct.pack("<3f", *block[prop(b_11.Unk_XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_11.Unk_R)]))
+				writeCalculatedSphere(file, block)
+				file.write(struct.pack("<3f", *block[prop(b_11.Unk_XYZ1)]))
+				file.write(struct.pack("<3f", *block[prop(b_11.Unk_XYZ2)]))
+				file.write(struct.pack("<f", block[prop(b_11.Unk_R1)]))
+				file.write(struct.pack("<f", block[prop(b_11.Unk_R2)]))
 
 				file.write(struct.pack("<i", len(block.children)))
 
@@ -656,8 +799,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 12:
 
-				file.write(struct.pack("<3f", *block[prop(b_12.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_12.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<3f", *block[prop(b_12.Unk_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_12.Unk_R)]))
 				file.write(struct.pack("<i", block[prop(b_12.Unk_Int1)]))
@@ -671,8 +813,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 13:
 
-				file.write(struct.pack("<3f", *block[prop(b_13.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_13.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<i", block[prop(b_13.Unk_Int1)]))
 				file.write(struct.pack("<i", block[prop(b_13.Unk_Int2)]))
 				itemList = block[prop(b_13.Unk_List)]
@@ -684,8 +825,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 14:
 
-				file.write(struct.pack("<3f", *block[prop(b_14.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_14.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<3f", *block[prop(b_14.Unk_XYZ)]))
 				file.write(struct.pack("<f", block[prop(b_14.Unk_R)]))
 				file.write(struct.pack("<i", block[prop(b_14.Unk_Int1)]))
@@ -699,8 +839,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 15:
 
-				file.write(struct.pack("<3f", *block[prop(b_15.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_15.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<i", block[prop(b_15.Unk_Int1)]))
 				file.write(struct.pack("<i", block[prop(b_15.Unk_Int2)]))
 				itemList = block[prop(b_15.Unk_List)]
@@ -712,8 +851,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 16:
 
-				file.write(struct.pack("<3f", *block[prop(b_16.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_16.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<3f", *block[prop(b_16.Unk_XYZ1)]))
 				file.write(struct.pack("<3f", *block[prop(b_16.Unk_XYZ2)]))
 				file.write(struct.pack("<f", block[prop(b_16.Unk_Float1)]))
@@ -729,8 +867,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 17:
 
-				file.write(struct.pack("<3f", *block[prop(b_17.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_17.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<3f", *block[prop(b_17.Unk_XYZ1)]))
 				file.write(struct.pack("<3f", *block[prop(b_17.Unk_XYZ2)]))
 				file.write(struct.pack("<f", block[prop(b_17.Unk_Float1)]))
@@ -746,9 +883,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 18:
 
-				file.write(struct.pack("<3f", *block[prop(b_18.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_18.R)]))
-
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_18.Space_Name)], file)
 				writeName(block[prop(b_18.Add_Name)], file)
 
@@ -764,8 +899,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 20:
 
-				file.write(struct.pack("<3f", *block[prop(b_20.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_20.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				pointList = []
 				for sp in block.data.splines:
 					for point in sp.points:
@@ -789,8 +923,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 21:
 
-				file.write(struct.pack("<3f", *block[prop(b_21.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_21.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<i", block[prop(b_21.GroupCnt)]))
 				file.write(struct.pack("<i", block[prop(b_21.Unk_Int2)]))
 
@@ -820,10 +953,9 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				file.write(struct.pack("<i", len(mesh.polygons)))
 				for poly in mesh.polygons:
 					file.write(struct.pack("<i", len(poly.vertices)))
+					l_vertexes = poly.vertices
 					for vert in poly.vertices:
-						file.write(struct.pack("<f", mesh.vertices[vert].co.x))
-						file.write(struct.pack("<f", mesh.vertices[vert].co.y))
-						file.write(struct.pack("<f", mesh.vertices[vert].co.z))
+						file.write(struct.pack("<3f", *(block.matrix_world @ Vector(mesh.vertices[vert].co))))
 
 				# file.write(struct.pack("<i", 0)) #Verts Count
 
@@ -874,8 +1006,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 26:
 
-				file.write(struct.pack("<3f", *block[prop(b_26.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_26.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<3f", *block[prop(b_26.Unk_XYZ1)]))
 				file.write(struct.pack("<3f", *block[prop(b_26.Unk_XYZ2)]))
 				file.write(struct.pack("<3f", *block[prop(b_26.Unk_XYZ3)]))
@@ -886,8 +1017,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 27:
 
-				file.write(struct.pack("<3f", *block[prop(b_27.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_27.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<i", block[prop(b_27.Flag)]))
 				file.write(struct.pack("<3f", *block[prop(b_27.Unk_XYZ)]))
 				file.write(struct.pack("<i", block[prop(b_27.Material)]))
@@ -896,10 +1026,10 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 				# sprite_center = block[prop(b_28.Sprite_Center)]
 				sprite_center = 0.125 * sum((Vector(b) for b in block.bound_box), Vector())
+				sprite_center = block.matrix_world @ sprite_center
 
-				file.write(struct.pack("<3f", *block[prop(b_28.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_28.R)]))
-				file.write(struct.pack("<3f", *sprite_center))
+				writeMeshSphere(file, block)
+				file.write(struct.pack("<3f", *block.location)) #sprite center
 
 
 				format_flags_attrs = obj.data.attributes[prop(pfb_28.Format_Flags)].data
@@ -907,7 +1037,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 				mesh = block.data
 
-				l_verts = someProps[0]
+				l_verts = someProps[4]
 				# l_uvs = someProps[1]
 				l_normals = someProps[2]
 				l_polygons = someProps[3]
@@ -932,8 +1062,10 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					file.write(struct.pack("<i", getMaterialIndexInRES(l_material)))
 					file.write(struct.pack("<i", len(verts)))
 					for i, vert in enumerate(verts):
-						scale_u = sprite_center[1] - l_verts[vert][1]
-						scale_v = l_verts[vert][2] - sprite_center[2]
+						# scale_u = sprite_center[1] - l_verts[vert][1]
+						# scale_v = l_verts[vert][2] - sprite_center[2]
+						scale_u = -l_verts[vert][1]
+						scale_v = l_verts[vert][2]
 						file.write(struct.pack("<f", scale_u))
 						file.write(struct.pack("<f", scale_v))
 						#UVs
@@ -942,8 +1074,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 29:
 
-				file.write(struct.pack("<3f", *block[prop(b_29.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_29.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<i", block[prop(b_29.Unk_Int1)]))
 				file.write(struct.pack("<i", block[prop(b_29.Unk_Int2)]))
 				file.write(struct.pack("<3f", *block[prop(b_29.Unk_XYZ)]))
@@ -955,9 +1086,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 30:
 
-				file.write(struct.pack("<3f", *block[prop(b_30.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_30.R)]))
-
+				writeMeshSphere(file, block)
 
 				roomName1 = '{}:{}'.format(block[prop(b_30.ResModule1)], block[prop(b_30.RoomName1)])
 				roomName2 = '{}:{}'.format(block[prop(b_30.ResModule2)], block[prop(b_30.RoomName2)])
@@ -972,7 +1101,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				else:
 					writeName(getRoomName(currentRes, roomName1), file)
 
-				vertexes = [cn.co for cn in block.data.vertices]
+				vertexes = [block.matrix_world @ cn.co for cn in block.data.vertices]
 
 				if toImportSecondSide:
 					p1 = vertexes[0]
@@ -986,8 +1115,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 31:
 
-				file.write(struct.pack("<3f", *block[prop(b_31.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_31.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<i", block[prop(b_31.Unk_Int1)]))
 				file.write(struct.pack("<3f", *block[prop(b_31.Unk_XYZ1)]))
 				file.write(struct.pack("<f", block[prop(b_31.Unk_R)]))
@@ -996,8 +1124,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 33:
 
-				file.write(struct.pack("<3f", *block[prop(b_33.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_33.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<i", block[prop(b_33.Use_Lights)]))
 				file.write(struct.pack("<i", block[prop(b_33.Light_Type)]))
 				file.write(struct.pack("<i", block[prop(b_33.Flag)]))
@@ -1017,10 +1144,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 34:
 
-				log.debug(block[prop(b_34.XYZ)])
-
-				file.write(struct.pack("<3f", *block[prop(b_34.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_34.R)]))
+				writeBoundSphere(file, (0.0,0.0,0.0), 0.0)
 				file.write(struct.pack("<i", 0)) #skipped Int
 				pointList = []
 				for sp in block.data.splines:
@@ -1039,10 +1163,9 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				l_passToMesh = extra['passToMesh'][block.name]
 
 				offset = l_passToMesh['offset']
-				verts, uvs, normals, polygons = l_passToMesh['props']
+				verts, uvs, normals, polygons, local_verts = l_passToMesh['props']
 
-				file.write(struct.pack("<3f", *block[prop(b_35.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_35.R)]))
+				writeMeshSphere(file, block)
 				file.write(struct.pack("<i", block[prop(b_35.MType)]))
 				# file.write(struct.pack("<i", 3))
 				file.write(struct.pack("<i", block[prop(b_35.TexNum)]))
@@ -1101,8 +1224,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				# isSecondUvs = False
 				formatRaw = block[prop(b_36.MType)]
 				normalSwitch = False
-				file.write(struct.pack("<3f", *block[prop(b_36.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_36.R)]))
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_36.Name1)], file)
 				writeName(block[prop(b_36.Name2)], file)
 
@@ -1142,7 +1264,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				file.write(struct.pack("<i", offset)) #Vertex count
 
 				for mesh in passToMesh.values():
-					verts, uvs, normals, faces = mesh['props']
+					verts, uvs, normals, faces, local_verts = mesh['props']
 					for i, v in enumerate(verts):
 						file.write(struct.pack("<3f", *v))
 						file.write(struct.pack("<f", uvs[i][0]))
@@ -1166,8 +1288,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				# isSecondUvs = False
 				formatRaw = block[prop(b_37.SType)]
 				normalSwitch = False
-				file.write(struct.pack("<3f", *block[prop(b_37.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_37.R)]))
+				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_37.Name1)], file)
 				# file.write(struct.pack("<i", block[prop(b_37.SType)]))
 
@@ -1205,7 +1326,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 
 				for mesh in passToMesh.values():
-					verts, uvs, normals, faces = mesh['props']
+					verts, uvs, normals, faces, local_verts = mesh['props']
 					for i, v in enumerate(verts):
 						file.write(struct.pack("<3f", *v))
 						file.write(struct.pack("<f", uvs[i][0]))
@@ -1226,8 +1347,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 39:
 
-				file.write(struct.pack("<3f", *block[prop(b_39.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_39.R)]))
+				writeCalculatedSphere(file, block)
 				file.write(struct.pack("<i", block[prop(b_39.Color_R)]))
 				file.write(struct.pack("<f", block[prop(b_39.Unk_Float1)]))
 				file.write(struct.pack("<f", block[prop(b_39.Fog_Start)]))
@@ -1241,8 +1361,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 			elif objType == 40:
 
-				file.write(struct.pack("<3f", *block[prop(b_40.XYZ)]))
-				file.write(struct.pack("<f", block[prop(b_40.R)]))
+				writeBoundSphere(file, block.location, block.empty_display_size)
 				writeName(block[prop(b_40.Name1)], file)
 				writeName(block[prop(b_40.Name2)], file)
 				file.write(struct.pack("<i", block[prop(b_40.Unk_Int1)]))
@@ -1408,7 +1527,11 @@ def getMeshProps(obj):
 
 	polygons = mesh.polygons
 
-	vertexes = [cn.co for cn in mesh.vertices]
+	mat = obj.matrix_world
+
+	vertexes = [(mat @ cn.co) for cn in mesh.vertices]
+
+	local_verts = [cn.co for cn in mesh.vertices]
 
 	uvs = [None] * len(vertexes)
 	for poly in polygons:
@@ -1418,7 +1541,7 @@ def getMeshProps(obj):
 
 	normals = [cn.normal for cn in mesh.vertices]
 
-	return [vertexes, uvs, normals, polygons]
+	return [vertexes, uvs, normals, polygons, local_verts]
 
 
 # def forChild(object, root, file):
