@@ -19,12 +19,12 @@ from .class_descr import (
 from .class_descr import (
 	b_1,
 	b_2,
-	b_3,
+	# b_3,
 	b_4,
 	b_5,
 	b_6,
 	b_7,
-	b_8,
+	# b_8,
 	b_9,
 	b_10,
 	b_11,
@@ -302,12 +302,12 @@ perVertBlock_35 = createTypeClass(pvb_35)
 
 s_block_1 = createTypeClass(b_1, False)
 s_block_2 = createTypeClass(b_2, False)
-s_block_3 = createTypeClass(b_3, False)
+# s_block_3 = createTypeClass(b_3, False)
 s_block_4 = createTypeClass(b_4, False)
 s_block_5 = createTypeClass(b_5, False)
 s_block_6 = createTypeClass(b_6, False)
 s_block_7 = createTypeClass(b_7, False)
-s_block_8 = createTypeClass(b_8, False)
+# s_block_8 = createTypeClass(b_8, False)
 s_block_9 = createTypeClass(b_9, False)
 s_block_10 = createTypeClass(b_10, False)
 s_block_11 = createTypeClass(b_11, False)
@@ -340,12 +340,12 @@ s_block_40 = createTypeClass(b_40, False)
 
 block_1 = createTypeClass(b_1)
 block_2 = createTypeClass(b_2)
-block_3 = createTypeClass(b_3)
+# block_3 = createTypeClass(b_3)
 block_4 = createTypeClass(b_4)
 block_5 = createTypeClass(b_5)
 block_6 = createTypeClass(b_6)
 block_7 = createTypeClass(b_7)
-block_8 = createTypeClass(b_8)
+# block_8 = createTypeClass(b_8)
 block_9 = createTypeClass(b_9)
 block_10 = createTypeClass(b_10)
 block_11 = createTypeClass(b_11)
@@ -379,12 +379,12 @@ block_40 = createTypeClass(b_40)
 _classes = (
 	s_block_1,
 	s_block_2,
-	s_block_3,
+	# s_block_3,
 	s_block_4,
 	s_block_5,
 	s_block_6,
 	s_block_7,
-	s_block_8,
+	# s_block_8,
 	s_block_9,
 	s_block_10,
 	s_block_11,
@@ -417,12 +417,12 @@ _classes = (
 
 	block_1,
 	block_2,
-	block_3,
+	# block_3,
 	block_4,
 	block_5,
 	block_6,
 	block_7,
-	block_8,
+	# block_8,
 	block_9,
 	block_10,
 	block_11,

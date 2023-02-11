@@ -23,12 +23,12 @@ import bpy_extras.mesh_utils
 from .class_descr import (
 	b_1,
 	b_2,
-	b_3,
+	# b_3,
 	b_4,
 	b_5,
 	b_6,
 	b_7,
-	b_8,
+	# b_8,
 	b_9,
 	b_10,
 	b_11,
@@ -528,10 +528,21 @@ def export(filepath):
 	file.write(struct.pack("<i", cp_eof - cp_data_blocks))
 
 def commonSort(curCenter, arr):
+	global createdBounders
+	global emptyToMeshKeys
+
 	def dist(curCenter, obj):
-		center = obj.get('b3d_border_center')
-		rad = obj.get('b3d_border_rad')
-		if center is None or rad is None or rad < 0.0001:
+
+		center = None
+		rad = None
+
+		key = emptyToMeshKeys.get(obj.name)
+		if key is not None:
+			result = createdBounders.get(key)
+			center = result[0]
+			rad = result[1]
+
+		if center is None or rad is None:
 			return 0
 		else:
 			return (sum(map(lambda xx,yy : (xx-yy)**2,curCenter,center)))**0.5

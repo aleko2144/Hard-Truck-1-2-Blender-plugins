@@ -13,12 +13,12 @@ from pathlib import Path
 from .class_descr import (
 	b_1,
 	b_2,
-	b_3,
+	# b_3,
 	b_4,
 	b_5,
 	b_6,
 	b_7,
-	b_8,
+	# b_8,
 	b_9,
 	b_10,
 	b_11,
@@ -660,8 +660,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_2.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_2.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_2.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_2.R)] = bounding_sphere[3]
                 b3dObj[prop(b_2.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_2.Unk_R)] = unknown_sphere[3]
 
@@ -680,8 +680,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_3.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_3.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_3.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_3.R)] = bounding_sphere[3]
 
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
@@ -700,8 +700,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_4.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_4.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_4.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_4.R)] = bounding_sphere[3]
                 b3dObj[prop(b_4.Name1)] = name1
                 b3dObj[prop(b_4.Name2)] = name2
 
@@ -721,8 +721,8 @@ def read(file, context, self, filepath):
                     continue
                 b3dObj = bpy.data.objects.new(objName, None) #create empty
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_5.XYZ)] = (bounding_sphere[0:3])
-                b3dObj[prop(b_5.R)] = (bounding_sphere[3])
+                # b3dObj[prop(b_5.XYZ)] = (bounding_sphere[0:3])
+                # b3dObj[prop(b_5.R)] = (bounding_sphere[3])
                 b3dObj[prop(b_5.Name1)] = name
 
                 b3dObj.parent = parentObj
@@ -753,8 +753,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_6.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_6.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_6.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_6.R)] = bounding_sphere[3]
                 b3dObj[prop(b_6.Name1)] = name1
                 b3dObj[prop(b_6.Name2)] = name2
 
@@ -792,8 +792,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_7.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_7.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_7.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_7.R)] = bounding_sphere[3]
                 b3dObj[prop(b_7.Name1)] = groupName
 
                 b3dObj.parent = parentObj
@@ -985,8 +985,8 @@ def read(file, context, self, filepath):
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
                 b3dObj.location = bounding_sphere[0:3]
-                b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_8.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_8.R)] = bounding_sphere[3]
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
@@ -1025,8 +1025,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_9.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_9.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_9.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_9.R)] = bounding_sphere[3]
                 b3dObj[prop(b_9.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_9.Unk_R)] = unknown_sphere[3]
 
@@ -1046,8 +1046,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_10.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_10.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_10.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_10.R)] = bounding_sphere[3]
                 b3dObj[prop(b_10.LOD_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_10.LOD_R)] = unknown_sphere[3]
 
@@ -1070,8 +1070,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_11.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_11.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_11.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_11.R)] = bounding_sphere[3]
                 b3dObj[prop(b_11.Unk_XYZ1)] = unknown_point1
                 b3dObj[prop(b_11.Unk_XYZ2)] = unknown_point2
                 b3dObj[prop(b_11.Unk_R1)] = unknown_r1
@@ -1098,8 +1098,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_12.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_12.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_12.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_12.R)] = bounding_sphere[3]
                 b3dObj[prop(b_12.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_12.Unk_R)] = unknown_sphere[3]
                 b3dObj[prop(b_12.Unk_Int1)] = unknown1
@@ -1126,8 +1126,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_13.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_13.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_13.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_13.R)] = bounding_sphere[3]
                 b3dObj[prop(b_13.Unk_Int1)] = unknown1
                 b3dObj[prop(b_13.Unk_Int2)] = unknown2
                 b3dObj[prop(b_13.Unk_List)] = l_params
@@ -1156,8 +1156,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_14.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_14.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_14.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_14.R)] = bounding_sphere[3]
                 b3dObj[prop(b_14.Unk_XYZ)] = unknown_sphere[0:3]
                 b3dObj[prop(b_14.Unk_R)] = unknown_sphere[3]
                 b3dObj[prop(b_14.Unk_Int1)] = unknown1
@@ -1184,8 +1184,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_15.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_15.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_15.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_15.R)] = bounding_sphere[3]
                 b3dObj[prop(b_15.Unk_Int1)] = unknown1
                 b3dObj[prop(b_15.Unk_Int2)] = unknown2
                 b3dObj[prop(b_15.Unk_List)] = l_params
@@ -1216,8 +1216,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_16.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_16.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_16.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_16.R)] = bounding_sphere[3]
                 b3dObj[prop(b_16.Unk_XYZ1)] = vector1
                 b3dObj[prop(b_16.Unk_XYZ2)] = vector2
                 b3dObj[prop(b_16.Unk_Float1)] = unk1
@@ -1253,8 +1253,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_17.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_17.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_17.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_17.R)] = bounding_sphere[3]
                 b3dObj[prop(b_17.Unk_XYZ1)] = vector1
                 b3dObj[prop(b_17.Unk_XYZ2)] = vector2
                 b3dObj[prop(b_17.Unk_Float1)] = unk1
@@ -1281,8 +1281,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_18.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_18.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_18.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_18.R)] = bounding_sphere[3]
                 b3dObj[prop(b_18.Add_Name)] = add_name
                 b3dObj[prop(b_18.Space_Name)] = space_name
 
@@ -1352,8 +1352,8 @@ def read(file, context, self, filepath):
                 # b3dObj.location = (0,0,0)
                 b3dObj[BLOCK_TYPE] = type
                 b3dObj.location = bounding_sphere[0:3]
-                b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_20.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_20.R)] = bounding_sphere[3]
                 b3dObj[prop(b_20.Unk_Int1)] = unknown1
                 b3dObj[prop(b_20.Unk_Int2)] = unknown2
                 b3dObj[prop(b_20.Unk_List)] = unknowns
@@ -1375,8 +1375,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_21.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_21.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_21.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_21.R)] = bounding_sphere[3]
                 b3dObj[prop(b_21.GroupCnt)] = groupCnt
                 b3dObj[prop(b_21.Unk_Int2)] = unknown2
                 b3dObj.parent = parentObj
@@ -1536,8 +1536,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_26.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_26.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_26.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_26.R)] = bounding_sphere[3]
                 b3dObj[prop(b_26.Unk_XYZ1)] = unknown_sphere1
                 b3dObj[prop(b_26.Unk_XYZ2)] = unknown_sphere2
                 b3dObj[prop(b_26.Unk_XYZ3)] = unknown_sphere3
@@ -1560,8 +1560,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_27.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_27.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_27.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_27.R)] = bounding_sphere[3]
                 b3dObj[prop(b_27.Flag)] = flag1
                 b3dObj[prop(b_27.Unk_XYZ)] = unknown_sphere
                 b3dObj[prop(b_27.Material)] = materialId
@@ -1732,8 +1732,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_28.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_28.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_28.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_28.R)] = bounding_sphere[3]
                 b3dObj[prop(b_28.Sprite_Center)] = sprite_center
                 b3dObj.location = bounding_sphere[0:3]
 
@@ -1760,8 +1760,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_29.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_29.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_29.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_29.R)] = bounding_sphere[3]
                 b3dObj[prop(b_29.Unk_Int1)] = num0
                 b3dObj[prop(b_29.Unk_Int2)] = num1
                 b3dObj[prop(b_29.Unk_XYZ)] = unknown_sphere[0:3]
@@ -1841,8 +1841,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_31.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_31.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_31.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_31.R)] = bounding_sphere[3]
                 b3dObj[prop(b_31.Unk_Int1)] = num
                 b3dObj[prop(b_31.Unk_XYZ1)] = unknown_sphere[0:3]
                 b3dObj[prop(b_31.Unk_R)] = unknown_sphere[3]
@@ -1879,8 +1879,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_33.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_33.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_33.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_33.R)] = bounding_sphere[3]
                 b3dObj[prop(b_33.Use_Lights)] = useLights
                 b3dObj[prop(b_33.Light_Type)] = light_type
                 b3dObj[prop(b_33.Flag)] = flag1
@@ -1933,8 +1933,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_34.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_34.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_34.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_34.R)] = bounding_sphere[3]
                 b3dObj[prop(b_34.UnkInt)] = unknown1
 
                 b3dObj.parent = parentObj
@@ -2121,8 +2121,8 @@ def read(file, context, self, filepath):
                 b3dObj.parent = parentObj
                 b3dObj[BLOCK_TYPE] = type
                 b3dObj.location = bounding_sphere[0:3]
-                b3dObj[prop(b_35.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_35.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_35.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_35.R)] = bounding_sphere[3]
                 b3dObj[prop(b_35.MType)] = mType
                 b3dObj[prop(b_35.TexNum)] = texNum
                 b3dObj['FType'] = 0
@@ -2188,8 +2188,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_36.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_36.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_36.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_36.R)] = bounding_sphere[3]
                 b3dObj[prop(b_36.Name1)] = name1
                 b3dObj[prop(b_36.Name2)] = name2
                 b3dObj[prop(b_36.MType)] = formatRaw
@@ -2258,8 +2258,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None) #create empty
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_37.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_37.R)] = bounding_sphere[3]
                 b3dObj[prop(b_37.Name1)] = groupName
                 b3dObj[prop(b_37.SType)] = formatRaw
 
@@ -2283,8 +2283,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_39.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_39.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_39.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_39.R)] = bounding_sphere[3]
                 b3dObj[prop(b_39.Color_R)] = color_r
                 b3dObj[prop(b_39.Unk_Float1)] = unknown
                 b3dObj[prop(b_39.Fog_Start)] = fog_start
@@ -2316,8 +2316,8 @@ def read(file, context, self, filepath):
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_40.XYZ)] = bounding_sphere[0:3]
-                b3dObj[prop(b_40.R)] = bounding_sphere[3]
+                # b3dObj[prop(b_40.XYZ)] = bounding_sphere[0:3]
+                # b3dObj[prop(b_40.R)] = bounding_sphere[3]
                 b3dObj[prop(b_40.Name1)] = name1
                 b3dObj[prop(b_40.Name2)] = name2
                 b3dObj[prop(b_40.Unk_Int1)] = unknown1
@@ -2390,8 +2390,8 @@ def read(file, context, self, filepath):
         b3dObj = bpy.data.objects.new(key, b3dMesh)
         b3dObj[BLOCK_TYPE] = 30
         b3dObj.location = border["bounding_point"]
-        b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
-        b3dObj[prop(b_30.R)] = border["bounding_rad"]
+        # b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
+        # b3dObj[prop(b_30.R)] = border["bounding_rad"]
         b3dObj[prop(b_30.ResModule1)] = res_name1
         b3dObj[prop(b_30.RoomName1)] = room_name1
         b3dObj[prop(b_30.ResModule2)] = res_name2

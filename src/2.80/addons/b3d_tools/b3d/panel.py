@@ -47,21 +47,33 @@ from .scripts import (
 
 
 from .classes import (
-	block_1,block_2,block_3,block_4,block_5,block_6,block_7,block_8,block_9,block_10,\
+	block_1,block_2, \
+	# block_3,
+	block_4,block_5,block_6,block_7, \
+	# block_8,
+	block_9,block_10,\
 	block_11,block_12,block_13,block_14,block_15,block_16,block_17,block_18,block_20,\
 	block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,\
 	block_30,block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,\
 
 	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35,\
 
-	s_block_1,s_block_2,s_block_3,s_block_4,s_block_5,s_block_6,s_block_7,s_block_8,s_block_9,s_block_10,\
+	s_block_1,s_block_2, \
+	# s_block_3,
+	s_block_4,s_block_5,s_block_6,s_block_7, \
+	# s_block_8,
+	s_block_9,s_block_10,\
 	s_block_11,s_block_12,s_block_13,s_block_14,s_block_15,s_block_16,s_block_17,s_block_18,s_block_20,\
 	s_block_21,s_block_22,s_block_23,s_block_24,s_block_25,s_block_26,s_block_27,s_block_28,s_block_29,\
 	s_block_30,s_block_31,s_block_33,s_block_34,s_block_35,s_block_36,s_block_37,s_block_39,s_block_40,\
 )
 from .class_descr import (
 	getClassDefByType,
-	b_1,b_2,b_3,b_4,b_5,b_6,b_7,b_8,b_9,b_10,\
+	b_1,b_2, \
+	# b_3,
+	b_4,b_5,b_6,b_7, \
+	# b_8,
+	b_9,b_10,\
 	b_11,b_12,b_13,b_14,b_15,b_16,b_17,b_18,b_20,\
 	b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
 	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,\
@@ -107,12 +119,12 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 	sBlock1: PointerProperty(type=s_block_1)
 	sBlock2: PointerProperty(type=s_block_2)
-	sBlock3: PointerProperty(type=s_block_3)
+	# sBlock3: PointerProperty(type=s_block_3)
 	sBlock4: PointerProperty(type=s_block_4)
 	sBlock5: PointerProperty(type=s_block_5)
 	sBlock6: PointerProperty(type=s_block_6)
 	sBlock7: PointerProperty(type=s_block_7)
-	sBlock8: PointerProperty(type=s_block_8)
+	# sBlock8: PointerProperty(type=s_block_8)
 	sBlock9: PointerProperty(type=s_block_9)
 	sBlock10: PointerProperty(type=s_block_10)
 	sBlock11: PointerProperty(type=s_block_11)
@@ -145,12 +157,12 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 	block1: PointerProperty(type=block_1)
 	block2: PointerProperty(type=block_2)
-	block3: PointerProperty(type=block_3)
+	# block3: PointerProperty(type=block_3)
 	block4: PointerProperty(type=block_4)
 	block5: PointerProperty(type=block_5)
 	block6: PointerProperty(type=block_6)
 	block7: PointerProperty(type=block_7)
-	block8: PointerProperty(type=block_8)
+	# block8: PointerProperty(type=block_8)
 	block9: PointerProperty(type=block_9)
 	block10: PointerProperty(type=block_10)
 	block11: PointerProperty(type=block_11)
