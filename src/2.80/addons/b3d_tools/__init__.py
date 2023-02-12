@@ -52,9 +52,9 @@ from .tch import tch_unregister, tch_register
 bl_info = {
 	"name": "King of The Road Tools",
 	"description": "",
-	"author": "Andrey Prozhoga",
-	"version": (1, 2, 2),
-	"blender": (2, 80, 0),
+	"author": "Andrey Prozhoga, LabVaKars",
+	"version": (1, 3, 1),
+	"blender": (2, 93, 0),
 	"location": "3D View > Tools",
 	"warning": "",
 	"wiki_url": "",
