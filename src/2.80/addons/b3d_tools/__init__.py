@@ -70,11 +70,13 @@ bl_info = {
 
 def register():
 	custom_UIList.register()
+	way.register()
 	b3d.register()
 	# tch_register()
 
 def unregister():
 	b3d.unregister()
+	way.unregister()
 	custom_UIList.unregister()
 	# tch_unregister()
 

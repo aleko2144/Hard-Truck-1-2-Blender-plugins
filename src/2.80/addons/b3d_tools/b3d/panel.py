@@ -1772,7 +1772,7 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 # register and unregister
 # ------------------------------------------------------------------------
 
-_classes = (
+_classes = [
 	PanelSettings,
 	SingleAddOperator,
 	TemplateAddOperator,
@@ -1817,7 +1817,7 @@ _classes = (
 	OBJECT_PT_b3d_materials_panel,
 	OBJECT_PT_b3d_func_panel,
 	OBJECT_PT_b3d_misc_panel,
-)
+]
 
 def register():
 	for cls in _classes:

@@ -57,9 +57,9 @@ def menu_func_export(self, context):
     pass
 
 
-_classes = (
+_classes = [
     ImportWayTxt
-)
+]
 
 
 def register():

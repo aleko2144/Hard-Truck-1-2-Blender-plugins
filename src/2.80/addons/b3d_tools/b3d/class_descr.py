@@ -2033,14 +2033,14 @@ def getClassDefByType(blockNum):
 		zclass = b_40
 	return zclass
 
-_classes = (
+_classes = [
 	ActiveBlock,
 	FloatBlock,
 	TextureBlock,
 	MaskfileBlock,
 	MaterialBlock,
 	ResBlock
-)
+]
 
 def register():
 	for cls in _classes:

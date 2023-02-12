@@ -383,7 +383,7 @@ block_37 = createTypeClass(b_37)
 block_39 = createTypeClass(b_39)
 block_40 = createTypeClass(b_40)
 
-_classes = (
+_classes = [
 	s_block_1,
 	s_block_2,
 	# s_block_3,
@@ -466,7 +466,7 @@ _classes = (
 
 	perVertBlock_8,
 	perVertBlock_35
-)
+]
 
 def register():
 	for cls in _classes:

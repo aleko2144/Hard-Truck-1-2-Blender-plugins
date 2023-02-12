@@ -1118,12 +1118,13 @@ class ExportSomeData(Operator, ExportHelper):
 
 # Only needed if you want to add into a dynamic menu
 def menu_func_export(self, context):
-    self.layout.operator(ExportSomeData.bl_idname, text="KOTR WAY (.way")
+	pass
+    # self.layout.operator(ExportSomeData.bl_idname, text="KOTR WAY (.way")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportSomeData.bl_idname, text="KOTR WAY (.way)")
 
-_classes = (
+_classes = [
 	PanelSettings1,
 	AddOperator1,
 	SetValuesOperator1,
@@ -1135,7 +1136,7 @@ _classes = (
 	OBJECT_PT_blocks_panel,
 	ImportSomeData,
 	ExportSomeData
-)
+]
 
 
 def register():

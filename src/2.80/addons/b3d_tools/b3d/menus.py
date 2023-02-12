@@ -247,12 +247,12 @@ def menu_func_import(self, context):
 def menu_func_export(self, context):
    self.layout.operator(ExportB3D.bl_idname, text='KOTR B3D (.b3d)')
 
-_classes = (
+_classes = [
     HTImportPreferences,
     ImportB3D,
     ImportRAW,
     ExportB3D
-)
+]
 
 
 def register():

@@ -419,7 +419,7 @@ class CUSTOM_PG_objectCollection(PropertyGroup):
 #   Register & Unregister
 # -------------------------------------------------------------------
 
-_classes = (
+_classes = [
     CUSTOM_OT_actions,
     CUSTOM_OT_actions_arrbname,
     CUSTOM_OT_addViewportSelection,
@@ -431,7 +431,7 @@ _classes = (
     CUSTOM_UL_items,
     CUSTOM_PT_objectList,
     CUSTOM_PG_objectCollection,
-)
+]
 
 def register():
     from bpy.utils import register_class
