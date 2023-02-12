@@ -80,7 +80,7 @@ def setCustObjValue(subtype, bname, pname):
 			result = int(result)
 		elif subtype == fieldType.FLOAT:
 			result = float(result)
-		elif subtype == fieldType.FLOAT:
+		elif subtype == fieldType.STRING:
 			result = str(result)
 
 		setattr(
@@ -203,12 +203,19 @@ def createTypeClass(zclass, multipleEdit = True):
 				)
 
 				if multipleEdit:
-					prop = EnumProperty(
-						name = obj['name'],
-						description = obj['description'],
-						default = obj['default'],
-						items = obj['items']
-					)
+					if subtype == fieldType.STRING:
+						prop = StringProperty(
+							name = obj['name'],
+							description = obj['description'],
+							default = obj['default'],
+							maxlen = 32
+						)
+					elif subtype == fieldType.INT:
+						prop = IntProperty(
+							name = obj['name'],
+							description = obj['description'],
+							default = obj['default']
+						)
 
 				attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
 				attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
@@ -242,7 +249,7 @@ def createTypeClass(zclass, multipleEdit = True):
 							description = obj['description'],
 							maxlen = 32
 						)
-					if subtype == fieldType.INT:
+					elif subtype == fieldType.INT:
 						prop = IntProperty(
 							name = obj['name'],
 							description = obj['description']

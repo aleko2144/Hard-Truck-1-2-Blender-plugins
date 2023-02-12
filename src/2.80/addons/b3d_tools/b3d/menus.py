@@ -191,19 +191,14 @@ class ExportB3D(Operator, ImportHelper):
     filename_ext = '.b3d'
     filter_glob : StringProperty(default='*.b3d', options={'HIDDEN'})
 
-    generate_pro_file : BoolProperty(name='Generate .pro file',
-                        description='Generate .pro file, which can used'\
-                                    'to assembly the resources file', default=False)
+    # generate_pro_file : BoolProperty(name='Generate .pro file',
+    #                     description='Generate .pro file, which can used'\
+    #                                 'to assembly the resources file', default=False)
 
-    textures_path : StringProperty(
-        name="Textures directory",
-        default="txr\\",
-        )
-
-    partial_export: BoolProperty(
-        name="Partial export",
-        default=False,
-    )
+    # textures_path : StringProperty(
+    #     name="Textures directory",
+    #     default="txr\\",
+    #     )
 
     def execute(self, context):
         print('Exporting file', self.filepath)

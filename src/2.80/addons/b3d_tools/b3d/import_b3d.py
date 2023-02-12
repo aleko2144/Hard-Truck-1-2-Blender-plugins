@@ -829,12 +829,6 @@ def read(file, context, self, filepath):
                     if format & 0b10:
                         uvCount += 1
 
-                    if format & 0b100000 and format & 0b10000:
-                        if format & 0b1:
-                            log.debug("intencities 3f")
-                        else:
-                            log.debug("intencities f")
-
                     poly_block_uvs = [{}]
 
                     poly_block_len = len(poly_block_uvs)
@@ -852,7 +846,6 @@ def read(file, context, self, filepath):
                         face = struct.unpack("<i",file.read(4))[0]
                         faces.append(face)
                         if format & 0b10:
-                            log.debug("uv override 8")
                             # uv override
                             for k in range(uvCount):
                                 poly_block_uvs[k][face] = struct.unpack("<2f",file.read(8))
@@ -950,22 +943,22 @@ def read(file, context, self, filepath):
                 #         uvsMesh = (uvs[k][j][0], 1-uvs[k][j][1])
                 #         customUV.data[loop].uv = uvsMesh
 
+                # for simplicity
+                # for u, uvMap in enumerate(vertex_block_uvs):
 
-                for u, uvMap in enumerate(vertex_block_uvs):
+                #     customUV = b3dMesh.uv_layers.new()
+                #     customUV.name = "UVmapVert{}".format(u)
+                #     uvsMesh = []
 
-                    customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVmapVert{}".format(u)
-                    uvsMesh = []
-
-                    for i, texpoly in enumerate(b3dMesh.polygons):
-                        for j,loop in enumerate(texpoly.loop_indices):
-                            uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                            customUV.data[loop].uv = uvsMesh
+                #     for i, texpoly in enumerate(b3dMesh.polygons):
+                #         for j,loop in enumerate(texpoly.loop_indices):
+                #             uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                #             customUV.data[loop].uv = uvsMesh
 
                 for u, uvOver in enumerate(overriden_uvs):
 
                     customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVmapPoly{}".format(u)
+                    customUV.name = "UVMap"
                     uvsMesh = []
 
                     for i, texpoly in enumerate(b3dMesh.polygons):
@@ -974,11 +967,14 @@ def read(file, context, self, filepath):
                             customUV.data[loop].uv = uvsMesh
 
                 createCustomAttribute(b3dMesh, formats, pfb_8, pfb_8.Format_Flags)
-                createCustomAttribute(b3dMesh, unkFs, pfb_8, pfb_8.Unk_Float1)
-                createCustomAttribute(b3dMesh, unkInts, pfb_8, pfb_8.Unk_Int2)
 
-                createCustomAttribute(b3dMesh, curNormalsOff, pvb_8, pvb_8.Normal_Switch)
-                createCustomAttribute(b3dMesh, curNormals, pvb_8, pvb_8.Custom_Normal)
+                # those are usually consts in all objects
+                # createCustomAttribute(b3dMesh, unkFs, pfb_8, pfb_8.Unk_Float1)
+                # createCustomAttribute(b3dMesh, unkInts, pfb_8, pfb_8.Unk_Int2)
+
+                # cancel for now, maybe find workaround later
+                # createCustomAttribute(b3dMesh, curNormalsOff, pvb_8, pvb_8.Normal_Switch)
+                # createCustomAttribute(b3dMesh, curNormals, pvb_8, pvb_8.Custom_Normal)
 
                 #Create Object
 
@@ -1685,21 +1681,23 @@ def read(file, context, self, filepath):
                 # Ev.set()
                 # Tr.join()
 
-                for u, uvMap in enumerate(vertex_block_uvs):
-                    if len(uvMap):
-                        customUV = b3dMesh.uv_layers.new()
-                        customUV.name = "UVmapVert{}".format(u)
-                        uvsMesh = []
 
-                        for i, texpoly in enumerate(b3dMesh.polygons):
-                            for j,loop in enumerate(texpoly.loop_indices):
-                                uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                                customUV.data[loop].uv = uvsMesh
+                # for simplicity
+                # for u, uvMap in enumerate(vertex_block_uvs):
+                #     if len(uvMap):
+                #         customUV = b3dMesh.uv_layers.new()
+                #         customUV.name = "UVmapVert{}".format(u)
+                #         uvsMesh = []
+
+                #         for i, texpoly in enumerate(b3dMesh.polygons):
+                #             for j,loop in enumerate(texpoly.loop_indices):
+                #                 uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                #                 customUV.data[loop].uv = uvsMesh
 
                 for u, uvOver in enumerate(overriden_uvs):
                     if len(uvOver):
                         customUV = b3dMesh.uv_layers.new()
-                        customUV.name = "UVmapPoly{}".format(u)
+                        customUV.name = "UVMap"
                         uvsMesh = []
 
                         for i, texpoly in enumerate(b3dMesh.polygons):
@@ -1727,8 +1725,10 @@ def read(file, context, self, filepath):
                             b3dMesh.materials.append(mat)
 
                 createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
-                createCustomAttribute(b3dMesh, unkFs, pfb_28, pfb_28.Unk_Float1)
-                createCustomAttribute(b3dMesh, unkInts, pfb_28, pfb_28.Unk_Int2)
+
+                # those are usually consts in all objects
+                # createCustomAttribute(b3dMesh, unkFs, pfb_28, pfb_28.Unk_Float1)
+                # createCustomAttribute(b3dMesh, unkInts, pfb_28, pfb_28.Unk_Int2)
 
                 b3dObj = bpy.data.objects.new(objName, b3dMesh)
                 b3dObj[BLOCK_TYPE] = type
@@ -1971,12 +1971,6 @@ def read(file, context, self, filepath):
                     if format & 0b10:
                         uvCount += 1
 
-                    if format & 0b100000 and format & 0b10000:
-                        if format & 0b1:
-                            log.debug("intencities 3f")
-                        else:
-                            log.debug("intencities f")
-
                     poly_block_uvs = [{}]
 
                     poly_block_len = len(poly_block_uvs)
@@ -1994,7 +1988,6 @@ def read(file, context, self, filepath):
                         face = struct.unpack("<i",file.read(4))[0]
                         faces.append(face)
                         if format & 0b10:
-                            log.debug("uv override 35")
                             # uv override
                             for k in range(uvCount):
                                 poly_block_uvs[k][face] = struct.unpack("<2f",file.read(8))
@@ -2079,22 +2072,22 @@ def read(file, context, self, filepath):
                 #         b3dMesh.vertices[idx].normal = normals[idx]
 
 
+                # for simplicity
+                # for u, uvMap in enumerate(vertex_block_uvs):
 
-                for u, uvMap in enumerate(vertex_block_uvs):
+                #     customUV = b3dMesh.uv_layers.new()
+                #     customUV.name = "UVmapVert{}".format(u)
+                #     uvsMesh = []
 
-                    customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVmapVert{}".format(u)
-                    uvsMesh = []
-
-                    for i, texpoly in enumerate(b3dMesh.polygons):
-                        for j,loop in enumerate(texpoly.loop_indices):
-                            uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                            customUV.data[loop].uv = uvsMesh
+                #     for i, texpoly in enumerate(b3dMesh.polygons):
+                #         for j,loop in enumerate(texpoly.loop_indices):
+                #             uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                #             customUV.data[loop].uv = uvsMesh
 
                 for u, uvOver in enumerate(overriden_uvs):
 
                     customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVmapPoly{}".format(u)
+                    customUV.name = "UVMap"
                     uvsMesh = []
 
                     for i, texpoly in enumerate(b3dMesh.polygons):
@@ -2106,11 +2099,13 @@ def read(file, context, self, filepath):
                 # b3dMesh.attributes["my_normal"].data.foreach_set("vector", normals_set)
 
                 createCustomAttribute(b3dMesh, formats, pfb_35, pfb_35.Format_Flags)
-                createCustomAttribute(b3dMesh, unkFs, pfb_35, pfb_35.Unk_Float1)
-                createCustomAttribute(b3dMesh, unkInts, pfb_35, pfb_35.Unk_Int2)
+                # those are usually consts in all objects
+                # createCustomAttribute(b3dMesh, unkFs, pfb_35, pfb_35.Unk_Float1)
+                # createCustomAttribute(b3dMesh, unkInts, pfb_35, pfb_35.Unk_Int2)
 
-                createCustomAttribute(b3dMesh, curNormalsOff, pvb_35, pvb_35.Normal_Switch)
-                createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
+                # cancel for now, maybe find workaround later
+                # createCustomAttribute(b3dMesh, curNormalsOff, pvb_35, pvb_35.Normal_Switch)
+                # createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
                 if self.to_import_textures:
                     mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texNum)].value)]
@@ -2125,12 +2120,12 @@ def read(file, context, self, filepath):
                 # b3dObj[prop(b_35.R)] = bounding_sphere[3]
                 b3dObj[prop(b_35.MType)] = mType
                 b3dObj[prop(b_35.TexNum)] = texNum
-                b3dObj['FType'] = 0
-                try:
-                    b3dObj['SType'] = b3dObj.parent['SType']
-                except:
-                    b3dObj['SType'] = 2
-                b3dObj['BType'] = 35
+                # b3dObj['FType'] = 0
+                # try:
+                #     b3dObj['SType'] = b3dObj.parent['SType']
+                # except:
+                #     b3dObj['SType'] = 2
+                # b3dObj['BType'] = 35
                 realName = b3dObj.name
                 # for face in b3dMesh.polygons:
                 #     face.use_smooth = True
@@ -2152,11 +2147,6 @@ def read(file, context, self, filepath):
                 formatRaw = struct.unpack("<i",file.read(4))[0]
                 uvCount = formatRaw >> 8
                 format = formatRaw & 0xFF
-
-                if format == 1 or format == 2:
-                    log.debug("normals 3f")
-                elif format == 3:
-                    log.debug("normals f")
 
                 vertex_block_uvs.append([])
                 for i in range(uvCount):
@@ -2192,7 +2182,7 @@ def read(file, context, self, filepath):
                 # b3dObj[prop(b_36.R)] = bounding_sphere[3]
                 b3dObj[prop(b_36.Name1)] = name1
                 b3dObj[prop(b_36.Name2)] = name2
-                b3dObj[prop(b_36.MType)] = formatRaw
+                b3dObj[prop(b_36.VType)] = formatRaw
 
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)
@@ -2214,11 +2204,6 @@ def read(file, context, self, filepath):
                 formatRaw = struct.unpack("<i",file.read(4))[0]
                 uvCount = formatRaw >> 8
                 format = formatRaw & 0xFF
-
-                if format == 1 or format == 2:
-                    log.debug("normals 3f")
-                elif format == 3:
-                    log.debug("normals f")
 
                 vertex_block_uvs.append([])
                 for i in range(uvCount):
@@ -2261,7 +2246,7 @@ def read(file, context, self, filepath):
                 # b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
                 # b3dObj[prop(b_37.R)] = bounding_sphere[3]
                 b3dObj[prop(b_37.Name1)] = groupName
-                b3dObj[prop(b_37.SType)] = formatRaw
+                b3dObj[prop(b_37.VType)] = formatRaw
 
                 b3dObj.parent = parentObj
                 context.collection.objects.link(b3dObj)

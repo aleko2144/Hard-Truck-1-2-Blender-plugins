@@ -22,7 +22,7 @@ blockTypeList = [
     ('05', "05(Container)", "Container containing other blocks"),
     ('06', "06(Vertexes)", "Vertex block (HT1)"),
     ('07', "07(Vertexes)", "Vertex block (HT2)"),
-    ('08', "08(Polygons)", "Polygon block"),
+    # ('08', "08(Polygons)", "Polygon block"),
     ('09', "09(Trigger)", "Trigger"),
     ('10', "10(LOD)", "LOD"),
     ('11', "11(Trigger)", "Unknown block"),
@@ -34,10 +34,10 @@ blockTypeList = [
     ('17', "17(Trigger)", "Unknown block"),
     ('18', "18(Connector)", "Connector between space block(24) and root container block. Exmaple: FiatWheel0Space and Single0Wheel14"),
     ('19', "19(Room)", "Room container"),
-    ('20', "20(2D collision)", "Flat vertical collision"),
+    # ('20', "20(2D collision)", "Flat vertical collision"),
     ('21', "21(Event)", "Container with event handling"),
     ('22', "22(Trigger)", "Locator?"),
-    ('23', "23(3D collision)", "3D collision"),
+    # ('23', "23(3D collision)", "3D collision"),
     ('24', "24(Space)", "Space"),
     ('25', "25(Sound)", "Sound"),
     ('26', "26(Unk?)", "Locator?"),
@@ -48,7 +48,7 @@ blockTypeList = [
     ('31', "31(Unk?)", "Unknown block"),
     ('33', "33(Light)", "Light source"),
     ('34', "34(Unk?)", "Unknown block"),
-    ('35', "35(Polygons)", "Polygon block"),
+    # ('35', "35(Polygons)", "Polygon block"),
     ('36', "36(Vertexes)", "Vertex block (HT1)"),
     ('37', "37(Vertexes)", "Vertex block (HT2)"),
     ('39', "39(Unk?)", "Locator?"),
@@ -70,11 +70,13 @@ collisionTypeList = [
     ('16', "ice (no tire marks)", "")
 ]
 
-lTypeList = [
-    ('0', 'Type 0', ""),
-    ('1', 'Type 1', ""),
-    ('2', 'Type 2', ""),
-    ('3', 'Type 3', "")
+
+
+vTypeList = [
+    ('0', '0(No normals)', "No normals"),
+    ('1', '1(With normals)', "With normals"),
+    ('2', '2(With normals)', "With normals"),
+    ('3', '3(Normal switch)', "Normal switch")
 ]
 
 

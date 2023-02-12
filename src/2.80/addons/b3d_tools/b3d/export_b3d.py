@@ -718,7 +718,9 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 				# file.write(struct.pack("<i", 0)) # PolygonCount
 				file.write(struct.pack("<i", len(polygons))) #Polygon count
 
-				format_flags_attrs = obj.data.attributes[prop(pfb_8.Format_Flags)].data
+				format_flags_attrs = obj.data.attributes.get(prop(pfb_8.Format_Flags))
+				if format_flags_attrs is not None:
+					format_flags_attrs = format_flags_attrs.data
 
 				mesh = block.data
 
@@ -728,7 +730,10 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					useNormals = False
 					normalSwitch = False
 					l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name)
-					formatRaw = format_flags_attrs[poly.index].value
+					if format_flags_attrs is None:
+						formatRaw = 2 # default
+					else:
+						formatRaw = format_flags_attrs[poly.index].value
 					# formatRaw = 0 #temporary
 					file.write(struct.pack("<i", formatRaw))
 					file.write(struct.pack("<f", 1.0)) # TODO: not consts
@@ -752,7 +757,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					l_uvs = {}
 					for li in poly.loop_indices:
 						vi = mesh.loops[li].vertex_index
-						l_uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+						l_uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
 
 					for i, vert in enumerate(poly.vertices):
 						file.write(struct.pack("<i", offset + vert))
@@ -1061,7 +1066,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					l_uvs = {}
 					for li in poly.loop_indices:
 						vi = mesh.loops[li].vertex_index
-						l_uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+						l_uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
 
 					verts = poly.vertices
 
@@ -1217,7 +1222,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					l_uvs = {}
 					for li in poly.loop_indices:
 						vi = mesh.loops[li].vertex_index
-						l_uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+						l_uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
 
 					for i, vert in enumerate(poly.vertices):
 						file.write(struct.pack("<i", offset + vert))
@@ -1233,7 +1238,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			elif objType == 36:
 
 				# isSecondUvs = False
-				formatRaw = block[prop(b_36.MType)]
+				formatRaw = block[prop(b_36.VType)]
 				normalSwitch = False
 				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_36.Name1)], file)
@@ -1297,11 +1302,11 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 			elif objType == 37:
 
 				# isSecondUvs = False
-				formatRaw = block[prop(b_37.SType)]
+				formatRaw = block[prop(b_37.VType)]
 				normalSwitch = False
 				writeCalculatedSphere(file, block)
 				writeName(block[prop(b_37.Name1)], file)
-				# file.write(struct.pack("<i", block[prop(b_37.SType)]))
+				# file.write(struct.pack("<i", block[prop(b_37.VType)]))
 
 
 				offset = 0
@@ -1548,7 +1553,7 @@ def getMeshProps(obj):
 	for poly in polygons:
 		for li in poly.loop_indices:
 			vi = mesh.loops[li].vertex_index
-			uvs[vi] = mesh.uv_layers['UVmapPoly0'].data[li].uv
+			uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
 
 	normals = [cn.normal for cn in mesh.vertices]
 
@@ -2378,7 +2383,7 @@ def getMeshProps(obj):
 # 				file.write(bytearray(b'\x00'*32))
 # 				vLen = len(verticesL)
 
-# 				file.write(struct.pack("<i",object['SType'])) # 2 - normals, 3 - verts+uv(no normal), 258 - rain
+# 				file.write(struct.pack("<i",object['VType'])) # 2 - normals, 3 - verts+uv(no normal), 258 - rain
 # 				file.write(struct.pack("<i",vLen))
 
 # 				#normals = []

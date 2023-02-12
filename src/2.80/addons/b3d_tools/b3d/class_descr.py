@@ -23,6 +23,7 @@ from ..consts import (
 	collisionTypeList,
 	generatorTypeList,
 	b24FlagList,
+	vTypeList,
 	BLOCK_TYPE,
 	LEVEL_GROUP
 )
@@ -1788,12 +1789,14 @@ class b_36():
 		'description': '',
 		'default': ''
 	}
-	MType = {
-		'prop': 'MType',
-		'type': fieldType.INT,
-		'name': 'Type',
+	VType = {
+		'prop': 'vType',
+		'type': fieldType.ENUM,
+		'subtype': fieldType.INT,
+		'name': 'Vertex type',
 		'description': '',
-		'default': 0
+		'default': 2,
+		'items': vTypeList
 	}
 
 class b_37():
@@ -1825,12 +1828,14 @@ class b_37():
 		'description': '',
 		'default': ''
 	}
-	SType = {
-		'prop': 'SType',
-		'type': fieldType.INT,
-		'name': 'Type',
+	VType = {
+		'prop': 'vType',
+		'type': fieldType.ENUM,
+		'subtype': fieldType.INT,
+		'name': 'Vertex type',
 		'description': '',
-		'default': 0
+		'default': 1,
+		'items': vTypeList
 	}
 
 class b_39():
