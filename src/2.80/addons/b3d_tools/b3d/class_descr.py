@@ -217,8 +217,6 @@ borderSphereGroup = 'border_sphere'
 # fieldType.SPHERE_EDIT
 
 
-
-
 class pvb_8():
 	Normal_Switch = {
 		'prop': 'normal_switch',
@@ -252,6 +250,7 @@ class pvb_35():
 		'default': (0.0, 0.0, 0.0)
 	}
 
+
 class pfb_8():
 	Format_Flags = {
 		'prop': 'format_flags',
@@ -271,6 +270,7 @@ class pfb_8():
 		'description': '',
 		'default': 0
 	}
+
 
 class pfb_28():
 	Format_Flags = {
@@ -313,6 +313,7 @@ class pfb_35():
 		'default': 0
 	}
 
+
 class b_1():
 	Name1 = {
 		'prop': 'name1',
@@ -329,28 +330,8 @@ class b_1():
 		'default': ''
 	}
 
+
 class b_2():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
@@ -366,51 +347,8 @@ class b_2():
 		'default': 0.0
 	}
 
-# class b_3():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 
 class b_4():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.ENUM_DYN,
@@ -427,6 +365,7 @@ class b_4():
 		'default': ''
 	}
 
+
 class b_5():
 	Name1 = {
 		'prop': 'name1',
@@ -435,51 +374,9 @@ class b_5():
 		'description': '',
 		'default': ''
 	}
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 
 
 class b_6():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
@@ -495,28 +392,8 @@ class b_6():
 		'default': ''
 	}
 
+
 class b_7():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
@@ -525,51 +402,8 @@ class b_7():
 		'default': ''
 	}
 
-# class b_8():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 
 class b_9():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ = {
 		'prop': 'b3d_b9_center',
 		'group': 'b9_group',
@@ -592,28 +426,8 @@ class b_9():
 		'type': fieldType.SPHERE_EDIT
 	}
 
+
 class b_10():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	LOD_XYZ = {
 		'prop': 'b3d_LOD_center',
 		'group': 'LOD_group',
@@ -636,28 +450,8 @@ class b_10():
 		'type': fieldType.SPHERE_EDIT
 	}
 
+
 class b_11():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
@@ -687,28 +481,8 @@ class b_11():
 		'default': 0.0
 	}
 
+
 class b_12():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
@@ -743,29 +517,9 @@ class b_12():
 		'name': 'Unk. params',
 		'description': '',
 	}
+
 
 class b_13():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
@@ -787,28 +541,8 @@ class b_13():
 		'description': '',
 	}
 
+
 class b_14():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
@@ -844,28 +578,8 @@ class b_14():
 		'description': '',
 	}
 
+
 class b_15():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
@@ -886,29 +600,9 @@ class b_15():
 		'name': 'Unk. params',
 		'description': '',
 	}
+
 
 class b_16():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
@@ -957,29 +651,9 @@ class b_16():
 		'name': 'Unk. params',
 		'description': '',
 	}
+
 
 class b_17():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
@@ -1029,28 +703,8 @@ class b_17():
 		'description': '',
 	}
 
+
 class b_18():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Space_Name = {
         'prop': 'space_name',
         'type': fieldType.ENUM_DYN,
@@ -1068,28 +722,8 @@ class b_18():
         'description': ''
     }
 
+
 class b_20():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
@@ -1111,28 +745,8 @@ class b_20():
 		'description': '',
 	}
 
+
 class b_21():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	GroupCnt = {
 		'prop': 'group_cnt',
 		'type': fieldType.INT,
@@ -1148,28 +762,8 @@ class b_21():
 		'default': 0
 	}
 
+
 class b_22():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
@@ -1184,6 +778,7 @@ class b_22():
 		'description': '',
 		'default': 0.0
 	}
+
 
 class b_23():
 	Unk_Int1 = {
@@ -1209,6 +804,7 @@ class b_23():
 		'description': '',
 	}
 
+
 class b_24():
 	Flag = {
 		'prop': 'flag',
@@ -1219,6 +815,7 @@ class b_24():
 		'default': 0,
 		'items': b24FlagList
 	}
+
 
 class b_25():
 	XYZ = {
@@ -1285,28 +882,8 @@ class b_25():
 		'default': 0.0
 	}
 
+
 class b_26():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_XYZ1 = {
 		'prop': 'unk_XYZ1',
 		'type': fieldType.COORD,
@@ -1329,28 +906,8 @@ class b_26():
 		'default': (0.0, 0.0, 0.0)
 	}
 
+
 class b_27():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Flag = {
 		'prop': 'flag',
 		'type': fieldType.INT,
@@ -1373,28 +930,8 @@ class b_27():
 		'default': 0
 	}
 
+
 class b_28():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Sprite_Center = {
 		'prop': 'unk_XYZ',
 		'type': fieldType.COORD,
@@ -1404,28 +941,8 @@ class b_28():
 	}
  	#todo: check
 
+
 class b_29():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
@@ -1455,28 +972,8 @@ class b_29():
 		'default': 0.0
 	}
 
+
 class b_30():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	ResModule1 = {
 		'prop': '1_roomName_res',
 		'group': 'resModule1',
@@ -1518,28 +1015,8 @@ class b_30():
 		'default': ''
 	}
 
+
 class b_31():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Unk_Int1 = {
 		'prop': 'int1',
 		'type': fieldType.INT,
@@ -1577,28 +1054,8 @@ class b_31():
 	}
 	#todo: check
 
+
 class b_33():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Use_Lights = {
 		'prop': 'useLight',
 		'type': fieldType.INT,
@@ -1686,27 +1143,6 @@ class b_33():
 
 
 class b_34():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	UnkInt = {
 		'prop': 'int1',
 		'type': fieldType.INT,
@@ -1715,28 +1151,8 @@ class b_34():
 		'default': 0
 	}
 
+
 class b_35():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	MType = {
 		'prop': 'mType',
 		'type': fieldType.INT,
@@ -1753,28 +1169,8 @@ class b_35():
 		'description': '',
 	}
 
+
 class b_36():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
@@ -1799,28 +1195,8 @@ class b_36():
 		'items': vTypeList
 	}
 
+
 class b_37():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
@@ -1838,28 +1214,8 @@ class b_37():
 		'items': vTypeList
 	}
 
+
 class b_39():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Color_R = {
 		'prop': 'color_r',
 		'type': fieldType.INT,
@@ -1896,28 +1252,8 @@ class b_39():
 		'default': 0
 	}
 
+
 class b_40():
-	# XYZ = {
-	# 	'prop': 'b3d_border_center',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.COORD,
-	# 	'name': 'Block border coord',
-	# 	'description': '',
-	# 	'default': (0.0, 0.0, 0.0)
-	# }
-	# R = {
-	# 	'prop': 'b3d_border_rad',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.RAD,
-	# 	'name': 'Block border rad',
-	# 	'description': '',
-	# 	'default': 0.0
-	# }
-	# Set_Bound = {
-	# 	'prop': 'b3d_border',
-	# 	'group': borderSphereGroup,
-	# 	'type': fieldType.SPHERE_EDIT
-	# }
 	Name1 = {
 		'prop': 'name1',
 		'type': fieldType.STRING,
@@ -1954,6 +1290,75 @@ class b_40():
 		'name': 'Unk. params',
 		'description': '',
 	}
+
+# b_50 - segment
+# b_51 - unoriented node
+# b_52 - oriented node
+
+class b_50():
+	Attr1 = {
+		'prop': 'attr1',
+		'type': fieldType.INT,
+		'name': 'Attr. 1',
+		'description': '',
+		'default': 0
+	}
+	Attr2 = {
+		'prop': 'attr2',
+		'type': fieldType.FLOAT,
+		'name': 'Attr. 2',
+		'description': '',
+		'default': 0
+	}
+	Attr3 = {
+		'prop': 'attr3',
+		'type': fieldType.INT,
+		'name': 'Attr. 3',
+		'description': '',
+		'default': 0
+	}
+	Rten = {
+		'prop': 'rten',
+		'type': fieldType.STRING,
+		'name': 'Unk. name',
+		'description': '',
+		'default': ''
+	}
+	Width1 = {
+		'prop': 'wdth1',
+		'type': fieldType.FLOAT,
+		'name': 'Width 1',
+		'description': '',
+		'default': 0
+	}
+	Width2 = {
+		'prop': 'wdth2',
+		'type': fieldType.FLOAT,
+		'name': 'Width 2',
+		'description': '',
+		'default': 0
+	}
+
+
+class b_51():
+	Flag = {
+		'prop': 'flag',
+		'type': fieldType.INT,
+		'name': 'Flag',
+		'description': '',
+		'default': 0
+	}
+
+
+class b_52():
+	Flag = {
+		'prop': 'flag',
+		'type': fieldType.INT,
+		'name': 'Flag',
+		'description': '',
+		'default': 0
+	}
+
 
 def getClassDefByType(blockNum):
 	zclass = None
@@ -2031,6 +1436,13 @@ def getClassDefByType(blockNum):
 		zclass = b_39
 	elif blockNum == 40:
 		zclass = b_40
+
+	elif blockNum == 50:
+		zclass = b_50
+	elif blockNum == 51:
+		zclass = b_51
+	elif blockNum == 52:
+		zclass = b_52
 	return zclass
 
 _classes = [

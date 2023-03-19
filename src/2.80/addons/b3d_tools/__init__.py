@@ -43,12 +43,6 @@ else:
 	)
 
 
-
-
-from .tch import tch_unregister, tch_register
-
-
-
 bl_info = {
 	"name": "King of The Road Tools",
 	"description": "",
@@ -70,13 +64,13 @@ bl_info = {
 
 def register():
 	custom_UIList.register()
-	way.register()
+	# way.register()
 	b3d.register()
 	# tch_register()
 
 def unregister():
 	b3d.unregister()
-	way.unregister()
+	# way.unregister()
 	custom_UIList.unregister()
 	# tch_unregister()
 

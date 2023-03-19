@@ -1,13 +1,8 @@
 import enum
-from hashlib import new
 import struct
 import sys
 import time
-import timeit
 import datetime
-import threading
-import pdb
-import logging
 from pathlib import Path
 
 from .class_descr import (
@@ -80,8 +75,12 @@ from .common import (
     readCString,
     transformVertices,
     getPolygonsBySelectedVertices,
-    recalcToLocalCoord,
     getCenterCoord
+)
+
+from ..common import (
+    log,
+    recalcToLocalCoord
 )
 
 import bpy
@@ -100,7 +99,6 @@ import re
 
 import bmesh
 
-from ..common import log
 
 
 def thread_import_b3d(self, files, context):
@@ -518,11 +516,13 @@ def read(file, context, self, filepath):
 
     b3dName = os.path.basename(filepath)
 
-    b3dObj = bpy.data.objects.new(b3dName, None)
-    b3dObj[BLOCK_TYPE] = 0
-    context.collection.objects.link(b3dObj) # root object
+    b3dObj = bpy.data.objects.get(b3dName)
+    if b3dObj is None:
+        b3dObj = bpy.data.objects.new(b3dName, None)
+        b3dObj[BLOCK_TYPE] = 111
+        context.collection.objects.link(b3dObj) # root object
 
-    objString = [b3dName]
+    objString = [b3dObj.name]
 
     while ex!=ChunkType.END_CHUNKS:
 
@@ -1297,11 +1297,13 @@ def read(file, context, self, filepath):
                 if not usedBlocks[str(type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
+                b3dObj = bpy.data.objects.get(objName)
+                if b3dObj is None:
+                    b3dObj = bpy.data.objects.new(objName, None)
+                    b3dObj[BLOCK_TYPE] = type
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
+                    b3dObj.parent = parentObj
+                    context.collection.objects.link(b3dObj)
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
 
@@ -1328,26 +1330,27 @@ def read(file, context, self, filepath):
 
                 curveData = bpy.data.curves.new('curve', type='CURVE')
 
-                curveData.dimensions = '3D'
+                curveData.dimensions = '2D'
                 curveData.resolution_u = 2
 
                 # map coords to spline
                 polyline = curveData.splines.new('POLY')
                 polyline.points.add(len(coords)-1)
 
-                coords = recalcToLocalCoord(bounding_sphere[0:3], coords)
+                newCoords = recalcToLocalCoord(coords[0], coords)
 
-                for i, coord in enumerate(coords):
+                for i, coord in enumerate(newCoords):
                     x,y,z = coord
                     polyline.points[i].co = (x, y, z, 1)
 
-                curveData.bevel_depth = 0.01
+                curveData.bevel_depth = 0.05
+                curveData.extrude = 20
 
                 # create Object
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 # b3dObj.location = (0,0,0)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj.location = bounding_sphere[0:3]
+                b3dObj.location = coords[0]
                 # b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
                 # b3dObj[prop(b_20.R)] = bounding_sphere[3]
                 b3dObj[prop(b_20.Unk_Int1)] = unknown1
@@ -2317,7 +2320,6 @@ def read(file, context, self, filepath):
 
                 b3dObj.parent = parentObj
                 objString[-1] = b3dObj.name
-
             else:
                 log.warning('smthng wrng')
                 return
@@ -2387,124 +2389,6 @@ def read(file, context, self, filepath):
 
         b3dObj.parent = None
         transfCollection.objects.link(b3dObj)
-
-
-def readWayTxt(file, context, op, filepath):
-    b3dObj = 0
-    # b3dObj = bpy.data.objects.new(os.path.basename(op.properties.filepath),None)
-    # context.collection.objects.link(b3dObj)
-
-    # objString = [os.path.basename(op.properties.filepath)]
-
-    type = None
-    mnam_c = 0
-
-    grom = 0
-    rnod = 1
-    rseg = 2
-    mnam = 3
-    mnam2nd = 4
-
-    lineNum = 0
-
-    for line in file:
-        if (type == grom):
-            lineNum+=1
-            if (lineNum == 2): #GROM ROOM
-                b3dObj = bpy.data.objects.new(line.strip(),None)
-                b3dObj.parent = context.scene.objects[objString[-1]]
-                context.collection.objects.link(b3dObj)
-                objString.append(line.strip())
-            elif (lineNum == 3):
-                type = None			#GROM RESET
-                lineNum = 0
-        elif(type == rnod):
-            lineNum+=1
-            if (lineNum == 2): #RNOD ROOM
-                bpy.ops.mesh.primitive_ico_sphere_add(size=10, location=(0,0,0))
-                b3dObj = bpy.context.object
-                b3dObj.name = line.strip()
-                b3dObj.parent = context.scene.objects[objString[-1]]
-                objString.append(line.strip())
-            elif (lineNum == 4): #RNOD POS
-
-                b3dObj.location = make_tuple(line.strip())#loc
-            elif (lineNum == 5):
-                type = None			#RNOD RESET
-                lineNum = 0
-                del objString[-1]
-        elif(type == rseg):
-            massline = 0
-            lineNum+=1
-            if (line[2:6]=='RTEN'):
-                massline = 6
-            else:
-                massline = 4
-            if (lineNum == massline): #RSEG MASS
-
-                b3dObj = bpy.data.objects.new('RSEG',None)				#
-                b3dObj.parent = context.scene.objects[objString[-1]]	#
-                objString.append(b3dObj.name)
-                context.collection.objects.link(b3dObj)
-
-
-                mass = make_tuple(line.strip())
-                for pos in mass:
-                    bpy.ops.mesh.primitive_cylinder_add(radius = 1,location = pos)
-                    b3dObj = bpy.context.object
-                    b3dObj.name = 'location'
-                    b3dObj.parent = context.scene.objects[objString[-1]]
-                    #objString.append('RSEG')
-                bpy.ops.curve.primitive_bezier_curve_add()
-                b3dObj = bpy.context.object
-
-                b3dObj.parent = context.scene.objects[objString[-1]]
-                b3dObj.name = 'RSEGBezier'
-                b3dObj.data.dimensions = '3D'
-                b3dObj.data.fill_mode = 'FULL'
-                b3dObj.data.bevel_depth = 0.1
-                b3dObj.data.bevel_resolution = 4
-
-                flatten = lambda mass: [item for sublist in mass for item in sublist]
-                b3dObj.data.splines[0].bezier_points.add(len(mass)-2)
-                b3dObj.data.splines[0].bezier_points.foreach_set("co",flatten(mass))
-
-                points = b3dObj.data.splines[0].bezier_points
-
-                for i,point in enumerate(points):
-                    point.handle_left_type = point.handle_right_type = "AUTO"
-
-                type = None 	#reset
-                lineNum = 0
-                del objString[-1]
-        elif(type == mnam):
-            b3dObj = bpy.data.objects.new(line[1:mnam_c],None)
-            b3dObj['root'] = True
-            context.collection.objects.link(b3dObj)
-
-            objString = [b3dObj.name]
-            type = None
-
-        elif(type == None):
-            if (line[0:2] == '  '):
-                if (line[2:6] == 'RNOD'):
-                    type = rnod
-                elif (line[2:6] == 'RSEG'):
-                    type = rseg
-            else:
-                if (line[0:4] == 'GROM'):
-                    if (len(objString)>1):
-                        del objString[-1]
-                    type = grom
-                elif(line[0:4] == 'MNAM'):
-                    mnam_c = int(line[5])
-                    type = mnam
-
-
-
-
-
-
 
 
 def assignMaterialByVertices(obj, vertIndexes, matIndex):

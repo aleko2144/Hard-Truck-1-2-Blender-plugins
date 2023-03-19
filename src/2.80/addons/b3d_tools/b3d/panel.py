@@ -60,6 +60,8 @@ from .classes import (
 
 	perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35,\
 
+	block_50, block_51, block_52,\
+
 	s_block_1,s_block_2, \
 	# s_block_3,
 	s_block_4,s_block_5,s_block_6,s_block_7, \
@@ -68,6 +70,8 @@ from .classes import (
 	s_block_11,s_block_12,s_block_13,s_block_14,s_block_15,s_block_16,s_block_17,s_block_18,s_block_20,\
 	s_block_21,s_block_22,s_block_23,s_block_24,s_block_25,s_block_26,s_block_27,s_block_28,s_block_29,\
 	s_block_30,s_block_31,s_block_33,s_block_34,s_block_35,s_block_36,s_block_37,s_block_39,s_block_40,\
+
+	s_block_50,s_block_51,s_block_52
 )
 from .class_descr import (
 	getClassDefByType,
@@ -80,6 +84,7 @@ from .class_descr import (
 	b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
 	b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,\
 	pfb_8, pfb_28, pfb_35, pvb_8, pvb_35,
+	b_50,b_51,b_52,
 	ResBlock
 )
 
@@ -111,7 +116,9 @@ def resModuleCallback(scene, context):
 	mytool = context.scene.my_tool
 	resModules = mytool.resModules
 
-	enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(resModules)]
+	enumProperties = [("-1", "None", "")]
+
+	enumProperties.extend([(str(i), cn.value, "") for i, cn in enumerate(resModules)])
 
 	return enumProperties
 
@@ -157,6 +164,10 @@ class PanelSettings(bpy.types.PropertyGroup):
 	sBlock39: PointerProperty(type=s_block_39)
 	sBlock40: PointerProperty(type=s_block_40)
 
+	sBlock50: PointerProperty(type=s_block_50)
+	sBlock51: PointerProperty(type=s_block_51)
+	sBlock52: PointerProperty(type=s_block_52)
+
 	block1: PointerProperty(type=block_1)
 	block2: PointerProperty(type=block_2)
 	# block3: PointerProperty(type=block_3)
@@ -194,6 +205,10 @@ class PanelSettings(bpy.types.PropertyGroup):
 	block37: PointerProperty(type=block_37)
 	block39: PointerProperty(type=block_39)
 	block40: PointerProperty(type=block_40)
+
+	block50: PointerProperty(type=block_50)
+	block51: PointerProperty(type=block_51)
+	block52: PointerProperty(type=block_52)
 
 	perFaceBlock8: PointerProperty(type=perFaceBlock_8)
 	perFaceBlock28: PointerProperty(type=perFaceBlock_28)
@@ -238,7 +253,8 @@ class PanelSettings(bpy.types.PropertyGroup):
 		items=[
 			('mesh', "Mesh", "Cast selected meshes to vertices(6,7,36,37) polygons blocks(8,35)"),
 			('colis3D', "3D collision", "Creates copy of selected mesh for 3D collision(23)"),
-			('colis2D', "2D collision", "Cast selected curve to 2D collision(20)")
+			('colis2D', "2D collision", "Cast selected curve to 2D collision(20)"),
+			('way', "Transport path", "Cast selected curve to transport path(50)"),
 		]
 	)
 
@@ -313,6 +329,12 @@ class PanelSettings(bpy.types.PropertyGroup):
 		description = 'New object will be parented to this object'
 	)
 
+	cast_copy : bpy.props.BoolProperty(
+		name ='Create copy',
+		description = 'Will be created copy of selected object and casted to B3D format',
+		default = True
+	)
+
 # ------------------------------------------------------------------------
 #	menus
 # ------------------------------------------------------------------------
@@ -332,6 +354,23 @@ class PanelSettings(bpy.types.PropertyGroup):
 # ------------------------------------------------------------------------
 #	operators / buttons
 # ------------------------------------------------------------------------
+
+class SetParentOperator(bpy.types.Operator):
+	bl_idname = "wm.set_parent_operator"
+	bl_label = "Set parent"
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+
+		if context.object is None:
+			self.report({'INFO'}, "No object selected")
+			return {'FINISHED'}
+
+		mytool.parent_str = context.object.name
+
+		return {'FINISHED'}
+
 
 class SingleAddOperator(bpy.types.Operator):
 	bl_idname = "wm.single_add_operator"
@@ -367,8 +406,9 @@ class SingleAddOperator(bpy.types.Operator):
 			# 28 - 2d sprite
 			# 30 - portal
 			# 24 - locator
-			25,26,27,29,31,33,34,39
+			25,26,27,29,31,33,34,39,
 			# 40 - generator
+			51,52
 		]:
 			object = bpy.data.objects.new(object_name, None)
 			object.location=(0.0,0.0,0.0)
@@ -394,7 +434,7 @@ class SingleAddOperator(bpy.types.Operator):
 					group.parent = object
 					context.collection.objects.link(group)
 
-		elif block_type in [24, 40]: # empties which location is important
+		elif block_type in [24, 40, 51, 52]: # empties which location is important
 
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
@@ -404,11 +444,13 @@ class SingleAddOperator(bpy.types.Operator):
 			if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
 				setAllObjsByType(context, object, zclass)
 
-			if block_type == 24:
+			if block_type in [24, 52]:
 				object.empty_display_type = 'ARROWS'
 			elif block_type == 40:
 				object.empty_display_type = 'SPHERE'
 				object.empty_display_size = 5
+			elif block_type == 51:
+				object.empty_display_type = 'PLAIN_AXES'
 
 			context.collection.objects.link(object)
 
@@ -522,6 +564,8 @@ class CastAddOperator(bpy.types.Operator):
 		castType = mytool.castType_enum
 		parentObj = bpy.data.objects.get(mytool.parent_str)
 
+		toCopy = int(mytool.cast_copy)
+
 		if castType == 'mesh':
 			vertType = int(mytool.vertexBlock_enum)
 			polyType = int(mytool.polyBlock_enum)
@@ -541,22 +585,57 @@ class CastAddOperator(bpy.types.Operator):
 			for polyObj in context.selected_objects:
 				if polyObj.type == 'MESH':
 
-					newObj = polyObj.copy()
-					newObj.data = polyObj.data.copy()
-					newObj[consts.BLOCK_TYPE] = polyType
-					newObj.parent = vertObj
-					if polyType != 8:
-						setAllObjsByType(context, newObj, polyclass)
+					if toCopy:
+						newObj = polyObj.copy()
+						newObj.data = polyObj.data.copy()
+						newObj[consts.BLOCK_TYPE] = polyType
+						newObj.parent = vertObj
+						if polyType != 8:
+							setAllObjsByType(context, newObj, polyclass)
 
-					formats = [2]*len(newObj.data.polygons)
-					if polyType == 8:
-						createCustomAttribute(newObj.data, formats, pfb_8, pfb_8.Format_Flags)
-					elif polyType == 35:
-						createCustomAttribute(newObj.data, formats, pfb_35, pfb_35.Format_Flags)
+						formats = [2]*len(newObj.data.polygons)
+						if polyType == 8:
+							createCustomAttribute(newObj.data, formats, pfb_8, pfb_8.Format_Flags)
+						elif polyType == 35:
+							createCustomAttribute(newObj.data, formats, pfb_35, pfb_35.Format_Flags)
 
-					context.collection.objects.link(newObj)
+						context.collection.objects.link(newObj)
 
-					log.info("Created new B3D object: {}.".format(newObj.name))
+						log.info("Created new B3D object: {}.".format(newObj.name))
+					else:
+						polyObj[consts.BLOCK_TYPE] = polyType
+						polyObj.parent = vertObj
+						if polyType != 8:
+							setAllObjsByType(context, polyObj, polyclass)
+						formats = [2]*len(polyObj.data.polygons)
+						if polyType == 8:
+							createCustomAttribute(polyObj.data, formats, pfb_8, pfb_8.Format_Flags)
+						elif polyType == 35:
+							createCustomAttribute(polyObj.data, formats, pfb_35, pfb_35.Format_Flags)
+
+						log.info("Cast existing B3D object: {}.".format(polyObj.name))
+
+				else:
+					log.info("Selected object {} is not Mesh. Changes not applied.".format(polyObj.name))
+
+		elif castType == 'colis3D':
+
+			for polyObj in context.selected_objects:
+				if polyObj.type == 'MESH':
+
+					if toCopy:
+						newObj = polyObj.copy()
+						newObj.data = polyObj.data.copy()
+						newObj[consts.BLOCK_TYPE] = 23
+						newObj.parent = parentObj
+						setAllObjsByType(context, newObj, b_23)
+						context.collection.objects.link(newObj)
+						log.info("Created new B3D 3d collision: {}.".format(newObj.name))
+					else:
+						polyObj[consts.BLOCK_TYPE] = 23
+						polyObj.parent = parentObj
+						setAllObjsByType(context, polyObj, b_23)
+						log.info("Cast existing object to B3D 3d collision: {}.".format(polyObj.name))
 				else:
 					log.info("Selected object {} is not Mesh. Changes not applied.".format(polyObj.name))
 
@@ -564,32 +643,54 @@ class CastAddOperator(bpy.types.Operator):
 
 			for polyObj in context.selected_objects:
 				if polyObj.type == 'CURVE':
-					newObj = polyObj.copy()
-					newObj.data = polyObj.data.copy()
-					newObj[consts.BLOCK_TYPE] = 20
-					newObj.parent = parentObj
-					setAllObjsByType(context, newObj, b_20)
-					context.collection.objects.link(newObj)
-					log.info("Created new B3D 2d colision: {}.".format(newObj.name))
+
+					if toCopy:
+						newObj = polyObj.copy()
+						newObj.data = polyObj.data.copy()
+						newObj[consts.BLOCK_TYPE] = 20
+						newObj.data.bevel_depth = 0.05
+						newObj.data.extrude = 20
+						newObj.parent = parentObj
+						setAllObjsByType(context, newObj, b_20)
+						context.collection.objects.link(newObj)
+						log.info("Created new B3D 2d colision: {}.".format(newObj.name))
+					else:
+						polyObj[consts.BLOCK_TYPE] = 20
+						polyObj.data.bevel_depth = 0.05
+						polyObj.data.extrude = 20
+						polyObj.parent = parentObj
+						setAllObjsByType(context, polyObj, b_20)
+						log.info("Cast exiting object to B3D 2d colision: {}.".format(polyObj.name))
+
 				else:
 					log.info("Selected object {} is not Curve. Changes not applied.".format(polyObj.name))
 
-		elif castType == 'colis3D':
+		elif castType == 'way':
 
 			for polyObj in context.selected_objects:
-				if polyObj.type == 'MESH':
-					newObj = polyObj.copy()
-					newObj.data = polyObj.data.copy()
+				if polyObj.type == 'CURVE':
 
-					newObj[consts.BLOCK_TYPE] = 23
-					newObj.parent = parentObj
-					setAllObjsByType(context, newObj, b_23)
+					if toCopy:
+						newObj = polyObj.copy()
+						newObj.data = polyObj.data.copy()
+						newObj[consts.BLOCK_TYPE] = 50
+						newObj.data.bevel_depth = 0.3
+						newObj.data.bevel_mode = 'ROUND'
+						newObj.parent = parentObj
+						setAllObjsByType(context, newObj, b_50)
+						context.collection.objects.link(newObj)
+						log.info("Created new WAY Path: {}.".format(newObj.name))
+					else:
+						polyObj[consts.BLOCK_TYPE] = 50
+						polyObj.data.bevel_depth = 0.3
+						polyObj.data.bevel_mode = 'ROUND'
+						polyObj.parent = parentObj
+						setAllObjsByType(context, polyObj, b_50)
+						log.info("Cast existing object to WAY Path: {}.".format(polyObj.name))
 
-					context.collection.objects.link(newObj)
-
-					log.info("Created new B3D 3d collision: {}.".format(newObj.name))
 				else:
-					log.info("Selected object {} is not Mesh. Changes not applied.".format(polyObj.name))
+					log.info("Selected object {} is not Curve. Changes not applied.".format(polyObj.name))
+
 
 		return {'FINISHED'}
 
@@ -905,6 +1006,19 @@ class ApplyTransformsOperator(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+class ShowHide2DCollisionsOperator(bpy.types.Operator):
+	bl_idname = "wm.show_hide_2d_collisions_operator"
+	bl_label = "Show/Hide 2D collisions"
+	bl_description = "If all 2D collisions(20) are hidden, shows them. otherwise - hide."
+
+	def execute(self, context):
+		scene = context.scene
+		mytool = scene.my_tool
+
+		showHideObjByType(self, 20)
+
+		return {'FINISHED'}
+
 class ShowHideCollisionsOperator(bpy.types.Operator):
 	bl_idname = "wm.show_hide_collisions_operator"
 	bl_label = "Show/Hide collisions"
@@ -1175,16 +1289,19 @@ class OBJECT_PT_b3d_cast_add_panel(bpy.types.Panel):
 		layout = self.layout
 		mytool = context.scene.my_tool
 
-		layout.prop(mytool, 'parent_str')
+		split = layout.split(factor=0.75)
+		c = split.column()
+		c.prop(mytool, 'parent_str')
+		c = split.column()
+		c.operator("wm.set_parent_operator")
 
 		layout.prop(mytool, "castType_enum")
 		castType = mytool.castType_enum
+		layout.prop(mytool, "cast_copy")
 		box = layout.box()
 		if castType == 'mesh':
 			box.prop(mytool, "vertexBlock_enum")
 			box.prop(mytool, "polyBlock_enum")
-
-
 
 		box.operator("wm.cast_add_operator")
 
@@ -1395,11 +1512,12 @@ class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
 		mytool = scene.my_tool
 
 
-		layout.prop(mytool, "mirrorType_enum")
+		# layout.prop(mytool, "mirrorType_enum")
 
-		layout.operator("wm.mirror_objects_operator")
+		# layout.operator("wm.mirror_objects_operator")
 		layout.operator("wm.apply_transforms_operator")
 		layout.operator("wm.show_hide_collisions_operator")
+		layout.operator("wm.show_hide_2d_collisions_operator")
 		layout.operator("wm.show_hide_room_borders_operator")
 		layout.operator("wm.show_hide_generator_operator")
 
@@ -1450,61 +1568,62 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 		mytool = scene.my_tool
 
 		currentRes = int(mytool.selectedResModule)
-		curResModule = mytool.resModules[currentRes]
+		if currentRes != -1:
+			curResModule = mytool.resModules[currentRes]
 
-		box = self.layout.box()
+			box = self.layout.box()
 
-		rows = 2
-		row = box.row()
-		row.template_list("CUSTOM_UL_items", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
+			rows = 2
+			row = box.row()
+			row.template_list("CUSTOM_UL_items", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
 
-		col = row.column(align=True)
+			col = row.column(align=True)
 
-		props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
-		props.action = 'ADD'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "maskfiles"
-		props.customindex = "maskfiles_index"
+			props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
+			props.action = 'ADD'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "maskfiles"
+			props.customindex = "maskfiles_index"
 
-		props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
-		props.action = 'REMOVE'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "maskfiles"
-		props.customindex = "maskfiles_index"
+			props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
+			props.action = 'REMOVE'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "maskfiles"
+			props.customindex = "maskfiles_index"
 
-		col.separator()
+			col.separator()
 
-		props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
-		props.action = 'UP'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "maskfiles"
-		props.customindex = "maskfiles_index"
+			props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
+			props.action = 'UP'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "maskfiles"
+			props.customindex = "maskfiles_index"
 
-		props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
-		props.action = 'DOWN'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "maskfiles"
-		props.customindex = "maskfiles_index"
+			props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
+			props.action = 'DOWN'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "maskfiles"
+			props.customindex = "maskfiles_index"
 
-		#Maskfile edit
-		box = self.layout.box()
+			#Maskfile edit
+			box = self.layout.box()
 
-		maskfiles_index = scene.maskfiles_index
-		if len(curResModule.maskfiles):
-			curMaskfile = curResModule.maskfiles[maskfiles_index]
+			maskfiles_index = scene.maskfiles_index
+			if len(curResModule.maskfiles):
+				curMaskfile = curResModule.maskfiles[maskfiles_index]
 
-			box.prop(curMaskfile, "is_noload", text="Noload")
+				box.prop(curMaskfile, "is_noload", text="Noload")
 
-			split = box.split(factor=0.3)
-			split.prop(curMaskfile, "is_someint", text="?Someint?")
-			col = split.column()
-			col.prop(curMaskfile, "someint")
+				split = box.split(factor=0.3)
+				split.prop(curMaskfile, "is_someint", text="?Someint?")
+				col = split.column()
+				col.prop(curMaskfile, "someint")
 
-			col.enabled = curMaskfile.is_someint
+				col.enabled = curMaskfile.is_someint
 
 class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_textures_panel"
@@ -1524,63 +1643,64 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 		mytool = scene.my_tool
 
 		currentRes = int(mytool.selectedResModule)
-		curResModule = mytool.resModules[currentRes]
+		if currentRes != -1:
+			curResModule = mytool.resModules[currentRes]
 
-		box = self.layout.box()
+			box = self.layout.box()
 
-		rows = 2
-		row = box.row()
-		row.template_list("CUSTOM_UL_items", "textures_list", curResModule, "textures", scene, "textures_index", rows=rows)
+			rows = 2
+			row = box.row()
+			row.template_list("CUSTOM_UL_items", "textures_list", curResModule, "textures", scene, "textures_index", rows=rows)
 
-		col = row.column(align=True)
+			col = row.column(align=True)
 
-		props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
-		props.action = 'ADD'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "textures"
-		props.customindex = "textures_index"
+			props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
+			props.action = 'ADD'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "textures"
+			props.customindex = "textures_index"
 
-		props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
-		props.action = 'REMOVE'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "textures"
-		props.customindex = "textures_index"
+			props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
+			props.action = 'REMOVE'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "textures"
+			props.customindex = "textures_index"
 
-		col.separator()
+			col.separator()
 
-		props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
-		props.action = 'UP'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "textures"
-		props.customindex = "textures_index"
+			props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
+			props.action = 'UP'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "textures"
+			props.customindex = "textures_index"
 
-		props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
-		props.action = 'DOWN'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "textures"
-		props.customindex = "textures_index"
+			props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
+			props.action = 'DOWN'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "textures"
+			props.customindex = "textures_index"
 
-		#Texture edit
-		box = self.layout.box()
+			#Texture edit
+			box = self.layout.box()
 
-		textureIndex = scene.textures_index
-		if (len(curResModule.textures)):
-			curTexture = curResModule.textures[textureIndex]
+			textureIndex = scene.textures_index
+			if (len(curResModule.textures)):
+				curTexture = curResModule.textures[textureIndex]
 
-			box.prop(curTexture, "is_memfix", text="Memfix")
-			box.prop(curTexture, "is_noload", text="Noload")
-			box.prop(curTexture, "is_bumpcoord", text="Bympcoord")
+				box.prop(curTexture, "is_memfix", text="Memfix")
+				box.prop(curTexture, "is_noload", text="Noload")
+				box.prop(curTexture, "is_bumpcoord", text="Bympcoord")
 
-			split = box.split(factor=0.3)
-			split.prop(curTexture, "is_someint", text="?Someint?")
-			col = split.column()
-			col.prop(curTexture, "someint")
+				split = box.split(factor=0.3)
+				split.prop(curTexture, "is_someint", text="?Someint?")
+				col = split.column()
+				col.prop(curTexture, "someint")
 
-			col.enabled = curTexture.is_someint
+				col.enabled = curTexture.is_someint
 
 class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_materials_panel"
@@ -1600,153 +1720,154 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 		mytool = scene.my_tool
 
 		currentRes = int(mytool.selectedResModule)
-		curResModule = mytool.resModules[currentRes]
+		if currentRes != -1:
+			curResModule = mytool.resModules[currentRes]
 
-		box = self.layout.box()
+			box = self.layout.box()
 
-		rows = 2
-		row = box.row()
-		row.template_list("CUSTOM_UL_items", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
+			rows = 2
+			row = box.row()
+			row.template_list("CUSTOM_UL_items", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
 
-		col = row.column(align=True)
+			col = row.column(align=True)
 
-		props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
-		props.action = 'ADD'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "materials"
-		props.customindex = "materials_index"
+			props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
+			props.action = 'ADD'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "materials"
+			props.customindex = "materials_index"
 
-		props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
-		props.action = 'REMOVE'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "materials"
-		props.customindex = "materials_index"
+			props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
+			props.action = 'REMOVE'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "materials"
+			props.customindex = "materials_index"
 
-		col.separator()
+			col.separator()
 
-		props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
-		props.action = 'UP'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "materials"
-		props.customindex = "materials_index"
+			props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
+			props.action = 'UP'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "materials"
+			props.customindex = "materials_index"
 
-		props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
-		props.action = 'DOWN'
-		props.bname = "resModules"
-		props.bindex = currentRes
-		props.pname = "materials"
-		props.customindex = "materials_index"
+			props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
+			props.action = 'DOWN'
+			props.bname = "resModules"
+			props.bindex = currentRes
+			props.pname = "materials"
+			props.customindex = "materials_index"
 
-		#Material edit
-		box = self.layout.box()
+			#Material edit
+			box = self.layout.box()
 
-		textureIndex = scene.materials_index
-		if (len(curResModule.materials)):
-			curMaterial = curResModule.materials[textureIndex]
+			textureIndex = scene.materials_index
+			if (len(curResModule.materials)):
+				curMaterial = curResModule.materials[textureIndex]
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_reflect", text="Reflect")
-			col = split.column()
-			col.prop(curMaterial, "reflect")
-			col.enabled = curMaterial.is_reflect
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_reflect", text="Reflect")
+				col = split.column()
+				col.prop(curMaterial, "reflect")
+				col.enabled = curMaterial.is_reflect
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_specular", text="Specular")
-			col = split.column()
-			col.prop(curMaterial, "specular")
-			col.enabled = curMaterial.is_specular
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_specular", text="Specular")
+				col = split.column()
+				col.prop(curMaterial, "specular")
+				col.enabled = curMaterial.is_specular
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_transp", text="Transparency")
-			col = split.column()
-			col.prop(curMaterial, "transp")
-			col.enabled = curMaterial.is_transp
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_transp", text="Transparency")
+				col = split.column()
+				col.prop(curMaterial, "transp")
+				col.enabled = curMaterial.is_transp
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_rot", text="Rotation")
-			col = split.column()
-			col.prop(curMaterial, "rot")
-			col.enabled = curMaterial.is_rot
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_rot", text="Rotation")
+				col = split.column()
+				col.prop(curMaterial, "rot")
+				col.enabled = curMaterial.is_rot
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_col", text="Color")
-			col = split.column()
-			col.prop(curMaterial, "col")
-			col.enabled = curMaterial.is_col
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_col", text="Color")
+				col = split.column()
+				col.prop(curMaterial, "col")
+				col.enabled = curMaterial.is_col
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_tex", text="Texture TEX")
-			col = split.column()
-			col.prop(curMaterial, "tex")
-			col.enabled = curMaterial.is_tex
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_tex", text="Texture TEX")
+				col = split.column()
+				col.prop(curMaterial, "tex")
+				col.enabled = curMaterial.is_tex
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_ttx", text="Texture TTX")
-			col = split.column()
-			col.prop(curMaterial, "ttx")
-			col.enabled = curMaterial.is_ttx
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_ttx", text="Texture TTX")
+				col = split.column()
+				col.prop(curMaterial, "ttx")
+				col.enabled = curMaterial.is_ttx
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_itx", text="Texture ITX")
-			col = split.column()
-			col.prop(curMaterial, "itx")
-			col.enabled = curMaterial.is_itx
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_itx", text="Texture ITX")
+				col = split.column()
+				col.prop(curMaterial, "itx")
+				col.enabled = curMaterial.is_itx
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_att", text="Att")
-			col = split.column()
-			col.prop(curMaterial, "att")
-			col.enabled = curMaterial.is_att
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_att", text="Att")
+				col = split.column()
+				col.prop(curMaterial, "att")
+				col.enabled = curMaterial.is_att
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_msk", text="Maskfile")
-			col = split.column()
-			col.prop(curMaterial, "msk")
-			col.enabled = curMaterial.is_msk
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_msk", text="Maskfile")
+				col = split.column()
+				col.prop(curMaterial, "msk")
+				col.enabled = curMaterial.is_msk
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_power", text="Power")
-			col = split.column()
-			col.prop(curMaterial, "power")
-			col.enabled = curMaterial.is_power
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_power", text="Power")
+				col = split.column()
+				col.prop(curMaterial, "power")
+				col.enabled = curMaterial.is_power
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_coord", text="Coord")
-			col = split.column()
-			col.prop(curMaterial, "coord")
-			col.enabled = curMaterial.is_coord
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_coord", text="Coord")
+				col = split.column()
+				col.prop(curMaterial, "coord")
+				col.enabled = curMaterial.is_coord
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_env", text="Env")
-			col = split.column()
-			col.prop(curMaterial, "envId")
-			col.prop(curMaterial, "env")
-			col.enabled = curMaterial.is_env
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_env", text="Env")
+				col = split.column()
+				col.prop(curMaterial, "envId")
+				col.prop(curMaterial, "env")
+				col.enabled = curMaterial.is_env
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_rotPoint", text="Rotation Center")
-			col = split.column()
-			col.prop(curMaterial, "rotPoint")
-			col.enabled = curMaterial.is_rotPoint
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_rotPoint", text="Rotation Center")
+				col = split.column()
+				col.prop(curMaterial, "rotPoint")
+				col.enabled = curMaterial.is_rotPoint
 
-			split = box.split(factor=0.3)
-			split.prop(curMaterial, "is_move", text="Movement")
-			col = split.column()
-			col.prop(curMaterial, "move")
-			col.enabled = curMaterial.is_move
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_move", text="Movement")
+				col = split.column()
+				col.prop(curMaterial, "move")
+				col.enabled = curMaterial.is_move
 
-			box.prop(curMaterial, "is_noz", text="No Z")
-			box.prop(curMaterial, "is_nof", text="No F")
-			box.prop(curMaterial, "is_notile", text="No tiling")
-			box.prop(curMaterial, "is_notileu", text="No tiling U")
-			box.prop(curMaterial, "is_notilev", text="No tiling V")
-			box.prop(curMaterial, "is_alphamirr", text="Alphamirr")
-			box.prop(curMaterial, "is_bumpcoord", text="Bympcoord")
-			box.prop(curMaterial, "is_usecol", text="UseCol")
-			box.prop(curMaterial, "is_wave", text="Wave")
+				box.prop(curMaterial, "is_noz", text="No Z")
+				box.prop(curMaterial, "is_nof", text="No F")
+				box.prop(curMaterial, "is_notile", text="No tiling")
+				box.prop(curMaterial, "is_notileu", text="No tiling U")
+				box.prop(curMaterial, "is_notilev", text="No tiling V")
+				box.prop(curMaterial, "is_alphamirr", text="Alphamirr")
+				box.prop(curMaterial, "is_bumpcoord", text="Bympcoord")
+				box.prop(curMaterial, "is_usecol", text="UseCol")
+				box.prop(curMaterial, "is_wave", text="Wave")
 
 class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_misc_panel"
@@ -1774,6 +1895,7 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
 
 _classes = [
 	PanelSettings,
+	SetParentOperator,
 	SingleAddOperator,
 	TemplateAddOperator,
 	CastAddOperator,
@@ -1793,6 +1915,7 @@ _classes = [
 	FixVertsOperator,
 	MirrorAndFlipObjectsOperator,
 	ApplyTransformsOperator,
+	ShowHide2DCollisionsOperator,
 	ShowHideCollisionsOperator,
 	ShowHideRoomBordersOperator,
 	ShowLODOperator,

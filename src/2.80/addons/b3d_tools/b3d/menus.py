@@ -42,6 +42,7 @@ class HTImportPreferences(AddonPreferences):
         row = layout.row()
         row.prop(self, 'COMMON_RES_Path', expand=True)
 
+
 class ImportB3D(Operator, ImportHelper):
     '''Import from B3D file format (.b3d)'''
     bl_idname = 'import_scene.kotr_b3d'
@@ -183,27 +184,19 @@ class ImportB3D(Operator, ImportHelper):
             row.prop(block, 'state', text=block['name'], toggle=True)
 
 
-class ExportB3D(Operator, ImportHelper):
+class ExportB3D(Operator, ExportHelper):
     '''Export to B3D file format (.b3d)'''
     bl_idname = 'export_scene.kotr_b3d'
     bl_label = 'Export B3D'
 
     filename_ext = '.b3d'
+
     filter_glob : StringProperty(default='*.b3d', options={'HIDDEN'})
-
-    # generate_pro_file : BoolProperty(name='Generate .pro file',
-    #                     description='Generate .pro file, which can used'\
-    #                                 'to assembly the resources file', default=False)
-
-    # textures_path : StringProperty(
-    #     name="Textures directory",
-    #     default="txr\\",
-    #     )
 
     def execute(self, context):
         print('Exporting file', self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple())
-        export_b3d.write(self.filepath+'.b3d', context, self, self.filepath)
+        export_b3d.write(context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished exporting in', t, 'seconds')
         self.report({'INFO'}, 'B3D exported')
@@ -221,9 +214,10 @@ class ImportRAW(Operator, ImportHelper):
         type=OperatorFileListElement,
         options={'HIDDEN', 'SKIP_SAVE'},
     )
-    filter_glob : StringProperty(default='*.raw', options={'HIDDEN'})
 
     directory: StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+
+    filter_glob : StringProperty(default='*.raw', options={'HIDDEN'})
 
     def execute(self, context):
         for rawfile in self.files:
@@ -239,19 +233,72 @@ class ImportRAW(Operator, ImportHelper):
         return {'FINISHED'}
 
 
+class ImportWAY(Operator, ImportHelper):
+    """This appears in the tooltip of the operator and in the generated docs"""
+    bl_idname = "import_scene.kotr_way"
+    bl_label = "Import WAY"
+
+    filename_ext = '.way'
+
+    files: CollectionProperty(
+        type=OperatorFileListElement,
+        options={'HIDDEN', 'SKIP_SAVE'},
+    )
+
+    directory: StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+
+    filter_glob : StringProperty(default='*.way',options={'HIDDEN'})  # Max internal buffer length, longer would be clamped.
+
+    def execute(self, context):
+        from . import import_way
+
+        for wayfile in self.files:
+            filepath = os.path.join(self.directory, wayfile.name)
+            with open(filepath, 'rb') as file:
+                import_way.read(file, context, filepath)
+
+        return {'FINISHED'}
+
+
+class ExportWAY(Operator, ExportHelper):
+    """This appears in the tooltip of the operator and in the generated docs"""
+    bl_idname = "export_scene.kotr_way"
+    bl_label = "Export WAY"
+
+    filename_ext = '.way'
+
+    filter_glob : StringProperty(default='*.way', options={'HIDDEN'})  # Max internal buffer length, longer would be clamped.
+
+    def execute(self, context):
+        from . import export_way
+
+        print('Exporting file', self.filepath)
+        t = time.mktime(datetime.datetime.now().timetuple())
+        export_way.write(context, self, self.filepath)
+        t = time.mktime(datetime.datetime.now().timetuple()) - t
+        print('Finished exporting in', t, 'seconds')
+        self.report({'INFO'}, 'WAY exported')
+        return {'FINISHED'}
+
+
 def menu_func_import(self, context):
     self.layout.operator(ImportRAW.bl_idname, text='KOTR RAW (.raw)')
+    self.layout.operator(ImportWAY.bl_idname, text="KOTR WAY (.way)")
     self.layout.operator(ImportB3D.bl_idname, text='KOTR B3D (.b3d)')
 
 
 def menu_func_export(self, context):
-   self.layout.operator(ExportB3D.bl_idname, text='KOTR B3D (.b3d)')
+    self.layout.operator(ExportWAY.bl_idname, text="KOTR WAY (.way)")
+    self.layout.operator(ExportB3D.bl_idname, text='KOTR B3D (.b3d)')
+
 
 _classes = [
     HTImportPreferences,
     ImportB3D,
+    ImportWAY,
     ImportRAW,
-    ExportB3D
+    ExportB3D,
+    ExportWAY
 ]
 
 

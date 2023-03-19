@@ -156,14 +156,6 @@ def uv_from_vert_average(uv_layer, v):
     else:
         return None
 
-
-def MsgBox(label = "", title = "Error", icon = 'ERROR'):
-
-    def draw(self, context):
-        self.layout.label(label)
-
-    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
-
 def export_pro(file, textures_path):
 	file = open(myFile_pro+'.pro','w')
 
@@ -411,7 +403,7 @@ def writeBoundSphere(file, center, rad):
 	file.write(struct.pack("<3f", *center))
 	file.write(struct.pack("<f", rad))
 
-def write(file, context, op, filepath):
+def write(context, op, filepath):
 
 	global myFile_pro
 	myFile_pro = filepath

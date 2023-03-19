@@ -10,7 +10,9 @@ if "bpy" in locals():
     importlib.reload(class_descr)
     importlib.reload(classes)
     importlib.reload(import_b3d)
+    importlib.reload(import_way)
     importlib.reload(export_b3d)
+    importlib.reload(export_way)
     importlib.reload(imghelp)
     importlib.reload(panel)
     importlib.reload(menus)
@@ -21,7 +23,9 @@ else:
         class_descr,
         classes,
         import_b3d,
+        import_way,
         export_b3d,
+        export_way,
         imghelp,
         panel,
         menus

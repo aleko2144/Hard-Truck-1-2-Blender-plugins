@@ -54,11 +54,16 @@ from .class_descr import (
 	b_37,
 	b_39,
 	b_40,
+
 	pfb_8,
 	pfb_28,
 	pfb_35,
 	pvb_8,
-	pvb_35
+	pvb_35,
+	# way objs
+	b_50,
+	b_51,
+	b_52
 )
 
 from .common import (
@@ -98,9 +103,7 @@ def createTypeClass(zclass, multipleEdit = True):
 
 	block_num = zclass.__name__.split('_')[1]
 	attributes = {
-		'__annotations__' : {
-
-		}
+		'__annotations__' : {}
 	}
 	for attr in attrs:
 		obj = zclass.__dict__[attr]
@@ -345,6 +348,11 @@ s_block_37 = createTypeClass(b_37, False)
 s_block_39 = createTypeClass(b_39, False)
 s_block_40 = createTypeClass(b_40, False)
 
+s_block_50 = createTypeClass(b_50, False)
+s_block_51 = createTypeClass(b_51, False)
+s_block_52 = createTypeClass(b_52, False)
+
+
 block_1 = createTypeClass(b_1)
 block_2 = createTypeClass(b_2)
 # block_3 = createTypeClass(b_3)
@@ -382,6 +390,10 @@ block_36 = createTypeClass(b_36)
 block_37 = createTypeClass(b_37)
 block_39 = createTypeClass(b_39)
 block_40 = createTypeClass(b_40)
+
+block_50 = createTypeClass(b_50)
+block_51 = createTypeClass(b_51)
+block_52 = createTypeClass(b_52)
 
 _classes = [
 	s_block_1,
@@ -422,6 +434,10 @@ _classes = [
 	s_block_39,
 	s_block_40,
 
+	s_block_50,
+	s_block_51,
+	s_block_52,
+
 	block_1,
 	block_2,
 	# block_3,
@@ -459,6 +475,10 @@ _classes = [
 	block_37,
 	block_39,
 	block_40,
+
+	block_50,
+	block_51,
+	block_52,
 
 	perFaceBlock_8,
 	perFaceBlock_28,

@@ -13,6 +13,14 @@ from ..consts import (
     EMPTY_NAME
 )
 
+def getNotNumericName(name):
+    reIsCopy = re.compile(r'\|')
+    matchInd = reIsCopy.search(name)
+    result = name
+    if matchInd:
+        result = name[matchInd.span()[0]+1:]
+    return result
+
 def getNonCopyName(name):
     reIsCopy = re.compile(r'\.[0-9]*$')
     matchInd = reIsCopy.search(name)
@@ -333,18 +341,6 @@ def getSingleCoundingSphere(obj, local = False):
         p1 = obj.matrix_world @ Vector(obj.bound_box[0])
     rad = getPythagorLength(center, p1)
     return [center, rad]
-
-
-def recalcToLocalCoord(center, vertexes):
-    newVertexes = []
-    for vert in vertexes:
-        newVert = [0.0,0.0,0.0]
-        newVert[0] = vert[0] - center[0]
-        newVert[1] = vert[1] - center[1]
-        newVert[2] = vert[2] - center[2]
-        newVertexes.append(newVert)
-
-    return newVertexes
 
 def getCenterCoord(vertices):
     if len(vertices) == 0:

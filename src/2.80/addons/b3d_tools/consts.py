@@ -53,6 +53,9 @@ blockTypeList = [
     ('37', "37(Vertexes)", "Vertex block (HT2)"),
     ('39', "39(Unk?)", "Locator?"),
     ('40', "40(Generator)", "Object generator"),
+    # ('50', "50(Path)", "Path"),
+    ('51', "51(Unoriented point)", "Unoriented point"),
+    ('52', "52(Oriented point)", "Oriented point"),
 ]
 
 collisionTypeList = [
