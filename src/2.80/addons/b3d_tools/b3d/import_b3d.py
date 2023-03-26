@@ -62,10 +62,12 @@ from .scripts import (
 )
 
 
-from .imghelp import TXRtoTGA32
-from .imghelp import parsePLM
+from .imghelp import (
+    TXRtoTGA32,
+    MSKtoTGA32,
+    parsePLM
+)
 from .common import (
-    createMaterials,
     getColPropertyByName,
     getColPropertyIndexByName,
     getUsedFaces,
@@ -75,7 +77,9 @@ from .common import (
     readCString,
     transformVertices,
     getPolygonsBySelectedVertices,
-    getCenterCoord
+    getCenterCoord,
+    updateColorPreview,
+    getCurrentRESModule
 )
 
 from ..common import (
@@ -108,7 +112,7 @@ def thread_import_b3d(self, files, context):
         print('Importing file', filepath)
         t = time.mktime(datetime.datetime.now().timetuple())
         with open(filepath, 'rb') as file:
-            read(file, context, self, filepath)
+            readB3D(file, context, self, filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished importing in', t, 'seconds')
 
@@ -353,98 +357,160 @@ def parseRAW(file, context, op, filepath):
     b3dObj2 = bpy.data.objects.new(basename2, b3dMesh2)
     context.collection.objects.link(b3dObj2)
 
-def importTextures(filepath, resModules, self):
 
-    commonPalette = []
+def createMaterials(resModule, commonResModule):
 
-    noextPath, ext = os.path.splitext(filepath)
+    materialList = resModule.materials
 
-    resPath = ''
-    if len(self.res_location) > 0 and os.path.exists(self.res_location):
-        resPath = self.res_location
-    else:
-        resPath = os.path.join(noextPath + ".res")
+    for material in materialList:
+        createMaterial(resModule, commonResModule, material)
 
-    res_basepath = os.path.dirname(resPath)
-    res_basename = os.path.basename(resPath)[:-4] #cut extension
+#https://blender.stackexchange.com/questions/118646/add-a-texture-to-an-object-using-python-and-blender-2-8
+def createMaterial(resModule, commonResModule, mat):
 
-    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+    textureList = resModule.textures
+    palette = commonResModule.palette_colors
+    if len(resModule.palette_colors) > 0:
+        palette = resModule.palette_colors
+
+
+    newMat = bpy.data.materials.get("{}_{}".format(resModule.value, mat.name))
+    if newMat is None:
+        newMat = bpy.data.materials.new(name="{}_{}".format(resModule.value, mat.name))
+    newMat.use_nodes = True
+    bsdf = newMat.node_tree.nodes["Principled BSDF"]
+
+    for link in bsdf.inputs['Base Color'].links:
+        newMat.node_tree.nodes.remove(link.from_node)
+
+    if (mat.is_tex and int(mat.tex) > 0):
+        texidx = mat.tex
+        path = textureList[texidx-1].name
+        texImage = newMat.node_tree.nodes.new("ShaderNodeTexImage")
+        texImage.image = bpy.data.images.get(path)
+        newMat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+
+    elif mat.is_col and int(mat.col) > 0:
+        texColor = newMat.node_tree.nodes.new("ShaderNodeRGB")
+        texColor.outputs['Color'].default_value = palette[mat.col-1].value
+        newMat.node_tree.links.new(bsdf.inputs['Base Color'], texColor.outputs['Color'])
+
+
+def loadTexturefiles(basedir, resModule, image_format, convert_txr):
+    for texture in resModule.textures:
+        noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.name))[0]
+        if convert_txr:
+            TXRtoTGA32("{}.{}".format(noExtPath, "txr"))
+        imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
+        imgPath = "{}.{}".format(noExtPath, image_format)
+        texture.name = imgName
+        img = bpy.data.images.get(imgName)
+        if img is not None:
+            bpy.data.images.remove(img)
+        img = bpy.data.images.load(imgPath)
+        texture.id_value = img
+
+
+def loadMaskfiles(basedir, resModule, image_format, convert_txr):
+    for maskfile in resModule.maskfiles:
+        noExtPath = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.name))[0]
+        if convert_txr:
+            MSKtoTGA32("{}.{}".format(noExtPath, "msk"))
+        imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
+        imgPath = "{}.{}".format(noExtPath, image_format)
+        maskfile.name = imgName
+        img = bpy.data.images.get(imgName)
+        if img is not None:
+            bpy.data.images.remove(img)
+        img = bpy.data.images.load(imgPath)
+        maskfile.id_value = img
+
+def loadMaterials(resModule):
+    for mat in resModule.materials:
+        material = bpy.data.materials.get("{}_{}".format(resModule.value, mat.name))
+        if material is not None:
+            mat.id_value = material
+
+def loadPaletteFiles(basedir, resModule):
+    if resModule.palette_name != "":
+        palettePath = os.path.join(basedir, "PALETTEFILES", resModule.palette_subpath, resModule.palette_name)
+        parsePLM(resModule, palettePath)
+        for i, pal_color in enumerate(resModule.palette_colors):
+            updateColorPreview(resModule, i)
+
+
+def importResources(filepath, resModules, unpack_res = True, image_format = 'tga', convert_txr = True):
+
+    res_basepath = os.path.dirname(filepath)
+    res_basename = os.path.basename(filepath)[:-4] #cut extension
+
+    unpackPath = os.path.join(res_basepath, res_basename + r"_unpack")
 
     resIndex = getColPropertyIndexByName(resModules, res_basename)
     resModule = None
-    print(resIndex)
+
     if resIndex >= 0:
         resModule = resModules[resIndex]
     if resModule:
-        #delete old materials
-        for m in [cn.value for cn in resModule.materials]:
-            mat = bpy.data.materials.get("{}_{}".format(res_basename, m))
-            if mat:
-                bpy.data.materials.remove(mat)
         #delete RES module
         print("Removing resModule " + str(resIndex))
         resModules.remove(resIndex)
-        commonResIndex = getColPropertyIndexByName(resModules, "common")
-        resModules.remove(commonResIndex)
 
     resModule = resModules.add()
     resModule.value = res_basename
 
-    if self.to_import_textures:
-        if self.to_unpack_res:
-            unpackRES(resModule, resPath, True)
-        else:
-            unpackRES(resModule, resPath, False)
+    unpackRES(resModule, filepath, unpack_res)
 
-    if self.to_import_textures and not os.path.exists(commonResPath):
+    loadTexturefiles(unpackPath, resModule, image_format, convert_txr)
+
+    loadMaskfiles(unpackPath, resModule, image_format, convert_txr)
+
+    loadPaletteFiles(unpackPath, resModule)
+
+
+def readRES(file, context, self, filepath):
+
+    scene = context.scene
+    mytool = scene.my_tool
+
+    resModules = getattr(mytool, "resModules")
+    res_basename = os.path.basename(filepath)[:-4] #cut extension
+
+    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+
+    if not os.path.exists(commonResPath):
         self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
-        self.to_import_textures = False
+        return
 
-    if self.to_import_textures and os.path.exists(commonResPath):
-        # commonPath = os.path.join(r"D:\_PROJECTS\DB2\Hard Truck 2", r"COMMON")
-        # commonResPath = os.path.join(commonPath, r"COMMON.RES")
-        commonPath = os.path.join(os.path.dirname(commonResPath))
-        palettePath = os.path.join(commonPath, r"COMMON_unpack/PALETTEFILES/common.plm")
-        unpackPath = os.path.join(res_basepath, res_basename + r"_unpack")
-        materialsPath = os.path.join(unpackPath, r"MATERIALS", "MATERIALS.txt")
-        colorsPath = os.path.join(unpackPath, r"COLORS", "COLORS.txt")
-        texturePath = os.path.join(unpackPath, r"TEXTUREFILES")
-        maskfiles = os.path.join(unpackPath, r"MASKFILES")
+    commonResModule = getColPropertyByName(resModules, "COMMON")
 
-        #1. Получить общую для большинства палитру Common.plm
-        if os.path.exists(commonResPath):
-            # commonResModule = getColPropertyByName(resModules, "common")
-            # if not commonResModule:
-            commonResModule = resModules.add()
-            commonResModule.value = "common"
-            unpackRES(commonResModule, commonResPath)
-            commonPalette = parsePLM(palettePath)
-        else:
-            log.warning("Failed to unpack COMMON.RES")
+    if commonResModule is None or commonResPath == filepath or self.to_reload_common:
+        importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
 
-        #2. Распаковка .RES и конвертация .txr и .msk в .tga 32bit
-        # txrFolder = os.path.join(texturePath, "txr")
-        if self.to_convert_txr:
-            folder_content = os.listdir(texturePath)
-            reTXR = re.compile(r'\.txr')
-            for path in folder_content:
-                fullpath = os.path.join(texturePath, path)
-                if reTXR.search(path):
-                    TXRtoTGA32(fullpath)
+    importResources(filepath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
 
-        #3. Парсинг и добавление материалов
-        createMaterials(resModule, commonPalette, texturePath, self.textures_format)
+    resModule = getColPropertyByName(resModules, res_basename)
+    commonResModule = getColPropertyByName(resModules, "COMMON")
 
-def read(file, context, self, filepath):
+    createMaterials(resModule, commonResModule)
+
+    loadMaterials(resModule)
+    loadMaterials(commonResModule)
+
+
+def readB3D(file, context, self, filepath):
     if file.read(3) == b'b3d':
         log.info("correct file")
     else:
         log.error("b3d error")
+    scene = context.scene
+    mytool = scene.my_tool
 
     commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
 
-    scene = context.scene
-    mytool = scene.my_tool
+    if self.to_import_textures and not os.path.exists(commonResPath):
+        self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
+        self.to_import_textures = False
 
     #skip to materials list
     file.seek(21,1)
@@ -454,14 +520,11 @@ def read(file, context, self, filepath):
 
     resModules = getattr(mytool, "resModules")
 
-    importTextures(filepath, resModules, self)
-
     noextPath, ext = os.path.splitext(filepath)
     basepath = os.path.dirname(filepath)
     basename = os.path.basename(filepath)[:-4] #cut extension
 
 
-    #Пути
     resPath = ''
     if len(self.res_location) > 0 and os.path.exists(self.res_location):
         resPath = self.res_location
@@ -471,9 +534,20 @@ def read(file, context, self, filepath):
     res_basepath = os.path.dirname(resPath)
     res_basename = os.path.basename(resPath)[:-4] #cut extension
 
-    resModule = getColPropertyByName(resModules, res_basename)
+    if self.to_import_textures:
 
-    # commonPath = os.path.join(bpy.context.preferences.addons['import_b3d'].preferences.COMMON_RES_Path, r"COMMON")
+        commonResModule = getColPropertyByName(resModules, "COMMON")
+
+        if commonResModule is None or commonResPath == resPath:
+            importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
+            commonResModule = getColPropertyByName(resModules, "COMMON")
+
+        importResources(resPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
+
+        resModule = getColPropertyByName(resModules, res_basename)
+
+        createMaterials(resModule, commonResModule)
+
 
     blocksToImport = self.blocks_to_import
 
@@ -994,7 +1068,7 @@ def read(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1005,7 +1079,7 @@ def read(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
                             b3dMesh.materials.append(mat)
 
 
@@ -1714,7 +1788,7 @@ def read(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1724,7 +1798,7 @@ def read(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].value)]
+                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
                             b3dMesh.materials.append(mat)
 
                 createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
@@ -2111,7 +2185,7 @@ def read(file, context, self, filepath):
                 # createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
                 if self.to_import_textures:
-                    mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texNum)].value)]
+                    mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texNum)].name)]
                     b3dMesh.materials.append(mat)
 
 
@@ -2425,7 +2499,7 @@ def saveMaterial(resModule, materialStr):
     params = nameSplit[1:]
 
     material = resModule.materials.add()
-    material.value = name
+    material.name = name
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
@@ -2453,15 +2527,7 @@ def saveMaterial(resModule, materialStr):
                 setattr(material, "envId", int(envid))
         i+=1
 
-def saveMaskfile(resModule, maskfileStr):
-    nameSplit = maskfileStr.split(" ")
-    rawName = nameSplit[0]
-    params = nameSplit[1:]
-
-    name = rawName.split("\\")[-1][:-4]
-
-    maskfile = resModule.maskfiles.add()
-    maskfile.value = name
+def saveMaskfileParams(maskfile, params):
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
@@ -2478,16 +2544,7 @@ def saveMaskfile(resModule, maskfileStr):
                 setattr(maskfile, "someint", someInt)
         i+=1
 
-def saveTexture(resModule, textueStr):
-    nameSplit = textueStr.split(" ")
-    rawName = nameSplit[0]
-    params = nameSplit[1:]
-
-    name = rawName.split("\\")[-1][:-4]
-    log.debug(name)
-
-    texture = resModule.textures.add()
-    texture.value = name
+def saveTextureParams(texture, params):
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
@@ -2505,7 +2562,7 @@ def saveTexture(resModule, textueStr):
         i+=1
 
 
-def unpackRES(resModule, filepath, saveOnDisk = True, ):
+def unpackRES(resModule, filepath, saveOnDisk = True):
     log.info("Unpacking {}:".format(filepath))
 
     # filename, resExtension = os.path.splitext(filepath)
@@ -2520,7 +2577,6 @@ def unpackRES(resModule, filepath, saveOnDisk = True, ):
         while 1:
             category = readCString(resFile)
             if(len(category) > 0):
-                log.info(category)
                 resSplit = category.split(" ")
                 id = resSplit[0]
                 cnt = int(resSplit[1])
@@ -2528,79 +2584,65 @@ def unpackRES(resModule, filepath, saveOnDisk = True, ):
                 log.info("Element count in category is {}.".format(cnt))
                 binfilePath = None
                 if cnt > 0:
-                    elements = []
                     log.info("Start processing...")
                     curfolder = os.path.join(resdir,id)
-                    if id == "COLORS" or id == "MATERIALS" or id == "SOUNDS":
+                    if id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
+                        binfilePath = os.path.join(curfolder, "{}.txt".format(id))
                         if saveOnDisk:
-                            binfilePath = os.path.join(curfolder, "{}.txt".format(id))
                             binfileBase = os.path.dirname(binfilePath)
                             binfileBase = Path(binfileBase)
                             binfileBase.mkdir(exist_ok=True, parents=True)
-                        rawStrings = []
                         for i in range(cnt):
                             rawString = readCString(resFile)
-                            rawStrings.append(rawString)
-                        if id == "MATERIALS":
                             if saveOnDisk:
                                 with open(binfilePath, "wb") as outFile:
-                                    for rawString in rawStrings:
-                                        saveMaterial(resModule, rawString)
-                                        # nameSplit = rawString.split(" ")
-                                        # name = nameSplit[0]
-                                        # params = " ".join(nameSplit[1:])
-                                        # unpacked.materials.append(name)
-                                        # unpacked.materialParams.append(params)
-                                        outFile.write((rawString+"\n").encode("UTF-8"))
-                            else:
-                                for rawString in rawStrings:
-                                    saveMaterial(resModule, rawString)
-                                    # nameSplit = rawString.split(" ")
-                                    # name = nameSplit[0]
-                                    # params = " ".join(nameSplit[1:])
-                                    # unpacked.materials.append(name)
-                                    # unpacked.materialParams.append(params)
-                        elif id == "COLORS":
-                            if saveOnDisk:
-                                with open(binfilePath, "wb") as outFile:
-                                    for rawString in rawStrings:
-                                        # unpacked.colors.append(rawString)
-                                        outFile.write((rawString+"\n").encode("UTF-8"))
-                            else:
-                                for rawString in rawStrings:
-                                    pass
-                                    # unpacked.colors.append(rawString)
-                        else:
-                            if saveOnDisk:
-                                with open(binfilePath, "wb") as outFile:
-                                    for rawString in rawStrings:
-                                        outFile.write((rawString+"\n").encode("UTF-8"))
-                    else: #TEXTUREFILES and MASKFILES
-                        rawStrings = []
+                                    outFile.write((rawString+"\n").encode("UTF-8"))
+
+                            if id == "MATERIALS":
+                                saveMaterial(resModule, rawString)
+
+                    else: #PALETTEFILES, SOUNDFILES, BACKFILES, MASKFILES, TEXTUREFILES
                         for i in range(cnt):
                             rawString = readCString(resFile)
-                            rawStrings.append(rawString)
 
                             nameSplit = rawString.split(" ")
                             fullname = nameSplit[0]
-                            lastpath = fullname.split("\\")
-                            name = "\\".join(lastpath[len(lastpath)-1:])
+                            params = ""
+                            if len(params) > 1:
+                                params = nameSplit[1]
+                            pathSplit = fullname.split("\\")
+                            name = pathSplit[-1]
+                            subpath = ""
+                            if len(pathSplit) > 1:
+                                subpath = "\\".join(pathSplit[:-1])
+
                             sectionSize = struct.unpack("<i	",resFile.read(4))[0]
                             bytes = resFile.read(sectionSize)
+
+                            binfilePath = os.path.join(curfolder, "{}".format(fullname))
                             if saveOnDisk:
-                                binfilePath = os.path.join(curfolder, "{}".format(name))
                                 binfileBase = os.path.dirname(binfilePath)
                                 binfileBase = Path(binfileBase)
                                 binfileBase.mkdir(exist_ok=True, parents=True)
                                 with open(binfilePath, "wb") as binfile:
                                     log.info("Saving file {}".format(binfile.name))
                                     binfile.write(bytes)
-                        if id == "TEXTUREFILES":
-                            for rawString in rawStrings:
-                                saveTexture(resModule, rawString)
-                        if id == "MASKFILES":
-                            for rawString in rawStrings:
-                                saveMaskfile(resModule, rawString)
+
+                            if id == "TEXTUREFILES":
+                                texture = resModule.textures.add()
+                                texture.name = name
+                                texture.subpath = subpath
+                                saveTextureParams(texture, params)
+
+                            elif id == "MASKFILES":
+                                maskfile = resModule.maskfiles.add()
+                                maskfile.name = name
+                                maskfile.subpath = subpath
+                                saveMaskfileParams(maskfile, params)
+
+                            elif id == "PALETTEFILES":
+                                resModule.palette_subpath = subpath
+                                resModule.palette_name = name
                 else:
                     log.info("Skip category")
             else:

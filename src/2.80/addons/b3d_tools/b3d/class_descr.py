@@ -28,6 +28,14 @@ from ..consts import (
 	LEVEL_GROUP
 )
 
+from .common import (
+	getColPropertyIndex,
+	getColPropertyByName,
+	getCurrentRESModule,
+	getCurrentRESIndex,
+	updateColorPreview
+)
+
 # Dynamic block exmaple
 # block_5 = type("block_5", (bpy.types.PropertyGroup,), {
 #     '__annotations__': {
@@ -79,15 +87,127 @@ class ActiveBlock(bpy.types.PropertyGroup):
 class FloatBlock(bpy.types.PropertyGroup):
     value: FloatProperty()
 
+
+def update_palette_index(self, context):
+
+	index = getColPropertyIndex(self)
+	resModule = getCurrentRESModule()
+	if resModule is not None:
+		updateColorPreview(resModule, index)
+
+def getImageIndexInModule(field, imageName):
+	mytool = bpy.context.scene.my_tool
+
+	resModule = getCurrentRESModule()
+	if resModule is not None:
+		for i, t in enumerate(getattr(resModule, field)): #maskfiles, textures, materials
+			if t.id_value and t.id_value.name == imageName:
+				return i
+		return -1
+
+def callback_only_maskfiles(self, context):
+	mytool = bpy.context.scene.my_tool
+
+	ind = getCurrentRESIndex()
+	if(ind > -1):
+		return (getImageIndexInModule('maskfiles', context.name) > -1)
+
+
+def callback_only_materials(self, context):
+	mytool = bpy.context.scene.my_tool
+
+	ind = getCurrentRESIndex()
+	if(ind > -1):
+		return (getImageIndexInModule('materials', context.name) > -1)
+
+
+def callback_only_textures(self, context):
+	mytool = bpy.context.scene.my_tool
+
+	ind = getCurrentRESIndex()
+	if(ind > -1):
+		return (getImageIndexInModule('textures', context.name) > -1)
+
+
+def callback_only_colors(self, context):
+	mytool = bpy.context.scene.my_tool
+	resModules = mytool.resModules
+
+	resModule = getCurrentRESModule()
+	if resModule is not None:
+		commonResModule = getColPropertyByName(resModules, 'COMMON')
+
+		nameSplit = context.name.split('_')
+		if len(nameSplit) != 3:
+			return False
+		ind = -1
+		module = "COMMON"
+		try:
+			ind = int(nameSplit[2])
+		except:
+			return False
+		maxInd = len(commonResModule.palette_colors)
+		if len(resModule.palette_colors) > 0:
+			module = resModule.value
+			maxInd = len(resModule.palette_colors)
+
+		return nameSplit[0] == 'col' and nameSplit[1] == module and ind <= maxInd
+
+
+def setTexInd(self, context):
+	self.tex = getImageIndexInModule("textures", self.id_tex.name)
+
+def setMskInd(self, context):
+	self.msk = getImageIndexInModule("maskfiles", self.id_msk.name)
+
+def setMatInd(self, context):
+	self.att = getImageIndexInModule("materials", self.id_att.name)
+
+def setColInd(self, context):
+	if self.id_col is not None:
+		nameSplit = self.id_col.name.split('_')
+	ind = 0
+	try:
+		ind = int(nameSplit[2])
+	except:
+		pass
+	self.col = ind
+
+
+class PaletteColorBlock(bpy.types.PropertyGroup):
+	value: FloatVectorProperty(
+		name = 'Palette color',
+		subtype = 'COLOR',
+		default = (1, 1, 1, 1),
+		size = 4,
+		min = 0,
+		max = 1,
+		update = update_palette_index
+	)
+
+
 class MaskfileBlock(bpy.types.PropertyGroup):
-	value: StringProperty()
+	value: StringProperty(default = "")
+	subpath: StringProperty(default = "")
+	name: StringProperty(default = "")
+	id_value: PointerProperty(
+		name='Image',
+		type=bpy.types.Image
+	)
 
 	is_noload: BoolProperty(default=False)
 	is_someint: BoolProperty(default=False)
 	someint: IntProperty(default=0)
 
+
 class TextureBlock(bpy.types.PropertyGroup):
-	value: StringProperty()
+	value: StringProperty(default = "")
+	subpath: StringProperty(default = "")
+	name: StringProperty(default = "")
+	id_value: PointerProperty(
+		name='Image',
+		type=bpy.types.Image
+	)
 
 	is_memfix: BoolProperty(default=False)
 	is_noload: BoolProperty(default=False)
@@ -95,8 +215,14 @@ class TextureBlock(bpy.types.PropertyGroup):
 	is_someint: BoolProperty(default=False)
 	someint: IntProperty()
 
+
 class MaterialBlock(bpy.types.PropertyGroup):
-	value: StringProperty()
+	value: StringProperty(default = "")
+	name: StringProperty(default = "")
+	id_value: PointerProperty(
+		name='Material',
+		type=bpy.types.Material
+	)
 
 	is_reflect: BoolProperty(default=False)
 	reflect: FloatProperty(default=0.0)
@@ -111,21 +237,66 @@ class MaterialBlock(bpy.types.PropertyGroup):
 	rot: FloatProperty(default=0.0)
 
 	is_col: BoolProperty(default=False)
+	col_switch: BoolProperty(
+		name = 'Use dropdown',
+		description = 'Dropdown selection',
+		default = True
+	)
+	id_col: PointerProperty(
+		name='Colors',
+		type=bpy.types.Image,
+		poll=callback_only_colors,
+		update=setColInd
+	)
 	col: IntProperty(default=0)
 
 	is_tex: BoolProperty(default=False)
+	tex_type: EnumProperty(
+		name="Texture type",
+		items=[
+			('tex', "Tex", "Tex"),
+			('ttx', "Ttx", "Ttx"),
+			('itx', "Itx", "Itx"),
+		])
+	tex_switch: BoolProperty(
+		name = 'Use dropdown',
+		description = 'Dropdown selection',
+		default = True
+	)
+	id_tex: PointerProperty(
+		name='Texture',
+		type=bpy.types.Image,
+		poll=callback_only_textures,
+		update=setTexInd
+	)
 	tex: IntProperty(default=0)
 
-	is_ttx: BoolProperty(default=False)
-	ttx: IntProperty(default=0)
-
-	is_itx: BoolProperty(default=False)
-	itx: IntProperty(default=0)
-
 	is_att: BoolProperty(default=False)
+	att_switch: BoolProperty(
+		name = 'Use dropdown',
+		description = 'Dropdown selection',
+		default = True
+	)
+	id_att: PointerProperty(
+		name='Material',
+		type=bpy.types.Material,
+		poll=callback_only_materials,
+		update=setMatInd
+	)
 	att: IntProperty(default=0)
 
 	is_msk: BoolProperty(default=False)
+	msk_switch: BoolProperty(
+		name = 'Use dropdown',
+		description = 'Dropdown selection',
+		default = True
+	)
+	id_msk: PointerProperty(
+		name='Maskfile',
+		type=bpy.types.Image,
+		poll=callback_only_maskfiles,
+		update=setMskInd
+	)
 	msk: IntProperty(default=0)
 
 	is_power: BoolProperty(default=False)
@@ -155,10 +326,13 @@ class MaterialBlock(bpy.types.PropertyGroup):
 	is_wave: BoolProperty(default=False)
 
 class ResBlock(bpy.types.PropertyGroup):
-    value: StringProperty()
-    textures: CollectionProperty(type=TextureBlock)
-    materials: CollectionProperty(type=MaterialBlock)
-    maskfiles: CollectionProperty(type=MaskfileBlock)
+	value: StringProperty()
+	palette_subpath: StringProperty()
+	palette_name: StringProperty()
+	palette_colors: CollectionProperty(type=PaletteColorBlock)
+	textures: CollectionProperty(type=TextureBlock)
+	materials: CollectionProperty(type=MaterialBlock)
+	maskfiles: CollectionProperty(type=MaskfileBlock)
 
 borderSphereGroup = 'border_sphere'
 
@@ -1448,6 +1622,7 @@ def getClassDefByType(blockNum):
 _classes = [
 	ActiveBlock,
 	FloatBlock,
+	PaletteColorBlock,
 	TextureBlock,
 	MaskfileBlock,
 	MaterialBlock,

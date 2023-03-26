@@ -6,8 +6,12 @@ import sys
 
 from ..common import log
 
-def parsePLM(filepath):
-    colors = []
+from .common import (
+    hex_to_rgb
+)
+
+def parsePLM(resModule, filepath):
+    # colors = []
     with open(filepath, "rb") as plmFile:
         magic = plmFile.read(4).decode("UTF-8")
         palSize = struct.unpack("<I", plmFile.read(4))[0]
@@ -17,8 +21,10 @@ def parsePLM(filepath):
             R = struct.unpack("<B",plmFile.read(1))[0]
             G = struct.unpack("<B",plmFile.read(1))[0]
             B = struct.unpack("<B",plmFile.read(1))[0]
-            colors.append([R, G, B])
-    return colors
+
+            rgb_color = hex_to_rgb(R, G, B)
+            pal_color = resModule.palette_colors.add()
+            pal_color.value = rgb_color
 
 def paletteToColors(palette, indexes):
     colors = []

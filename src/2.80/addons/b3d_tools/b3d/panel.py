@@ -19,7 +19,8 @@ from .. import consts
 
 from .common import (
 	isRootObj,
-	getMytoolBlockNameByClass
+	getMytoolBlockNameByClass,
+	getColPropertyIndexByName
 )
 from .scripts import (
 	applyRemoveTransforms,
@@ -86,6 +87,14 @@ from .class_descr import (
 	pfb_8, pfb_28, pfb_35, pvb_8, pvb_35,
 	b_50,b_51,b_52,
 	ResBlock
+)
+
+from .common import (
+	getCurrentRESIndex
+)
+
+from .custom_UIList import (
+	drawListControls
 )
 
 
@@ -1550,6 +1559,37 @@ class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
 
 		layout.prop(mytool, "selectedResModule")
 
+
+class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
+	bl_idname = "OBJECT_PT_b3d_palette_panel"
+	bl_label = "Palette"
+	bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
+	bl_space_type = "VIEW_3D"
+	bl_region_type = getRegion()
+	bl_category = "b3d Tools"
+
+	@classmethod
+	def poll(self,context):
+		return context.object is not None
+
+	def draw(self, context):
+		layout = self.layout
+		scene = context.scene
+		mytool = scene.my_tool
+
+		resInd = getCurrentRESIndex()
+		if resInd != -1:
+			curResModule = mytool.resModules[resInd]
+
+			box = self.layout.box()
+
+			rows = 2
+			row = box.row()
+			row.template_list("CUSTOM_UL_colors", "palette_list", curResModule, "palette_colors", scene, "palette_index", type='GRID', columns = 2, rows=rows)
+
+			drawListControls(row, "custom.list_action_color", "resModules", resInd, "palette_colors", "palette_index")
+
+
 class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 	bl_idname = "OBJECT_PT_b3d_maskfiles_panel"
 	bl_label = "MSK-files"
@@ -1567,9 +1607,9 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		currentRes = int(mytool.selectedResModule)
-		if currentRes != -1:
-			curResModule = mytool.resModules[currentRes]
+		resInd = getCurrentRESIndex()
+		if resInd != -1:
+			curResModule = mytool.resModules[resInd]
 
 			box = self.layout.box()
 
@@ -1577,37 +1617,7 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 			row = box.row()
 			row.template_list("CUSTOM_UL_items", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
 
-			col = row.column(align=True)
-
-			props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
-			props.action = 'ADD'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "maskfiles"
-			props.customindex = "maskfiles_index"
-
-			props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
-			props.action = 'REMOVE'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "maskfiles"
-			props.customindex = "maskfiles_index"
-
-			col.separator()
-
-			props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
-			props.action = 'UP'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "maskfiles"
-			props.customindex = "maskfiles_index"
-
-			props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
-			props.action = 'DOWN'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "maskfiles"
-			props.customindex = "maskfiles_index"
+			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "maskfiles", "maskfiles_index")
 
 			#Maskfile edit
 			box = self.layout.box()
@@ -1642,47 +1652,17 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		currentRes = int(mytool.selectedResModule)
-		if currentRes != -1:
-			curResModule = mytool.resModules[currentRes]
+		resInd = getCurrentRESIndex()
+		if resInd != -1:
+			curResModule = mytool.resModules[resInd]
 
 			box = self.layout.box()
 
 			rows = 2
 			row = box.row()
-			row.template_list("CUSTOM_UL_items", "textures_list", curResModule, "textures", scene, "textures_index", rows=rows)
+			row.template_list("CUSTOM_UL_textures", "textures_list", curResModule, "textures", scene, "textures_index", rows=rows)
 
-			col = row.column(align=True)
-
-			props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
-			props.action = 'ADD'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "textures"
-			props.customindex = "textures_index"
-
-			props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
-			props.action = 'REMOVE'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "textures"
-			props.customindex = "textures_index"
-
-			col.separator()
-
-			props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
-			props.action = 'UP'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "textures"
-			props.customindex = "textures_index"
-
-			props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
-			props.action = 'DOWN'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "textures"
-			props.customindex = "textures_index"
+			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "textures", "textures_index")
 
 			#Texture edit
 			box = self.layout.box()
@@ -1719,47 +1699,20 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 		scene = context.scene
 		mytool = scene.my_tool
 
-		currentRes = int(mytool.selectedResModule)
-		if currentRes != -1:
-			curResModule = mytool.resModules[currentRes]
+		resInd = getCurrentRESIndex()
+		if resInd != -1:
+			curResModule = mytool.resModules[resInd]
+
+
+        	# self.layout.template_ID(item, 'id_value')
 
 			box = self.layout.box()
 
 			rows = 2
 			row = box.row()
-			row.template_list("CUSTOM_UL_items", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
+			row.template_list("CUSTOM_UL_materials", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
 
-			col = row.column(align=True)
-
-			props = col.operator("custom.list_action_arrbname", icon='ADD', text="")
-			props.action = 'ADD'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "materials"
-			props.customindex = "materials_index"
-
-			props = col.operator("custom.list_action_arrbname", icon='REMOVE', text="")
-			props.action = 'REMOVE'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "materials"
-			props.customindex = "materials_index"
-
-			col.separator()
-
-			props = col.operator("custom.list_action_arrbname", icon='TRIA_UP', text="")
-			props.action = 'UP'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "materials"
-			props.customindex = "materials_index"
-
-			props = col.operator("custom.list_action_arrbname", icon='TRIA_DOWN', text="")
-			props.action = 'DOWN'
-			props.bname = "resModules"
-			props.bindex = currentRes
-			props.pname = "materials"
-			props.customindex = "materials_index"
+			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "materials", "materials_index")
 
 			#Material edit
 			box = self.layout.box()
@@ -1771,62 +1724,68 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_reflect", text="Reflect")
 				col = split.column()
-				col.prop(curMaterial, "reflect")
 				col.enabled = curMaterial.is_reflect
+				col.prop(curMaterial, "reflect")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_specular", text="Specular")
 				col = split.column()
-				col.prop(curMaterial, "specular")
 				col.enabled = curMaterial.is_specular
+				col.prop(curMaterial, "specular")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_transp", text="Transparency")
 				col = split.column()
-				col.prop(curMaterial, "transp")
 				col.enabled = curMaterial.is_transp
+				col.prop(curMaterial, "transp")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_rot", text="Rotation")
 				col = split.column()
-				col.prop(curMaterial, "rot")
 				col.enabled = curMaterial.is_rot
+				col.prop(curMaterial, "rot")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_col", text="Color")
 				col = split.column()
-				col.prop(curMaterial, "col")
 				col.enabled = curMaterial.is_col
+				col.prop(curMaterial, "col_switch")
+				if curMaterial.col_switch:
+					col.prop(curMaterial, "id_col", text="Col num")
+				else:
+					col.prop(curMaterial, "col", text="Col num")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_tex", text="Texture TEX")
 				col = split.column()
-				col.prop(curMaterial, "tex")
 				col.enabled = curMaterial.is_tex
-
-				split = box.split(factor=0.3)
-				split.prop(curMaterial, "is_ttx", text="Texture TTX")
-				col = split.column()
-				col.prop(curMaterial, "ttx")
-				col.enabled = curMaterial.is_ttx
-
-				split = box.split(factor=0.3)
-				split.prop(curMaterial, "is_itx", text="Texture ITX")
-				col = split.column()
-				col.prop(curMaterial, "itx")
-				col.enabled = curMaterial.is_itx
+				col.prop(curMaterial, "tex_type")
+				col.prop(curMaterial, "tex_switch")
+				if curMaterial.tex_switch:
+					col.prop(curMaterial, "id_tex", text="Tex num")
+				else:
+					col.prop(curMaterial, "tex", text="Tex num")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_att", text="Att")
 				col = split.column()
-				col.prop(curMaterial, "att")
 				col.enabled = curMaterial.is_att
+				col.prop(curMaterial, "att_switch")
+				if curMaterial.att_switch:
+					col.prop(curMaterial, "id_att", text="Att num")
+				else:
+					col.prop(curMaterial, "att", text="Att num")
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_msk", text="Maskfile")
 				col = split.column()
-				col.prop(curMaterial, "msk")
 				col.enabled = curMaterial.is_msk
+				col.prop(curMaterial, "msk_switch")
+				if curMaterial.msk_switch:
+					col.prop(curMaterial, "id_msk", text="Msk num")
+				else:
+					col.prop(curMaterial, "msk", text="Msk num")
+
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_power", text="Power")
@@ -1935,6 +1894,7 @@ _classes = [
 	OBJECT_PT_b3d_pfb_edit_panel,
 	OBJECT_PT_b3d_pvb_edit_panel,
 	OBJECT_PT_b3d_res_module_panel,
+	OBJECT_PT_b3d_palette_panel,
 	OBJECT_PT_b3d_maskfiles_panel,
 	OBJECT_PT_b3d_textures_panel,
 	OBJECT_PT_b3d_materials_panel,

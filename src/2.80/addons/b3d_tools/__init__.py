@@ -23,7 +23,7 @@ if "bpy" in locals():
 	import importlib
 	# importlib.reload(object_UIList)
 	# importlib.reload(material_UIList)
-	importlib.reload(custom_UIList)
+	# importlib.reload(custom_UIList)
 	importlib.reload(common)
 	importlib.reload(consts)
 	importlib.reload(way)
@@ -34,7 +34,7 @@ else:
 	from . import (
 		# object_UIList,
 		# material_UIList,
-		custom_UIList,
+		# custom_UIList,
 		common,
 		consts,
 		way,
@@ -63,7 +63,7 @@ bl_info = {
 
 
 def register():
-	custom_UIList.register()
+	# custom_UIList.register()
 	# way.register()
 	b3d.register()
 	# tch_register()
@@ -71,7 +71,7 @@ def register():
 def unregister():
 	b3d.unregister()
 	# way.unregister()
-	custom_UIList.unregister()
+	# custom_UIList.unregister()
 	# tch_unregister()
 
 if __name__ == "__main__":

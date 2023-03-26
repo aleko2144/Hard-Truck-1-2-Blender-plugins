@@ -43,6 +43,53 @@ class HTImportPreferences(AddonPreferences):
         row.prop(self, 'COMMON_RES_Path', expand=True)
 
 
+class ImportRES(Operator, ImportHelper):
+    '''Import from RES file format (.res)'''
+    bl_idname = 'import_scene.kotr_res'
+    bl_label = 'Import RES'
+
+    filename_ext = '.res'
+
+    files: CollectionProperty(
+        type=OperatorFileListElement,
+        options={'HIDDEN', 'SKIP_SAVE'},
+    )
+
+    directory: StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+
+    filter_glob : StringProperty(default='*.res', options={'HIDDEN'})
+
+
+    to_unpack_res : BoolProperty(name='Unpack .res archive',
+                    description='Unpack associated with .b3d fie .res archive. \n'\
+                                'NOTE: .res archive must be located in the same folder as .b3d file', default=True)
+
+    to_convert_txr : BoolProperty(name='Convert .txr to .tga',
+                    description='Convert .txr from unpacked .res to .tga', default=True)
+
+    to_reload_common : BoolProperty(name='Reload common.res',
+                    description='Reloads resources from common.res', default=False)
+
+    textures_format : StringProperty(
+        name="Images format",
+        description="Loaded images format",
+        default="tga",
+    )
+
+    def execute(self, context):
+        for resfile in self.files:
+            filepath = os.path.join(self.directory, resfile.name)
+
+            print('Importing file', filepath)
+            t = time.mktime(datetime.datetime.now().timetuple())
+            with open(filepath, 'rb') as file:
+                import_b3d.readRES(file, context, self, filepath)
+            t = time.mktime(datetime.datetime.now().timetuple()) - t
+            print('Finished importing in', t, 'seconds')
+
+        return {'FINISHED'}
+
+
 class ImportB3D(Operator, ImportHelper):
     '''Import from B3D file format (.b3d)'''
     bl_idname = 'import_scene.kotr_b3d'
@@ -282,6 +329,7 @@ class ExportWAY(Operator, ExportHelper):
 
 
 def menu_func_import(self, context):
+    self.layout.operator(ImportRES.bl_idname, text='KOTR RES (.res)')
     self.layout.operator(ImportRAW.bl_idname, text='KOTR RAW (.raw)')
     self.layout.operator(ImportWAY.bl_idname, text="KOTR WAY (.way)")
     self.layout.operator(ImportB3D.bl_idname, text='KOTR B3D (.b3d)')
@@ -294,6 +342,7 @@ def menu_func_export(self, context):
 
 _classes = [
     HTImportPreferences,
+    ImportRES,
     ImportB3D,
     ImportWAY,
     ImportRAW,

@@ -145,38 +145,37 @@ def getMaterialIndexInRES(matName):
     curMaterialInd = getColPropertyIndexByName(curModule.materials, materialName)
     return curMaterialInd
 
+# https://blenderartists.org/t/index-lookup-in-a-collection/512818/2
+def getColPropertyIndex(prop):
+    txt = prop.path_from_id()
+    pos = txt.rfind('[')
+    colIndex = txt[pos+1: len(txt)-1]
+    return int(colIndex)
 
-def createMaterials(resModule, palette, texturePath, imageFormat):
-    materialList = resModule.materials
+def getCurrentRESIndex():
+    mytool = bpy.context.scene.my_tool
+    return int(mytool.selectedResModule)
 
-    for material in materialList:
-        createMaterial(resModule, palette, texturePath, material, imageFormat)
+def getCurrentRESModule():
+    mytool = bpy.context.scene.my_tool
+    resModule = None
+    ind = getCurrentRESIndex()
+    if ind > -1:
+        resModule = mytool.resModules[ind]
+    return resModule
 
-#https://blender.stackexchange.com/questions/118646/add-a-texture-to-an-object-using-python-and-blender-2-8
-def createMaterial(resModule, palette, texturepath, mat, imageFormat):
 
-    textureList = resModule.textures
-
-    newMat = bpy.data.materials.new(name="{}_{}".format(resModule.value, mat.value))
-    newMat.use_nodes = True
-    bsdf = newMat.node_tree.nodes["Principled BSDF"]
-
-    if mat.is_col and int(mat.col) > 0:
-        R = palette[mat.col-1][0]
-        G = palette[mat.col-1][1]
-        B = palette[mat.col-1][2]
-        texColor = newMat.node_tree.nodes.new("ShaderNodeRGB")
-        texColor.outputs[0].default_value = hex_to_rgb(R,G,B)
-        newMat.node_tree.links.new(bsdf.inputs['Base Color'], texColor.outputs['Color'])
-
-    if (mat.is_tex and int(mat.tex) > 0) \
-    or (mat.is_ttx and int(mat.ttx) > 0) \
-    or (mat.is_itx and int(mat.itx) > 0):
-        texidx = mat.tex | mat.ttx | mat.itx
-        path = textureList[texidx-1].value
-        texImage = newMat.node_tree.nodes.new("ShaderNodeTexImage")
-        texImage.image = bpy.data.images.load(os.path.join(texturepath, "{}.{}".format(path, imageFormat)))
-        newMat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+def updateColorPreview(resModule, ind):
+    moduleName = resModule.value
+    bpyImage = bpy.data.images.get("col_{}_{:03d}".format(moduleName, ind+1))
+    if bpyImage is None:
+        bpyImage = bpy.data.images.new("col_{}_{:03d}".format(moduleName, ind+1), width=1, height=1, alpha=1)
+    bpyImage.pixels[0] = resModule.palette_colors[ind].value[0]
+    bpyImage.pixels[1] = resModule.palette_colors[ind].value[1]
+    bpyImage.pixels[2] = resModule.palette_colors[ind].value[2]
+    bpyImage.pixels[3] = resModule.palette_colors[ind].value[3]
+    bpyImage.preview_ensure()
+    bpyImage.preview.reload()
 
 
 #https://blender.stackexchange.com/questions/158896/how-set-hex-in-rgb-node-python
