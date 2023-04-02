@@ -227,6 +227,11 @@ class PanelSettings(bpy.types.PropertyGroup):
 
 	resModules: CollectionProperty(type=ResBlock)
 
+	isImporting: bpy.props.BoolProperty(
+		name ='isRESImporting',
+		default = False
+	)
+
 	selectedResModule: EnumProperty(
         name="RES module",
         description="Selected RES module",
@@ -1583,6 +1588,9 @@ class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
 
 			box = self.layout.box()
 
+			box.prop(curResModule, "palette_subpath", text="Subpath")
+			box.prop(curResModule, "palette_name", text="Path")
+
 			rows = 2
 			row = box.row()
 			row.template_list("CUSTOM_UL_colors", "palette_list", curResModule, "palette_colors", scene, "palette_index", type='GRID', columns = 2, rows=rows)
@@ -1619,12 +1627,12 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 
 			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "maskfiles", "maskfiles_index")
 
-			#Maskfile edit
-			box = self.layout.box()
-
 			maskfiles_index = scene.maskfiles_index
 			if len(curResModule.maskfiles):
 				curMaskfile = curResModule.maskfiles[maskfiles_index]
+
+				box.prop(curMaskfile, "subpath", text="Subpath")
+				box.prop(curMaskfile, "name", text="Path")
 
 				box.prop(curMaskfile, "is_noload", text="Noload")
 
@@ -1664,12 +1672,15 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 
 			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "textures", "textures_index")
 
-			#Texture edit
-			box = self.layout.box()
-
 			textureIndex = scene.textures_index
 			if (len(curResModule.textures)):
 				curTexture = curResModule.textures[textureIndex]
+
+				box.prop(curTexture, "subpath", text="Subpath")
+				box.prop(curTexture, "name", text="Path")
+
+				box.prop(curTexture, "has_mipmap", text="Has mipmap")
+				box.prop(curTexture, "img_format", text="Image format")
 
 				box.prop(curTexture, "is_memfix", text="Memfix")
 				box.prop(curTexture, "is_noload", text="Noload")
@@ -1713,9 +1724,6 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 			row.template_list("CUSTOM_UL_materials", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
 
 			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "materials", "materials_index")
-
-			#Material edit
-			box = self.layout.box()
 
 			textureIndex = scene.materials_index
 			if (len(curResModule.materials)):

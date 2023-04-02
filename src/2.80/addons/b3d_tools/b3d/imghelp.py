@@ -1,13 +1,13 @@
 import os
 import struct
-from .common import unmaskShort
 import logging
 import sys
 
 from ..common import log
 
 from .common import (
-    hex_to_rgb
+    hex_to_rgb,
+    unmaskShort
 )
 
 def parsePLM(resModule, filepath):
@@ -84,11 +84,98 @@ def MSKtoTGA32(filepath):
             tgaFile.write(colorsPack)
 
 
+def writeTGA8888(filepath, header, colorsBefore, format):
+
+    header[5] = 32 #ColorMapEntrySize
+    header[10] = 32 #PixelDepth
+
+    width = header[8]
+    height = header[9]
+    colorsSize = height*width
+
+    colorsAfter = []
+
+    Rmsk = format[0]
+    Gmsk = format[1]
+    Bmsk = format[2]
+    Amsk = format[3]
+    Runmask = unmaskShort(Rmsk)
+    Gunmask = unmaskShort(Gmsk)
+    Bunmask = unmaskShort(Bmsk)
+    Aunmask = unmaskShort(Amsk)
+    if Aunmask[1] != 0:
+        for color in colorsBefore:
+            R = ((color & Rmsk) >> Runmask[2]) << (8-Runmask[1])
+            G = ((color & Gmsk) >> Gunmask[2]) << (8-Gunmask[1])
+            B = ((color & Bmsk) >> Bunmask[2]) << (8-Bunmask[1])
+            A = ((color & Amsk) >> Aunmask[2]) << (8-Aunmask[1])
+            colorsAfter.extend([B, G, R, A])
+    else:
+        for color in colorsBefore:
+            R = ((color & Rmsk) >> Runmask[2]) << (8-Runmask[1])
+            G = ((color & Gmsk) >> Gunmask[2]) << (8-Gunmask[1])
+            B = ((color & Bmsk) >> Bunmask[2]) << (8-Bunmask[1])
+            if (R | B | G) > 0:
+                A = 0b11111111
+            else:
+                A = 0
+            colorsAfter.extend([B, G, R, A])
+    with open(filepath, "wb") as tgaFile:
+        headerPack = struct.pack("<3b2hb4h2b"+"4s2i", *header)
+        colorsPack = struct.pack("<"+str(colorsSize*4)+"B", *colorsAfter)
+        tgaFile.write(headerPack)
+        tgaFile.write(colorsPack)
+
+
+def readLVMP(file):
+    mipmaps = []
+    mipmap = {}
+    mipmapCount = struct.unpack("<i", file.read(4))[0]
+    width = struct.unpack("<i", file.read(4))[0] #width
+    height = struct.unpack("<i", file.read(4))[0] #height
+    mipmapSize = width * height
+    skipInt = struct.unpack("<i", file.read(4))[0]
+    for i in range(mipmapCount):
+        mipmap['width'] = width
+        mipmap['height'] = height
+        mipmap['colors'] = list(struct.unpack("<"+str(mipmapSize)+"H", file.read(mipmapSize*2)))
+        width = width >> 1
+        height = height >> 1
+        mipmapSize = width * height
+        mipmaps.append(mipmap)
+        mipmap = {}
+
+    file.read(2) # 2 extra bytes
+    return mipmaps
+
+
+def getTXRParams(filepath):
+
+    result = {}
+    result['has_mipmap'] = False
+    with open(filepath, "rb") as file:
+        header = list(struct.unpack("<3b2hb4h2b"+"4s2i", file.read(30)))
+        width = header[8]
+        height = header[9]
+        colorsSize = height*width
+        file.seek(colorsSize*2, 1)
+        identifier = file.read(4)
+        sectionSize = struct.unpack("<i", file.read(4))[0]
+        if identifier == b"LVMP": #skip mipmap section
+            result['has_mipmap'] = True
+            file.seek(sectionSize+2, 1) #skip 2 bytes
+        identifier = file.read(4)
+        sectionSize = struct.unpack("<i", file.read(4))[0]
+        pfrm = list(struct.unpack("<4i", file.read(16)))
+        result['format'] = pfrm
+
+    return result
+
+
 def TXR565toTGA8888(filepath):
 
     outpath = os.path.splitext(filepath)[0] + ".tga"
     with open(filepath, "rb") as txrFile:
-        colorsAfter = []
         header = list(struct.unpack("<3b2hb4h2b"+"4s2i", txrFile.read(30)))
         header[5] = 32 #ColorMapEntrySize
         header[10] = 32 #PixelDepth
@@ -99,89 +186,32 @@ def TXR565toTGA8888(filepath):
 
         footerIdentifier = txrFile.read(4)
         footerSize = struct.unpack("<i", txrFile.read(4))[0]
+        mipmaps = []
         if footerIdentifier == b"LVMP": #skip mipmap section
-            txrFile.seek(footerSize+2, 1) # 2 extra bytes
+            mipmaps = readLVMP(txrFile)
             footerIdentifier = txrFile.read(4)
             footerSize = struct.unpack("<i", txrFile.read(4))[0]
 
-        footer = list(struct.unpack("<4i"+str(footerSize-16)+"B", txrFile.read(footerSize)))
-        Rmsk = footer[0]
-        Gmsk = footer[1]
-        Bmsk = footer[2]
-        Amsk = footer[3]
-        Runmask = unmaskShort(Rmsk)
-        Gunmask = unmaskShort(Gmsk)
-        Bunmask = unmaskShort(Bmsk)
-        Aunmask = unmaskShort(Amsk)
-        if Aunmask[1] != 0:
-            for color in colorsBefore:
-                R = ((color & Rmsk) >> Runmask[2]) << (8-Runmask[1])
-                G = ((color & Gmsk) >> Gunmask[2]) << (8-Gunmask[1])
-                B = ((color & Bmsk) >> Bunmask[2]) << (8-Bunmask[1])
-                A = ((color & Amsk) >> Aunmask[2]) << (8-Aunmask[1])
-                colorsAfter.extend([B, G, R, A])
-        else:
-            for color in colorsBefore:
-                R = ((color & Rmsk) >> Runmask[2]) << (8-Runmask[1])
-                G = ((color & Gmsk) >> Gunmask[2]) << (8-Gunmask[1])
-                B = ((color & Bmsk) >> Bunmask[2]) << (8-Bunmask[1])
-                if (R | B | G) > 0:
-                    A = 0b11111111
-                else:
-                    A = 0
-                colorsAfter.extend([B, G, R, A])
-        footer[0] = 0xFF000000
-        footer[1] = 0x00FF0000
-        footer[2] = 0x0000FF00
-        footer[3] = 0x000000FF
-        with open(outpath, "wb") as tgaFile:
-            headerPack = struct.pack("<3b2hb4h2b"+"4s2i", *header)
-            colorsPack = struct.pack("<"+str(colorsSize*4)+"B", *colorsAfter)
-            footerPack = struct.pack("<4I"+str(footerSize-16)+"B", *footer)
-            tgaFile.write(headerPack)
-            tgaFile.write(colorsPack)
-            tgaFile.write(footerIdentifier)
-            tgaFile.write(struct.pack("<i",footerSize))
-            tgaFile.write(footerPack)
+        pfrm = list(struct.unpack("<4i", txrFile.read(16)))
+        txrFile.read(footerSize-16)
 
-    return
+        mipmapHeader = header
+        for mipmap in mipmaps:
+            mipmapHeader[8] = mipmap['width']
+            mipmapHeader[9] = mipmap['height']
+            mipmapPath = "{}_{}_{}.tga".format(os.path.splitext(filepath)[0], mipmap['width'], mipmap['height'])
+            writeTGA8888(mipmapPath, mipmapHeader, mipmap['colors'], pfrm)
 
-def TXRwPAL888toTGA8888(filepath):
+        header[8] = width
+        header[9] = height
+        writeTGA8888(outpath, header, colorsBefore, pfrm)
 
-    outpath = os.path.splitext(filepath)[0] + ".tga"
-    with open(filepath, "rb") as txrFile:
-        colorsAfter = []
-        header = list(struct.unpack("<3b2hb4h2b", txrFile.read(18)))
-        colorMapLength = header[4]
-        width = header[8]
-        height = header[9]
-        header[1] = 0 #ColorMapType
-        header[2] = 2 #ImageType
-        header[4] = 0 #ColorMapLength
-        header[5] = 32 #ColorMapEntrySize
-        header[10] = 32 #PixelDepth
-        paletteSize = colorMapLength*3
-        palette = struct.unpack("<"+str(paletteSize)+"B", txrFile.read(paletteSize))
-        colorsSize = height*width
-        colorsBefore = list(struct.unpack("<"+str(colorsSize)+"B", txrFile.read(colorsSize)))
+    result = {}
+    result['format'] = pfrm
+    result['has_mipmap'] = True if len(mipmaps) > 0 else False
 
-        for color in colorsBefore:
-            R = palette[color*3]
-            G = palette[color*3+1]
-            B = palette[color*3+2]
-            if (R | B | G) > 0:
-                A = 0b11111111
-            else:
-                A = 0
-            colorsAfter.extend([B, G, R, A])
+    return result
 
-        with open(outpath, "wb") as tgaFile:
-            headerPack = struct.pack("<3b2hb4h2b", *header)
-            colorsPack = struct.pack("<"+str(colorsSize*4)+"B", *colorsAfter)
-            tgaFile.write(headerPack)
-            tgaFile.write(colorsPack)
-
-    return
 
 def TXRtoTGA32(filepath):
     outpath = os.path.splitext(filepath)[0] + ".tga"
@@ -191,10 +221,10 @@ def TXRtoTGA32(filepath):
         txrFile.seek(2, 0)
         imageType = struct.unpack("<B", txrFile.read(1))[0]
     if imageType == 2:
-        TXR565toTGA8888(filepath)
-    elif imageType == 1:
-        TXRwPAL888toTGA8888(filepath)
-    return
+        return TXR565toTGA8888(filepath)
+    else:
+        log.error("Unsupported Tga format")
+    return None
 
 def TGA32toTXR(filepath):
     outpath = os.path.splitext(filepath)[0] + ".txr"

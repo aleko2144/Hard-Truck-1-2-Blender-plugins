@@ -65,7 +65,8 @@ from .scripts import (
 from .imghelp import (
     TXRtoTGA32,
     MSKtoTGA32,
-    parsePLM
+    parsePLM,
+    getTXRParams
 )
 from .common import (
     getColPropertyByName,
@@ -79,7 +80,10 @@ from .common import (
     getPolygonsBySelectedVertices,
     getCenterCoord,
     updateColorPreview,
-    getCurrentRESModule
+    getActivePaletteModule,
+    getColorImgName,
+    getCurrentRESModule,
+    unmaskShort
 )
 
 from ..common import (
@@ -358,25 +362,25 @@ def parseRAW(file, context, op, filepath):
     context.collection.objects.link(b3dObj2)
 
 
-def createMaterials(resModule, commonResModule):
+def createMaterials(resModule):
 
     materialList = resModule.materials
 
     for material in materialList:
-        createMaterial(resModule, commonResModule, material)
+        createMaterial(resModule, material)
 
 #https://blender.stackexchange.com/questions/118646/add-a-texture-to-an-object-using-python-and-blender-2-8
-def createMaterial(resModule, commonResModule, mat):
+def createMaterial(resModule, mat):
+    mytool = bpy.context.scene.my_tool
 
     textureList = resModule.textures
-    palette = commonResModule.palette_colors
-    if len(resModule.palette_colors) > 0:
-        palette = resModule.palette_colors
+    paletteModule = getActivePaletteModule(resModule)
+    palette = paletteModule.palette_colors
 
 
-    newMat = bpy.data.materials.get("{}_{}".format(resModule.value, mat.name))
+    newMat = bpy.data.materials.get(mat.name)
     if newMat is None:
-        newMat = bpy.data.materials.new(name="{}_{}".format(resModule.value, mat.name))
+        newMat = bpy.data.materials.new(name=mat.name)
     newMat.use_nodes = True
     bsdf = newMat.node_tree.nodes["Principled BSDF"]
 
@@ -399,8 +403,12 @@ def createMaterial(resModule, commonResModule, mat):
 def loadTexturefiles(basedir, resModule, image_format, convert_txr):
     for texture in resModule.textures:
         noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.name))[0]
+        result = None
+        imgPath = "{}.{}".format(noExtPath, "txr")
         if convert_txr:
-            TXRtoTGA32("{}.{}".format(noExtPath, "txr"))
+            result = TXRtoTGA32(imgPath)
+        else:
+            result = getTXRParams(imgPath)
         imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
         imgPath = "{}.{}".format(noExtPath, image_format)
         texture.name = imgName
@@ -409,6 +417,16 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
             bpy.data.images.remove(img)
         img = bpy.data.images.load(imgPath)
         texture.id_value = img
+
+        img_format = result['format']
+        if img_format is not None:
+            R = unmaskShort(img_format[0])[1]
+            G = unmaskShort(img_format[1])[1]
+            B = unmaskShort(img_format[2])[1]
+            A = unmaskShort(img_format[3])[1]
+            texture.img_format = str(R) + str(G) + str(B) + str(A)
+
+        texture.has_mipmap = result['has_mipmap']
 
 
 def loadMaskfiles(basedir, resModule, image_format, convert_txr):
@@ -426,13 +444,36 @@ def loadMaskfiles(basedir, resModule, image_format, convert_txr):
         maskfile.id_value = img
 
 def loadMaterials(resModule):
+    mytool = bpy.context.scene.my_tool
     for mat in resModule.materials:
-        material = bpy.data.materials.get("{}_{}".format(resModule.value, mat.name))
+        material = bpy.data.materials.get(mat.name)
         if material is not None:
             mat.id_value = material
+            if mat.is_col:
+                paletteModule = getActivePaletteModule(resModule)
+                palette = paletteModule.palette_colors
+                if palette:
+                    image = bpy.data.images.get(getColorImgName(paletteModule.value, mat.col))
+                    if image is not None:
+                        mat.id_col = image
+
+            if mat.is_tex:
+                image = resModule.textures[mat.tex-1]
+                if image and image.id_value:
+                    mat.id_tex = image.id_value
+
+            if mat.is_msk:
+                image = resModule.maskfiles[mat.msk-1]
+                if image and image.id_value:
+                    mat.id_msk = image.id_value
+
+            if mat.is_att:
+                image = resModule.materials[mat.att-1]
+                if image and image.id_value:
+                    mat.id_att = image.id_value
 
 def loadPaletteFiles(basedir, resModule):
-    if resModule.palette_name != "":
+    if len(resModule.palette_name) > 0:
         palettePath = os.path.join(basedir, "PALETTEFILES", resModule.palette_subpath, resModule.palette_name)
         parsePLM(resModule, palettePath)
         for i, pal_color in enumerate(resModule.palette_colors):
@@ -482,6 +523,8 @@ def readRES(file, context, self, filepath):
         self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
         return
 
+    mytool.isImporting = True
+
     commonResModule = getColPropertyByName(resModules, "COMMON")
 
     if commonResModule is None or commonResPath == filepath or self.to_reload_common:
@@ -492,10 +535,15 @@ def readRES(file, context, self, filepath):
     resModule = getColPropertyByName(resModules, res_basename)
     commonResModule = getColPropertyByName(resModules, "COMMON")
 
-    createMaterials(resModule, commonResModule)
 
-    loadMaterials(resModule)
+    if commonResPath != res_basename:
+        createMaterials(commonResModule)
+    createMaterials(resModule)
+
     loadMaterials(commonResModule)
+    loadMaterials(resModule)
+
+    mytool.isImporting = False
 
 
 def readB3D(file, context, self, filepath):
@@ -536,6 +584,8 @@ def readB3D(file, context, self, filepath):
 
     if self.to_import_textures:
 
+        mytool.isImporting = True
+
         commonResModule = getColPropertyByName(resModules, "COMMON")
 
         if commonResModule is None or commonResPath == resPath:
@@ -545,8 +595,17 @@ def readB3D(file, context, self, filepath):
         importResources(resPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
 
         resModule = getColPropertyByName(resModules, res_basename)
+        commonResModule = getColPropertyByName(resModules, "COMMON")
 
-        createMaterials(resModule, commonResModule)
+        if commonResPath != resPath:
+            createMaterials(commonResModule)
+
+        createMaterials(resModule)
+
+        loadMaterials(commonResModule)
+        loadMaterials(resModule)
+
+        mytool.isImporting = False
 
 
     blocksToImport = self.blocks_to_import
@@ -1068,7 +1127,7 @@ def readB3D(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1079,7 +1138,7 @@ def readB3D(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
                             b3dMesh.materials.append(mat)
 
 
@@ -1788,7 +1847,7 @@ def readB3D(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1798,7 +1857,7 @@ def readB3D(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texnum)].name)]
+                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
                             b3dMesh.materials.append(mat)
 
                 createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
@@ -2185,7 +2244,7 @@ def readB3D(file, context, self, filepath):
                 # createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
                 if self.to_import_textures:
-                    mat = bpy.data.materials["{}_{}".format(resModule.value, resModule.materials[int(texNum)].name)]
+                    mat = bpy.data.materials.get(resModule.materials[int(texNum)].name)
                     b3dMesh.materials.append(mat)
 
 
@@ -2503,28 +2562,34 @@ def saveMaterial(resModule, materialStr):
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
-        if paramName in ["col", "att", "msk", "power", "coord", "tex", "ttx", "itx"]:
-            setattr(material, "is_" + paramName, True)
-            setattr(material, paramName, int(params[i+1]))
-            i+=1
-        elif paramName in ["reflect", "specular", "transp", "rot"]:
-            setattr(material, paramName, float(params[i+1]))
-            i+=1
-        elif paramName in ["noz", "nof", "notile", "notiveu", "notilev", \
-                            "alphamirr", "bumpcoord", "usecol", "wave"]:
-            setattr(material, "is_" + paramName, True)
-            i+=1
-        elif paramName in ["RotPoint", "move"]:
-            setattr(material, "is_" + paramName, True)
-            setattr(material, paramName, [float(params[i+1]), float(params[i+2])])
-            i+=2
-        elif paramName[0:3] == "env":
-            setattr(material, "is_env", True)
-            envid = paramName[3:]
-            setattr(material, "env", [float(params[i+1]), float(params[i+2])])
-            i+=2
-            if len(envid) > 0:
-                setattr(material, "envId", int(envid))
+        if len(paramName) > 0:
+            if paramName in ["tex", "ttx", "itx"]:
+                setattr(material, "is_tex", True)
+                setattr(material, "tex", int(params[i+1]))
+                setattr(material, "tex_type", paramName)
+                i+=1
+            elif paramName in ["col", "att", "msk", "power", "coord"]:
+                setattr(material, "is_" + paramName, True)
+                setattr(material, paramName, int(params[i+1]))
+                i+=1
+            elif paramName in ["reflect", "specular", "transp", "rot"]:
+                setattr(material, paramName, float(params[i+1]))
+                i+=1
+            elif paramName in ["noz", "nof", "notile", "notiveu", "notilev", \
+                                "alphamirr", "bumpcoord", "usecol", "wave"]:
+                setattr(material, "is_" + paramName, True)
+                # i+=1
+            elif paramName in ["RotPoint", "move"]:
+                setattr(material, "is_" + paramName, True)
+                setattr(material, paramName, [float(params[i+1]), float(params[i+2])])
+                i+=2
+            elif paramName[0:3] == "env":
+                setattr(material, "is_env", True)
+                envid = paramName[3:]
+                setattr(material, "env", [float(params[i+1]), float(params[i+2])])
+                i+=2
+                if len(envid) > 0:
+                    setattr(material, "envId", int(envid))
         i+=1
 
 def saveMaskfileParams(maskfile, params):
@@ -2536,7 +2601,7 @@ def saveMaskfileParams(maskfile, params):
         else:
             someInt = None
             try:
-                someInt = int(someInt)
+                someInt = int(params[i])
             except:
                 pass
             if someInt:
@@ -2553,13 +2618,32 @@ def saveTextureParams(texture, params):
         else:
             someInt = None
             try:
-                someInt = int(someInt)
+                someInt = int(params[i])
             except:
                 pass
             if someInt:
                 setattr(texture, "is_someint", True)
                 setattr(texture, "someint", someInt)
         i+=1
+
+
+def save_image_as(image, path, name):
+    scene = bpy.data.scenes.new("Temp")
+
+    show_name = image.name
+    image.name = name
+
+    # use docs.blender.org/api/current/bpy.types.ImageFormatSettings.html for more properties
+    settings = scene.render.image_settings
+    settings.file_format = 'TARGA_RAW'  # Options: 'BMP', 'IRIS', 'PNG', 'JPEG', 'JPEG2000', 'TARGA', 'TARGA_RAW', 'CINEON', 'DPX', 'OPEN_EXR_MULTILAYER', 'OPEN_EXR', 'HDR', 'TIFF', 'WEBP'
+
+    # save images with above settings
+    if not os.path.isfile(path):
+        path = os.path.join(path, name)
+    image.save_render(path, scene=scene)
+
+    bpy.data.scenes.remove(scene)
+    image.name = show_name
 
 
 def unpackRES(resModule, filepath, saveOnDisk = True):
@@ -2607,9 +2691,7 @@ def unpackRES(resModule, filepath, saveOnDisk = True):
 
                             nameSplit = rawString.split(" ")
                             fullname = nameSplit[0]
-                            params = ""
-                            if len(params) > 1:
-                                params = nameSplit[1]
+                            params = nameSplit[1:]
                             pathSplit = fullname.split("\\")
                             name = pathSplit[-1]
                             subpath = ""

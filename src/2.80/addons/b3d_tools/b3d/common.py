@@ -145,6 +145,9 @@ def getMaterialIndexInRES(matName):
     curMaterialInd = getColPropertyIndexByName(curModule.materials, materialName)
     return curMaterialInd
 
+def getColorImgName(moduleName, index):
+    return "col_{}_{:03d}".format(moduleName, index)
+
 # https://blenderartists.org/t/index-lookup-in-a-collection/512818/2
 def getColPropertyIndex(prop):
     txt = prop.path_from_id()
@@ -164,12 +167,21 @@ def getCurrentRESModule():
         resModule = mytool.resModules[ind]
     return resModule
 
+def getActivePaletteModule(resModule):
+    mytool = bpy.context.scene.my_tool
+    if resModule:
+        if len(resModule.palette_colors) > 0:
+            return resModule
+        commonResModule = getColPropertyByName(mytool.resModules, 'COMMON')
+        if len(commonResModule.palette_colors) > 0:
+            return commonResModule
+    return None
 
 def updateColorPreview(resModule, ind):
     moduleName = resModule.value
-    bpyImage = bpy.data.images.get("col_{}_{:03d}".format(moduleName, ind+1))
+    bpyImage = bpy.data.images.get(getColorImgName(moduleName, ind+1))
     if bpyImage is None:
-        bpyImage = bpy.data.images.new("col_{}_{:03d}".format(moduleName, ind+1), width=1, height=1, alpha=1)
+        bpyImage = bpy.data.images.new(getColorImgName(moduleName, ind+1), width=1, height=1, alpha=1)
     bpyImage.pixels[0] = resModule.palette_colors[ind].value[0]
     bpyImage.pixels[1] = resModule.palette_colors[ind].value[1]
     bpyImage.pixels[2] = resModule.palette_colors[ind].value[2]
@@ -353,7 +365,6 @@ def getCenterCoord(vertices):
 
 def getLevelGroup(obj):
     parent = obj.parent
-    # log.debug(parent)
     if parent is None:
         return 0
     if parent.get(BLOCK_TYPE) == 444:

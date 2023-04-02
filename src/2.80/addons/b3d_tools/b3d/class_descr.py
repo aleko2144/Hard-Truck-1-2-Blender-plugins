@@ -90,10 +90,11 @@ class FloatBlock(bpy.types.PropertyGroup):
 
 def update_palette_index(self, context):
 
-	index = getColPropertyIndex(self)
-	resModule = getCurrentRESModule()
-	if resModule is not None:
-		updateColorPreview(resModule, index)
+	if not bpy.context.scene.my_tool.isImporting:
+		index = getColPropertyIndex(self)
+		resModule = getCurrentRESModule()
+		if resModule is not None:
+			updateColorPreview(resModule, index)
 
 def getImageIndexInModule(field, imageName):
 	mytool = bpy.context.scene.my_tool
@@ -155,13 +156,19 @@ def callback_only_colors(self, context):
 
 
 def setTexInd(self, context):
-	self.tex = getImageIndexInModule("textures", self.id_tex.name)
+	index = getImageIndexInModule("textures", self.id_tex.name)
+	if index:
+		self.tex = index + 1
 
 def setMskInd(self, context):
-	self.msk = getImageIndexInModule("maskfiles", self.id_msk.name)
+	index = getImageIndexInModule("maskfiles", self.id_msk.name)
+	if index:
+		self.msk = index + 1
 
 def setMatInd(self, context):
-	self.att = getImageIndexInModule("materials", self.id_att.name)
+	index = getImageIndexInModule("materials", self.id_att.name)
+	if index:
+		self.att = index + 1
 
 def setColInd(self, context):
 	if self.id_col is not None:
@@ -208,6 +215,15 @@ class TextureBlock(bpy.types.PropertyGroup):
 		name='Image',
 		type=bpy.types.Image
 	)
+
+	has_mipmap: BoolProperty(default=False)
+	img_format: EnumProperty(
+		name="Image color map",
+		default = '5650',
+		items=[
+			('5650', "RGB(565)", "Color without transparency"),
+			('4444', "RGBA(4444)", "Color with transparency(A)")
+		])
 
 	is_memfix: BoolProperty(default=False)
 	is_noload: BoolProperty(default=False)

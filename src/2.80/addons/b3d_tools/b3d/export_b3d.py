@@ -281,7 +281,6 @@ def fillBoundingSphereLists():
 		referenceableName = obj.get(prop(b_18.Add_Name))
 		spaceName = obj.get(prop(b_18.Space_Name))
 		curMeshList = meshesInEmpty.get(referenceableName)
-		# log.debug(curMeshList)
 		if curMeshList is not None:
 
 			# global coords for 18 blocks parents
