@@ -1,17 +1,23 @@
-import os
 import struct
 import bpy
-import logging
-import sys
 import re
-import time
 from mathutils import Vector
+import math
 
 from ..common import log
 from ..consts import (
     BLOCK_TYPE,
     EMPTY_NAME
 )
+
+def writeSize(file, ms, writeMs=None):
+    if writeMs is None:
+        writeMs = ms
+    endMs = file.tell()
+    size = endMs - ms
+    file.seek(writeMs, 0)
+    file.write(struct.pack("<i", size))
+    file.seek(endMs, 0)
 
 def getNotNumericName(name):
     reIsCopy = re.compile(r'\|')
@@ -53,7 +59,24 @@ def isMeshBlock(obj):
 def isRefBlock(obj):
     return obj.get("block_type") is not None and obj["block_type"]==18
 
-def unmaskShort(num):
+def unmaskTemplate(templ):
+    offset = 0
+    unmasks = []
+    tA = int(templ[0])
+    tR = int(templ[1])
+    tG = int(templ[2])
+    tB = int(templ[3])
+    totalBytes = tR + tG + tB + tA
+    for i in range(4):
+        curInt = int(templ[i])
+        lzeros = offset
+        bits = curInt
+        rzeros = totalBytes - lzeros - bits
+        unmasks.append([lzeros, bits, rzeros])
+        offset += curInt
+    return unmasks
+
+def unmaskBits(num, bytes=2):
     bits = [int(digit) for digit in bin(num)[2:]]
     lzeros = 0
     rzeros = 0
@@ -65,7 +88,7 @@ def unmaskShort(num):
             ones+=1
         else:
             rzeros+=1
-        lzeros = 16 - len(bits)
+        lzeros = bytes*8 - len(bits)
     return [lzeros, ones, rzeros]
 
 
@@ -81,6 +104,53 @@ def readCString(file):
     except TypeError as e:
         log.error("Error in readCString. Nothing to read")
         return ""
+
+
+def readRESSections(filepath):
+	sections = []
+	with open(filepath, "rb") as file:
+		k = 0
+		while 1:
+			category = readCString(file)
+			if(len(category) > 0):
+				resSplit = category.split(" ")
+				id = resSplit[0]
+				cnt = int(resSplit[1])
+
+				sections.append({})
+
+				sections[k]["name"] = id
+				sections[k]["cnt"] = cnt
+				sections[k]["data"] = []
+
+				log.info("Reading category {}".format(id))
+				log.info("Element count in category is {}.".format(cnt))
+				if cnt > 0:
+					log.info("Start processing...")
+					resData = []
+					if id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
+						for i in range(cnt):
+							data = {}
+							data['row'] = readCString(file)
+							resData.append(data)
+
+					else: #PALETTEFILES, SOUNDFILES, BACKFILES, MASKFILES, TEXTUREFILES
+						for i in range(cnt):
+
+							data = {}
+							data['row'] = readCString(file)
+							data['size'] = struct.unpack("<i",file.read(4))[0]
+							data['bytes'] = file.read(data['size'])
+							resData.append(data)
+
+					sections[k]['data'] = resData
+
+				else:
+					log.info("Skip category")
+				k += 1
+			else:
+				break
+	return sections
 
 
 class HTMaterial():
@@ -190,14 +260,69 @@ def updateColorPreview(resModule, ind):
     bpyImage.preview.reload()
 
 
-#https://blender.stackexchange.com/questions/158896/how-set-hex-in-rgb-node-python
-def srgb_to_linearrgb(c):
-    if   c < 0:       return 0
-    elif c < 0.04045: return c/12.92
-    else:             return ((c+0.055)/1.055)**2.4
+def getMatTextureRefDict(resModule):
+    matToTexture = {}
+    textureToMat = {}
+    for i, mat in enumerate(resModule.materials):
+        if mat.is_tex:
+            matToTexture[i] = mat.tex-1
+            textureToMat[mat.tex-1] = i
 
-def hex_to_rgb(r,g,b,alpha=1):
-    return tuple([srgb_to_linearrgb(c/0xff) for c in (r,g,b)] + [alpha])
+    return [matToTexture, textureToMat]
+
+
+def rgb_to_srgb(r, g, b, alpha = 1):
+    # convert from RGB to sRGB
+    r_linear = r / 255.0
+    g_linear = g / 255.0
+    b_linear = b / 255.0
+
+    def srgb_transform(value):
+        if value <= 0.04045:
+            return value / 12.92
+        else:
+            return math.pow(((value + 0.055) / 1.055), 2.4)
+
+    r_srgb = srgb_transform(r_linear)
+    g_srgb = srgb_transform(g_linear)
+    b_srgb = srgb_transform(b_linear)
+
+    return (r_srgb, g_srgb, b_srgb, alpha)
+
+
+def srgb_to_rgb(r, g, b):
+    # convert from sRGB to RGB
+
+    def srgb_inverse_transform(value):
+        if value <= 0.04045 / 12.92:
+            return value * 12.92
+        else:
+            return math.pow(value, 1 / 2.4) * 1.055 - 0.055
+
+    r_rgb = srgb_inverse_transform(r)
+    g_rgb = srgb_inverse_transform(g)
+    b_rgb = srgb_inverse_transform(b)
+
+    return (round(r_rgb * 255), round(g_rgb * 255), round(b_rgb * 255))
+
+# https://blender.stackexchange.com/questions/234388/how-to-convert-rgb-to-hex-almost-there-1-error-colors
+# def linear_to_srgb8(c):
+#     if c < 0.0031308:
+#         srgb = 0.0 if c < 0.0 else c * 12.92
+#     else:
+#         srgb = 1.055 * math.pow(c, 1.0 / 2.4) - 0.055
+#     if srgb > 1: srgb = 1
+
+#     return round(255*srgb)
+
+#https://blender.stackexchange.com/questions/158896/how-set-hex-in-rgb-node-python
+# def srgb_to_linearrgb(c):
+#     if   c < 0:       return 0
+#     elif c < 0.04045: return c/12.92
+#     else:             return ((c+0.055)/1.055)**2.4
+
+# def hex_to_rgb(r,g,b,alpha=1):
+#     return tuple([srgb_to_linearrgb(c/0xff) for c in (r,g,b)] + [alpha])
 
 
 def getUsedVerticesAndTransform(vertices, faces):
@@ -431,5 +556,16 @@ def modulesCallback(self, context):
     modules = [cn for cn in bpy.data.objects if isRootObj(cn)]
 
     enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(modules)]
+
+    return enumProperties
+
+
+def resModulesCallback(self, context):
+
+    mytool = bpy.context.scene.my_tool
+
+    modules = [cn for cn in mytool.resModules if cn.value != "-1"]
+
+    enumProperties = [(cn.value, cn.value, "") for i, cn in enumerate(modules)]
 
     return enumProperties

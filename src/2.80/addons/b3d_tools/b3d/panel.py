@@ -18,13 +18,10 @@ from ..common import (
 from .. import consts
 
 from .common import (
-	isRootObj,
-	getMytoolBlockNameByClass,
-	getColPropertyIndexByName
+	isRootObj
 )
 from .scripts import (
 	applyRemoveTransforms,
-	applyTransforms,
 	hideConditionals,
 	showConditionals,
 	hideLOD,
@@ -32,7 +29,6 @@ from .scripts import (
 	showConditionals,
 	hideConditionals,
 	showHideObjByType,
-	showHideObjTreeByType,
 	prop,
 	drawCommon,
 	drawAllFieldsByType,
@@ -1679,6 +1675,7 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
 				box.prop(curTexture, "subpath", text="Subpath")
 				box.prop(curTexture, "name", text="Path")
 
+				box.prop(curTexture, "img_type", text="Image type")
 				box.prop(curTexture, "has_mipmap", text="Has mipmap")
 				box.prop(curTexture, "img_format", text="Image format")
 
@@ -1808,17 +1805,22 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 				col.enabled = curMaterial.is_coord
 
 				split = box.split(factor=0.3)
-				split.prop(curMaterial, "is_env", text="Env")
+				split.prop(curMaterial, "is_envId", text="Env")
 				col = split.column()
 				col.prop(curMaterial, "envId")
+				col.enabled = curMaterial.is_envId
+
+				split = box.split(factor=0.3)
+				split.prop(curMaterial, "is_env", text="Env")
+				col = split.column()
 				col.prop(curMaterial, "env")
 				col.enabled = curMaterial.is_env
 
 				split = box.split(factor=0.3)
-				split.prop(curMaterial, "is_rotPoint", text="Rotation Center")
+				split.prop(curMaterial, "is_RotPoint", text="Rotation Center")
 				col = split.column()
-				col.prop(curMaterial, "rotPoint")
-				col.enabled = curMaterial.is_rotPoint
+				col.prop(curMaterial, "RotPoint")
+				col.enabled = curMaterial.is_RotPoint
 
 				split = box.split(factor=0.3)
 				split.prop(curMaterial, "is_move", text="Movement")

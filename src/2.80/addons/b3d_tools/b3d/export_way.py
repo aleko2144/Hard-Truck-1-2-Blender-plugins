@@ -9,7 +9,8 @@ from .common import (
 	isRootObj,
 	getNonCopyName,
 	getNotNumericName,
-	BLOCK_TYPE
+	BLOCK_TYPE,
+	writeSize
 )
 
 from .scripts import (
@@ -19,9 +20,6 @@ from .scripts import (
 from .class_descr import (
 	b_50, b_51, b_52
 )
-
-def write(context, op, filepath):
-	export(filepath)
 
 
 def writeName(file, name):
@@ -88,16 +86,8 @@ def writePOSN(file, block):
 	file.write(struct.pack('<i', 24))
 	file.write(struct.pack("<ddd", *block.location))
 
-def writeSize(file, ms):
-	endMs = file.tell()
-	size = endMs - ms - 4
-	file.seek(ms, 0)
-	file.write(struct.pack("<i", size))
-	file.seek(endMs, 0)
 
-
-
-def export(filepath):
+def exportWay(context, op, filepath):
 	file = open(filepath, 'wb')
 
 	rootObj = bpy.context.object
@@ -108,12 +98,14 @@ def export(filepath):
 	rootName = rootObj.name[:-4]
 
 	#Header
-	writeType(file, "WTWR")
 	WTWR_ms = file.tell()
+	writeType(file, "WTWR")
+	WTWR_write_ms = file.tell()
 	file.write(struct.pack("<i", 0))
 	write_NAM(file, "MNAM", rootName)
-	writeType(file, "GDAT")
 	GDAT_ms = file.tell()
+	writeType(file, "GDAT")
+	GDAT_write_ms = file.tell()
 	file.write(struct.pack("<i", 0))
 
 	rooms = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) == 19]
@@ -126,25 +118,28 @@ def export(filepath):
 		ways.extend(segs)
 
 		if len(ways) > 0:
-			writeType(file, "GROM")
 			GROM_ms = file.tell()
+			writeType(file, "GROM")
+			GROM_write_ms = file.tell()
 			file.write(struct.pack("<i", 0))
 			write_NAM(file, "RNAM", room.name)
 			for wayObj in ways:
 				wayName = getNonCopyName(wayObj.name)
 				type = wayObj.get(BLOCK_TYPE)
 				if type == 50:
-					writeType(file, "RSEG")
 					RSEG_ms = file.tell()
+					writeType(file, "RSEG")
+					RSEG_write_ms = file.tell()
 					file.write(struct.pack("<i", 0))
 					writeATTR(file, wayObj)
 					writeWDTH(file, wayObj)
 					writeRTEN(file, wayObj)
 					writeVDAT(file, wayObj)
-					writeSize(file, RSEG_ms)
+					writeSize(file, RSEG_ms, RSEG_write_ms)
 				elif type == 51:
-					writeType(file, "RNOD")
 					RNOD_ms = file.tell()
+					writeType(file, "RNOD")
+					RNOD_write_ms = file.tell()
 					file.write(struct.pack("<i", 0))
 					write_NAM(file, "NNAM", wayName)
 					writePOSN(file, wayObj)
@@ -152,10 +147,11 @@ def export(filepath):
 					writeType(file, "FLAG")
 					file.write(struct.pack("<i", 4))
 					file.write(struct.pack("<i", wayObj[prop(b_51.Flag)]))
-					writeSize(file, RNOD_ms)
+					writeSize(file, RNOD_ms, RNOD_write_ms)
 				elif type == 52:
-					writeType(file, "RNOD")
 					RNOD_ms = file.tell()
+					writeType(file, "RNOD")
+					RNOD_write_ms = file.tell()
 					file.write(struct.pack("<i", 0))
 					write_NAM(file, "NNAM", wayName)
 					writePOSN(file, wayObj)
@@ -164,28 +160,12 @@ def export(filepath):
 					writeType(file, "FLAG")
 					file.write(struct.pack("<i", 4))
 					file.write(struct.pack("<i", wayObj[prop(b_52.Flag)]))
-					writeSize(file, RNOD_ms)
+					writeSize(file, RNOD_ms, RNOD_write_ms)
 
-			writeSize(file, GROM_ms)
+			writeSize(file, GROM_ms, GROM_write_ms)
 
-	writeSize(file, GDAT_ms)
-	writeSize(file, WTWR_ms)
-
-	#SetBytesLength(bpy.data.objects['way'], True)
-	#SetCBytesLength(bpy.data.objects['way'], True)
-	#SetRS(bpy.data.objects['way'], True)
-	#SetGR(bpy.data.objects['way'], True)
-	#SetGD(bpy.data.objects['way'], True)
-	#SetMN(bpy.data.objects['way'], True)
-	#SetWT(bpy.data.objects['way'], True)
-	# ClearBytes(bpy.data.objects['way'], True)
-	# SetNodeBytes(bpy.data.objects['way'], True)
-	# SetRSEGBytes(bpy.data.objects['way'], True)
-	# SetRoomBytes(bpy.data.objects['way'], True)
-	# SetWayBytes(bpy.data.objects['way'], True)
-	# SetWayBytes1(bpy.data.objects['way'], True)
-	# writeWTWR(bpy.data.objects['way'], file)
-	# forChild(bpy.data.objects['way'],True, file)
+	writeSize(file, GDAT_ms, GDAT_write_ms)
+	writeSize(file, WTWR_ms, WTWR_write_ms)
 
 	file.close()
 

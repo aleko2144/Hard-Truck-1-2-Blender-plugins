@@ -52,7 +52,7 @@ def getNumberedName(name):
 	globalInd += 1
 	return name
 
-def read(file, context, filepath):
+def importWay(file, context, filepath):
 	# file_path = file
 	# file = open(file, 'rb')
 

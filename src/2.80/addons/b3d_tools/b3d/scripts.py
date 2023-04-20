@@ -1,8 +1,4 @@
-import math
-
 import bpy
-import logging
-import sys
 import re
 
 from .class_descr import (

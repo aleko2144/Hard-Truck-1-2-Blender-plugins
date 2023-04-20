@@ -63,7 +63,7 @@ from .scripts import (
 
 
 from .imghelp import (
-    TXRtoTGA32,
+    convertTXRtoTGA32,
     MSKtoTGA32,
     parsePLM,
     getTXRParams
@@ -71,19 +71,17 @@ from .imghelp import (
 from .common import (
     getColPropertyByName,
     getColPropertyIndexByName,
-    getUsedFaces,
     getUsedFace,
     getUsedVerticesAndTransform,
-    getUserVertices,
-    readCString,
-    transformVertices,
     getPolygonsBySelectedVertices,
     getCenterCoord,
     updateColorPreview,
     getActivePaletteModule,
     getColorImgName,
-    getCurrentRESModule,
-    unmaskShort
+    unmaskBits,
+    readRESSections,
+    srgb_to_rgb,
+    getMatTextureRefDict
 )
 
 from ..common import (
@@ -92,22 +90,14 @@ from ..common import (
 )
 
 import bpy
-import mathutils
 import os.path
 import os
-from threading import Lock
 from bpy.props import *
-from bpy_extras.image_utils import load_image
-from ast import literal_eval as make_tuple
 
 from math import sqrt
 from math import atan2
 
 import re
-
-import bmesh
-
-
 
 def thread_import_b3d(self, files, context):
     for b3dfile in files:
@@ -116,7 +106,7 @@ def thread_import_b3d(self, files, context):
         print('Importing file', filepath)
         t = time.mktime(datetime.datetime.now().timetuple())
         with open(filepath, 'rb') as file:
-            readB3D(file, context, self, filepath)
+            importB3d(file, context, self, filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished importing in', t, 'seconds')
 
@@ -299,7 +289,7 @@ def parse_pro(input_file, colors_list):
 
         return material_textures
 
-def parseRAW(file, context, op, filepath):
+def importRaw(file, context, op, filepath):
 
     basename1 = os.path.basename(filepath)[:-4]
     basename2 = basename1+"_2"
@@ -400,13 +390,24 @@ def createMaterial(resModule, mat):
         newMat.node_tree.links.new(bsdf.inputs['Base Color'], texColor.outputs['Color'])
 
 
+
+
 def loadTexturefiles(basedir, resModule, image_format, convert_txr):
-    for texture in resModule.textures:
+    maatToTexture, textureToMat = getMatTextureRefDict(resModule)
+    paletteModule = getActivePaletteModule(resModule)
+    palette = paletteModule.palette_colors
+
+    for i, texture in enumerate(resModule.textures):
+        usedInMat = resModule.materials[textureToMat[i]]
+        transpColor = (0,0,0)
+        if usedInMat.tex_type == 'ttx' and usedInMat.is_col:
+            transpColor = srgb_to_rgb(*(palette[usedInMat.col-1].value[:3]))
+
         noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.name))[0]
         result = None
         imgPath = "{}.{}".format(noExtPath, "txr")
         if convert_txr:
-            result = TXRtoTGA32(imgPath)
+            result = convertTXRtoTGA32(imgPath, transpColor)
         else:
             result = getTXRParams(imgPath)
         imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
@@ -420,11 +421,13 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
 
         img_format = result['format']
         if img_format is not None:
-            R = unmaskShort(img_format[0])[1]
-            G = unmaskShort(img_format[1])[1]
-            B = unmaskShort(img_format[2])[1]
-            A = unmaskShort(img_format[3])[1]
-            texture.img_format = str(R) + str(G) + str(B) + str(A)
+            R = unmaskBits(img_format[0])[1]
+            G = unmaskBits(img_format[1])[1]
+            B = unmaskBits(img_format[2])[1]
+            A = unmaskBits(img_format[3])[1]
+
+            format_str = str(A) + str(R) + str(G) + str(B)
+            texture.img_format = format_str
 
         texture.has_mipmap = result['has_mipmap']
 
@@ -502,14 +505,14 @@ def importResources(filepath, resModules, unpack_res = True, image_format = 'tga
 
     unpackRES(resModule, filepath, unpack_res)
 
+    loadPaletteFiles(unpackPath, resModule)
+
     loadTexturefiles(unpackPath, resModule, image_format, convert_txr)
 
     loadMaskfiles(unpackPath, resModule, image_format, convert_txr)
 
-    loadPaletteFiles(unpackPath, resModule)
 
-
-def readRES(file, context, self, filepath):
+def importRes(file, context, self, filepath):
 
     scene = context.scene
     mytool = scene.my_tool
@@ -546,7 +549,7 @@ def readRES(file, context, self, filepath):
     mytool.isImporting = False
 
 
-def readB3D(file, context, self, filepath):
+def importB3d(file, context, self, filepath):
     if file.read(3) == b'b3d':
         log.info("correct file")
     else:
@@ -588,7 +591,7 @@ def readB3D(file, context, self, filepath):
 
         commonResModule = getColPropertyByName(resModules, "COMMON")
 
-        if commonResModule is None or commonResPath == resPath:
+        if commonResModule is None or commonResPath == resPath or self.to_reload_common:
             importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
             commonResModule = getColPropertyByName(resModules, "COMMON")
 
@@ -2575,7 +2578,7 @@ def saveMaterial(resModule, materialStr):
             elif paramName in ["reflect", "specular", "transp", "rot"]:
                 setattr(material, paramName, float(params[i+1]))
                 i+=1
-            elif paramName in ["noz", "nof", "notile", "notiveu", "notilev", \
+            elif paramName in ["noz", "nof", "notile", "notileu", "notilev", \
                                 "alphamirr", "bumpcoord", "usecol", "wave"]:
                 setattr(material, "is_" + paramName, True)
                 # i+=1
@@ -2584,12 +2587,14 @@ def saveMaterial(resModule, materialStr):
                 setattr(material, paramName, [float(params[i+1]), float(params[i+2])])
                 i+=2
             elif paramName[0:3] == "env":
-                setattr(material, "is_env", True)
                 envid = paramName[3:]
-                setattr(material, "env", [float(params[i+1]), float(params[i+2])])
-                i+=2
                 if len(envid) > 0:
+                    setattr(material, "is_envId", True)
                     setattr(material, "envId", int(envid))
+                else:
+                    setattr(material, "is_env", True)
+                    setattr(material, "env", [float(params[i+1]), float(params[i+2])])
+                    i+=2
         i+=1
 
 def saveMaskfileParams(maskfile, params):
@@ -2627,107 +2632,65 @@ def saveTextureParams(texture, params):
         i+=1
 
 
-def save_image_as(image, path, name):
-    scene = bpy.data.scenes.new("Temp")
-
-    show_name = image.name
-    image.name = name
-
-    # use docs.blender.org/api/current/bpy.types.ImageFormatSettings.html for more properties
-    settings = scene.render.image_settings
-    settings.file_format = 'TARGA_RAW'  # Options: 'BMP', 'IRIS', 'PNG', 'JPEG', 'JPEG2000', 'TARGA', 'TARGA_RAW', 'CINEON', 'DPX', 'OPEN_EXR_MULTILAYER', 'OPEN_EXR', 'HDR', 'TIFF', 'WEBP'
-
-    # save images with above settings
-    if not os.path.isfile(path):
-        path = os.path.join(path, name)
-    image.save_render(path, scene=scene)
-
-    bpy.data.scenes.remove(scene)
-    image.name = show_name
-
-
 def unpackRES(resModule, filepath, saveOnDisk = True):
     log.info("Unpacking {}:".format(filepath))
 
-    # filename, resExtension = os.path.splitext(filepath)
-    # basename = os.path.basename(filepath)[:-4]
-    # basepath = os.path.dirname(filepath)
     resdir = getRESFolder(filepath)
     curfolder = resdir
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
-    with open(filepath, "rb") as resFile:
-        while 1:
-            category = readCString(resFile)
-            if(len(category) > 0):
-                resSplit = category.split(" ")
-                id = resSplit[0]
-                cnt = int(resSplit[1])
-                log.info("Reading category {}".format(id))
-                log.info("Element count in category is {}.".format(cnt))
-                binfilePath = None
-                if cnt > 0:
-                    log.info("Start processing...")
-                    curfolder = os.path.join(resdir,id)
-                    if id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
-                        binfilePath = os.path.join(curfolder, "{}.txt".format(id))
-                        if saveOnDisk:
-                            binfileBase = os.path.dirname(binfilePath)
-                            binfileBase = Path(binfileBase)
-                            binfileBase.mkdir(exist_ok=True, parents=True)
-                        for i in range(cnt):
-                            rawString = readCString(resFile)
-                            if saveOnDisk:
-                                with open(binfilePath, "wb") as outFile:
-                                    outFile.write((rawString+"\n").encode("UTF-8"))
+    sections = readRESSections(filepath)
 
-                            if id == "MATERIALS":
-                                saveMaterial(resModule, rawString)
-
-                    else: #PALETTEFILES, SOUNDFILES, BACKFILES, MASKFILES, TEXTUREFILES
-                        for i in range(cnt):
-                            rawString = readCString(resFile)
-
-                            nameSplit = rawString.split(" ")
-                            fullname = nameSplit[0]
-                            params = nameSplit[1:]
-                            pathSplit = fullname.split("\\")
-                            name = pathSplit[-1]
-                            subpath = ""
-                            if len(pathSplit) > 1:
-                                subpath = "\\".join(pathSplit[:-1])
-
-                            sectionSize = struct.unpack("<i	",resFile.read(4))[0]
-                            bytes = resFile.read(sectionSize)
-
-                            binfilePath = os.path.join(curfolder, "{}".format(fullname))
-                            if saveOnDisk:
-                                binfileBase = os.path.dirname(binfilePath)
-                                binfileBase = Path(binfileBase)
-                                binfileBase.mkdir(exist_ok=True, parents=True)
-                                with open(binfilePath, "wb") as binfile:
-                                    log.info("Saving file {}".format(binfile.name))
-                                    binfile.write(bytes)
-
-                            if id == "TEXTUREFILES":
-                                texture = resModule.textures.add()
-                                texture.name = name
-                                texture.subpath = subpath
-                                saveTextureParams(texture, params)
-
-                            elif id == "MASKFILES":
-                                maskfile = resModule.maskfiles.add()
-                                maskfile.name = name
-                                maskfile.subpath = subpath
-                                saveMaskfileParams(maskfile, params)
-
-                            elif id == "PALETTEFILES":
-                                resModule.palette_subpath = subpath
-                                resModule.palette_name = name
-                else:
-                    log.info("Skip category")
+    for section in sections:
+        sectionName = section["name"]
+        if section["cnt"] > 0:
+            curfolder = os.path.join(resdir, sectionName)
+            if sectionName in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
+                binfilePath = os.path.join(curfolder, "{}.txt".format(sectionName))
+                if saveOnDisk:
+                    binfileBase = os.path.dirname(binfilePath)
+                    binfileBase = Path(binfileBase)
+                    binfileBase.mkdir(exist_ok=True, parents=True)
+                    with open(binfilePath, "wb") as outFile:
+                        for data in section['data']:
+                            outFile.write((data['row']+"\n").encode("UTF-8"))
+                if sectionName == "MATERIALS":
+                    for data in section['data']:
+                        saveMaterial(resModule, data['row'])
             else:
-                break
+                for data in section['data']:
+                    nameSplit = data['row'].split(" ")
+                    fullname = nameSplit[0]
+                    params = nameSplit[1:]
+                    pathSplit = fullname.split("\\")
+                    name = pathSplit[-1]
+                    subpath = ""
+                    if len(pathSplit) > 1:
+                        subpath = "\\".join(pathSplit[:-1])
+                    binfilePath = os.path.join(curfolder, "{}".format(fullname))
+                    if saveOnDisk:
+                        binfileBase = os.path.dirname(binfilePath)
+                        binfileBase = Path(binfileBase)
+                        binfileBase.mkdir(exist_ok=True, parents=True)
+                        with open(binfilePath, "wb") as binfile:
+                            log.info("Saving file {}".format(binfile.name))
+                            binfile.write(data['bytes'])
+
+                    if sectionName == "TEXTUREFILES":
+                        texture = resModule.textures.add()
+                        texture.name = name
+                        texture.subpath = subpath
+                        saveTextureParams(texture, params)
+
+                    elif sectionName == "MASKFILES":
+                        maskfile = resModule.maskfiles.add()
+                        maskfile.name = name
+                        maskfile.subpath = subpath
+                        saveMaskfileParams(maskfile, params)
+
+                    elif sectionName == "PALETTEFILES":
+                        resModule.palette_subpath = subpath
+                        resModule.palette_name = name
 
     return

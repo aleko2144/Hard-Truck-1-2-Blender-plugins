@@ -12,10 +12,6 @@ from bpy.props import (StringProperty,
 						CollectionProperty
 						)
 
-from bpy.types import (Panel,
-						Operator,
-						PropertyGroup,
-						)
 
 from ..common import log
 
@@ -80,9 +76,10 @@ class fieldType(enum.Enum):
 	SPHERE_EDIT = 41
 
 
-class ActiveBlock(bpy.types.PropertyGroup):
+class BoolBlock(bpy.types.PropertyGroup):
     name: StringProperty()
     state : BoolProperty()
+
 
 class FloatBlock(bpy.types.PropertyGroup):
     value: FloatProperty()
@@ -219,11 +216,20 @@ class TextureBlock(bpy.types.PropertyGroup):
 	has_mipmap: BoolProperty(default=False)
 	img_format: EnumProperty(
 		name="Image color map",
-		default = '5650',
+		default = '0565',
 		items=[
-			('5650', "RGB(565)", "Color without transparency"),
-			('4444', "RGBA(4444)", "Color with transparency(A)")
+			('0565', "ARGB(0565)", "Color without transparency"),
+			('4444', "ARGB(4444)", "Color with transparency(A)")
 		])
+
+	img_type: EnumProperty(
+		name="Image type",
+		default='TRUECOLOR',
+		items=[
+			('TRUECOLOR', "True-color image", "Store each pixel value"),
+			('COLORMAP', "Color mapped(palette) image", "Store indexes of palette")
+		]
+	)
 
 	is_memfix: BoolProperty(default=False)
 	is_noload: BoolProperty(default=False)
@@ -321,12 +327,14 @@ class MaterialBlock(bpy.types.PropertyGroup):
 	is_coord: BoolProperty(default=False)
 	coord: IntProperty(default=0)
 
-	is_env: BoolProperty(default=False)
+	is_envId: BoolProperty(default=False)
 	envId: IntProperty(default=0)
+
+	is_env: BoolProperty(default=False)
 	env: FloatVectorProperty(default=(0.0, 0.0), size=2)
 
-	is_rotPoint: BoolProperty(default=False)
-	rotPoint: FloatVectorProperty(default=(0.0, 0.0), size=2)
+	is_RotPoint: BoolProperty(default=False)
+	RotPoint: FloatVectorProperty(default=(0.0, 0.0), size=2)
 
 	is_move: BoolProperty(default=False)
 	move: FloatVectorProperty(default=(0.0, 0.0), size=2)
@@ -1636,7 +1644,7 @@ def getClassDefByType(blockNum):
 	return zclass
 
 _classes = [
-	ActiveBlock,
+	BoolBlock,
 	FloatBlock,
 	PaletteColorBlock,
 	TextureBlock,
