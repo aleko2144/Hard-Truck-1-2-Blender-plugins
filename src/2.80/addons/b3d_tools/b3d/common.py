@@ -184,35 +184,32 @@ class HTMaterial():
         self.usecol = False # bool
         self.wave = False # bool
 
-def getColPropertyByName(colProperty, value):
+def getColPropertyByName(colProperty, value, colName = 'value'):
     result = None
     for item in colProperty:
-        if item.value == value:
+        if getattr(item, colName) == value:
             result = item
             break
     return result
 
-def getColPropertyIndexByName(colProperty, value):
+def getColPropertyIndexByName(colProperty, value, colName='value'):
     result = -1
     for idx, item in enumerate(colProperty):
-        if item.value == value:
+        if getattr(item, colName) == value:
             result = idx
             break
     return result
 
-def existsColPropertyByName(colProperty, value):
+def existsColPropertyByName(colProperty, value, colName='value'):
     for item in colProperty:
-        if item.value == value:
+        if getattr(item, colName) == value:
             return True
     return False
 
-def getMaterialIndexInRES(matName):
+def getMaterialIndexInRES(matName, resModuleName):
     resModules = bpy.context.scene.my_tool.resModules
-    delimiterInd = matName.find("_")
-    resModuleName = matName[:delimiterInd]
-    materialName = matName[delimiterInd+1:]
     curModule = getColPropertyByName(resModules, resModuleName)
-    curMaterialInd = getColPropertyIndexByName(curModule.materials, materialName)
+    curMaterialInd = getColPropertyIndexByName(curModule.materials, matName, 'mat_name')
     return curMaterialInd
 
 def getColorImgName(moduleName, index):
@@ -551,21 +548,14 @@ def roomsCallback(bname, pname):
 
 def modulesCallback(self, context):
 
-    mytool = context.scene.my_tool
-
     modules = [cn for cn in bpy.data.objects if isRootObj(cn)]
-
-    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(modules)]
-
+    enumProperties = [(cn.name[:-4], cn.name[:-4], "") for i, cn in enumerate(modules)]
     return enumProperties
 
 
 def resModulesCallback(self, context):
 
     mytool = bpy.context.scene.my_tool
-
     modules = [cn for cn in mytool.resModules if cn.value != "-1"]
-
     enumProperties = [(cn.value, cn.value, "") for i, cn in enumerate(modules)]
-
     return enumProperties

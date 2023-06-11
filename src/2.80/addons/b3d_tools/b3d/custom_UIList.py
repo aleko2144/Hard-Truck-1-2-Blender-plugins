@@ -247,7 +247,7 @@ class CUSTOM_UL_materials(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.3)
         split.label(text="Index: %d" % (index+1))
-        split.template_ID(item, 'id_value')
+        split.template_ID(item, 'id_mat')
 
     def invoke(self, context, event):
         pass
@@ -257,7 +257,17 @@ class CUSTOM_UL_textures(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.3)
         split.label(text="Index: %d" % (index+1))
-        split.template_ID(item, 'id_value')
+        split.template_ID(item, 'id_tex')
+
+    def invoke(self, context, event):
+        pass
+
+class CUSTOM_UL_maskfiles(UIList):
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        split = layout.split(factor=0.3)
+        split.label(text="Index: %d" % (index+1))
+        split.template_ID(item, 'id_msk')
 
     def invoke(self, context, event):
         pass
@@ -350,6 +360,7 @@ _classes = [
     CUSTOM_OT_actions_color,
     CUSTOM_UL_colors,
     CUSTOM_UL_textures,
+    CUSTOM_UL_maskfiles,
     CUSTOM_UL_materials,
     CUSTOM_UL_items,
     CUSTOM_PT_objectList,

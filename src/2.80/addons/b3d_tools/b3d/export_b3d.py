@@ -455,9 +455,9 @@ def writeTEXTUREFILES(resModule, file, filepath, saveImages = True):
 			if usedInMat.tex_type == 'ttx' and usedInMat.is_col:
 				transpColor = srgb_to_rgb(*(palette[usedInMat.col-1].value[:3]))
 
-			imageName = "{}.tga".format(os.path.splitext(texture.name)[0])
+			imageName = "{}.tga".format(os.path.splitext(texture.tex_name)[0])
 			imagePath = os.path.join(exportFolder, imageName)
-			textureName = "{}\\{}".format(texture.subpath.rstrip("\\"), "{}.txr".format(os.path.splitext(texture.name)[0]))
+			textureName = "{}\\{}".format(texture.subpath.rstrip("\\"), "{}.txr".format(os.path.splitext(texture.tex_name)[0]))
 
 			texParams = []
 			if texture.is_someint:
@@ -474,7 +474,7 @@ def writeTEXTUREFILES(resModule, file, filepath, saveImages = True):
 			cString(texStr, file)
 
 			if saveImages:
-				saveImageAs(texture.id_value, imagePath)
+				saveImageAs(texture.id_tex, imagePath)
 
 			convertTGA32toTXR(imagePath, 2, texture.img_type, texture.img_format, texture.has_mipmap, transpColor)
 
@@ -494,8 +494,8 @@ def writeMATERIALS(resModule, file):
 	cString("MATERIALS {}".format(size), file)
 	if size > 0:
 		for material in resModule.materials:
-			if material.id_value is not None:
-				matName = material.id_value.name
+			if material.id_mat is not None:
+				matName = material.id_mat.name
 				matStr = matName
 				matParams = []
 				if material.is_tex:
@@ -534,7 +534,6 @@ def exportRes(context, op, exportDir):
 	mytool = bpy.context.scene.my_tool
 
 	exportedModules = [sn.name for sn in op.res_modules if sn.state == True]
-
 	if not os.path.isdir(exportDir):
 		exportDir = os.path.dirname(exportDir)
 
@@ -593,7 +592,7 @@ def exportRes(context, op, exportDir):
 
 
 
-def exportB3d(context, op, filepath):
+def exportB3d(context, op, exportDir):
 
 	global currentRes
 
@@ -609,98 +608,115 @@ def exportB3d(context, op, filepath):
 
 	fillBoundingSphereLists()
 
-	file = open(filepath, 'wb')
+	if not os.path.isdir(exportDir):
+		exportDir = os.path.dirname(exportDir)
 
-	materials = []
+	if op.partial_export:
+		selectedObj = bpy.context.object
+		if selectedObj is None:
+			log.error('No selected object in outliner')
+			return False
 
-	for material in bpy.data.materials:
-		materials.append(material.name)
-
-	cp_materials = 0
-	cp_data_blocks = 0
-	cp_eof = 0
-
-	#Header
-
-	file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
-
-	file.write(struct.pack('<i',0)) #File Size
-	file.write(struct.pack('<i',0)) #Mat list offset
-	file.write(struct.pack('<i',0)) #Mat list Data Size
-	file.write(struct.pack('<i',0)) #Data Chunks Offset
-	file.write(struct.pack('<i',0)) #Data Chunks Size
-
-	cp_materials = int(file.tell()/4)
-
-	objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
-	# curRoot = objs[0]
-	obj = bpy.context.object
-	curRoot = getRootObj(obj)
-
-	allObjs = []
-
-	if isRootObj(obj):
-		allObjs = curRoot.children
+		exportedObjects = [selectedObj.name]
 	else:
-		allObjs = [obj]
+		exportedObjects = [sn.name for sn in op.res_modules if sn.state == True]
 
-	spaces = [cn for cn in allObjs if cn.get(BLOCK_TYPE) == 24]
-	other = [cn for cn in allObjs if cn.get(BLOCK_TYPE) != 24]
+	for objName in exportedObjects:
 
-	rChild = []
-	rChild.extend(spaces)
-	rChild.extend(other)
+		obj = bpy.data.objects["{}.b3d".format(objName)]
+		curRoot = getRootObj(obj)
 
-	resModules = bpy.context.scene.my_tool.resModules
-	curResName = curRoot.name[:-4]
-	curModule = getColPropertyByName(resModules, curResName)
+		allObjs = []
 
-	currentRes = curResName
-	createBorderList()
+		if isRootObj(obj):
+			allObjs = curRoot.children
+		else:
+			allObjs = [obj]
 
-	file.write(struct.pack('<i', len(curModule.materials))) #Materials Count
-	for mat in curModule.materials:
-		writeName(mat.value, file)
+		filepath = os.path.join(exportDir, curRoot.name)
 
-	cp_data_blocks = int(file.tell()/4)
+		file = open(filepath, 'wb')
 
-	curMaxCnt = 0
-	curLevel = 0
+		# materials = []
 
-	file.write(struct.pack("<i",111)) # Begin_Chunks
+		# for material in bpy.data.materials:
+		# 	materials.append(material.name)
 
-	# prevLevel = 0
-	if len(rChild) > 0:
-		for obj in rChild[:-1]:
+		cp_materials = 0
+		cp_data_blocks = 0
+		cp_eof = 0
+
+		#Header
+
+		file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
+
+		#reserve places for sizes
+		file.write(struct.pack('<i',0)) #File Size
+		file.write(struct.pack('<i',0)) #Mat list offset
+		file.write(struct.pack('<i',0)) #Mat list Data Size
+		file.write(struct.pack('<i',0)) #Data Chunks Offset
+		file.write(struct.pack('<i',0)) #Data Chunks Size
+
+		cp_materials = int(file.tell()/4)
+
+
+		spaces = [cn for cn in allObjs if cn.get(BLOCK_TYPE) == 24]
+		other = [cn for cn in allObjs if cn.get(BLOCK_TYPE) != 24]
+
+		rChild = []
+		rChild.extend(spaces)
+		rChild.extend(other)
+
+		resModules = bpy.context.scene.my_tool.resModules
+		curResName = curRoot.name[:-4]
+		curModule = getColPropertyByName(resModules, curResName)
+
+		currentRes = curResName
+		createBorderList()
+
+		file.write(struct.pack('<i', len(curModule.materials))) #Materials Count
+		for mat in curModule.materials:
+			writeName(mat.mat_name, file)
+
+		cp_data_blocks = int(file.tell()/4)
+
+		curMaxCnt = 0
+		curLevel = 0
+
+		file.write(struct.pack("<i",111)) # Begin_Chunks
+
+		# prevLevel = 0
+		if len(rChild) > 0:
+			for obj in rChild[:-1]:
+				if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
+					curMaxCnt = 2
+				elif obj.get(BLOCK_TYPE) == 21:
+					curMaxCnt = obj[prop(b_21.GroupCnt)]
+				exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
+
+				file.write(struct.pack("<i", 444))
+
+			obj = rChild[-1]
 			if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
 				curMaxCnt = 2
 			elif obj.get(BLOCK_TYPE) == 21:
 				curMaxCnt = obj[prop(b_21.GroupCnt)]
 			exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
-			file.write(struct.pack("<i", 444))
+		file.write(struct.pack("<i",222))#EOF
 
-		obj = rChild[-1]
-		if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
-			curMaxCnt = 2
-		elif obj.get(BLOCK_TYPE) == 21:
-			curMaxCnt = obj[prop(b_21.GroupCnt)]
-		exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
+		cp_eof = int(file.tell()/4)
 
-	file.write(struct.pack("<i",222))#EOF
-
-	cp_eof = int(file.tell()/4)
-
-	file.seek(4,0)
-	file.write(struct.pack("<i", cp_eof))
-	file.seek(8,0)
-	file.write(struct.pack("<i", cp_materials))
-	file.seek(12,0)
-	file.write(struct.pack("<i", cp_data_blocks - cp_materials))
-	file.seek(16,0)
-	file.write(struct.pack("<i", cp_data_blocks))
-	file.seek(20,0)
-	file.write(struct.pack("<i", cp_eof - cp_data_blocks))
+		file.seek(4,0)
+		file.write(struct.pack("<i", cp_eof))
+		file.seek(8,0)
+		file.write(struct.pack("<i", cp_materials))
+		file.seek(12,0)
+		file.write(struct.pack("<i", cp_data_blocks - cp_materials))
+		file.seek(16,0)
+		file.write(struct.pack("<i", cp_data_blocks))
+		file.seek(20,0)
+		file.write(struct.pack("<i", cp_eof - cp_data_blocks))
 
 def commonSort(curCenter, arr):
 	global createdBounders
@@ -752,7 +768,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 		curCenter = list(block.location)
 
 		if objType == 444:
-			if int(block.name[6]) > 0:
+			if int(block.name[6]) > 0: #GROUP_?
 				file.write(struct.pack("<i",444))#Group Chunk
 
 			blChildren = commonSort(curCenter, blChildren)
@@ -904,7 +920,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					uvCount = 0
 					useNormals = False
 					normalSwitch = False
-					l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name)
+					l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name, currentRes)
 					if format_flags_attrs is None:
 						formatRaw = 2 # default
 					else:
@@ -1108,9 +1124,10 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
 				# Points list
 				for point in pointList:
-					file.write(struct.pack("<f", point.x))
-					file.write(struct.pack("<f", point.y))
-					file.write(struct.pack("<f", point.z))
+					file.write(struct.pack("<3f", *(block.matrix_world @ Vector(point[:3]))))
+					# file.write(struct.pack("<f", point.x))
+					# file.write(struct.pack("<f", point.y))
+					# file.write(struct.pack("<f", point.z))
 
 			elif objType == 21:
 
@@ -1250,7 +1267,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					file.write(struct.pack("<i", formatRaw)) # format with UVs TODO: not consts
 					file.write(struct.pack("<f", 1.0)) # TODO: not consts
 					file.write(struct.pack("<i", 32767)) # TODO: not consts
-					file.write(struct.pack("<i", getMaterialIndexInRES(l_material)))
+					file.write(struct.pack("<i", getMaterialIndexInRES(l_material, currentRes)))
 					file.write(struct.pack("<i", len(verts)))
 					for i, vert in enumerate(verts):
 						# scale_u = sprite_center[1] - l_verts[vert][1]
@@ -1372,7 +1389,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 					uvCount = 0
 					useNormals = False
 					normalSwitch = False
-					l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name)
+					l_material_ind = getMaterialIndexInRES(obj.data.materials[poly.material_index].name, currentRes)
 					formatRaw = format_flags_attrs[poly.index].value
 					# formatRaw = 0
 					file.write(struct.pack("<i", formatRaw))

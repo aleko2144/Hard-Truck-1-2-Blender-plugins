@@ -110,6 +110,46 @@ def thread_import_b3d(self, files, context):
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished importing in', t, 'seconds')
 
+def import_multiple_res(self, files, context):
+
+    scene = context.scene
+    mytool = scene.my_tool
+
+    resModules = getattr(mytool, "resModules")
+
+    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+
+    if not os.path.exists(commonResPath) and self.to_import_textures:
+        self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures can't be imported! Please, set path to Common.res in addon preferences.")
+        return {'FINISHED'}
+
+    mytool.isImporting = True
+
+    commonResModule = getColPropertyByName(resModules, "COMMON")
+
+    if commonResModule is None or self.to_reload_common:
+
+        print('Importing file', commonResPath)
+        t = time.mktime(datetime.datetime.now().timetuple())
+        with open(commonResPath, 'rb') as file:
+            importRes(file, context, self, commonResPath)
+        t = time.mktime(datetime.datetime.now().timetuple()) - t
+        print('Finished importing in', t, 'seconds')
+
+    for resfile in self.files:
+        filepath = os.path.join(self.directory, "{}.res".format(os.path.splitext(resfile.name)[0]))
+
+        if filepath != commonResPath: #COMMON.RES imported before
+
+            print('Importing file', filepath)
+            t = time.mktime(datetime.datetime.now().timetuple())
+            with open(filepath, 'rb') as file:
+                importRes(file, context, self, filepath)
+            t = time.mktime(datetime.datetime.now().timetuple()) - t
+            print('Finished importing in', t, 'seconds')
+
+    mytool.isImporting = False
+
 class ChunkType(enum.Enum):
     END_CHUNK = 0
     END_CHUNKS = 1
@@ -368,21 +408,24 @@ def createMaterial(resModule, mat):
     palette = paletteModule.palette_colors
 
 
-    newMat = bpy.data.materials.get(mat.name)
+    newMat = bpy.data.materials.get(mat.mat_name)
     if newMat is None:
-        newMat = bpy.data.materials.new(name=mat.name)
+        newMat = bpy.data.materials.new(name=mat.mat_name)
     newMat.use_nodes = True
     bsdf = newMat.node_tree.nodes["Principled BSDF"]
 
     for link in bsdf.inputs['Base Color'].links:
         newMat.node_tree.nodes.remove(link.from_node)
 
+    for link in bsdf.inputs['Alpha'].links:
+        newMat.node_tree.nodes.remove(link.from_node)
+
     if (mat.is_tex and int(mat.tex) > 0):
-        texidx = mat.tex
-        path = textureList[texidx-1].name
+        path = textureList[mat.tex-1].tex_name
         texImage = newMat.node_tree.nodes.new("ShaderNodeTexImage")
         texImage.image = bpy.data.images.get(path)
         newMat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+        newMat.node_tree.links.new(bsdf.inputs['Alpha'], texImage.outputs['Alpha'])
 
     elif mat.is_col and int(mat.col) > 0:
         texColor = newMat.node_tree.nodes.new("ShaderNodeRGB")
@@ -403,7 +446,7 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
         if usedInMat.tex_type == 'ttx' and usedInMat.is_col:
             transpColor = srgb_to_rgb(*(palette[usedInMat.col-1].value[:3]))
 
-        noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.name))[0]
+        noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.tex_name))[0]
         result = None
         imgPath = "{}.{}".format(noExtPath, "txr")
         if convert_txr:
@@ -411,13 +454,15 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
         else:
             result = getTXRParams(imgPath)
         imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
+        log.debug('Importing image {}'.format(imgName))
+
         imgPath = "{}.{}".format(noExtPath, image_format)
-        texture.name = imgName
+        texture.tex_name = imgName
         img = bpy.data.images.get(imgName)
-        if img is not None:
-            bpy.data.images.remove(img)
-        img = bpy.data.images.load(imgPath)
-        texture.id_value = img
+        if img is None:
+            # bpy.data.images.remove(img)
+            img = bpy.data.images.load(imgPath)
+        texture.id_tex = img
 
         img_format = result['format']
         if img_format is not None:
@@ -427,6 +472,8 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
             A = unmaskBits(img_format[3])[1]
 
             format_str = str(A) + str(R) + str(G) + str(B)
+            if format_str not in ['4444', '0565']:
+                format_str = '4444'
             texture.img_format = format_str
 
         texture.has_mipmap = result['has_mipmap']
@@ -434,24 +481,24 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
 
 def loadMaskfiles(basedir, resModule, image_format, convert_txr):
     for maskfile in resModule.maskfiles:
-        noExtPath = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.name))[0]
+        noExtPath = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.msk_name))[0]
         if convert_txr:
             MSKtoTGA32("{}.{}".format(noExtPath, "msk"))
         imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
         imgPath = "{}.{}".format(noExtPath, image_format)
-        maskfile.name = imgName
+        maskfile.msk_name = imgName
         img = bpy.data.images.get(imgName)
-        if img is not None:
-            bpy.data.images.remove(img)
-        img = bpy.data.images.load(imgPath)
-        maskfile.id_value = img
+        if img is None:
+            # bpy.data.images.remove(img)
+            img = bpy.data.images.load(imgPath)
+        maskfile.id_msk = img
 
 def loadMaterials(resModule):
     mytool = bpy.context.scene.my_tool
     for mat in resModule.materials:
-        material = bpy.data.materials.get(mat.name)
+        material = bpy.data.materials.get(mat.mat_name)
         if material is not None:
-            mat.id_value = material
+            mat.id_mat = material
             if mat.is_col:
                 paletteModule = getActivePaletteModule(resModule)
                 palette = paletteModule.palette_colors
@@ -462,18 +509,18 @@ def loadMaterials(resModule):
 
             if mat.is_tex:
                 image = resModule.textures[mat.tex-1]
-                if image and image.id_value:
-                    mat.id_tex = image.id_value
+                if image and image.id_tex:
+                    mat.id_tex = image.id_tex
 
             if mat.is_msk:
                 image = resModule.maskfiles[mat.msk-1]
-                if image and image.id_value:
-                    mat.id_msk = image.id_value
+                if image and image.id_msk:
+                    mat.id_msk = image.id_msk
 
             if mat.is_att:
                 image = resModule.materials[mat.att-1]
-                if image and image.id_value:
-                    mat.id_att = image.id_value
+                if image and image.id_mat:
+                    mat.id_att = image.id_mat
 
 def loadPaletteFiles(basedir, resModule):
     if len(resModule.palette_name) > 0:
@@ -520,33 +567,11 @@ def importRes(file, context, self, filepath):
     resModules = getattr(mytool, "resModules")
     res_basename = os.path.basename(filepath)[:-4] #cut extension
 
-    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
-
-    if not os.path.exists(commonResPath):
-        self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
-        return
-
-    mytool.isImporting = True
-
-    commonResModule = getColPropertyByName(resModules, "COMMON")
-
-    if commonResModule is None or commonResPath == filepath or self.to_reload_common:
-        importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
-
     importResources(filepath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
 
     resModule = getColPropertyByName(resModules, res_basename)
-    commonResModule = getColPropertyByName(resModules, "COMMON")
-
-
-    if commonResPath != res_basename:
-        createMaterials(commonResModule)
     createMaterials(resModule)
-
-    loadMaterials(commonResModule)
     loadMaterials(resModule)
-
-    mytool.isImporting = False
 
 
 def importB3d(file, context, self, filepath):
@@ -587,28 +612,28 @@ def importB3d(file, context, self, filepath):
 
     if self.to_import_textures:
 
-        mytool.isImporting = True
+    #     mytool.isImporting = True
 
-        commonResModule = getColPropertyByName(resModules, "COMMON")
+    #     commonResModule = getColPropertyByName(resModules, "COMMON")
 
-        if commonResModule is None or commonResPath == resPath or self.to_reload_common:
-            importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
-            commonResModule = getColPropertyByName(resModules, "COMMON")
+    #     if commonResModule is None or commonResPath == resPath or self.to_reload_common:
+    #         importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
+    #         commonResModule = getColPropertyByName(resModules, "COMMON")
 
-        importResources(resPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
+    #     importResources(resPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
 
         resModule = getColPropertyByName(resModules, res_basename)
-        commonResModule = getColPropertyByName(resModules, "COMMON")
+    #     commonResModule = getColPropertyByName(resModules, "COMMON")
 
-        if commonResPath != resPath:
-            createMaterials(commonResModule)
+    #     if commonResPath != resPath:
+    #         createMaterials(commonResModule)
 
-        createMaterials(resModule)
+    #     createMaterials(resModule)
 
-        loadMaterials(commonResModule)
-        loadMaterials(resModule)
+    #     loadMaterials(commonResModule)
+    #     loadMaterials(resModule)
 
-        mytool.isImporting = False
+    #     mytool.isImporting = False
 
 
     blocksToImport = self.blocks_to_import
@@ -1130,7 +1155,8 @@ def importB3d(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
+                            mat = resModule.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1141,7 +1167,8 @@ def importB3d(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
+                            mat = resModule.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
                             b3dMesh.materials.append(mat)
 
 
@@ -1473,20 +1500,25 @@ def importB3d(file, context, self, filepath):
                 polyline = curveData.splines.new('POLY')
                 polyline.points.add(len(coords)-1)
 
-                newCoords = recalcToLocalCoord(coords[0], coords)
+                if len(coords) > 0:
+                    originPoint = coords[0]
+                else:
+                    originPoint = bounding_sphere[0:3]
+
+                newCoords = recalcToLocalCoord(originPoint, coords)
 
                 for i, coord in enumerate(newCoords):
                     x,y,z = coord
                     polyline.points[i].co = (x, y, z, 1)
 
-                curveData.bevel_depth = 0.05
-                curveData.extrude = 20
+                curveData.bevel_depth = 0
+                curveData.extrude = 10
 
                 # create Object
                 b3dObj = bpy.data.objects.new(objName, curveData)
                 # b3dObj.location = (0,0,0)
                 b3dObj[BLOCK_TYPE] = type
-                b3dObj.location = coords[0]
+                b3dObj.location = originPoint
                 # b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
                 # b3dObj[prop(b_20.R)] = bounding_sphere[3]
                 b3dObj[prop(b_20.Unk_Int1)] = unknown1
@@ -1850,7 +1882,8 @@ def importB3d(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
+                            mat = resModule.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
                             b3dMesh.materials.append(mat)
                             lastIndex = len(b3dMesh.materials)-1
 
@@ -1860,7 +1893,8 @@ def importB3d(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = bpy.data.materials.get(resModule.materials[int(texnum)].name)
+                            mat = resModule.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
                             b3dMesh.materials.append(mat)
 
                 createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
@@ -2247,7 +2281,8 @@ def importB3d(file, context, self, filepath):
                 # createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
 
                 if self.to_import_textures:
-                    mat = bpy.data.materials.get(resModule.materials[int(texNum)].name)
+                    mat = resModule.materials[int(texnum)].id_mat
+                    # mat = bpy.data.materials.get(resModule.materials[int(texNum)].mat_name)
                     b3dMesh.materials.append(mat)
 
 
@@ -2561,7 +2596,7 @@ def saveMaterial(resModule, materialStr):
     params = nameSplit[1:]
 
     material = resModule.materials.add()
-    material.name = name
+    material.mat_name = name
     i = 0
     while i < len(params):
         paramName = params[i].replace('"', '')
@@ -2679,13 +2714,13 @@ def unpackRES(resModule, filepath, saveOnDisk = True):
 
                     if sectionName == "TEXTUREFILES":
                         texture = resModule.textures.add()
-                        texture.name = name
+                        texture.tex_name = name
                         texture.subpath = subpath
                         saveTextureParams(texture, params)
 
                     elif sectionName == "MASKFILES":
                         maskfile = resModule.maskfiles.add()
-                        maskfile.name = name
+                        maskfile.msk_name = name
                         maskfile.subpath = subpath
                         saveMaskfileParams(maskfile, params)
 

@@ -133,7 +133,7 @@ def readLVMP(file, bytesPerPixel):
     width = struct.unpack("<i", file.read(4))[0] #width
     height = struct.unpack("<i", file.read(4))[0] #height
     mipmapSize = width * height
-    skipInt = struct.unpack("<i", file.read(4))[0]
+    l_bytesPerPixel = struct.unpack("<i", file.read(4))[0] # in HT2 is 2
     for i in range(mipmapCount):
         mipmap['width'] = width
         mipmap['height'] = height
@@ -616,7 +616,12 @@ def MSKtoTGA32(filepath):
         palette = list(struct.unpack("<"+str(paletteSize*3)+"B", mskFile.read(paletteSize*3)))
         colorsSize = width*height
 
-        colors = decompressRle(mskFile, width, height, 2)
+        if magic == 'MS16':
+            bytesPerPixel = 2
+        else: #MSKR, MSK8, MASK
+            bytesPerPixel = 1
+
+        colors = decompressRle(mskFile, width, height, bytesPerPixel)
 
         header = [None]*12
         header[0] = 0 #IDLength

@@ -658,16 +658,16 @@ class CastAddOperator(bpy.types.Operator):
 						newObj = polyObj.copy()
 						newObj.data = polyObj.data.copy()
 						newObj[consts.BLOCK_TYPE] = 20
-						newObj.data.bevel_depth = 0.05
-						newObj.data.extrude = 20
+						newObj.data.bevel_depth = 0
+						newObj.data.extrude = 10
 						newObj.parent = parentObj
 						setAllObjsByType(context, newObj, b_20)
 						context.collection.objects.link(newObj)
 						log.info("Created new B3D 2d colision: {}.".format(newObj.name))
 					else:
 						polyObj[consts.BLOCK_TYPE] = 20
-						polyObj.data.bevel_depth = 0.05
-						polyObj.data.extrude = 20
+						polyObj.data.bevel_depth = 0
+						polyObj.data.extrude = 10
 						polyObj.parent = parentObj
 						setAllObjsByType(context, polyObj, b_20)
 						log.info("Cast exiting object to B3D 2d colision: {}.".format(polyObj.name))
@@ -1619,7 +1619,7 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 
 			rows = 2
 			row = box.row()
-			row.template_list("CUSTOM_UL_items", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
+			row.template_list("CUSTOM_UL_maskfiles", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
 
 			drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "maskfiles", "maskfiles_index")
 

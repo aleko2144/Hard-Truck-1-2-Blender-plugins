@@ -93,13 +93,14 @@ def update_palette_index(self, context):
 		if resModule is not None:
 			updateColorPreview(resModule, index)
 
-def getImageIndexInModule(field, imageName):
+def getImageIndexInModule(field, imageName, colName='id_value'):
 	mytool = bpy.context.scene.my_tool
 
 	resModule = getCurrentRESModule()
 	if resModule is not None:
 		for i, t in enumerate(getattr(resModule, field)): #maskfiles, textures, materials
-			if t.id_value and t.id_value.name == imageName:
+			id_value = getattr(t, colName)
+			if id_value and id_value.name == imageName:
 				return i
 		return -1
 
@@ -108,7 +109,7 @@ def callback_only_maskfiles(self, context):
 
 	ind = getCurrentRESIndex()
 	if(ind > -1):
-		return (getImageIndexInModule('maskfiles', context.name) > -1)
+		return (getImageIndexInModule('maskfiles', context.name, 'id_msk') > -1)
 
 
 def callback_only_materials(self, context):
@@ -116,7 +117,7 @@ def callback_only_materials(self, context):
 
 	ind = getCurrentRESIndex()
 	if(ind > -1):
-		return (getImageIndexInModule('materials', context.name) > -1)
+		return (getImageIndexInModule('materials', context.name, 'id_mat') > -1)
 
 
 def callback_only_textures(self, context):
@@ -124,7 +125,7 @@ def callback_only_textures(self, context):
 
 	ind = getCurrentRESIndex()
 	if(ind > -1):
-		return (getImageIndexInModule('textures', context.name) > -1)
+		return (getImageIndexInModule('textures', context.name, 'id_tex') > -1)
 
 
 def callback_only_colors(self, context):
@@ -153,17 +154,17 @@ def callback_only_colors(self, context):
 
 
 def setTexInd(self, context):
-	index = getImageIndexInModule("textures", self.id_tex.name)
+	index = getImageIndexInModule("textures", self.id_tex.name, 'id_tex')
 	if index:
 		self.tex = index + 1
 
 def setMskInd(self, context):
-	index = getImageIndexInModule("maskfiles", self.id_msk.name)
+	index = getImageIndexInModule("maskfiles", self.id_msk.name, 'id_msk')
 	if index:
 		self.msk = index + 1
 
 def setMatInd(self, context):
-	index = getImageIndexInModule("materials", self.id_att.name)
+	index = getImageIndexInModule("materials", self.id_att.name, 'id_mat')
 	if index:
 		self.att = index + 1
 
@@ -191,10 +192,9 @@ class PaletteColorBlock(bpy.types.PropertyGroup):
 
 
 class MaskfileBlock(bpy.types.PropertyGroup):
-	value: StringProperty(default = "")
 	subpath: StringProperty(default = "")
-	name: StringProperty(default = "")
-	id_value: PointerProperty(
+	msk_name: StringProperty(default = "")
+	id_msk: PointerProperty(
 		name='Image',
 		type=bpy.types.Image
 	)
@@ -205,10 +205,9 @@ class MaskfileBlock(bpy.types.PropertyGroup):
 
 
 class TextureBlock(bpy.types.PropertyGroup):
-	value: StringProperty(default = "")
 	subpath: StringProperty(default = "")
-	name: StringProperty(default = "")
-	id_value: PointerProperty(
+	tex_name: StringProperty(default = "")
+	id_tex: PointerProperty(
 		name='Image',
 		type=bpy.types.Image
 	)
@@ -239,9 +238,8 @@ class TextureBlock(bpy.types.PropertyGroup):
 
 
 class MaterialBlock(bpy.types.PropertyGroup):
-	value: StringProperty(default = "")
-	name: StringProperty(default = "")
-	id_value: PointerProperty(
+	mat_name: StringProperty(default = "")
+	id_mat: PointerProperty(
 		name='Material',
 		type=bpy.types.Material
 	)
