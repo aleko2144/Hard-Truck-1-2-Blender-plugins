@@ -19,7 +19,7 @@ import re
 import bmesh
 
 def openclose(file):
-	oc = file.read(4)	
+	oc = file.read(4)
 	if (oc == (b'\x4D\x01\x00\x00')):
 		return 2
 	elif oc == (b'\x2B\x02\x00\x00'):
@@ -49,9 +49,9 @@ def readName(file):
 	else:
 		objName = (objName.decode("cp1251").rstrip('\0'))
 	return objName
-	
-	
-		
+
+
+
 class type05:
 	name_fmt = '32c'
 	byte1 = 'c'
@@ -62,24 +62,24 @@ class type05:
 		self.byte1 = struct.unpack(self.byte1,_s)
 		_s = file.read(struct.calcsize(self.byte3))
 		self.byte3 = struct.unpack(self.byte3,_s)
-		
+
 class type15:
 	byte1 = 'c'
 	byte1_2 = 'c'
 	byte4 = '4c'
 	byte3 = '3c'
 	def __init__(self,file):
-		self.byte1 = onebyte(file)					
+		self.byte1 = onebyte(file)
 		file.seek(3,1)								#
-		
+
 		_s = file.read(struct.calcsize(self.byte4))	#
 		self.byte4 = struct.unpack(self.byte4,_s)
-		
+
 		self.byte1_2 = onebyte(file)				# кол-во вложеных обьектов 25
-		
+
 		_s = file.read(struct.calcsize(self.byte3))
 		self.byte3 = struct.unpack(self.byte3,_s)
-				
+
 
 class coords3:
 	def __init__(self, file):
@@ -93,7 +93,7 @@ class quat:
 		self.v = struct.unpack(self.fmt, _s)
 		# Quats are stored x,y,z,w - this fixes it
 		self.v = [self.v[-1], self.v[0], self.v[1], self.v[2]]
-								
+
 def Triangulate(faces):
 	print('faces: '+str(faces))
 	faces_new = []
@@ -103,8 +103,8 @@ def Triangulate(faces):
 			# faces_new.extend([faces[t],faces[t+1],faces[t+2]])
 		# else:
 			# faces_new.extend([faces[t+2],faces[t+1],faces[t]])
-			
-			
+
+
 			# if ((format == 0) or (format == 16) or (format == 1)):
 				# faces_new.extend([faces[t+2],faces[t+1],faces[0]])
 			# else:
@@ -112,7 +112,7 @@ def Triangulate(faces):
 	print('faces new: '+str(faces_new))
 	return faces_new
 
-	
+
 def MakePolyOk(faces):
 	faces1 = []
 	face = []
@@ -121,7 +121,7 @@ def MakePolyOk(faces):
 			faces1.append(faces[j])
 		else:
 			face.append(faces[j])
-			
+
 	faces = face
 	faces1.reverse()
 	faces.extend(faces1)
@@ -131,8 +131,8 @@ def parse_plm(input_file, color_format):
 	with open (input_file,'r+b') as file:
 		struct.unpack('<i',file.read(4))[0] #== 5065808:
 		data_len = struct.unpack('<i',file.read(4))[0]
-		
-		
+
+
 		##### PALT #####
 		PALT = struct.unpack('<i',file.read(4))[0]
 		#if PALT == 1414283600:
@@ -140,17 +140,17 @@ def parse_plm(input_file, color_format):
 		#else:
 			#print("something went wrong")
 		#	sys.exit()
-			
+
 		PALT_len = struct.unpack('<i',file.read(4))[0]
-		
+
 		colors_list = []
-		
+
 		for i in range(PALT_len):
 			#print("COLOR " + str(i))
 			R = 0
 			G = 0
 			B = 0
-			
+
 			R_dat = struct.unpack('<b',file.read(1))[0]
 			if (R_dat <= 1):
 				R = 255 + R_dat
@@ -169,44 +169,44 @@ def parse_plm(input_file, color_format):
 			#print("R: " + str(R) + "G: " + str(G) + "B: " + str(B))
 			#print("R: " + str(R_dat) + "G: " + str(G_dat) + "B: " + str(B_dat))
 			#print("")
-			
+
 			col_1 = 0
 			col_2 = 0
 			col_3 = 0
-			
+
 			if (color_format[0] == "R"):
 				col_1 = R
 			elif (color_format[0] == "G"):
 				col_1 = G
 			elif (color_format[0] == "B"):
 				col_1 = B
-				
+
 			if (color_format[1] == "R"):
 				col_2 = R
 			elif (color_format[1] == "G"):
 				col_2 = G
 			elif (color_format[1] == "B"):
 				col_2 = B
-				
+
 			if (color_format[2] == "R"):
 				col_3 = R
 			elif (color_format[2] == "G"):
 				col_3 = G
 			elif (color_format[2] == "B"):
 				col_3 = B
-				
+
 			colors_list.append( (col_1, col_2, col_3) )
-		
+
 		return colors_list
-						
+
 def parse_pro(input_file, colors_list):
 	with open (input_file,'r') as file:
 		#read all lines first
 		pro = file.readlines()
 		file.close()
 		# you may also want to remove whitespace characters like `\n` at the end of each line
-		pro = [x.strip() for x in pro] 
-		
+		pro = [x.strip() for x in pro]
+
 		#print(pro)
 		##### TEXTUREFILES #####
 		texturefiles_index = pro.index([i for i in pro if "TEXTUREFILES" in i][0])
@@ -222,10 +222,10 @@ def parse_pro(input_file, colors_list):
 		materials = []
 		for i in range(materials_num):
 			materials.append(pro[materials_index + 1 + i]) # тоже самое, так как materials_index = номер строки, где написано "MATERIALS", сами материалы на одну строку ниже
-			
+
 		##### Параметры материалов (col %d) #####
 		material_colors = []
-		
+
 		for i in range(materials_num):
 			colNum_str = str(re.findall(r'col\s+\d+', materials[i]))
 			colNum = 0
@@ -236,11 +236,11 @@ def parse_pro(input_file, colors_list):
 				material_colors.append(str(colors_list[colNum]))
 			else:
 				material_colors.append("[]")
-			
-			
+
+
 		##### Параметры материалов (tex %d) #####
 		material_textures = []
-		
+
 		for i in range(materials_num):
 			texNum_str = str(re.findall(r't\wx\s+\d+', materials[i])) # t\wx - так как помимо tex, ещё бывает ttx
 			texNum = 0
@@ -251,34 +251,34 @@ def parse_pro(input_file, colors_list):
 				material_textures.append(texturefiles[texNum-1])
 			else:
 				material_textures.append(material_colors[i])
-				
+
 		#for k in range(materials_num):
 		#	print(materials[k] + " ---> " + material_textures[k])
-		
+
 		return material_textures
-		
+
 def read(file, context, op, filepath, search_tex_names, textures_format, color_format, tex_path):
 	if file.read(3) == b'b3d':
 		print ("correct file");
 	else:
 		print ("b3d error")
-		
+
 	file.seek(21,1);
 	Imgs = []
 	math = []
 	#texr = []
-	
+
 	if (search_tex_names == True):
 		colors_list = parse_plm(file.name[:-3] + "plm", color_format)
 		material_textures = parse_pro(file.name[:-3] + "pro", colors_list)
 	#print(material_textures)
-	
+
 	for i in range(struct.unpack('<i',file.read(4))[0]):
 		#Imgs.append(file.read(32).decode("utf-8").rstrip('\0'))
-		
+
 		SNImg = file.read(32).decode("utf-8").rstrip('\0') #читаю имя
-		#PImg = (filepath.rsplit('\\',1)[0] +'\\txr\\' +SNImg+'.tga') #полный путь ####################################################### 
-		
+		#PImg = (filepath.rsplit('\\',1)[0] +'\\txr\\' +SNImg+'.tga') #полный путь #######################################################
+
 		if (search_tex_names == True):
 			if (material_textures[i][0] == "("):
 				PImg = (material_textures[i])
@@ -288,9 +288,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				PImg = (filepath.rsplit('\\',1)[0] + "\\" + material_textures[i] + "." + textures_format)
 		else:
 			PImg = (filepath.rsplit('\\',1)[0] +'\\txr\\' +SNImg + "." + textures_format)
-		
+
 		#print (PImg)
-		
+
 		if (search_tex_names == True):
 			if os.path.isfile(PImg):
 				img = bpy.data.images.load(PImg)
@@ -317,13 +317,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				else:
 					img = bpy.data.images.new(SNImg,1,1)
 					print ('no '+PImg+' image')
-			
+
 			#print(img.pixels)
 			#name="Untitled", width=1024, height=1024, color=(0.0, 0.0, 0.0, 1.0), alpha=True, generated_type='BLANK', float=False, gen_context='NONE', use_stereo_3d=False
 			#print ('no '+PImg+' image')
-			
+
 			#print(PImg[1:-1].split(", "))
-			
+
 			#print(int((PImg[1:-1].split(", "))[0]))
 			#print(int((PImg[1:-1].split(", "))[1]))
 			#print(int((PImg[1:-1].split(", "))[2]))
@@ -339,9 +339,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#print ('no '+PImg+' image')
 		Imgs.append(img)
 		#print(Imgs)
-		
-		
-		tex = bpy.data.textures.new(SNImg,'IMAGE') 
+
+
+		tex = bpy.data.textures.new(SNImg,'IMAGE')
 		tex.use_preview_alpha = True
 		tex.image = img #bpy.data.images[i]
 		mat = bpy.data.materials.new(SNImg)
@@ -350,10 +350,10 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 		mat.texture_slots[0].texture = tex
 		mat.texture_slots[0].use_map_alpha = True
 		math.append(mat)
-		
-		
-	file.seek(4,1)		
-	
+
+
+	file.seek(4,1)
+
 	ex = 0
 	i = 0
 	lvl = 0
@@ -368,15 +368,15 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 	uv = []
 	b3dObj = bpy.data.objects.new(os.path.basename(op.properties.filepath),None)
 	context.scene.objects.link(b3dObj)
-	
+
 	objString = [os.path.basename(op.properties.filepath)]
-	
+
 	while ex!=1:
 
 
 		#if (file.tell()>23281193):
 		#	break
-		
+
 		ex = openclose(file)
 		if ex == 0:
 			#print('-')
@@ -386,7 +386,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 			#print((objString))
 			#print('eob')
 			#continue
-		elif ex == 1: 
+		elif ex == 1:
 			print(str(cnt))
 			file.close()
 			break
@@ -404,7 +404,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				qu = quat(file).v
 				objString.append(os.path.basename(op.properties.filepath))
 				ff = file.seek(28,1)
-			
+
 			elif (type == 1):
 				cnt+=1
 				#b3dObj.append(
@@ -413,7 +413,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
 				b3dObj['2 name'] = file.read(32).decode("cp1251").rstrip('\0')
 				b3dObj['3 name'] = file.read(32).decode("cp1251").rstrip('\0')
@@ -428,8 +428,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-				
+				#b3dObj.hide = True
+
 				qu = quat(file).v
 				struct.unpack("<4fi",file.read(20))
 			elif (type == 3):	#
@@ -441,8 +441,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-				
+				#b3dObj.hide = True
+
 				qu = quat(file).v
 				struct.unpack("<i",file.read(4))
 			elif (type == 4):	#похоже на контейнер 05 совмещенный с 12
@@ -452,20 +452,20 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
-				
+
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-				
+				#b3dObj.hide = True
+
 				qu = quat(file).v
 				str(file.read(32).decode("utf-8")).rstrip('\0')
 				struct.unpack("<i7fi",file.read(36))
-				
-				
+
+
 			elif (type==5): #общий контейнер
 				#object = type05(file)
 				cnt+=1
-				
-				b3dObj = bpy.data.objects.new(objName, None)		
+
+				b3dObj = bpy.data.objects.new(objName, None)
 
 				b3dObj['block_type'] = 5
 				b3dObj['pos'] = str(file.tell())
@@ -478,9 +478,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 				file.seek(4,1)
-				#b3dObj.hide = True	
-				
-			elif (type == 6):	
+				#b3dObj.hide = True
+
+			elif (type == 6):
 				vertexes = []
 				uv = []
 
@@ -490,10 +490,10 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
-				
+
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-				
+				#b3dObj.hide = True
+
 				qu = quat(file).v
 				readName(file)
 				readName(file)
@@ -512,23 +512,23 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 7
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
-					
+
 				qu = quat(file).v
 				str(struct.unpack("<8f",file.read(32))) #0-0
-				
-				
+
+
 				num = struct.unpack("<i",file.read(4))[0]
 				for i in range(num):
 					vertexes.append(struct.unpack("<3f",file.read(12)))
 					uv.append(struct.unpack("<2f",file.read(8))) #((struct.unpack("<f",file.read(4))[0], 1 - struct.unpack("<f",file.read(4))[0]))
 					#str(struct.unpack("<5f",file.read(20)))
 				str(struct.unpack("<i",file.read(4))[0])
-				
+
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
+
 			elif (type == 8):	#тоже фейсы		face
 				faces = []
 				faces_all = []
@@ -540,10 +540,10 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj['block_type'] = '8'
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				
-				#b3dObj.hide = True	
+
+				#b3dObj.hide = True
 				qu = coords3(file).v
-				
+
 				#b3dObj.location = qu
 				file.read(4)
 				num = struct.unpack("<i",file.read(4))[0]
@@ -551,27 +551,27 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					faces = []
 					faces_new = []
 					format = struct.unpack("<i",file.read(4))[0]
-					
+
 					struct.unpack("<fi",file.read(8))
 					texnum = struct.unpack("i",file.read(4))[0]
-					
+
 					num1 = struct.unpack("<i",file.read(4))[0]
-					
+
 					if ((format == 178) or (format == 50)):
 						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])							
+							faces.append(struct.unpack("<i",file.read(4))[0])
 							struct.unpack("<5f",file.read(20))
 					elif ((format == 176) or (format == 48)or (format == 179)or (format == 51)):
 						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])							
+							faces.append(struct.unpack("<i",file.read(4))[0])
 							struct.unpack("<3f",file.read(12))
 					elif ((format == 3) or (format == 2) or (format == 131)):
 						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])							
+							faces.append(struct.unpack("<i",file.read(4))[0])
 							struct.unpack("<2f",file.read(8))
 					elif format == 177:
 						for j in range(num1):
-							faces.append(struct.unpack("<i",file.read(4))[0])							
+							faces.append(struct.unpack("<i",file.read(4))[0])
 							struct.unpack("<f",file.read(4))
 					else:
 						for j in range(num1):
@@ -595,13 +595,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				Ev.set()
 				Tr.join()
 
-				
+
 				uvMesh = b3dMesh.uv_textures.new()
 				imgMesh = math[texnum].texture_slots[0].texture.image.size[0]
 				uvMesh.name = 'default'
 				uvLoop = b3dMesh.uv_layers[0]
 				uvsMesh = []
-				
+
 				#print('uvs:	',str(uvs))
 				for i, texpoly in enumerate(uvMesh.data):
 					texpoly.image = Imgs[texnum]
@@ -609,13 +609,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					for j,k in enumerate(poly.loop_indices):
 						uvsMesh = [uvs[i][j][0],1 - uvs[i][j][1]]
 						uvLoop.data[k].uv = uvsMesh
-						
+
 				mat = b3dMesh.materials.append(math[texnum])
-				
+
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 
-				
+
 			elif (type == 9):
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
@@ -624,15 +624,15 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-				
+				#b3dObj.hide = True
+
 
 				qu = quat(file).v
 				str(quat(file).v)
 				#print
 				file.seek(4,1)
 			elif (type == 10): #контейнер, хз о чем
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 10
@@ -640,8 +640,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-				
+				#b3dObj.hide = True
+
 				qu = quat(file).v
 				quat(file)
 				(onebyte(file))
@@ -671,11 +671,11 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
 				qu = quat(file).v
 				file.read(28)
-	
+
 			elif (type == 13):
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
@@ -684,9 +684,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
-			
+
 				qu = quat(file).v
 				num = []
 				coords = []
@@ -697,9 +697,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				if num[-1]>0:
 					pass
 					#printwrite(writefile,tab1+'0d Coords:	'+str(coords))
-					
-			elif (type == 14): #sell_ ? 
-				
+
+			elif (type == 14): #sell_ ?
+
 				#cnt+=1
 				#b3dObj = bpy.data.objects.new(objName, None)
 				#b3dObj['block_type'] = 14
@@ -707,19 +707,19 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#b3dObj.parent = context.scene.objects[objString[-1]]
 				#context.scene.objects.link(b3dObj)
 				#objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
-				#qu = quat(file).v				
+				#qu = quat(file).v
 				#file.seek(24, 1)
 				#var = struct.unpack("<i",file.read(4))[0]
 				#print(str(file.tell()))
 				#if var !=0:
 				#	file.seek(len(objName), 1)
 					#file.seek(4, 1)
-				
+
 				#file.seek(17,1)
 				#file.seek(11,1)#0-0
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 14
@@ -727,7 +727,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
+
 				qu = quat(file).v
 				quat(file).v
 				#printwrite(writefile,tab1+'XYZW:	'+str(qu))
@@ -753,25 +753,25 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					print(len(name))
 					file.seek(48, 1) #в конец блока
 					skip_len = 0
-						
+
 					if (len(name) > 15):
 						skip_len = 20
-						
+
 					elif (11 < len(name) < 15 or len(name) == 15):
 						skip_len = 16
-						
+
 					elif (7 < len(name) < 11 or len(name) == 11):
 						skip_len = 12
-						
+
 					elif (3 < len(name) < 7 or len(name) == 7):
 						skip_len = 8
-							
+
 					elif (len(name) < 3 or len(name) == 3):
 						skip_len = 4
-						
+
 					file.seek(skip_len, 1)
-				
-				
+
+
 			elif (type == 16):
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
@@ -780,7 +780,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
 				qu = quat(file).v
 				struct.unpack("11f",file.read(44))
@@ -792,14 +792,14 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
 				qu = quat(file).v
 				struct.unpack("11f",file.read(44))
-				
+
 			elif (type == 18):	#контейнер "применить к"
 				qu = quat(file).v
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 18
@@ -809,8 +809,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
-				
+
+
 			elif (type == 19):
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
@@ -819,13 +819,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-			
+				#b3dObj.hide = True
+
 				num = []
 				num.append(struct.unpack("i",file.read(4))[0])
 				#printwrite(writefile,tab1+str(num))
 
-	
+
 			elif (type == 20):
 				cnt+=1
 				#b3dObj = bpy.data.objects.new(objName, None)
@@ -835,7 +835,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#objString.append(context.scene.objects[0].name)
 
 				qu = quat(file).v
-			
+
 				verts_count = struct.unpack("i",file.read(4))[0]
 				struct.unpack("f",file.read(4))
 				struct.unpack("f",file.read(4))
@@ -851,7 +851,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#for i in range (title[3]):
 				#	coords1.append(struct.unpack("f",file.read(4))[0])
 				curveData = bpy.data.curves.new('curve', type='CURVE')
-				
+
 				curveData.dimensions = '3D'
 				curveData.resolution_u = 2
 
@@ -870,8 +870,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#scn = bpy.context.scene
 				#scn.objects.link(curveOB)
 				#scn.objects.active = curveOB
-				
-				
+
+
 				b3dObj.location = (0,0,0)
 				b3dObj['block_type'] = 20
 				b3dObj['pos'] = str(file.tell())
@@ -879,13 +879,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
-				#bpy.context.scene.objects.link(object)  
 
-			
-			elif (type == 21): #testkey??? 
+				#bpy.context.scene.objects.link(object)
+
+
+			elif (type == 21): #testkey???
 				qu = quat(file).v
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 21
@@ -893,13 +893,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 				object = type15(file)
-				
+
 
 
 			elif (type == 23): #colision mesh
-				
+
 				cnt+=1
 				b3dMesh = (bpy.data.meshes.new(objName))
 				b3dObj = bpy.data.objects.new(objName, b3dMesh)
@@ -909,8 +909,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.hide = True
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
-				
+
+
 				#qu = quat(file).v
 
 				var1 = struct.unpack("<i",file.read(4))[0]
@@ -925,55 +925,55 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				vertexes = []
 				for i in range(vertsBlockNum):
 					vertsInBlock = struct.unpack("<i",file.read(4))[0]
-					
+
 					if (vertsInBlock == 3):
 						faces.append([num+1,num+2,num+0])
 						num+=3
 					elif(vertsInBlock ==4):
 						faces.append([num+1,num+2,num+0,num+2,num+3,num+1])
 						num+=4
-						
-					#faces.append([num+0,num+1,num+2,num+3,num+1,num+0])	
-						
+
+					#faces.append([num+0,num+1,num+2,num+3,num+1,num+0])
+
 					#if (vertsInBlock == 3):
 					#	faces.append([num+0,num+1,num+2])
 					#	num+=3
 					#elif(vertsInBlock ==4):
 					#	faces.append([num+0,num+1,num+2,num+3,num+2,num+0])
 					#	num+=3
-						
+
 					#else:
 					#	for j in range(vertsInBlock-2):
 					#		faces.append([num+j+0,num+j+2,num+j+1])
 					#		num+=vertsInBlock
-						
+
 					for j in range(vertsInBlock):
 						vertexes.append(struct.unpack("<3f",file.read(12)))
 						#face =  [i*j+0,i*j+1,i*j+2]
 
-						
+
 				#print('verts: '+str((vertexes)))
 				#print('faces: '+str( (faces)))
-				
+
 				b3dMesh.from_pydata(vertexes,[],faces)
 
 				#faces =  [(num+0,num+1,num+2), (5,6,2), (6,7,3), (4,0,7)]
-				
+
 				#coords23.append(num1)
 				#faces = (coords23[i][5],coords23[i][9],coords23[i][13])
-				
-				
+
+
 				# Ev = threading.Event()
 				# Tr = threading.Thread(target=b3dMesh.from_pydata, args = (vertexes,[],faces))
 				# Tr.start()
 				# Ev.set()
 				# Tr.join()
-				
-				
+
+
 				# mesh = []
 				# meshFaces = []
 				# numCnt = 0
-				
+
 				# num = struct.unpack("<i",file.read(4))[0]
 				# #print (str(num))
 				# for i in range(num):
@@ -987,14 +987,14 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 						# mesh.append(coords3(file).v)
 						# faces.append(j)
 					# meshFaces.append(faces)
-				
+
 			elif (type == 24): #настройки положения обьекта
 				cnt+=1
-				
+
 				#qu = quat(file).v
 				#objString.append(context.scene.objects[0].name)
 				#file.seek(20,1)
-				
+
 				m11 = struct.unpack("<f",file.read(4))[0]
 				m12 = struct.unpack("<f",file.read(4))[0]
 				m13 = struct.unpack("<f",file.read(4))[0]
@@ -1006,13 +1006,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				m31 = struct.unpack("<f",file.read(4))[0]
 				m32 = struct.unpack("<f",file.read(4))[0]
 				m33 = struct.unpack("<f",file.read(4))[0]
-				
+
 				sp_pos = struct.unpack("<fff",file.read(12))
 
 				x_d = 0.0
 				y_d = 0.0
 				z_d = 0.0
-				
+
 				PI = 3.14159265358979;
 				test_var = 0.0
 				test_var = ((m33*m33) + (m31*m31))
@@ -1026,13 +1026,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					z_d = atan2(- m21, m11)
 					x_d = atan2(- m32, var_cy)
 					y_d = 0;
-				
+
 				rot_x = ((x_d * 180) / PI)
 				rot_y = ((y_d * 180) / PI)
 				rot_z = ((z_d * 180) / PI)
 
 
-				
+
 				#bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=sp_pos)
 				b3dObj = bpy.data.objects.new(objName, None)
 				#b3dObj = bpy.context.selected_objects[0]
@@ -1042,22 +1042,22 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.rotation_euler[1] = y_d
 				b3dObj.rotation_euler[2] = z_d
 				b3dObj.location = sp_pos
-				
+
 				#b3dObj['rotation_euler0'] = rot_x
 				#b3dObj['rotation_euler1'] = rot_y
 				#b3dObj['rotation_euler2'] = rot_z
-				
+
 				#bpy.ops.object.select_all(action='DESELECT')
 				flag = struct.unpack("<i",file.read(4))[0]
 				b3dObj['flag'] = flag
 				file.seek(4,1)#01 00 00 00
-				
+
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
+
 			elif (type == 25): #copSiren????/ контейнер
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 25
@@ -1065,15 +1065,15 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
-			
+				#b3dObj.hide = True
+
 				qu = coords3(file).v
 				file.seek(32,1)
 				ff = file.read(4)
 				for i in range(10):
 					file.seek(4,1)
-			elif (type == 27): 
-				
+			elif (type == 27):
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 27
@@ -1082,26 +1082,26 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 				file.seek(36, 1)
-				
+
 			elif (type == 28): #face
-				
+
 				cnt+=1
 				b3dMesh = (bpy.data.meshes.new(objName))
 				#print('cnt:	'+str(cnt))
 				b3dObj = bpy.data.objects.new(objName, b3dMesh)
 				b3dObj['block_type'] = 28
 				b3dObj['pos'] = str(file.tell())
-				
+
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				
-				#b3dObj.hide = True				
+
+				#b3dObj.hide = True
 				coords = []
-				
+
 				qu = quat(file).v
 				file.seek(12,1)
-				
+
 				num = struct.unpack("<i",file.read(4))[0]
-				
+
 				for i in range(num):
 					type = struct.unpack("i",file.read(4))[0]
 					file.seek(12,1)
@@ -1113,7 +1113,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							file.seek(16,1) #x,y,u,v
 						if type == -256:
 							file.seek(8, 1) #x,y
-			
+
 				#for i in range(num):
 				#	num1 = struct.unpack("i",file.read(4))[0]
 				#	coords.extend(struct.unpack("f3i",file.read(16)))
@@ -1134,28 +1134,28 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					# for i in range(num*2):
 						# coords.extend(struct.unpack("<7f",file.read(28)))
 					# coords.extend(struct.unpack("<f",file.read(4)))
-					
+
 				# elif ((num == 10) or(num == 6)) : #db1
 					# for i in range(num):
-						# coords.extend(struct.unpack("if3i",file.read(20)))	
+						# coords.extend(struct.unpack("if3i",file.read(20)))
 						# num1 = coords[-1]
 						# for i in range (num1):
 							# coords.append(struct.unpack("<2f",file.read(8)))
 				# #b3dMesh.from_pydata(vertexes,[],faces)
-				
+
 				context.scene.objects.link(b3dObj) #добавляем в сцену обьект
 				objString.append(context.scene.objects[0].name)
-				
-			elif (type == 29):	
+
+			elif (type == 29):
 				#cnt+=1
 				#b3dObj = bpy.data.objects.new(objName, None)
 				#b3dObj['block_type'] = 29
 				#b3dObj['pos'] = str(file.tell())
 				#b3dObj.parent = context.scene.objects[objString[-1]]
-				##b3dObj.hide = True				
+				##b3dObj.hide = True
 				#context.scene.objects.link(b3dObj)
 				#objString.append(context.scene.objects[0].name)
-				
+
 				#qu = quat(file).v
 				##num0 = struct.unpack("<i",file.read(4))[0]
 				##struct.unpack("<i",file.read(4))[0]
@@ -1165,75 +1165,75 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				##elif num0 == 3:
 				##	pass
 				##struct.unpack("<i",file.read(4))[0]
-				
+
 				##дб1
-				
-				
+
+
 				##дб2
 				##struct.unpack("<i",file.read(4))[0]
 				##struct.unpack("<i",file.read(4))[0]
 				##struct.unpack("<fff",file.read(12))
 				##struct.unpack("<fff",file.read(12))
 				##struct.unpack("<i",file.read(4))[0]
-				
+
 				##struct.unpack("<i",file.read(4))[0]
-				
+
 				#num0 = struct.unpack("<i",file.read(4))[0]
 				#num1 = struct.unpack("<i",file.read(4))[0]
 				#struct.unpack("<fff",file.read(12))
 				#struct.unpack("<fff",file.read(12))
-				
+
 				#struct.unpack("<f",file.read(4))[0]
-				
+
 				#if (num0 != 3):
 				#	struct.unpack("<f",file.read(4))[0]
-					
+
 				#struct.unpack("<i",file.read(4))[0]
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 29
 				b3dObj['pos'] = str(file.tell())
-				b3dObj.parent = context.scene.objects[objString[-1]]		
+				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
+
 				qu = quat(file).v
 				num0 = struct.unpack("<i",file.read(4))[0]
 				num1 = struct.unpack("<i",file.read(4))[0]
-					
+
 				struct.unpack("<fff",file.read(12))
 				struct.unpack("<fff",file.read(12))
-					
+
 				for i in range(num0 - 2):
 					#add_float = struct.unpack("<f",file.read(4))[0]
 					file.seek(4, 1)
-						
-					
+
+
 				struct.unpack("<i",file.read(4))[0]
-				
-				
-			elif (type == 30):	
+
+
+			elif (type == 30):
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 30
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 
 				qu = quat(file).v
 				file.read(32)
-				
+
 				file.read(24)
-			elif (type == 31):	
+			elif (type == 31):
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 31
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 
@@ -1244,22 +1244,22 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				for i in range(num):
 					struct.unpack("<fi",file.read(8))
 
-				
+
 			elif (type == 33): #lamp
-				
+
 				cnt+=1
 				b3dObj = bpy.data.objects.new(objName, None)
 				b3dObj['block_type'] = 33
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
 				qu = quat(file).v
 				#ff = file.read(4)
 				#for i in range(18):
 				#	file.seek(4,1)
-				
+
 				file.seek(4,1)
 				b3dObj['light_type'] = struct.unpack("<i",file.read(4))[0]
 				file.seek(4,1)
@@ -1277,7 +1277,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj['G'] = struct.unpack("<f",file.read(4))[0]
 				b3dObj['B'] = struct.unpack("<f",file.read(4))[0]
 				file.seek(4,1)
-					
+
 			elif (type == 34): #lamp
 				num = 0
 				cnt+=1
@@ -1285,10 +1285,10 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj['block_type'] = 34
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				
+
 				qu = quat(file).v
 				ff = file.read(4)
 				num = struct.unpack("<i",file.read(4))[0]
@@ -1296,16 +1296,16 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					file.seek(16,1)
 			elif (type == 35): #mesh
 				coords23 = []
-				
+
 				cnt+=1
 				b3dMesh = (bpy.data.meshes.new(objName))
 				#print('cnt:	'+str(cnt))
 				b3dObj = bpy.data.objects.new(objName, b3dMesh)
 				#b3dObj['block_type'] = 35
-				
+
 				b3dObj.parent = context.scene.objects[objString[-1]]
-				
-				#b3dObj.hide = True				
+
+				#b3dObj.hide = True
 				qu = quat(file).v
 				faces = []
 				num0 = struct.unpack("<i",file.read(4))[0]
@@ -1316,7 +1316,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 
 				########
 				faces1 = []
-				
+
 				#print (str(file.tell()))
 				if num0<3:
 					for i in range(num):
@@ -1344,7 +1344,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							# faces1 = coords23[i][4:7]
 							# faces.append(faces1)
 						elif ((num1[0] == 2) or (num1[0] == 3)):
-							num1.extend(struct.unpack("<fiiiiffiffiff",file.read(52)))	
+							num1.extend(struct.unpack("<fiiiiffiffiff",file.read(52)))
 							coords23.append(num1)
 							faces1=(coords23[i][5],coords23[i][8],coords23[i][11])
 						else:
@@ -1360,7 +1360,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 						#print(str(num1))
 						#print(str(file.tell()))
 						uvs.append((uv[faces1[0]],uv[faces1[1]],uv[faces1[2]]))
-						
+
 				elif num0 == 3:
 					#print(str(num))
 					for i in range(num):
@@ -1373,19 +1373,19 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 						uvs.append((uv[faces1[0]],uv[faces1[1]],uv[faces1[2]]))
 						#print (str(coords23))
 						#print ('faces	' + str(faces1)+'	'+str(uv))
-						
+
 				Ev = threading.Event()
 				Tr = threading.Thread(target=b3dMesh.from_pydata, args = (vertexes,[],faces))
 				Tr.start()
 				Ev.set()
 				Tr.join()
-				
+
 				#if ((format == 2) or (format == 515) or (format == 514) or (format == 258)):
 					#i = 0
 					#for i,vert in enumerate(b3dMesh.vertices):
 						#vert.normal = normals[i]
-						
-						
+
+
 				uvMesh = b3dMesh.uv_textures.new()
 				#b3dMesh.use_mirror_topology = True
 				#imgMesh = math[coords23[i][3]].texture_slots[0].texture.image.size[0]
@@ -1393,9 +1393,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				uvLoop = b3dMesh.uv_layers[0]
 				uvsMesh = []
 				#print('uvs:	'+str(uvs))
-				
+
 				#uvMain = createTextureLayer("default", b3dMesh, uvs)
-				
+
 				for i, texpoly in enumerate(uvMesh.data):
 					#print(str(i))
 					poly = b3dMesh.polygons[i]
@@ -1403,11 +1403,11 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					for j,k in enumerate(poly.loop_indices):
 						uvsMesh = [uvs[i][j][0],1 - uvs[i][j][1]]
 						uvLoop.data[k].uv = uvsMesh
-						
-				
+
+
 				#b3dMesh.materials.append(math[texNum])#coords23[i][3]])
-				
-				
+
+
 				b3dMesh.uv_textures['UVmap'].active = True
 				b3dMesh.uv_textures['UVmap'].active_render = True
 
@@ -1462,7 +1462,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							vertexes.append(struct.unpack("<3f",file.read(12)))
 							uv.append(struct.unpack("<2f",file.read(8)))
 							file.seek(4,1)
-							
+
 					elif ((format ==258) or (format ==515)):
 
 						for i in range(iter):
@@ -1477,7 +1477,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							normals.append(struct.unpack("<3f",file.read(12)))
 							struct.unpack("<4f",file.read(16))
 					#print(str(objName))
-							
+
 				file.seek(4,1)#01 00 00 00 subblocks count
 
 			elif (type == 37):
@@ -1503,7 +1503,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					#b3dObj.location = qu
 					context.scene.objects.link(b3dObj)
 					objString.append(context.scene.objects[0].name)
-					##b3dObj.hide = True				
+					##b3dObj.hide = True
 					if format == 2:	#Vertex with normals
 						for i in range(iter):
 							vertexes.append(struct.unpack("<3f",file.read(12)))
@@ -1515,7 +1515,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							vertexes.append(struct.unpack("<3f",file.read(12)))
 							uv.append(struct.unpack("<2f",file.read(8)))
 							file.seek(4,1)
-							
+
 					elif ((format ==258) or (format ==515)): #258 - стекло
 
 						for i in range(iter):
@@ -1530,7 +1530,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							normals.append(struct.unpack("<3f",file.read(12)))
 							struct.unpack("<4f",file.read(16))
 					#print(str(objName))
-							
+
 				file.seek(4,1)#01 00 00 00 subblocks count
 			elif (type == 39):
 				cnt+=1
@@ -1540,12 +1540,12 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
-				##b3dObj.hide = True				
-			
+				##b3dObj.hide = True
+
 				qu = quat(file).v
 				quat(file)
 				file.read(4)
-				
+
 				struct.unpack("<i",file.read(4))
 
 			elif (type == 40):
@@ -1553,18 +1553,18 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				data1 = []
 				cnt+=1
 				#objString.append(context.scene.objects[0].name)
-				sp_pos = struct.unpack("<fff",file.read(12))	
-				file.seek(4,1)				
+				sp_pos = struct.unpack("<fff",file.read(12))
+				file.seek(4,1)
 				#bpy.ops.mesh.primitive_ico_sphere_add(size=0.05, calc_uvs=True, location=sp_pos)
 				#b3dObj = bpy.context.selected_objects[0]
-				b3dObj = bpy.data.objects.new(objName, None)	
+				b3dObj = bpy.data.objects.new(objName, None)
 				#b3dObj.name = objName
 				b3dObj['block_type'] = 40
 				b3dObj['pos'] = str(file.tell())
 				b3dObj.parent = context.scene.objects[objString[-1]]
 				objString.append(context.scene.objects[0].name)
 				#bpy.ops.object.select_all(action='DESELECT')
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
 				file.read(32)
 				file.read(32)
@@ -1572,8 +1572,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				data = struct.unpack("<3i",file.read(12))
 				for i in range (data[-1]):
 					data1.append(struct.unpack("f", file.read(4))[0])
-				#print (str(data[-1])+'	'+str(data1))	
-				
+				#print (str(data[-1])+'	'+str(data1))
+
 			#elif (type == 40):
 			#	data = []
 			#	data1 = []
@@ -1583,7 +1583,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 			#	b3dObj.parent = context.scene.objects[objString[-1]]
 			#	context.scene.objects.link(b3dObj)
 			#	objString.append(context.scene.objects[0].name)
-				#b3dObj.hide = True				
+				#b3dObj.hide = True
 
 			#	qu = quat(file).v
 			#	file.read(32)
@@ -1593,31 +1593,31 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 			#	for i in range (data[-1]):
 			#		data1.append(struct.unpack("f", file.read(4))[0])
 				#print (str(data[-1])+'	'+str(data1))
-			
+
 			else:
 				print(str(file.tell()))
 				print ('smthng wrng')
 				return
 			#print(objName)
-			
+
 def readWayTxt(file, context, op, filepath):
 	b3dObj = 0
 	# b3dObj = bpy.data.objects.new(os.path.basename(op.properties.filepath),None)
 	# context.scene.objects.link(b3dObj)
-	
+
 	# objString = [os.path.basename(op.properties.filepath)]
-	
+
 	type = None
 	mnam_c = 0
-	
+
 	grom = 0
 	rnod = 1
 	rseg = 2
 	mnam = 3
 	mnam2nd = 4
-	
-	lineNum = 0 
-	
+
+	lineNum = 0
+
 	for line in file:
 		if (type == grom):
 			lineNum+=1
@@ -1656,13 +1656,13 @@ def readWayTxt(file, context, op, filepath):
 				massline = 4
 			if (lineNum == massline):
 				#print (line.strip())	#RSEG MASS
-				
+
 				b3dObj = bpy.data.objects.new('RSEG',None)				#
 				b3dObj.parent = context.scene.objects[objString[-1]]	#
 				objString.append(b3dObj.name)
 				context.scene.objects.link(b3dObj)
 
-				
+
 				mass = make_tuple(line.strip())
 				for pos in mass:
 					bpy.ops.mesh.primitive_cylinder_add(radius = 1,location = pos)
@@ -1678,16 +1678,16 @@ def readWayTxt(file, context, op, filepath):
 				b3dObj.data.fill_mode = 'FULL'
 				b3dObj.data.bevel_depth = 0.1
 				b3dObj.data.bevel_resolution = 4
-				
+
 				flatten = lambda mass: [item for sublist in mass for item in sublist]
 				b3dObj.data.splines[0].bezier_points.add(len(mass)-2)
 				b3dObj.data.splines[0].bezier_points.foreach_set("co",flatten(mass))
-				
+
 				points = b3dObj.data.splines[0].bezier_points
-				
+
 				for i,point in enumerate(points):
 					point.handle_left_type = point.handle_right_type = "AUTO"
-				
+
 				type = None 	#reset
 				lineNum = 0
 				del objString[-1]
@@ -1695,10 +1695,10 @@ def readWayTxt(file, context, op, filepath):
 			b3dObj = bpy.data.objects.new(line[1:mnam_c],None)
 			b3dObj['root'] = True
 			context.scene.objects.link(b3dObj)
-			
+
 			objString = [b3dObj.name]
 			type = None
-				
+
 		elif(type == None):
 			#print("line:	",line)
 			if (line[0:2] == '  '):
@@ -1713,5 +1713,5 @@ def readWayTxt(file, context, op, filepath):
 					type = grom
 				elif(line[0:4] == 'MNAM'):
 					mnam_c = int(line[5])
-					type = mnam					
+					type = mnam
 					#print (line[0:4])

@@ -59,22 +59,22 @@ class ImportB3D(bpy.types.Operator, ImportHelper):
     use_image_search = BoolProperty(name='Image Search',
                         description='Search subdirectories for any associated'\
                                     'images', default=False)
-						
+
     search_tex_names = BoolProperty(name='Get texture names from *.res',
                         description='Get texture names from res-file'\
                                     'images', default=False)
-						
+
     textures_format = StringProperty(
         name="Textures format",
         default="png",
         )
-		
+
     color_format = StringProperty(
         name="Color format",
         default="RGB",
         description="RGB or BGR",
         )
-		
+
     tex_path = StringProperty(
         name="Created textures path",
         default="\\txr",
@@ -112,7 +112,7 @@ class ImportWayTxt(bpy.types.Operator, ImportHelper):
         print('Finished importing in', t, 'seconds')
         return {'FINISHED'}
 
-		
+
 class ExportB3D(bpy.types.Operator, ImportHelper):
     '''Export to B3D file format (.b3d)'''
     bl_idname = 'export_scene.kotr_b3d'
@@ -124,7 +124,7 @@ class ExportB3D(bpy.types.Operator, ImportHelper):
     generate_pro_file = BoolProperty(name='Generate .pro file',
                         description='Generate .pro file, which can used'\
                                     'to assembly the resources file', default=False)
-									
+
     textures_path = StringProperty(
         name="Textures directory",
         default="txr\\",
@@ -139,7 +139,7 @@ class ExportB3D(bpy.types.Operator, ImportHelper):
         print('Finished exporting in', t, 'seconds')
         return {'FINISHED'}
 
-		
+
 def menu_func_import(self, context):
     self.layout.operator(ImportB3D.bl_idname, text='KOTR B3D (.b3d)')
     self.layout.operator(ImportWayTxt.bl_idname, text='KOTR WAY (.txt)')
@@ -151,15 +151,15 @@ def menu_func_export(self, context):
 
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
 
 if __name__ == "__main__":
-    register() 
+    register()
