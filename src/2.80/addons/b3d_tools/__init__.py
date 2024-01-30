@@ -19,41 +19,39 @@
 # <pep8 compliant>
 
 if "bpy" in locals():
-	print("Reimporting modules!!!")
-	import importlib
-	# importlib.reload(object_UIList)
-	# importlib.reload(material_UIList)
-	# importlib.reload(custom_UIList)
-	importlib.reload(common)
-	importlib.reload(consts)
-	importlib.reload(way)
-	importlib.reload(tch)
-	importlib.reload(b3d)
+    print("Reimporting modules!!!")
+    import importlib
+    # importlib.reload(object_UIList)
+    # importlib.reload(material_UIList)
+    # importlib.reload(custom_UIList)
+    importlib.reload(common)
+    importlib.reload(consts)
+    importlib.reload(tch)
+    importlib.reload(b3d)
 else:
-	import bpy
-	from . import (
-		# object_UIList,
-		# material_UIList,
-		# custom_UIList,
-		common,
-		consts,
-		way,
-		tch,
-		b3d
-	)
+    import bpy
+    from . import (
+        # object_UIList,
+        # material_UIList,
+        # custom_UIList,
+        common,
+        consts,
+        tch,
+        b3d
+    )
 
 
 bl_info = {
-	"name": "King of The Road Tools",
-	"description": "",
-	"author": "Andrey Prozhoga, LabVaKars",
-	"version": (2, 3, 1),
-	"blender": (2, 93, 0),
-	"location": "3D View > Tools",
-	"warning": "",
-	"wiki_url": "",
-	"tracker_url": "vk.com/rnr_mods",
-	"category": "Development"
+    "name": "King of The Road Tools",
+    "description": "",
+    "author": "Andrey Prozhoga, LabVaKars",
+    "version": (2, 3, 1),
+    "blender": (2, 93, 0),
+    "location": "3D View > Tools",
+    "warning": "",
+    "wiki_url": "",
+    "tracker_url": "vk.com/rnr_mods",
+    "category": "Development"
 }
 
 
@@ -61,18 +59,17 @@ bl_info = {
 # register and unregister
 # ------------------------------------------------------------------------
 
-
 def register():
-	# custom_UIList.register()
-	# way.register()
-	b3d.register()
-	# tch_register()
+    # custom_UIList.register()
+    # way.register()
+    b3d.register()
+    # tch_register()
 
 def unregister():
-	b3d.unregister()
-	# way.unregister()
-	# custom_UIList.unregister()
-	# tch_unregister()
+    b3d.unregister()
+    # way.unregister()
+    # custom_UIList.unregister()
+    # tch_unregister()
 
 if __name__ == "__main__":
-	register()
+    register()

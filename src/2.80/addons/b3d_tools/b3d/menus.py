@@ -31,7 +31,8 @@ from . import (
 )
 from .common import (
     resModulesCallback,
-    modulesCallback
+    modulesCallback,
+    getColPropertyByName
 )
 
 
@@ -94,8 +95,17 @@ class ImportRES(Operator, ImportHelper):
     to_convert_txr : BoolProperty(name='Convert .txr to .tga',
                     description='Convert .txr|.msk from unpacked .res to .tga', default=True)
 
-    to_reload_common : BoolProperty(name='Reload common.res',
-                    description='Reloads resources from common.res', default=False)
+    to_reload_common_res : BoolProperty(name='Reload common.res(HT2)',
+                    description='Imports/Reloads resources from common.res', default=False)
+
+    res_extension : EnumProperty(
+        name="Extension",
+        items=[
+            ('res', '.RES', '.RES'),
+            ('rmp', '.RMP', '.RMP'),
+        ],
+        default='res'
+    )
 
     textures_format : StringProperty(
         name="Images format",
@@ -106,25 +116,28 @@ class ImportRES(Operator, ImportHelper):
     def execute(self, context):
 
         # importing Res
-        t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
+        mytool = bpy.context.scene.my_tool
+        resModules = mytool.resModules
 
-        tt = time.mktime(datetime.datetime.now().timetuple())
+        #importing COMMON.RES(Hard Truck 2)
+        commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+        commonResModule = getColPropertyByName(resModules, 'COMMON')
 
-        t0.start()
-        t0.join()
+        if (commonResModule is None or self.to_reload_common_res) and os.path.exists(commonResPath):
+            import_b3d.import_common_dot_res(self, context, commonResPath)
+            t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
 
-        tt = time.mktime(datetime.datetime.now().timetuple()) - tt
+            tt = time.mktime(datetime.datetime.now().timetuple())
+
+            t0.start()
+            t0.join()
+
+            tt = time.mktime(datetime.datetime.now().timetuple()) - tt
+
+        else:
+            self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
         print('All RES imported in', tt, 'seconds')
-        # for resfile in self.files:
-        #     filepath = os.path.join(self.directory, resfile.name)
-
-        #     print('Importing file', filepath)
-        #     t = time.mktime(datetime.datetime.now().timetuple())
-        #     with open(filepath, 'rb') as file:
-        #         import_b3d.importRes(file, context, self, filepath)
-        #     t = time.mktime(datetime.datetime.now().timetuple()) - t
-        #     print('Finished importing in', t, 'seconds')
 
         return {'FINISHED'}
 
@@ -210,6 +223,7 @@ class ExportRES(Operator, ExportHelper):
 
         box2.prop(self, "export_images")
         box2.prop(self, "to_merge")
+        box2.prop(self, 'res_extension')
 
         box2.label(text="Sections to merge:")
         box3 = box2.box()
@@ -251,8 +265,17 @@ class ImportB3D(Operator, ImportHelper):
                     description='Import textures from unpacked .res archive. \n'\
                                 'NOTE: if importing for the first time select previous option too', default=False)
 
-    to_reload_common : BoolProperty(name='Reload common.res',
-                    description='Reloads resources from common.res', default=False)
+    to_reload_common_res : BoolProperty(name='Reload common.res(HT2)',
+                    description='Imports/Reloads resources from common.res', default=False)
+
+    res_extension : EnumProperty(
+        name="Extension",
+        items=[
+            ('res', '.RES', '.RES'),
+            ('rmp', '.RMP', '.RMP'),
+        ],
+        default='res'
+    )
 
     textures_format : StringProperty(
         name="Images format",
@@ -267,8 +290,8 @@ class ImportB3D(Operator, ImportHelper):
     )
 
     show_all_blocks : EnumProperty(
-		name="Block",
-		items=[
+        name="Block",
+        items=[
             ('0', 'Custom select', 'Custom select'),
             ('1', 'Select all', 'Select all'),
             ('2', 'Select none', 'Select none'),
@@ -299,15 +322,31 @@ class ImportB3D(Operator, ImportHelper):
 
     def execute(self, context):
         # importing Res
-        t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
 
-        tt = time.mktime(datetime.datetime.now().timetuple())
+        mytool = bpy.context.scene.my_tool
+        resModules = mytool.resModules
 
-        t0.start()
-        t0.join()
+        #importing COMMON.RES(Hard Truck 2)
+        commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+        commonResModule = getColPropertyByName(resModules, 'COMMON')
 
-        tt = time.mktime(datetime.datetime.now().timetuple()) - tt
-        print('All RES imported in', tt, 'seconds')
+        if (commonResModule is None or self.to_reload_common_res) and self.to_import_textures and os.path.exists(commonResPath):
+            import_b3d.import_common_dot_res(self, context, commonResPath)
+        else:
+            self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
+            self.to_import_textures = False
+
+        # importing other RES modules
+        if self.to_import_textures:
+            t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
+
+            tt = time.mktime(datetime.datetime.now().timetuple())
+
+            t0.start()
+            t0.join()
+
+            tt = time.mktime(datetime.datetime.now().timetuple()) - tt
+            print('All RES imported in', tt, 'seconds')
 
         # importing B3d
         evens = [cn for i,cn in enumerate(self.files) if i%2==0]
@@ -344,7 +383,9 @@ class ImportB3D(Operator, ImportHelper):
         row = box1.row()
         row.prop(self, 'to_import_textures')
         row = box1.row()
-        row.prop(self, 'to_reload_common')
+        row.prop(self, 'to_reload_common_res')
+        row = box1.row()
+        row.prop(self, 'res_extension')
         row = box1.row()
         row.prop(self, 'textures_format')
 

@@ -6,48 +6,48 @@ import datetime
 from pathlib import Path
 
 from .class_descr import (
-	b_1,
-	b_2,
-	# b_3,
-	b_4,
-	b_5,
-	b_6,
-	b_7,
-	# b_8,
-	b_9,
-	b_10,
-	b_11,
-	b_12,
-	b_13,
-	b_14,
-	b_15,
-	b_16,
-	b_17,
-	b_18,
-	b_20,
-	b_21,
-	b_22,
-	b_23,
-	b_24,
-	b_25,
-	b_26,
-	b_27,
-	b_28,
-	b_29,
-	b_30,
-	b_31,
-	b_33,
-	b_34,
-	b_35,
-	b_36,
-	b_37,
-	b_39,
-	b_40,
-	pfb_8,
-	pfb_28,
-	pfb_35,
-	pvb_8,
-	pvb_35
+    b_1,
+    b_2,
+    # b_3,
+    b_4,
+    b_5,
+    b_6,
+    b_7,
+    # b_8,
+    b_9,
+    b_10,
+    b_11,
+    b_12,
+    b_13,
+    b_14,
+    b_15,
+    b_16,
+    b_17,
+    b_18,
+    b_20,
+    b_21,
+    b_22,
+    b_23,
+    b_24,
+    b_25,
+    b_26,
+    b_27,
+    b_28,
+    b_29,
+    b_30,
+    b_31,
+    b_33,
+    b_34,
+    b_35,
+    b_36,
+    b_37,
+    b_39,
+    b_40,
+    pfb_8,
+    pfb_28,
+    pfb_35,
+    pvb_8,
+    pvb_35
 )
 
 from ..consts import (
@@ -110,34 +110,34 @@ def thread_import_b3d(self, files, context):
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         print('Finished importing in', t, 'seconds')
 
+def import_common_dot_res(self, context, commonResPath):
+    scene = context.scene
+    mytool = scene.my_tool
+
+    mytool.isImporting = True
+
+    print('Importing file', commonResPath)
+    t = time.mktime(datetime.datetime.now().timetuple())
+    with open(commonResPath, 'rb') as file:
+        importRes(file, context, self, commonResPath)
+    t = time.mktime(datetime.datetime.now().timetuple()) - t
+    print('Finished importing in', t, 'seconds')
+
+    mytool.isImporting = False
+
+
 def import_multiple_res(self, files, context):
 
     scene = context.scene
     mytool = scene.my_tool
 
-    resModules = getattr(mytool, "resModules")
-
     commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
-
-    if not os.path.exists(commonResPath) and self.to_import_textures:
-        self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures can't be imported! Please, set path to Common.res in addon preferences.")
-        return {'FINISHED'}
 
     mytool.isImporting = True
 
-    commonResModule = getColPropertyByName(resModules, "COMMON")
-
-    if commonResModule is None or self.to_reload_common:
-
-        print('Importing file', commonResPath)
-        t = time.mktime(datetime.datetime.now().timetuple())
-        with open(commonResPath, 'rb') as file:
-            importRes(file, context, self, commonResPath)
-        t = time.mktime(datetime.datetime.now().timetuple()) - t
-        print('Finished importing in', t, 'seconds')
-
     for resfile in self.files:
-        filepath = os.path.join(self.directory, "{}.res".format(os.path.splitext(resfile.name)[0]))
+        log.info(resfile.name)
+        filepath = os.path.join(self.directory, "{}.{}".format(os.path.splitext(resfile.name)[0], self.res_extension))
 
         if filepath != commonResPath: #COMMON.RES imported before
 
@@ -582,17 +582,8 @@ def importB3d(file, context, self, filepath):
     scene = context.scene
     mytool = scene.my_tool
 
-    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
-
-    if self.to_import_textures and not os.path.exists(commonResPath):
-        self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
-        self.to_import_textures = False
-
     #skip to materials list
     file.seek(21,1)
-    Imgs = []
-    math = []
-    materials = []
 
     resModules = getattr(mytool, "resModules")
 
@@ -600,41 +591,16 @@ def importB3d(file, context, self, filepath):
     basepath = os.path.dirname(filepath)
     basename = os.path.basename(filepath)[:-4] #cut extension
 
-
     resPath = ''
     if len(self.res_location) > 0 and os.path.exists(self.res_location):
         resPath = self.res_location
     else:
-        resPath = os.path.join(noextPath + ".res")
+        resPath = filepath
 
-    res_basepath = os.path.dirname(resPath)
     res_basename = os.path.basename(resPath)[:-4] #cut extension
 
     if self.to_import_textures:
-
-    #     mytool.isImporting = True
-
-    #     commonResModule = getColPropertyByName(resModules, "COMMON")
-
-    #     if commonResModule is None or commonResPath == resPath or self.to_reload_common:
-    #         importResources(commonResPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
-    #         commonResModule = getColPropertyByName(resModules, "COMMON")
-
-    #     importResources(resPath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
-
         resModule = getColPropertyByName(resModules, res_basename)
-    #     commonResModule = getColPropertyByName(resModules, "COMMON")
-
-    #     if commonResPath != resPath:
-    #         createMaterials(commonResModule)
-
-    #     createMaterials(resModule)
-
-    #     loadMaterials(commonResModule)
-    #     loadMaterials(resModule)
-
-    #     mytool.isImporting = False
-
 
     blocksToImport = self.blocks_to_import
 
@@ -811,7 +777,7 @@ def importB3d(file, context, self, filepath):
                 objString[-1] = b3dObj.name
 
 
-            elif (type == 2):	#контейнер хз
+            elif (type == 2):    #контейнер хз
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 unknown_sphere = struct.unpack("<4f",file.read(16))
                 childCnt = struct.unpack("<i",file.read(4))
@@ -832,7 +798,7 @@ def importB3d(file, context, self, filepath):
                 objString[-1] = b3dObj.name
 
 
-            elif (type == 3):	#
+            elif (type == 3):    #
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 childCnt = struct.unpack("<i",file.read(4))
 
@@ -850,7 +816,7 @@ def importB3d(file, context, self, filepath):
                 objString[-1] = b3dObj.name
 
 
-            elif (type == 4):	#похоже на контейнер 05 совмещенный с 12
+            elif (type == 4):    #похоже на контейнер 05 совмещенный с 12
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 name1 = readName(file)
                 name2 = readName(file)
@@ -924,7 +890,7 @@ def importB3d(file, context, self, filepath):
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
 
-            elif (type == 7):	#25? xyzuv TailLight? похоже на "хвост" движения	mesh
+            elif (type == 7):    #25? xyzuv TailLight? похоже на "хвост" движения    mesh
                 format = 0
                 vertexes = []
                 normals = []
@@ -962,7 +928,7 @@ def importB3d(file, context, self, filepath):
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
 
-            elif (type == 8):	#тоже фейсы		face
+            elif (type == 8):    #тоже фейсы        face
                 faces = []
                 faces_all = []
                 overriden_uvs = []
@@ -1427,7 +1393,7 @@ def importB3d(file, context, self, filepath):
                 realName = b3dObj.name
                 objString[-1] = b3dObj.name
 
-            elif (type == 18):	#контейнер "применить к"
+            elif (type == 18):    #контейнер "применить к"
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 space_name = readName(file)
@@ -1643,8 +1609,6 @@ def importB3d(file, context, self, filepath):
                 rot_x = ((x_d * 180) / PI)
                 rot_y = ((y_d * 180) / PI)
                 rot_z = ((z_d * 180) / PI)
-
-
 
                 b3dObj = bpy.data.objects.new(objName, None)
                 b3dObj[BLOCK_TYPE] = type
@@ -2335,7 +2299,7 @@ def importB3d(file, context, self, filepath):
                         vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
                         for j in range(uvCount):
                             vertex_block_uvs[j+1].append(struct.unpack("<2f",file.read(8)))
-                        if format == 1 or format == 2:	#Vertex with normals
+                        if format == 1 or format == 2:    #Vertex with normals
                             normals.append(struct.unpack("<3f",file.read(12)))
                             normals_off.append(1.0)
                         elif format == 3: #отличается от шаблона 010Editor
@@ -2396,7 +2360,7 @@ def importB3d(file, context, self, filepath):
                             vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
                             for j in range(uvCount):
                                 vertex_block_uvs[j+1].append(struct.unpack("<2f",file.read(8)))
-                            if format == 1 or format == 2:	#Vertex with normals
+                            if format == 1 or format == 2:    #Vertex with normals
                                 normals.append(struct.unpack("<3f",file.read(12)))
                                 normals_off.append(1.0)
                             elif format == 3: #отличается от шаблона 010Editor

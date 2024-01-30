@@ -107,50 +107,50 @@ def readCString(file):
 
 
 def readRESSections(filepath):
-	sections = []
-	with open(filepath, "rb") as file:
-		k = 0
-		while 1:
-			category = readCString(file)
-			if(len(category) > 0):
-				resSplit = category.split(" ")
-				id = resSplit[0]
-				cnt = int(resSplit[1])
+    sections = []
+    with open(filepath, "rb") as file:
+        k = 0
+        while 1:
+            category = readCString(file)
+            if(len(category) > 0):
+                resSplit = category.split(" ")
+                id = resSplit[0]
+                cnt = int(resSplit[1])
 
-				sections.append({})
+                sections.append({})
 
-				sections[k]["name"] = id
-				sections[k]["cnt"] = cnt
-				sections[k]["data"] = []
+                sections[k]["name"] = id
+                sections[k]["cnt"] = cnt
+                sections[k]["data"] = []
 
-				log.info("Reading category {}".format(id))
-				log.info("Element count in category is {}.".format(cnt))
-				if cnt > 0:
-					log.info("Start processing...")
-					resData = []
-					if id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
-						for i in range(cnt):
-							data = {}
-							data['row'] = readCString(file)
-							resData.append(data)
+                log.info("Reading category {}".format(id))
+                log.info("Element count in category is {}.".format(cnt))
+                if cnt > 0:
+                    log.info("Start processing...")
+                    resData = []
+                    if id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
+                        for i in range(cnt):
+                            data = {}
+                            data['row'] = readCString(file)
+                            resData.append(data)
 
-					else: #PALETTEFILES, SOUNDFILES, BACKFILES, MASKFILES, TEXTUREFILES
-						for i in range(cnt):
+                    else: #PALETTEFILES, SOUNDFILES, BACKFILES, MASKFILES, TEXTUREFILES
+                        for i in range(cnt):
 
-							data = {}
-							data['row'] = readCString(file)
-							data['size'] = struct.unpack("<i",file.read(4))[0]
-							data['bytes'] = file.read(data['size'])
-							resData.append(data)
+                            data = {}
+                            data['row'] = readCString(file)
+                            data['size'] = struct.unpack("<i",file.read(4))[0]
+                            data['bytes'] = file.read(data['size'])
+                            resData.append(data)
 
-					sections[k]['data'] = resData
+                    sections[k]['data'] = resData
 
-				else:
-					log.info("Skip category")
-				k += 1
-			else:
-				break
-	return sections
+                else:
+                    log.info("Skip category")
+                k += 1
+            else:
+                break
+    return sections
 
 
 class HTMaterial():
@@ -517,16 +517,16 @@ def spacesCallback(self, context):
 
 def resMaterialsCallback(self, context):
 
-	mytool = context.scene.my_tool
-	rootObj = getRootObj(context.object)
-	moduleName = rootObj.name[:-4]
+    mytool = context.scene.my_tool
+    rootObj = getRootObj(context.object)
+    moduleName = rootObj.name[:-4]
 
-	resModules = mytool.resModules
-	curModule = getColPropertyByName(resModules, moduleName)
+    resModules = mytool.resModules
+    curModule = getColPropertyByName(resModules, moduleName)
 
-	enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(curModule.materials)]
+    enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(curModule.materials)]
 
-	return enumProperties
+    return enumProperties
 
 def roomsCallback(bname, pname):
     def callback_func(self, context):

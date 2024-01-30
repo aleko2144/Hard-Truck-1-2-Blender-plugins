@@ -11,7 +11,7 @@ from ..common import (
 from .common import (
     getPolygonsBySelectedVertices,
     getSelectedVertices,
-	isRootObj,
+    isRootObj,
     isMeshBlock,
     getRootObj,
     getAllChildren,

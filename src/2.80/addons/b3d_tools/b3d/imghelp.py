@@ -31,14 +31,14 @@ def parsePLM(resModule, filepath):
 def paletteToColors(palette, indexes, trc):
     colors = []
     for index in indexes:
-            R = palette[index*3]
-            G = palette[index*3+1]
-            B = palette[index*3+2]
-            if (0 | (R << 16) | (G << 8) | B) != (0 | (trc[0] << 16) | (trc[1] << 8) | trc[2]):
-                A = 255
-            else:
-                A = 0
-            colors.extend([B, G, R, A])
+        R = palette[index*3]
+        G = palette[index*3+1]
+        B = palette[index*3+2]
+        if (0 | (R << 16) | (G << 8) | B) != (0 | (trc[0] << 16) | (trc[1] << 8) | trc[2]):
+            A = 255
+        else:
+            A = 0
+        colors.extend([B, G, R, A])
     return colors
 
 
@@ -54,17 +54,24 @@ def compressRle(file, width, height, bytes_per_pixel):
 
 
 def decompressRle(file, width, height, bytes_per_pixel):
-    pixel_count = 0
-    decompressed_data = bytearray(width * height * bytes_per_pixel)
-    while pixel_count < width * height:
-        curBit = struct.unpack("<B", file.read(1))[0]
-        if(curBit > 127):
-            pixel_count += (curBit-128)
-        else:
-            decompressed_data[pixel_count * bytes_per_pixel:(pixel_count + curBit) * bytes_per_pixel] = file.read(curBit*bytes_per_pixel)
-            pixel_count += curBit
+    try:
+        # log.debug("BPP: {}".format(bytes_per_pixel))
+        pixel_count = 0
+        decompressed_data = bytearray(width * height * bytes_per_pixel)
+        while pixel_count < width * height:
+            curBit = struct.unpack("<B", file.read(1))[0]
+            if(curBit > 127): #black pixels
+                pixel_count += (curBit-128)
+                # log.debug("black pixels {} {}".format(curBit-128, file.tell()))
+            else: #raw data
+                decompressed_data[pixel_count * bytes_per_pixel:(pixel_count + curBit) * bytes_per_pixel] = file.read(curBit*bytes_per_pixel)
+                pixel_count += curBit
+                # log.debug("Raw data {} {}".format(curBit, file.tell()))
 
-    return decompressed_data
+        return decompressed_data
+    except:
+        log.error(file.tell())
+        raise
 
 
 def writeTGA8888(filepath, header, colorsBefore, bitMask, transpColor = (0,0,0), bytesPerPixel = 2):
@@ -248,7 +255,11 @@ def COLORMAP_TXRtoTGA32(filepath, transpColor):
             tgaFile.write(headerPack)
             tgaFile.write(colorsPack)
 
-    return
+        result = {}
+        result['format'] = [4,4,4,4] #probably
+        result['has_mipmap'] = False
+
+    return result
 
 def generatePalette(colors, width, height, size = 256):
     num_pixels = width * height
@@ -609,7 +620,7 @@ def MSKtoTGA32(filepath):
     indexes = []
     colorsAfter = []
     with open(filepath, "rb") as mskFile:
-        magic = struct.unpack("<4s", mskFile.read(4))
+        magic = mskFile.read(4).decode('cp1251')
         width = struct.unpack("<H", mskFile.read(2))[0]
         height = struct.unpack("<H", mskFile.read(2))[0]
         paletteSize = 256
@@ -637,8 +648,20 @@ def MSKtoTGA32(filepath):
         header[10] = 32 #PixelDepth
         header[11] = 32 #ImageDescriptor
 
-        footerIdentifier = mskFile.read(4)
-        footerSize = struct.unpack("<i", mskFile.read(4))[0]
-        pfrm = list(struct.unpack("<4i", mskFile.read(16)))
+        pfrm = [5,6,5,0]
 
-        writeTGA8888(outpath, header, colors, (0,0,0), pfrm, 2)
+        while True:
+            footerIdentifier = mskFile.read(4).decode('cp1251')
+            if footerIdentifier == 'PFRM':
+                footerSize = struct.unpack("<i", mskFile.read(4))[0]
+                pfrm = list(struct.unpack("<4i", mskFile.read(16)))
+                continue
+
+            elif footerIdentifier == 'ENDR':
+                mskFile.read(4) # alwas int 0
+                continue
+
+            mskFile.seek(-4, 1)
+            break
+
+        writeTGA8888(outpath, header, colors, pfrm, (0,0,0), bytesPerPixel)
