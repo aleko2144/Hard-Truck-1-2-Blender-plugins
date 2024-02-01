@@ -1418,7 +1418,7 @@ class b_37():
         'subtype': fieldType.INT,
         'name': 'Vertex type',
         'description': '',
-        'default': 1,
+        'default': 2,
         'items': vTypeList
     }
 

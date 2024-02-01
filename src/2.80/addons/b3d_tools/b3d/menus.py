@@ -333,8 +333,7 @@ class ImportB3D(Operator, ImportHelper):
         if (commonResModule is None or self.to_reload_common_res) and self.to_import_textures and os.path.exists(commonResPath):
             import_b3d.import_common_dot_res(self, context, commonResPath)
         else:
-            self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
-            self.to_import_textures = False
+            self.report({'ERROR'}, "Common.res path is wrong or is not set. There might be problems with imported textures! Please, set path to Common.res in addon preferences.")
 
         # importing other RES modules
         if self.to_import_textures:

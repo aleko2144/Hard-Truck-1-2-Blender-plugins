@@ -635,88 +635,88 @@ def exportB3d(context, op, exportDir):
 
         filepath = os.path.join(exportDir, curRoot.name)
 
-        file = open(filepath, 'wb')
+        with open(filepath, 'wb') as file:
 
-        # materials = []
+            # materials = []
 
-        # for material in bpy.data.materials:
-        #     materials.append(material.name)
+            # for material in bpy.data.materials:
+            #     materials.append(material.name)
 
-        cp_materials = 0
-        cp_data_blocks = 0
-        cp_eof = 0
+            cp_materials = 0
+            cp_data_blocks = 0
+            cp_eof = 0
 
-        #Header
+            #Header
 
-        file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
+            file.write(b'b3d\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
 
-        #reserve places for sizes
-        file.write(struct.pack('<i',0)) #File Size
-        file.write(struct.pack('<i',0)) #Mat list offset
-        file.write(struct.pack('<i',0)) #Mat list Data Size
-        file.write(struct.pack('<i',0)) #Data Chunks Offset
-        file.write(struct.pack('<i',0)) #Data Chunks Size
+            #reserve places for sizes
+            file.write(struct.pack('<i',0)) #File Size
+            file.write(struct.pack('<i',0)) #Mat list offset
+            file.write(struct.pack('<i',0)) #Mat list Data Size
+            file.write(struct.pack('<i',0)) #Data Chunks Offset
+            file.write(struct.pack('<i',0)) #Data Chunks Size
 
-        cp_materials = int(file.tell()/4)
+            cp_materials = int(file.tell()/4)
 
 
-        spaces = [cn for cn in allObjs if cn.get(BLOCK_TYPE) == 24]
-        other = [cn for cn in allObjs if cn.get(BLOCK_TYPE) != 24]
+            spaces = [cn for cn in allObjs if cn.get(BLOCK_TYPE) == 24]
+            other = [cn for cn in allObjs if cn.get(BLOCK_TYPE) != 24]
 
-        rChild = []
-        rChild.extend(spaces)
-        rChild.extend(other)
+            rChild = []
+            rChild.extend(spaces)
+            rChild.extend(other)
 
-        resModules = bpy.context.scene.my_tool.resModules
-        curResName = curRoot.name[:-4]
-        curModule = getColPropertyByName(resModules, curResName)
+            resModules = bpy.context.scene.my_tool.resModules
+            curResName = curRoot.name[:-4]
+            curModule = getColPropertyByName(resModules, curResName)
 
-        currentRes = curResName
-        createBorderList()
+            currentRes = curResName
+            createBorderList()
 
-        file.write(struct.pack('<i', len(curModule.materials))) #Materials Count
-        for mat in curModule.materials:
-            writeName(mat.mat_name, file)
+            file.write(struct.pack('<i', len(curModule.materials))) #Materials Count
+            for mat in curModule.materials:
+                writeName(mat.mat_name, file)
 
-        cp_data_blocks = int(file.tell()/4)
+            cp_data_blocks = int(file.tell()/4)
 
-        curMaxCnt = 0
-        curLevel = 0
+            curMaxCnt = 0
+            curLevel = 0
 
-        file.write(struct.pack("<i",111)) # Begin_Chunks
+            file.write(struct.pack("<i",111)) # Begin_Chunks
 
-        # prevLevel = 0
-        if len(rChild) > 0:
-            for obj in rChild[:-1]:
+            # prevLevel = 0
+            if len(rChild) > 0:
+                for obj in rChild[:-1]:
+                    if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
+                        curMaxCnt = 2
+                    elif obj.get(BLOCK_TYPE) == 21:
+                        curMaxCnt = obj[prop(b_21.GroupCnt)]
+                    exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
+
+                    file.write(struct.pack("<i", 444))
+
+                obj = rChild[-1]
                 if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
                     curMaxCnt = 2
                 elif obj.get(BLOCK_TYPE) == 21:
                     curMaxCnt = obj[prop(b_21.GroupCnt)]
                 exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
 
-                file.write(struct.pack("<i", 444))
+            file.write(struct.pack("<i",222))#EOF
 
-            obj = rChild[-1]
-            if obj.get(BLOCK_TYPE) == 10 or obj.get(BLOCK_TYPE) == 9:
-                curMaxCnt = 2
-            elif obj.get(BLOCK_TYPE) == 21:
-                curMaxCnt = obj[prop(b_21.GroupCnt)]
-            exportBlock(obj, False, curLevel, curMaxCnt, [0], {}, file)
+            cp_eof = int(file.tell()/4)
 
-        file.write(struct.pack("<i",222))#EOF
-
-        cp_eof = int(file.tell()/4)
-
-        file.seek(4,0)
-        file.write(struct.pack("<i", cp_eof))
-        file.seek(8,0)
-        file.write(struct.pack("<i", cp_materials))
-        file.seek(12,0)
-        file.write(struct.pack("<i", cp_data_blocks - cp_materials))
-        file.seek(16,0)
-        file.write(struct.pack("<i", cp_data_blocks))
-        file.seek(20,0)
-        file.write(struct.pack("<i", cp_eof - cp_data_blocks))
+            file.seek(4,0)
+            file.write(struct.pack("<i", cp_eof))
+            file.seek(8,0)
+            file.write(struct.pack("<i", cp_materials))
+            file.seek(12,0)
+            file.write(struct.pack("<i", cp_data_blocks - cp_materials))
+            file.seek(16,0)
+            file.write(struct.pack("<i", cp_data_blocks))
+            file.seek(20,0)
+            file.write(struct.pack("<i", cp_eof - cp_data_blocks))
 
 def commonSort(curCenter, arr):
     global createdBounders

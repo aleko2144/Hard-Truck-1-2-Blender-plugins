@@ -210,6 +210,8 @@ def getMaterialIndexInRES(matName, resModuleName):
     resModules = bpy.context.scene.my_tool.resModules
     curModule = getColPropertyByName(resModules, resModuleName)
     curMaterialInd = getColPropertyIndexByName(curModule.materials, matName, 'mat_name')
+    if curMaterialInd == -1:
+        curMaterialInd = 1
     return curMaterialInd
 
 def getColorImgName(moduleName, index):
