@@ -13,8 +13,8 @@
 | Расширение | Описание           | Импорт | Экспорт |
 |-----------|-----------------------|:----------:|:----------:|
 | .b3d | Модели, логика, различные объекты   | Да   | Да  |
-| .b3d + .res  | Модели, логика, различные объекты + текстуры   | Да   | Нет  |
-| .way  | Пути транспорта для ИИ   | Да   | Нет  |
+| .b3d + .res  | Модели, логика, различные объекты + текстуры   | Да   | Да  |
+| .way  | Пути транспорта для ИИ   | Да   | Да  |
 | .tch/.tech  | Параметры транспорта и динамических объектов   |      | Да  |
 
 ## Файлы в проекте
@@ -70,6 +70,6 @@ Hard Truck classic games (VWI engine) import/export plugins for Blender.
 | Extension | Description           | Import | Export |
 |-----------|-----------------------|:----------:|:----------:|
 | .b3d  | Models, game logic, various objects   | Yes   | Yes  |
-| .b3d + .res  | Models, game logic, various objects + textures   | Yes   | No  |
-| .way  | AI paths   | Yes  | No  |
+| .b3d + .res  | Models, game logic, various objects + textures   | Yes   | Yes  |
+| .way  | AI paths   | Yes  | Yes  |
 | .tch/.tech  | Transport parameters |      | Yes |
