@@ -10,11 +10,11 @@ from .common import (
     writeSize
 )
 from ..common import (
-    createLogger
+    imghelp_logger
 )
 
 #Setup module logger
-log = createLogger("imghelp")
+log = imghelp_logger
 
 def parsePLM(resModule, filepath):
     # colors = []
@@ -219,7 +219,8 @@ def TRUEIMAGE_TXRtoTGA32(filepath, transpColor, bytesPerPixel):
         for mipmap in mipmaps:
             mipmapHeader[8] = mipmap['width']
             mipmapHeader[9] = mipmap['height']
-            mipmapPath = "{}_{}_{}.tga".format(os.path.splitext(filepath)[0], mipmap['width'], mipmap['height'])
+            filepath_no_ext = os.path.splitext(filepath)[0]
+            mipmapPath = f'{filepath_no_ext}_{mipmap["width"]}_{mipmap["height"]}.tga'
             writeTGA8888(mipmapPath, mipmapHeader, mipmap['colors'], pfrm, transpColor, bytesPerPixel)
 
         header[8] = width
@@ -592,7 +593,9 @@ def TRUECOLOR_TGA32toTXR(filepath, bytesPerPixel, imageType, imageFormat, genMip
                 mipmapHeader = header
                 mipmapHeader[8] = m_width
                 mipmapHeader[9] = m_height
-                mipmapPath = "{}_{}-{}.tga".format(os.path.splitext(filepath)[0], m_width, m_height)
+                filepath_no_ext = os.path.splitext(filepath)[0]
+                #todo: check
+                mipmapPath = f"{filepath_no_ext}_{m_width}-{m_height}.tga"
                 writeTGA8888(mipmapPath, mipmapHeader, mipmapBytearray, [\
                     0b00000000111111110000000000000000,\
                     0b00000000000000001111111100000000,\

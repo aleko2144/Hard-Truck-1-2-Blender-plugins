@@ -5,7 +5,7 @@ import logging
 
 from ..common import (
     getRegion,
-    createLogger
+    panel_logger
 )
 
 from .. import consts
@@ -102,7 +102,7 @@ from bpy.types import (Panel,
 
 
 #Setup module logger
-log = createLogger("panel")
+log = panel_logger
 
 
 
@@ -432,7 +432,7 @@ class SingleAddOperator(bpy.types.Operator):
                     groupCnt = object[prop(b_21.GroupCnt)]
 
                 for i in range(groupCnt):
-                    group = bpy.data.objects.new("GROUP_{}".format(i), None)
+                    group = bpy.data.objects.new(f"GROUP_{i}", None)
                     group.location=(0.0,0.0,0.0)
                     group[consts.BLOCK_TYPE] = 444
                     group.parent = object
@@ -1078,7 +1078,7 @@ class ShowLODOperator(bpy.types.Operator):
 
         for obj in objs:
             showLOD(obj)
-        self.report({'INFO'}, "{} LOD objects(block 10) are shown".format(len(objs)))
+        self.report({'INFO'}, f"{len(objs)} LOD objects(block 10) are shown")
 
         return {'FINISHED'}
 
@@ -1098,7 +1098,7 @@ class HideLODOperator(bpy.types.Operator):
 
         for obj in objs:
             hideLOD(obj)
-        self.report({'INFO'}, "{} LOD objects(block 10) are hidden".format(len(objs)))
+        self.report({'INFO'}, f"{len(objs)} LOD objects(block 10) are hidden")
 
         return {'FINISHED'}
 
@@ -1120,7 +1120,7 @@ class ShowConditionalsOperator(bpy.types.Operator):
 
         for obj in objs:
             showConditionals(obj, self.group)
-        self.report({'INFO'}, "{} Conditional objects(block 21) are shown".format(len(objs)))
+        self.report({'INFO'}, f"{len(objs)} Conditional objects(block 21) are shown")
 
 
         return {'FINISHED'}
@@ -1143,7 +1143,7 @@ class HideConditionalsOperator(bpy.types.Operator):
 
         for obj in objs:
             hideConditionals(obj, self.group)
-        self.report({'INFO'}, "{} Conditional objects(block 21) are hidden".format(len(objs)))
+        self.report({'INFO'}, f"{len(objs)} Conditional objects(block 21) are hidden")
 
         return {'FINISHED'}
 

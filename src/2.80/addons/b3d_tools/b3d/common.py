@@ -5,14 +5,14 @@ from mathutils import Vector
 import math
 import logging
 
-from ..common import createLogger
+from ..common import common_logger
 from ..consts import (
     BLOCK_TYPE,
     EMPTY_NAME
 )
 
 #Setup module logger
-log = createLogger("common")
+log = common_logger
 
 def writeSize(file, ms, writeMs=None):
     if writeMs is None:
@@ -49,7 +49,7 @@ def getRootObj(obj):
     return result
 
 def isEmptyName(name):
-    reIsEmpty = re.compile(r'.*{}.*'.format(EMPTY_NAME))
+    reIsEmpty = re.compile(fr'.*{EMPTY_NAME}.*')
     return reIsEmpty.search(name)
 
 def isMeshBlock(obj):
@@ -219,7 +219,7 @@ def getMaterialIndexInRES(matName, resModuleName):
     return curMaterialInd
 
 def getColorImgName(moduleName, index):
-    return "col_{}_{:03d}".format(moduleName, index)
+    return f"col_{moduleName}_{index:03d}"
 
 # https://blenderartists.org/t/index-lookup-in-a-collection/512818/2
 def getColPropertyIndex(prop):
@@ -418,13 +418,13 @@ def getMytoolBlockNameByClass(zclass, multipleClass = True):
     btype, bnum = zclass.__name__.split('_')
     if btype == 'b':
         if multipleClass:
-            bname = 'block{}'.format(bnum)
+            bname = f'block{bnum}'
         else:
-            bname = 'sBlock{}'.format(bnum)
+            bname = f'sBlock{bnum}'
     elif btype == 'pfb':
-        bname = 'perFaceBlock{}'.format(bnum)
+        bname = f'perFaceBlock{bnum}'
     elif btype == 'pvb':
-        bname = 'perVertBlock{}'.format(bnum)
+        bname = f'perVertBlock{bnum}'
 
     return [bname, bnum]
 
@@ -433,13 +433,13 @@ def getMytoolBlockName(btype, bnum, multipleClass = False):
     bname = ''
     if btype == 'b':
         if multipleClass:
-            bname = 'block{}'.format(bnum)
+            bname = f'block{bnum}'
         else:
-            bname = 'sBlock{}'.format(bnum)
+            bname = f'sBlock{bnum}'
     elif btype == 'pfb':
-        bname = 'perFaceBlock{}'.format(bnum)
+        bname = f'perFaceBlock{bnum}'
     elif btype == 'pvb':
-        bname = 'perVertBlock{}'.format(bnum)
+        bname = f'perVertBlock{bnum}'
 
     return bname
 
@@ -540,9 +540,9 @@ def roomsCallback(bname, pname):
         enumProperties = []
 
         mytool = context.scene.my_tool
-        resModule = context.object.path_resolve('["{}"]'.format(pname))
+        resModule = context.object.path_resolve(f'["{pname}"]')
 
-        rootObj = bpy.data.objects.get('{}.b3d'.format(resModule))
+        rootObj = bpy.data.objects.get(f'{resModule}.b3d')
         if rootObj:
             rooms = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) == 19]
 

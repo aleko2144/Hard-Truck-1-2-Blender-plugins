@@ -6,7 +6,7 @@ import logging
 
 from ..common import (
     recalcToLocalCoord,
-    createLogger
+    importway_logger
 )
 
 from ..consts import (
@@ -23,7 +23,7 @@ from .class_descr import (
 )
 
 #Setup module logger
-log = createLogger("import_way")
+log = importway_logger
 
 globalInd = None
 
@@ -44,14 +44,14 @@ def readName(file, text_len):
 
 def openclose(file, path):
     if file.tell() == os.path.getsize(path):
-        log.info ('EOF')
+        log.debug ('EOF')
         return 1
     else:
         return 2
 
 def getNumberedName(name):
     global globalInd
-    name = "{:04d}|{}".format(globalInd, name)
+    name = f"{globalInd:04d}|{name}"
     globalInd += 1
     return name
 
@@ -83,21 +83,21 @@ def importWay(file, context, filepath):
                 subtype = readBlockType(file)
 
                 if subtype == "WTWR":
-                    log.info("Reading type WTWR")
+                    log.debug("Reading type WTWR")
                     subtypeSize = struct.unpack("<i",file.read(4))[0]
 
                 elif subtype == "MNAM":
-                    log.info("Reading type MNAM")
+                    log.debug("Reading type MNAM")
                     subtypeSize = struct.unpack("<i",file.read(4))[0]
                     moduleName = readName(file, subtypeSize)
 
                 elif subtype == "GDAT":
-                    log.info("Reading type GDAT")
+                    log.debug("Reading type GDAT")
                     subtypeSize = struct.unpack("<i",file.read(4))[0]
                 else:
                     readingHeader = False
 
-                    rootName = '{}.b3d'.format(moduleName)
+                    rootName = f'{moduleName}.b3d'
 
                     rootObject = bpy.data.objects.get(rootName)
                     if rootObject is None:
@@ -112,13 +112,13 @@ def importWay(file, context, filepath):
             type = readBlockType(file)
 
             if type == "GROM": #GROM
-                log.info("Reading type GROM")
+                log.debug("Reading type GROM")
                 grom_size = struct.unpack("<i",file.read(4))[0]
 
                 objName = ''
                 subtype = readBlockType(file)
                 if subtype == "RNAM":
-                    log.info("Reading subtype RNAM")
+                    log.debug("Reading subtype RNAM")
                     nameLen = struct.unpack("<i",file.read(4))[0]
                     objName = readName(file, nameLen)
 
@@ -135,7 +135,7 @@ def importWay(file, context, filepath):
                 curRoom = bpy.data.objects[curObj.name]
 
             elif type == "RSEG": #RSEG
-                log.info("Reading type RSEG")
+                log.debug("Reading type RSEG")
                 rseg_size = struct.unpack("<i",file.read(4))[0]
                 rseg_size_cur = rseg_size
 
@@ -152,26 +152,24 @@ def importWay(file, context, filepath):
                     subtypeSize = struct.unpack("<i",file.read(4))[0]
 
                     if subtype == "ATTR":
-                        log.info("Reading subtype ATTR")
+                        log.debug("Reading subtype ATTR")
                         attr1 = struct.unpack("<i",file.read(4))[0]
                         attr2 = struct.unpack("<d",file.read(8))[0]
                         attr3 = struct.unpack("<i",file.read(4))[0]
 
-                        # log.info("ATTR: " + str(attr1) + " " + str(attr2) + " " + str(attr3))
-
                         rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
 
                     elif subtype == "WDTH":
-                        log.info("Reading subtype WDTH")
+                        log.debug("Reading subtype WDTH")
                         wdth1 = struct.unpack("<d",file.read(8))[0]
                         wdth2 = struct.unpack("<d",file.read(8))[0]
 
-                        log.info(f"WDTH: {str(wdth1)} {str(wdth2)}")
+                        log.debug(f"WDTH: {str(wdth1)} {str(wdth2)}")
 
                         rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
 
                     elif subtype == "VDAT":
-                        log.info("Reading subtype VDAT")
+                        log.debug("Reading subtype VDAT")
                         len_points = struct.unpack("<i",file.read(4))[0]
                         for i in range (len_points):
                             points.append(struct.unpack("ddd",file.read(24)))
@@ -179,7 +177,7 @@ def importWay(file, context, filepath):
                         rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
 
                     elif subtype == "RTEN":
-                        log.info("Reading subtype RTEN")
+                        log.debug("Reading subtype RTEN")
                         unkName = readName(file, subtypeSize)
 
                         subtypeSize = ((subtypeSize >> 2) + 1) * 4
@@ -221,7 +219,7 @@ def importWay(file, context, filepath):
                     context.collection.objects.link(curObj)
 
             elif type == "RNOD": #RNOD
-                log.info("Reading type RNOD")
+                log.debug("Reading type RNOD")
                 rnod_size = struct.unpack("<i",file.read(4))[0]
                 rnod_size_cur = rnod_size
 
@@ -236,31 +234,26 @@ def importWay(file, context, filepath):
                     subtype = readBlockType(file)
                     subtypeSize = struct.unpack("<i",file.read(4))[0]
                     if subtype == "NNAM":
-                        log.info("Reading subtype NNAM")
+                        log.debug("Reading subtype NNAM")
                         objName = readName(file, subtypeSize)
-                        # log.info(objName)
 
                         realSize = ((subtypeSize >> 2) + 1) * 4
                         rnod_size_cur -= (realSize+8) #subtype+subtypeSize
                     elif subtype == "POSN":
-                        log.info("Reading subtype POSN")
+                        log.debug("Reading subtype POSN")
                         pos = struct.unpack("ddd",file.read(24))
-                        # log.info(pos)
 
                         rnod_size_cur -= (subtypeSize+8) #subtype+subtypeSize
                     elif subtype == "ORTN":
-                        log.info("Reading subtype ORTN")
+                        log.debug("Reading subtype ORTN")
                         object_matrix = []
                         for i in range(4):
                             object_matrix.append(struct.unpack("<ddd",file.read(24)))
-                        # for i in range(4):
-                        #     log.info(object_matrix[i])
 
                         rnod_size_cur -= (subtypeSize+8) #subtype+subtypeSize
                     elif subtype == "FLAG":
-                        log.info("Reading subtype FLAG")
+                        log.debug("Reading subtype FLAG")
                         flag = struct.unpack("<i",file.read(4))[0]
-                        # log.info(flag)
 
                         rnod_size_cur -= (subtypeSize+8) #subtype+subtypeSize
 

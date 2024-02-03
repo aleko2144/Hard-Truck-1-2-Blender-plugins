@@ -11,7 +11,7 @@ from .common import (
 )
 
 from ..common import (
-    createLogger
+    exportway_logger
 )
 
 from .scripts import (
@@ -23,7 +23,7 @@ from .class_descr import (
 )
 
 #Setup module logger
-log = createLogger("export_way")
+log = exportway_logger
 
 
 def writeName(file, name):
@@ -99,11 +99,11 @@ def exportWay(context, op, exportDir):
 
     for objName in exportedModules:
 
-        filepath = os.path.join(exportDir, "{}.way".format(objName))
+        filepath = os.path.join(exportDir, f"{objName}.way")
 
         file = open(filepath, 'wb')
 
-        rootObj = bpy.data.objects["{}.b3d".format(objName)]
+        rootObj = bpy.data.objects[f"{objName}.b3d"]
 
         #Header
         writeType(file, "WTWR")

@@ -80,7 +80,7 @@ def setCustObjValue(subtype, bname, pname):
     def callback_func(self, context):
 
         mytool = context.scene.my_tool
-        result = getattr(getattr(mytool, bname), '{}_enum'.format(pname))
+        result = getattr(getattr(mytool, bname), f'{pname}_enum')
         if subtype == fieldType.INT:
             result = int(result)
         elif subtype == fieldType.FLOAT:
@@ -90,7 +90,7 @@ def setCustObjValue(subtype, bname, pname):
 
         setattr(
             bpy.context.object,
-            '["{}"]'.format(pname),
+            f'["{pname}"]',
             result
         )
 
@@ -182,7 +182,7 @@ def createTypeClass(zclass, multipleEdit = True):
             elif obj.get('callback') == fieldType.MATERIAL_IND:
                 enum_callback = resMaterialsCallback
             elif obj.get('callback') == fieldType.ROOM:
-                enum_callback = roomsCallback(bname, '{}_res'.format(pname))
+                enum_callback = roomsCallback(bname, f'{pname}_res')
             elif obj.get('callback') == fieldType.RES_MODULE:
                 enum_callback = modulesCallback
 
@@ -220,11 +220,11 @@ def createTypeClass(zclass, multipleEdit = True):
                             default = obj['default']
                         )
 
-                attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
-                attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
+                attributes['__annotations__'][f'{pname}_switch'] = prop_switch
+                attributes['__annotations__'][f'{pname}_enum'] = prop_enum
 
                 if multipleEdit:
-                    attributes['__annotations__']['{}'.format(pname)] = prop
+                    attributes['__annotations__'][f'{pname}'] = prop
 
             elif obj['type'] == fieldType.ENUM_DYN:
                 # prop = None
@@ -258,48 +258,48 @@ def createTypeClass(zclass, multipleEdit = True):
                             description = obj['description']
                         )
 
-                attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
-                attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
+                attributes['__annotations__'][f'{pname}_switch'] = prop_switch
+                attributes['__annotations__'][f'{pname}_enum'] = prop_enum
 
                 if multipleEdit:
-                    attributes['__annotations__']['{}'.format(pname)] = prop
+                    attributes['__annotations__'][f'{pname}'] = prop
 
         elif obj['type'] == fieldType.V_FORMAT: # currently only available in vertex edit
 
-            attributes['__annotations__']["show_{}".format(pname)] = lockProp
+            attributes['__annotations__'][f"show_{pname}"] = lockProp
 
             prop1 = BoolProperty(
                 name = 'Triangulation offset',
                 description = 'Order in which vertexes are read depends on that',
                 default = True
             )
-            attributes['__annotations__']['{}_{}'.format(pname, 'triang_offset')] = prop1
+            attributes['__annotations__'][f'{pname}_triang_offset'] = prop1
 
             prop2 = BoolProperty(
                 name = 'Use UV',
                 description = 'If active, writes UV during export.',
                 default = True
             )
-            attributes['__annotations__']['{}_{}'.format(pname, 'use_uvs')] = prop2
+            attributes['__annotations__'][f'{pname}_use_uvs'] = prop2
 
             prop3 = BoolProperty(
                 name = 'Use normals',
                 description = 'If active, writes normal during export.',
                 default = True
             )
-            attributes['__annotations__']['{}_{}'.format(pname, 'use_normals')] = prop3
+            attributes['__annotations__'][f'{pname}_use_normals'] = prop3
 
             prop4 = BoolProperty(
                 name = 'Normal switch',
                 description = 'If active, use <float> for en(dis)abling normals. If not active use <float vector> for common normals. Is ignored if "Use normals" is inactive',
                 default = True
             )
-            attributes['__annotations__']['{}_{}'.format(pname, 'normal_flag')] = prop4
+            attributes['__annotations__'][f'{pname}_normal_flag'] = prop4
 
     if multipleEdit:
-        newclass = type("{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
+        newclass = type(f"{zclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
     else:
-        newclass = type("s_{}_gen".format(zclass.__name__), (bpy.types.PropertyGroup,), attributes)
+        newclass = type(f"s_{zclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
     return newclass
 
 

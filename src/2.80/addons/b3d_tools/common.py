@@ -26,18 +26,28 @@ def createLogger(module_name):
     log_level = 40 #ERROR
     log = logging.getLogger(module_name)
     log.setLevel(log_level)
-    log.addHandler(logging.StreamHandler(sys.stdout))
+    if not log.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s - %(message)s','%H:%M:%S'))
+        log.addHandler(handler)
     return log
 
-common_logger = createLogger("common")
-exportb3d_logger = createLogger("export_b3d")
-exportway_logger = createLogger("export_way")
-imghelp_logger = createLogger("imghelp")
-importb3d_logger = createLogger("import_b3d")
-importway_logger = createLogger("import_way")
-menus_logger = createLogger("menus")
-scripts_logger = createLogger("scripts")
+common_logger = createLogger("b3d_tools.common")
+exportb3d_logger = createLogger("b3d_tools.export_b3d")
+exportway_logger = createLogger("b3d_tools.export_way")
+imghelp_logger = createLogger("b3d_tools.imghelp")
+importb3d_logger = createLogger("b3d_tools.import_b3d")
+importway_logger = createLogger("b3d_tools.import_way")
+panel_logger = createLogger("b3d_tools.panel")
+menus_logger = createLogger("b3d_tools.menus")
+scripts_logger = createLogger("b3d_tools.scripts")
 
-loggers = [common_logger, exportb3d_logger, exportway_logger, imghelp_logger, importb3d_logger, importway_logger, menus_logger, scripts_logger]
+loggers = [common_logger, exportb3d_logger, exportway_logger, imghelp_logger, importb3d_logger, importway_logger, panel_logger, menus_logger, scripts_logger]
+
+def updateLoggers(self, context):
+    log_level = int(bpy.context.preferences.addons['b3d_tools'].preferences.logger_level)
+    for logger in loggers:
+        logger.setLevel(log_level)
+
 
 

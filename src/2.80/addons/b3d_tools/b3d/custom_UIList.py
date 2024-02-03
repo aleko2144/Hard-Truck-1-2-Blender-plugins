@@ -76,7 +76,7 @@ def action_invoke_color(self, context, event, arr_bname = False):
             setattr(scn, self.customindex, idx+1)
             updateColorPreview(resModule, idx)
             updateColorPreview(resModule, idx+1)
-            info = 'Item "%s" moved to position %d' % (item.name, idx+1)
+            info = f'Item "{item.name}" moved to position {idx+1}'
             self.report({'INFO'}, info)
 
         elif self.action == 'UP' and idx >= 1:
@@ -84,11 +84,11 @@ def action_invoke_color(self, context, event, arr_bname = False):
             setattr(scn, self.customindex, idx-1)
             updateColorPreview(resModule, idx)
             updateColorPreview(resModule, idx-1)
-            info = 'Item "%s" moved to position %d' % (item.name, idx-1)
+            info = f'Item "{item.name}" moved to position {idx+1}'
             self.report({'INFO'}, info)
 
         elif self.action == 'REMOVE':
-            info = 'Item "%s" removed from list' % (param[idx].name)
+            info = f'Item "{param[idx].name}" removed from list'
             setattr(scn, self.customindex, idx-1)
             param.remove(idx)
             for i in range(idx-1, len(param)-1):
@@ -102,7 +102,7 @@ def action_invoke_color(self, context, event, arr_bname = False):
             for i in range(len(param)-1, idx+1, -1):
                 param.move(i, i-1)
             setattr(scn, self.customindex, idx)
-            self.report({'INFO'}, "Item added to list on position %d" % (idx))
+            self.report({'INFO'}, f"Item added to list on position {idx}")
     return {"FINISHED"}
 
 
@@ -124,17 +124,17 @@ def action_invoke(self, context, event, arr_bname = False):
         if self.action == 'DOWN' and idx < len(param) - 1:
             param.move(idx, idx+1)
             setattr(scn, self.customindex, idx+1)
-            info = 'Item "%s" moved to position %d' % (item.name, idx+1)
+            info = f'Item "{item.name}" moved to position {idx+1}'
             self.report({'INFO'}, info)
 
         elif self.action == 'UP' and idx >= 1:
             param.move(idx, idx-1)
             setattr(scn, self.customindex, idx-1)
-            info = 'Item "%s" moved to position %d' % (item.name, idx-1)
+            info = f'Item "{item.name}" moved to position {idx+1}'
             self.report({'INFO'}, info)
 
         elif self.action == 'REMOVE':
-            info = 'Item "%s" removed from list' % (param[idx].name)
+            info = f'Item "{param[idx].name}" removed from list'
             setattr(scn, self.customindex, idx-1)
             param.remove(idx)
             self.report({'INFO'}, info)
@@ -145,7 +145,7 @@ def action_invoke(self, context, event, arr_bname = False):
             for i in range(len(param)-1, idx+1, -1):
                 param.move(i, i-1)
             setattr(scn, self.customindex, idx)
-            self.report({'INFO'}, "Item added to list on position %d" % (idx))
+            self.report({'INFO'}, f"Item added to list on position {idx}")
     return {"FINISHED"}
 
 
@@ -233,7 +233,7 @@ class CUSTOM_UL_colors(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.5)
-        split.label(text="%d" % (index+1))
+        split.label(text= f"{index+1}")
         split.prop(item, "value", text="")
 
     def invoke(self, context, event):
@@ -244,7 +244,7 @@ class CUSTOM_UL_materials(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.3)
-        split.label(text="Index: %d" % (index+1))
+        split.label(text= f"Index: {index+1}")
         split.template_ID(item, 'id_mat')
 
     def invoke(self, context, event):
@@ -254,7 +254,7 @@ class CUSTOM_UL_textures(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.3)
-        split.label(text="Index: %d" % (index+1))
+        split.label(text= f"Index: {(index+1)}")
         split.template_ID(item, 'id_tex')
 
     def invoke(self, context, event):
@@ -264,7 +264,7 @@ class CUSTOM_UL_maskfiles(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.3)
-        split.label(text="Index: %d" % (index+1))
+        split.label(text= f"Index: {(index+1)}")
         split.template_ID(item, 'id_msk')
 
     def invoke(self, context, event):
@@ -274,7 +274,7 @@ class CUSTOM_UL_items(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.3)
-        split.label(text="Index: %d" % (index+1))
+        split.label(text= f"Index: {(index+1)}")
         split.prop(item, "value", text="", emboss=False, translate=False)
 
     def invoke(self, context, event):

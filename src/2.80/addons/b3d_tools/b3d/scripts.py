@@ -6,7 +6,7 @@ from .class_descr import (
     b_21
 )
 from ..common import (
-    createLogger
+    scripts_logger
 )
 from .common import (
     getPolygonsBySelectedVertices,
@@ -30,7 +30,7 @@ from ..consts import (
     TEMP_COLLECTION
 )
 
-log = createLogger("scripts")
+log = scripts_logger
 
 reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
 reb3dMesh = re.compile(r'.*b3dcopy.*')
@@ -44,7 +44,6 @@ class Graph:
 
         visited[val]["in"] += 1
         for v in self.graph[val]:
-            print(v)
             if self.graph.get(v) is not None:
                 visited[val]["out"] += 1
                 self.DFSUtil(v, visited)
@@ -67,7 +66,6 @@ class Graph:
 
         for val in searchIn:
             for v in self.graph[val]:
-                print(v)
                 if self.graph.get(v) is not None:
                     visited[val]["out"] += 1
                     self.DFSUtil(v, visited)
@@ -171,7 +169,7 @@ def applyTransform(root):
             newmesh = block.copy()
             # newmesh.data = mesh.data.copy() # for NOT linked copy
             newmesh.parent = prevSpaceCopyObj
-            newmesh.name = "{}_b3dcopy".format(block.name)
+            newmesh.name = f"{block.name}_b3dcopy"
             # log.info("Linking {}".format(newmesh.name))
             transfCollection.objects.link(newmesh)
             # newmesh.hide_set(False)
@@ -220,11 +218,11 @@ def showHideObjByType(self, type):
     if len(objs) == len(hiddenObj):
         for obj in objs:
             obj.hide_set(False)
-        self.report({'INFO'}, "{} (block {}) objects are shown".format(len(objs), type))
+        self.report({'INFO'}, f"{len(objs)} (block {type}) objects are shown")
     else:
         for obj in objs:
             obj.hide_set(True)
-        self.report({'INFO'}, "{} (block {}) objects are hidden".format(len(objs), type))
+        self.report({'INFO'}, f"{len(objs)} (block {type}) objects are hidden")
 
 def showHideObjTreeByType(type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==type]
@@ -454,12 +452,12 @@ def createCenterDriver(srcObj, bname, pname):
         d = srcObj.driver_add('location', i).driver
 
         v = d.variables.new()
-        v.name = 'location{}'.format(i)
+        v.name = f'location{i}'
         # v.targets[0].id_type = 'SCENE'
         # v.targets[0].id = bpy.context.scene
         # v.targets[0].data_path = 'my_tool.{}.{}[{}]'.format(bname, pname, i)
         v.targets[0].id = bpy.context.object
-        v.targets[0].data_path = '["{}"][{}]'.format(pname, i)
+        v.targets[0].data_path = f'["{pname}"][{i}]'
 
         d.expression = v.name
 
@@ -472,7 +470,7 @@ def createRadDriver(srcObj, bname, pname):
     # v1.targets[0].id = bpy.context.scene
     # v1.targets[0].data_path = 'my_tool.{}.{}'.format(bname, pname)
     v1.targets[0].id = bpy.context.object
-    v1.targets[0].data_path = '["{}"]'.format(pname)
+    v1.targets[0].data_path = f'["{pname}"]'
 
     d.expression = v1.name
 
@@ -483,7 +481,7 @@ def showHideSphere(context, root, pname):
         transfCollection = bpy.data.collections.new(TEMP_COLLECTION)
         bpy.context.scene.collection.children.link(transfCollection)
 
-    objName = "{}||{}||{}".format(root.name, pname, 'temp')
+    objName = f"{root.name}||{pname}||temp"
 
     b3dObj = bpy.data.objects.get(objName)
 
@@ -493,8 +491,8 @@ def showHideSphere(context, root, pname):
 
         bnum = root.get(BLOCK_TYPE)
 
-        centerName = "{}_center".format(pname)
-        radName = "{}_rad".format(pname)
+        centerName = f"{pname}_center"
+        radName = f"{pname}_rad"
 
         center = root.get(centerName)
         rad = root.get(radName)
@@ -590,19 +588,19 @@ def drawFieldsByType(l_self, context, zclass, multipleEdit = True):
                 if multipleEdit: # getting from my_tool
                     col.prop(getattr(mytool, bname), pname)
                 else:
-                    col.prop(context.object, '["{}"]'.format(pname), text=propText)
+                    col.prop(context.object, f'["{pname}"]', text=propText)
 
             elif ftype in [fieldType.ENUM_DYN, fieldType.ENUM]:
 
-                col.prop(getattr(mytool, bname), '{}_switch'.format(pname))
+                col.prop(getattr(mytool, bname), f'{pname}_switch')
 
-                if(getattr(getattr(mytool, bname), '{}_switch'.format(pname))):
-                    col.prop(getattr(mytool, bname), '{}_enum'.format(pname))
+                if(getattr(getattr(mytool, bname), f'{pname}_switch')):
+                    col.prop(getattr(mytool, bname), f'{pname}_enum')
                 else:
                     if multipleEdit:
                         col.prop(getattr(mytool, bname), pname)
                     else:
-                        col.prop(context.object, '["{}"]'.format(pname), text=propText)
+                        col.prop(context.object, f'["{pname}"]', text=propText)
 
             elif ftype == fieldType.LIST:
                 collect = getattr(mytool, bname)
@@ -651,13 +649,13 @@ def drawFieldsByType(l_self, context, zclass, multipleEdit = True):
         elif ftype == fieldType.V_FORMAT:
             if multipleEdit:
                 box = curLayout.box()
-                box.prop(getattr(mytool, bname), "show_{}".format(pname))
+                box.prop(getattr(mytool, bname), f"show_{pname}".format(pname))
 
                 col1 = box.column()
-                col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'triang_offset'))
-                col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_uvs'))
-                col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'use_normals'))
-                col1.prop(getattr(mytool, bname), "{}_{}".format(pname, 'normal_flag'))
+                col1.prop(getattr(mytool, bname), f"{pname}_triang_offset")
+                col1.prop(getattr(mytool, bname), f"{pname}_use_uvs")
+                col1.prop(getattr(mytool, bname), f"{pname}_use_normals")
+                col1.prop(getattr(mytool, bname), f"{pname}_normal_flag")
 
                 if getattr(getattr(mytool, bname), "show_"+pname):
                     col1.enabled = True
@@ -849,10 +847,10 @@ def getFromAttributes(context, obj, attrs, bname, index):
             useNormals = format & 0b10000 and format & 0b100000
             normalFlag = format & 1
 
-            getattr(mytool, bname)["{}_{}".format(obj['prop'],'triang_offset')] = triangOffset
-            getattr(mytool, bname)["{}_{}".format(obj['prop'],'use_uvs')] = useUV
-            getattr(mytool, bname)["{}_{}".format(obj['prop'],'use_normals')] = useNormals
-            getattr(mytool, bname)["{}_{}".format(obj['prop'],'normal_flag')] = normalFlag
+            getattr(mytool, bname)[f'{obj["prop"]}_triang_offse'] = triangOffset
+            getattr(mytool, bname)[f'{obj["prop"]}_use_uvs'] = useUV
+            getattr(mytool, bname)[f'{obj["prop"]}_use_normals'] = useNormals
+            getattr(mytool, bname)[f'{obj["prop"]}_normal_flag'] = normalFlag
 
 def setFromAttributes(context, obj, attrs, bname, index):
 
@@ -872,10 +870,10 @@ def setFromAttributes(context, obj, attrs, bname, index):
 
         elif obj['type'] == fieldType.V_FORMAT:
             value = 0
-            triangOffset = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'triang_offset')]
-            useUV = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'use_uvs')]
-            useNormals = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'use_normals')]
-            normalFlag = getattr(mytool, bname)['{}_{}'.format(obj['prop'], 'normal_flag')]
+            triangOffset = getattr(mytool, bname)[f'{obj["prop"]}_triang_offset']
+            useUV = getattr(mytool, bname)[f'{obj["prop"]}_use_uvs']
+            useNormals = getattr(mytool, bname)[f'{obj["prop"]}_use_normals']
+            normalFlag = getattr(mytool, bname)[f'{obj["prop"]}_normal_flag']
 
             if triangOffset:
                 value = value ^ 0b10000000

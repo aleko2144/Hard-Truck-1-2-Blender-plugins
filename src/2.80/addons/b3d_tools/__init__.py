@@ -64,6 +64,7 @@ def register():
     # way.register()
     b3d.register()
     # tch_register()
+    common.updateLoggers(None, None)
 
 def unregister():
     b3d.unregister()

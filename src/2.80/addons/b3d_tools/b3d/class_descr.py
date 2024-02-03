@@ -1,6 +1,5 @@
-from email.policy import default
-import bpy
 import enum
+import bpy
 
 from bpy.props import (StringProperty,
                         BoolProperty,

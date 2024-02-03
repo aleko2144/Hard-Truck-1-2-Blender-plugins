@@ -9,7 +9,6 @@ import bmesh
 
 
 def read_tch(context, filepath, use_some_setting):
-    print("running read_tch...")
     #file = open(filepath, 'r', encoding='utf-8')
     #data = f.read()
 

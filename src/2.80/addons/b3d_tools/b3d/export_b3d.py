@@ -65,7 +65,7 @@ from ..consts import (
 )
 
 from ..common import (
-    createLogger
+    exportb3d_logger
 )
 
 from .common import (
@@ -91,29 +91,9 @@ from .imghelp import (
 )
 
 #Setup module logger
-log = createLogger("export_b3d")
+log = exportb3d_logger
 
 RoMesh = True
-
-def openclose(file):
-    oc = file.read(4)
-    if (oc == (b'\x4D\x01\x00\x00')): #Begin Chunk
-        return 2
-    elif oc == (b'\x2B\x02\x00\x00'): #End Chunk
-        # print('}')
-        return 0
-    elif oc == (b'\xbc\x01\x00\x00'): #Group Chunk
-        #print('BC01')
-        return 3
-    elif oc == (b'\xde\x00\00\00'): #End Chunks
-        print ('EOF')
-        return 1
-    else:
-        print(str(file.tell()))
-        print (str(oc))
-        print('brackets error')
-        sys.exit()
-
 
 def export_pro(file, textures_path):
     # file = open(myFile_pro+'.pro','w')
@@ -129,7 +109,7 @@ def export_pro(file, textures_path):
 
     #file.write('\n')
 
-    file.write('MATERIALS ' + str(len(bpy.data.materials)) + '\n')
+    file.write(f'MATERIALS {str(len(bpy.data.materials))}\n')
 
     materials = []
     num_tex = 0
@@ -138,11 +118,10 @@ def export_pro(file, textures_path):
         materials.append(material.name)
 
     for i in range(len(materials)):
-        num_tex = i#imgs.index[i]
-        #print(str(imgs[i]))
-        file.write(materials[i] + ' tex ' + str(num_tex + 1) + '\n')
+        num_tex = i
+        file.write(f'{materials[i]} tex {str(num_tex + 1)}\n')
 
-    file.write('TEXTUREFILES ' + str(len(bpy.data.materials)) + '\n')
+    file.write(f'TEXTUREFILES {str(len(bpy.data.materials))}\n')
 
     imgs = []
     for img in bpy.data.images:
@@ -150,9 +129,9 @@ def export_pro(file, textures_path):
 
     for material in bpy.data.materials:
         try:
-            file.write(textures_path + material.texture_slots[0].texture.image.name[:-3] + 'txr' + '\n')
+            file.write(f"{textures_path}{material.texture_slots[0].texture.image.name[:-3]}txr\n")
         except:
-            file.write(textures_path + "error" + '.txr' + '\n')
+            file.write(f"{textures_path}error.txr\n")
 
     file.write('\n')
 
@@ -270,9 +249,9 @@ def fillBoundingSphereLists():
     #     log.debug(m)
 
     for emptyName in meshesInEmpty.keys():
-        meshesInEmpty[emptyName].sort(key= lambda x: "{}{}".format(str(x["obj"]), str(x["transf"])))
+        meshesInEmpty[emptyName].sort(key= lambda x: f'{str(x["obj"])}{str(x["transf"])}')
 
-        key = "||".join(["{}{}".format(str(cn["obj"]), str(cn["transf"])) for cn in meshesInEmpty[emptyName]])
+        key = "||".join([f'{str(cn["obj"])}{str(cn["transf"])}' for cn in meshesInEmpty[emptyName]])
         emptyToMeshKeys[emptyName] = key
         if not key in uniqueArrays:
             uniqueArrays[key] = meshesInEmpty[emptyName]
@@ -294,8 +273,13 @@ def createBorderList():
 
     for bb in borderBlocks:
 
-        border1 = '{}:{}'.format(bb[prop(b_30.ResModule1)], bb[prop(b_30.RoomName1)])
-        border2 = '{}:{}'.format(bb[prop(b_30.ResModule2)], bb[prop(b_30.RoomName2)])
+        module1_name = bb[prop(b_30.ResModule1)]
+        module2_name = bb[prop(b_30.ResModule2)]
+        room1_name = bb[prop(b_30.RoomName1)]
+        room2_name = bb[prop(b_30.RoomName2)]
+
+        border1 = f'{module1_name}:{room1_name}'
+        border2 = f'{module2_name}:{room2_name}'
 
         if not border1 in borders:
             borders[border1] = []
@@ -395,12 +379,12 @@ def writePALETTEFILES(resModule, file):
     if len(resModule.palette_colors) > 0:
         size = 1
 
-    cString("PALETTEFILES {}".format(size), file)
+    cString(f"PALETTEFILES {size}", file)
     if size > 0:
         palette_name = resModule.palette_name
         if palette_name is None or len(palette_name) == 0:
-            palette_name = "{}.plm".format(resModule.value)
-        cString("{}".format(palette_name), file)
+            palette_name = f"{resModule.value}.plm"
+        cString(f"{palette_name}", file)
         PalName_ms = file.tell()
         file.seek(4,1)
         file.write("PALT".encode("cp1251"))
@@ -422,27 +406,27 @@ def writePALETTEFILES(resModule, file):
 
 def writeSOUNDFILES(resModule, file):
     size = 0
-    cString("SOUNDFILES {}".format(0), file)
+    cString("SOUNDFILES 0", file)
 
 
 def writeBACKFILES(resModule, file):
     size = 0
-    cString("BACKFILES {}".format(0), file)
+    cString("BACKFILES 0", file)
 
 
 def writeMASKFILES(resModule, file):
     size = 0
-    cString("MASKFILES {}".format(0), file)
+    cString("MASKFILES 0", file)
 
 
 def writeTEXTUREFILES(resModule, file, filepath, saveImages = True):
     size = len(resModule.textures)
 
-    cString("TEXTUREFILES {}".format(size), file)
+    cString(f"TEXTUREFILES {size}", file)
     if size > 0:
         exportFolder = os.path.dirname(filepath)
         basename = os.path.basename(filepath)[:-4]
-        exportFolder = os.path.join(exportFolder, '{}_export'.format(basename))
+        exportFolder = os.path.join(exportFolder, f'{basename}_export')
         exportFolderPath = Path(exportFolder)
         exportFolderPath.mkdir(exist_ok=True, parents=True)
 
@@ -456,20 +440,24 @@ def writeTEXTUREFILES(resModule, file, filepath, saveImages = True):
             if usedInMat.tex_type == 'ttx' and usedInMat.is_col:
                 transpColor = srgb_to_rgb(*(palette[usedInMat.col-1].value[:3]))
 
-            imageName = "{}.tga".format(os.path.splitext(texture.tex_name)[0])
+            basepath_no_ext = os.path.splitext(texture.tex_name)[0]
+
+            imageName = f"{basepath_no_ext}.tga"
+            txr_name = f"{basepath_no_ext}.txr"
             imagePath = os.path.join(exportFolder, imageName)
-            textureName = "{}\\{}".format(texture.subpath.rstrip("\\"), "{}.txr".format(os.path.splitext(texture.tex_name)[0]))
+            texture_subpath = texture.subpath.rstrip("\\")
+            textureName = f'{texture_subpath}{chr(92)}{txr_name}'
 
             texParams = []
             if texture.is_someint:
-                texParams.append("{}".format(texture.someint))
+                texParams.append(f"{texture.someint}")
 
             for param in ["noload", "bumpcoord", "memfix"]:
-                if getattr(texture, 'is_{}'.format(param)):
-                    texParams.append("{}".format(param))
+                if getattr(texture, f'is_{param}'):
+                    texParams.append(f"{param}")
 
             if len(texParams) > 0:
-                texStr = "{} {}".format(textureName, "  ".join(texParams))
+                texStr = f'{textureName} {"  ".join(texParams)}'
             else:
                 texStr = textureName
             cString(texStr, file)
@@ -492,7 +480,7 @@ def writeTEXTUREFILES(resModule, file, filepath, saveImages = True):
 
 def writeMATERIALS(resModule, file):
     size = len(resModule.materials)
-    cString("MATERIALS {}".format(size), file)
+    cString(f"MATERIALS {size}", file)
     if size > 0:
         for material in resModule.materials:
             if material.id_mat is not None:
@@ -500,34 +488,44 @@ def writeMATERIALS(resModule, file):
                 matStr = matName
                 matParams = []
                 if material.is_tex:
-                    matParams.append("{} {}".format(material.tex_type, material.tex))
+                    matParams.append(f"{material.tex_type} {material.tex}")
+
                 for param in ["col", "att", "msk", "power", "coord"]:
-                    if getattr(material, 'is_{}'.format(param)):
-                        matParams.append("{} {}".format(param, getattr(material, param)))
+                    if getattr(material, f'is_{param}'):
+                        int_param = getattr(material, param)
+                        matParams.append(f"{param} {int_param}")
+
                 for param in ["reflect", "specular", "transp", "rot"]:
-                    if getattr(material, 'is_{}'.format(param)):
-                        matParams.append("{} {:.2f}".format(param, float(getattr(material, param))))
+                    if getattr(material, f'is_{param}'):
+                        float_param = float(getattr(material, param))
+                        matParams.append(f"{param} {float_param:.2f}")
+
                 for param in ["noz", "nof", "notile", "notileu", "notilev", \
                                 "alphamirr", "bumpcoord", "usecol", "wave"]:
-                    if getattr(material, 'is_{}'.format(param)):
-                        matParams.append("{}".format(param))
-                for param in ["RotPoint", "move", "env"]:
-                    if getattr(material, 'is_{}'.format(param)):
-                        matParams.append("{} {:.2f} {:.2f}".format(param, getattr(material, param)[0], getattr(material, param)[1]))
-                if material.is_envId:
-                    matParams.append("env{}".format(material.envId))
+                    if getattr(material, f'is_{param}'):
+                        matParams.append(f"{param}")
 
-                matStr = "{} {}".format(matName, "  ".join(matParams))
+                for param in ["RotPoint", "move", "env"]:
+                    if getattr(material, f'is_{param}'):
+                        param1, param2 = getattr(material, param)
+                        matParams.append(f"{param} {param1:.2f} {param2:.2f}")
+
+                if material.is_envId:
+                    matParams.append(f"env{material.envId}")
+
+                mat_params_str = "  ".join(matParams)
+
+                matStr = f"{matName} {mat_params_str}"
                 cString(matStr, file)
 
 def writeCOLORS(resModule, file):
     size = 0
-    cString("COLORS {}".format(0), file)
+    cString("COLORS 0", file)
 
 
 def writeSOUNDS(resModule, file):
     size = 0
-    cString("SOUNDS {}".format(0), file)
+    cString("SOUNDS 0", file)
 
 
 
@@ -543,14 +541,14 @@ def exportRes(context, op, exportDir):
         resModule = getColPropertyByName(mytool.resModules, moduleName)
         if resModule is not None:
 
-            filepath = os.path.join(exportDir, "{}.res".format(resModule.value))
+            filepath = os.path.join(exportDir, f"{resModule.value}.res")
 
             if op.to_merge:
 
                 # allSections = ["PALETTEFILES", "SOUNDFILES", "SOUNDS", "BACKFILES", "MASKFILES", "COLORS", "TEXTUREFILES", "MATERIALS"]
 
                 if not os.path.exists(filepath):
-                    log.error("Not found file to merge into: {}".format(filepath))
+                    log.error(f"Not found file to merge into: {filepath}")
                     continue
 
                 sections = readRESSections(filepath)
@@ -570,7 +568,7 @@ def exportRes(context, op, exportDir):
                             elif section['name'] == 'MATERIALS':
                                 writeMATERIALS(resModule, file)
                         else:
-                            cString("{} {}".format(section['name'], section['cnt']), file)
+                            cString(f'{section["name"]} {section["cnt"]}', file)
                             if section['name'] in ["COLORS", "MATERIALS", "SOUNDS"]:
                                 for data in section['data']:
                                     cString(data['row'], file)
@@ -624,7 +622,7 @@ def exportB3d(context, op, exportDir):
 
     for objName in exportedObjects:
 
-        obj = bpy.data.objects["{}.b3d".format(objName)]
+        obj = bpy.data.objects[f"{objName}.b3d"]
         curRoot = getRootObj(obj)
 
         allObjs = []
@@ -1097,7 +1095,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
             elif objType == 19:
 
-                currentRoomName = '{}:{}'.format(currentRes, objName)
+                currentRoomName = f'{currentRes}:{objName}'
                 borderBlocks = borders[currentRoomName]
                 blChildren.extend(borderBlocks)
 
@@ -1297,8 +1295,13 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
                 writeMeshSphere(file, block)
 
-                roomName1 = '{}:{}'.format(block[prop(b_30.ResModule1)], block[prop(b_30.RoomName1)])
-                roomName2 = '{}:{}'.format(block[prop(b_30.ResModule2)], block[prop(b_30.RoomName2)])
+                module1_name = block[prop(b_30.ResModule1)]
+                module2_name = block[prop(b_30.ResModule2)]
+                room1_name = block[prop(b_30.RoomName1)]
+                room2_name = block[prop(b_30.RoomName2)]
+
+                roomName1 = f'{module1_name}:{room1_name}'
+                roomName2 = f'{module2_name}:{room2_name}'
                 toImportSecondSide = False
                 if currentRoomName == roomName1:
                     toImportSecondSide = True

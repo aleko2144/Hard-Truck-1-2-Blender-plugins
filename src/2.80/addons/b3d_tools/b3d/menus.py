@@ -36,16 +36,10 @@ from .common import (
 )
 from ..common import (
     menus_logger,
-    loggers
+    updateLoggers
 )
 
 log = menus_logger
-
-loggers_array = loggers
-def updateLoggers(self, context):
-    log_level = int(context.preferences.addons['b3d_tools'].preferences.logger_level)
-    for logger in loggers_array:
-        logger.setLevel(log_level)
 
 class HTImportPreferences(AddonPreferences):
     bl_idname = "b3d_tools"
@@ -602,10 +596,18 @@ class ImportWAY(Operator, ImportHelper):
     def execute(self, context):
         from . import import_way
 
+        tt = time.mktime(datetime.datetime.now().timetuple())
         for wayfile in self.files:
             filepath = os.path.join(self.directory, wayfile.name)
+            log.info(f'Importing file {filepath}')
+            t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
                 import_way.importWay(file, context, filepath)
+            t = time.mktime(datetime.datetime.now().timetuple()) - t
+            log.info(f'Finished importing in {t} seconds')
+
+        tt = time.mktime(datetime.datetime.now().timetuple()) - tt
+        log.info(f'Finished all importing in {t} seconds')
 
         return {'FINISHED'}
 

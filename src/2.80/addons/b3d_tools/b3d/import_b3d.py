@@ -86,7 +86,7 @@ from .common import (
 
 from ..common import (
     recalcToLocalCoord,
-    createLogger
+    importb3d_logger
 )
 
 import bpy
@@ -100,7 +100,7 @@ from math import atan2
 import re
 
 #Setup module logger
-log = createLogger("import_b3d")
+log = importb3d_logger
 
 
 def thread_import_b3d(self, files, context):
@@ -451,15 +451,16 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
 
         noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.tex_name))[0]
         result = None
-        imgPath = "{}.{}".format(noExtPath, "txr")
+        imgPath = f"{noExtPath}.txr"
         if convert_txr:
             result = convertTXRtoTGA32(imgPath, transpColor)
         else:
             result = getTXRParams(imgPath)
-        imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
+        filename_no_ext = os.path.basename(noExtPath)
+        imgName = f"{filename_no_ext}.{image_format}"
         log.debug(f'Importing image {imgName}')
 
-        imgPath = "{}.{}".format(noExtPath, image_format)
+        imgPath = f"{noExtPath}.{image_format}"
         texture.tex_name = imgName
         img = bpy.data.images.get(imgName)
         if img is None:
@@ -486,9 +487,10 @@ def loadMaskfiles(basedir, resModule, image_format, convert_txr):
     for maskfile in resModule.maskfiles:
         noExtPath = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.msk_name))[0]
         if convert_txr:
-            MSKtoTGA32("{}.{}".format(noExtPath, "msk"))
-        imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
-        imgPath = "{}.{}".format(noExtPath, image_format)
+            MSKtoTGA32(f"{noExtPath}.msk")
+        filename_no_ext = os.path.basename(noExtPath)
+        imgName = f"{filename_no_ext}.{image_format}"
+        imgPath = f"{noExtPath}.{image_format}"
         maskfile.msk_name = imgName
         img = bpy.data.images.get(imgName)
         if img is None:
@@ -688,7 +690,7 @@ def importB3d(file, context, self, filepath):
                 if levelGroups[lvl] > 0:
 
                     if len(parentObj.children) == 0:
-                        groupObjName = 'GROUP_{}'.format(0)
+                        groupObjName = 'GROUP_0'
 
                         b3dObj = bpy.data.objects.new(groupObjName, None)
                         b3dObj[BLOCK_TYPE] = 444
@@ -697,7 +699,7 @@ def importB3d(file, context, self, filepath):
                         context.collection.objects.link(b3dObj)
                         # objString.append(b3dObj.name)
 
-                groupObjName = 'GROUP_{}'.format(levelGroups[lvl])
+                groupObjName = f'GROUP_{levelGroups[lvl]}'
 
                 b3dObj = bpy.data.objects.new(groupObjName, None)
                 b3dObj[BLOCK_TYPE] = 444
@@ -720,7 +722,7 @@ def importB3d(file, context, self, filepath):
 
             if parentObj.get(BLOCK_TYPE) in [9, 10, 21]:
 
-                groupObjName = 'GROUP_{}'.format(0)
+                groupObjName = 'GROUP_0'
 
                 b3dObj = bpy.data.objects.new(groupObjName, None)
                 b3dObj[BLOCK_TYPE] = 444
@@ -1424,7 +1426,7 @@ def importB3d(file, context, self, filepath):
 
                 childCnt = struct.unpack("i",file.read(4))[0]
 
-                currentRoomName = "{}:{}".format(res_basename, objName)
+                currentRoomName = f"{res_basename}:{objName}"
 
                 if not usedBlocks[str(type)]:
                     continue
@@ -1934,7 +1936,7 @@ def importB3d(file, context, self, filepath):
                     moduleName = res_basename
                     roomName = splitted[0]
 
-                fullRoomName = "{}:{}".format(moduleName, roomName)
+                fullRoomName = f"{moduleName}:{roomName}"
 
                 sortedRooms = sorted([currentRoomName, fullRoomName])
 
@@ -2476,7 +2478,7 @@ def importB3d(file, context, self, filepath):
 
         border = borders[key]
 
-        b3dMesh = (bpy.data.meshes.new("{}_mesh".format(key)))
+        b3dMesh = (bpy.data.meshes.new(f"{key}_mesh"))
         #0-x
         #1-y
         #2-z
@@ -2555,7 +2557,7 @@ def assignMaterialByVertices(obj, vertIndexes, matIndex):
 def getRESFolder(filepath):
     basename = os.path.basename(filepath)
     basepath = os.path.dirname(filepath)
-    return os.path.join(basepath, "{}_unpack".format(basename[:-4]))
+    return os.path.join(basepath, f"{basename[:-4]}_unpack")
 
 def saveMaterial(resModule, materialStr):
     nameSplit = materialStr.split(" ")
@@ -2649,7 +2651,7 @@ def unpackRES(resModule, filepath, saveOnDisk = True):
         if section["cnt"] > 0:
             curfolder = os.path.join(resdir, sectionName)
             if sectionName in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
-                binfilePath = os.path.join(curfolder, "{}.txt".format(sectionName))
+                binfilePath = os.path.join(curfolder, f"{sectionName}.txt")
                 if saveOnDisk:
                     binfileBase = os.path.dirname(binfilePath)
                     binfileBase = Path(binfileBase)
@@ -2670,7 +2672,7 @@ def unpackRES(resModule, filepath, saveOnDisk = True):
                     subpath = ""
                     if len(pathSplit) > 1:
                         subpath = "\\".join(pathSplit[:-1])
-                    binfilePath = os.path.join(curfolder, "{}".format(fullname))
+                    binfilePath = os.path.join(curfolder, f"{fullname}")
                     if saveOnDisk:
                         binfileBase = os.path.dirname(binfilePath)
                         binfileBase = Path(binfileBase)
