@@ -2,10 +2,11 @@ import bpy
 import struct
 import os
 import sys
+import logging
 
 from ..common import (
-    log,
-    recalcToLocalCoord
+    recalcToLocalCoord,
+    createLogger
 )
 
 from ..consts import (
@@ -20,6 +21,9 @@ from .scripts import (
 from .class_descr import (
     b_50,b_51,b_52
 )
+
+#Setup module logger
+log = createLogger("import_way")
 
 globalInd = None
 
@@ -40,11 +44,10 @@ def readName(file, text_len):
 
 def openclose(file, path):
     if file.tell() == os.path.getsize(path):
-        print ('EOF')
+        log.info ('EOF')
         return 1
     else:
         return 2
-    print(str(os.path.getsize(path)))
 
 def getNumberedName(name):
     global globalInd
@@ -163,7 +166,7 @@ def importWay(file, context, filepath):
                         wdth1 = struct.unpack("<d",file.read(8))[0]
                         wdth2 = struct.unpack("<d",file.read(8))[0]
 
-                        log.info("WDTH: {} {}".format(str(wdth1), str(wdth2)))
+                        log.info(f"WDTH: {str(wdth1)} {str(wdth2)}")
 
                         rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
 
@@ -207,7 +210,6 @@ def importWay(file, context, filepath):
                     # curveData.bevel_mode = ''
 
                     curObj.location = (points[0])
-                    # print("setting properties...")
                     curObj[BLOCK_TYPE] = 50
                     curObj[prop(b_50.Attr1)] = attr1
                     curObj[prop(b_50.Attr2)] = attr2
@@ -285,5 +287,5 @@ def importWay(file, context, filepath):
                 curObj.parent = curRoom
                 context.collection.objects.link(curObj)
             else:
-                log.error("Unknown type: " + type + " on position " + str(file.tell()))
+                log.error(f"Unknown type: {type} on position {str(file.tell())}")
 

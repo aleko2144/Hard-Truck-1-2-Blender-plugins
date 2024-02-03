@@ -121,8 +121,6 @@ def action_invoke(self, context, event, arr_bname = False):
     except IndexError:
         pass
     else:
-        print(param)
-
         if self.action == 'DOWN' and idx < len(param) - 1:
             param.move(idx, idx+1)
             setattr(scn, self.customindex, idx+1)

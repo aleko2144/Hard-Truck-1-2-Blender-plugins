@@ -1,8 +1,7 @@
 import os
 import struct
 import math
-
-from ..common import log
+import bpy
 
 from .common import (
     rgb_to_srgb,
@@ -10,6 +9,12 @@ from .common import (
     unmaskTemplate,
     writeSize
 )
+from ..common import (
+    createLogger
+)
+
+#Setup module logger
+log = createLogger("imghelp")
 
 def parsePLM(resModule, filepath):
     # colors = []
@@ -282,7 +287,7 @@ def generatePalette(colors, width, height, size = 256):
 
 
     if len(pixel_counts) > size:
-        log.error("Image doesn't fit {} color palette.".format(size))
+        log.error(f"Image doesn't fit {size} color palette.")
         return None
 
     palette = [0]*size
@@ -349,7 +354,7 @@ def generateMipmaps(barray, width, height, tempFrom):
 
 def convertTXRtoTGA32(filepath, transpColor):
     outpath = os.path.splitext(filepath)[0] + ".tga"
-    log.info("Converting " + outpath)
+    log.info(f"Converting {outpath}")
     imageType = ""
     with open(filepath, "rb") as txrFile:
         txrFile.seek(2, 0)
@@ -365,7 +370,7 @@ def convertTXRtoTGA32(filepath, transpColor):
 
 def convertTGA32toTXR(filepath, bytesPerPixel, imageType, imageFormat, genMipmap, transpColor=(0,0,0)):
     outpath = os.path.splitext(filepath)[0] + ".txr"
-    log.info("Converting " + outpath)
+    log.info(f"Converting {outpath}")
 
     if imageType == 'TRUECOLOR':
         TRUECOLOR_TGA32toTXR(filepath, 2, 2, imageFormat, genMipmap, transpColor)
@@ -616,7 +621,7 @@ def TRUECOLOR_TGA32toTXR(filepath, bytesPerPixel, imageType, imageFormat, genMip
 
 def MSKtoTGA32(filepath):
     outpath = os.path.splitext(filepath)[0] + ".tga"
-    log.info("Converting " + outpath)
+    log.info(f"Converting {outpath}")
     indexes = []
     colorsAfter = []
     with open(filepath, "rb") as mskFile:

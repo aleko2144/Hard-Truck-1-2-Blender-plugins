@@ -6,7 +6,7 @@ from .class_descr import (
     b_21
 )
 from ..common import (
-    log
+    createLogger
 )
 from .common import (
     getPolygonsBySelectedVertices,
@@ -29,6 +29,8 @@ from ..consts import (
     TRANSF_COLLECTION,
     TEMP_COLLECTION
 )
+
+log = createLogger("scripts")
 
 reb3dSpace = re.compile(r'.*b3dSpaceCopy.*')
 reb3dMesh = re.compile(r'.*b3dcopy.*')
@@ -405,7 +407,7 @@ def processCond(root, group, state):
             block.hide_set(state)
 
         for directChild in blChildren:
-            log.debug("Processing {}".format(directChild.name))
+            log.debug(f"Processing {directChild.name}")
             nextState = False
             if glevel == 1:
                 nextState = True

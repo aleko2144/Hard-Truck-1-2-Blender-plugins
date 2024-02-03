@@ -3,12 +3,16 @@ import bpy
 import re
 from mathutils import Vector
 import math
+import logging
 
-from ..common import log
+from ..common import createLogger
 from ..consts import (
     BLOCK_TYPE,
     EMPTY_NAME
 )
+
+#Setup module logger
+log = createLogger("common")
 
 def writeSize(file, ms, writeMs=None):
     if writeMs is None:
@@ -102,7 +106,7 @@ def readCString(file):
             i += 1
         return "".join(chrs[:-1])
     except TypeError as e:
-        log.error("Error in readCString. Nothing to read")
+        log.warning("Error in readCString. Nothing to read")
         return ""
 
 
@@ -123,8 +127,8 @@ def readRESSections(filepath):
                 sections[k]["cnt"] = cnt
                 sections[k]["data"] = []
 
-                log.info("Reading category {}".format(id))
-                log.info("Element count in category is {}.".format(cnt))
+                log.info(f"Reading category {id}")
+                log.info(f"Element count in category is {cnt}.")
                 if cnt > 0:
                     log.info("Start processing...")
                     resData = []

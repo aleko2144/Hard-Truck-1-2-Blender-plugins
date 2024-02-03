@@ -15,6 +15,7 @@ if "bpy" in locals():
     importlib.reload(import_way)
     importlib.reload(export_b3d)
     importlib.reload(export_way)
+    importlib.reload(scripts)
     importlib.reload(panel)
     importlib.reload(menus)
 else:
@@ -29,6 +30,7 @@ else:
         import_way,
         export_b3d,
         export_way,
+        scripts,
         panel,
         menus
     )

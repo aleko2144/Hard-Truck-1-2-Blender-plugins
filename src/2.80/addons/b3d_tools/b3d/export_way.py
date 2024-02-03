@@ -2,16 +2,16 @@ import bpy
 import struct
 import os
 
-from ..common import (
-    log
-)
-
 from .common import (
     isRootObj,
     getNonCopyName,
     getNotNumericName,
     BLOCK_TYPE,
     writeSize
+)
+
+from ..common import (
+    createLogger
 )
 
 from .scripts import (
@@ -21,6 +21,9 @@ from .scripts import (
 from .class_descr import (
     b_50, b_51, b_52
 )
+
+#Setup module logger
+log = createLogger("export_way")
 
 
 def writeName(file, name):

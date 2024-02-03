@@ -10,8 +10,6 @@ import os.path
 from math import cos
 from math import sin
 
-
-
 from .class_descr import (
     b_1,
     b_2,
@@ -67,7 +65,7 @@ from ..consts import (
 )
 
 from ..common import (
-    log
+    createLogger
 )
 
 from .common import (
@@ -91,6 +89,9 @@ from .common import (
 from .imghelp import (
     convertTGA32toTXR
 )
+
+#Setup module logger
+log = createLogger("export_b3d")
 
 RoMesh = True
 
@@ -760,7 +761,7 @@ def exportBlock(obj, isLast, curLevel, maxGroups, curGroups, extra, file):
 
     if objType != None:
 
-        log.debug("{}_{}_{}_{}".format(block.get(BLOCK_TYPE), curLevel, 0, block.name))
+        log.debug(f"{block.get(BLOCK_TYPE)}_{curLevel}_{0}_{block.name}")
 
         blChildren = list(block.children)
 

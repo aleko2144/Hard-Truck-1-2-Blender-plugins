@@ -13,8 +13,6 @@ from bpy.props import (StringProperty,
                         )
 
 
-from ..common import log
-
 from ..consts import (
     collisionTypeList,
     generatorTypeList,
@@ -52,8 +50,6 @@ from .common import (
 #             )
 #     }
 # })
-
-
 
 class fieldType(enum.Enum):
     IGNORE = 0

@@ -1,18 +1,11 @@
 
 
-if "bpy" in locals():
-    print("Reimporting modules!!!")
-    import importlib
-    importlib.reload(scripts)
-else:
-    import bpy
-    from . import (
-        scripts
-    )
+import bpy
+import logging
 
 from ..common import (
     getRegion,
-    log
+    createLogger
 )
 
 from .. import consts
@@ -107,6 +100,9 @@ from bpy.types import (Panel,
                         PropertyGroup,
                         )
 
+
+#Setup module logger
+log = createLogger("panel")
 
 
 
@@ -609,7 +605,7 @@ class CastAddOperator(bpy.types.Operator):
 
                         context.collection.objects.link(newObj)
 
-                        log.info("Created new B3D object: {}.".format(newObj.name))
+                        log.info(f"Created new B3D object: {newObj.name}.")
                     else:
                         polyObj[consts.BLOCK_TYPE] = polyType
                         polyObj.parent = vertObj
@@ -621,10 +617,10 @@ class CastAddOperator(bpy.types.Operator):
                         elif polyType == 35:
                             createCustomAttribute(polyObj.data, formats, pfb_35, pfb_35.Format_Flags)
 
-                        log.info("Cast existing B3D object: {}.".format(polyObj.name))
+                        log.info(f"Cast existing B3D object: {polyObj.name}.")
 
                 else:
-                    log.info("Selected object {} is not Mesh. Changes not applied.".format(polyObj.name))
+                    log.info(f"Selected object {polyObj.name} is not Mesh. Changes not applied.")
 
         elif castType == 'colis3D':
 
@@ -638,14 +634,14 @@ class CastAddOperator(bpy.types.Operator):
                         newObj.parent = parentObj
                         setAllObjsByType(context, newObj, b_23)
                         context.collection.objects.link(newObj)
-                        log.info("Created new B3D 3d collision: {}.".format(newObj.name))
+                        log.info(f"Created new B3D 3d collision: {newObj.name}.")
                     else:
                         polyObj[consts.BLOCK_TYPE] = 23
                         polyObj.parent = parentObj
                         setAllObjsByType(context, polyObj, b_23)
-                        log.info("Cast existing object to B3D 3d collision: {}.".format(polyObj.name))
+                        log.info(f"Cast existing object to B3D 3d collision: {polyObj.name}.")
                 else:
-                    log.info("Selected object {} is not Mesh. Changes not applied.".format(polyObj.name))
+                    log.info(f"Selected object {polyObj.name} is not Mesh. Changes not applied.")
 
         elif castType == 'colis2D':
 
@@ -661,17 +657,17 @@ class CastAddOperator(bpy.types.Operator):
                         newObj.parent = parentObj
                         setAllObjsByType(context, newObj, b_20)
                         context.collection.objects.link(newObj)
-                        log.info("Created new B3D 2d colision: {}.".format(newObj.name))
+                        log.info(f"Created new B3D 2d colision: {newObj.name}.")
                     else:
                         polyObj[consts.BLOCK_TYPE] = 20
                         polyObj.data.bevel_depth = 0
                         polyObj.data.extrude = 10
                         polyObj.parent = parentObj
                         setAllObjsByType(context, polyObj, b_20)
-                        log.info("Cast exiting object to B3D 2d colision: {}.".format(polyObj.name))
+                        log.info(f"Cast exiting object to B3D 2d colision: {polyObj.name}.")
 
                 else:
-                    log.info("Selected object {} is not Curve. Changes not applied.".format(polyObj.name))
+                    log.info(f"Selected object {polyObj.name} is not Curve. Changes not applied.")
 
         elif castType == 'way':
 
@@ -687,17 +683,17 @@ class CastAddOperator(bpy.types.Operator):
                         newObj.parent = parentObj
                         setAllObjsByType(context, newObj, b_50)
                         context.collection.objects.link(newObj)
-                        log.info("Created new WAY Path: {}.".format(newObj.name))
+                        log.info(f"Created new WAY Path: {newObj.name}.")
                     else:
                         polyObj[consts.BLOCK_TYPE] = 50
                         polyObj.data.bevel_depth = 0.3
                         polyObj.data.bevel_mode = 'ROUND'
                         polyObj.parent = parentObj
                         setAllObjsByType(context, polyObj, b_50)
-                        log.info("Cast existing object to WAY Path: {}.".format(polyObj.name))
+                        log.info(f"Cast existing object to WAY Path: {polyObj.name}.")
 
                 else:
-                    log.info("Selected object {} is not Curve. Changes not applied.".format(polyObj.name))
+                    log.info(f"Selected object {polyObj.name} is not Curve. Changes not applied.")
 
 
         return {'FINISHED'}

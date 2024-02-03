@@ -34,8 +34,18 @@ from .common import (
     modulesCallback,
     getColPropertyByName
 )
+from ..common import (
+    menus_logger,
+    loggers
+)
 
+log = menus_logger
 
+loggers_array = loggers
+def updateLoggers(self, context):
+    log_level = int(context.preferences.addons['b3d_tools'].preferences.logger_level)
+    for logger in loggers_array:
+        logger.setLevel(log_level)
 
 class HTImportPreferences(AddonPreferences):
     bl_idname = "b3d_tools"
@@ -45,10 +55,24 @@ class HTImportPreferences(AddonPreferences):
         default="",
         subtype='FILE_PATH')
 
+    logger_level: EnumProperty(
+        name = "Logger level",
+        default = "40", # "ERROR"
+        items = [
+            ( "10", "DEBUG", "DEBUG"),
+            ( "20", "INFO", "INFO"),
+            ( "30", "WARNING", "WARNING"),
+            ( "40", "ERROR", "ERROR")
+        ],
+        update=updateLoggers
+    )
+
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         row.prop(self, 'COMMON_RES_Path', expand=True)
+        row = layout.row()
+        row.prop(self, 'logger_level', expand=False)
 
 def drawMultiSelectList(self, layout, listName, perRow):
 
@@ -137,7 +161,7 @@ class ImportRES(Operator, ImportHelper):
         else:
             self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
-        print('All RES imported in', tt, 'seconds')
+        log.info(f'All RES imported in {tt} seconds')
 
         return {'FINISHED'}
 
@@ -200,11 +224,11 @@ class ExportRES(Operator, ExportHelper):
 
     def execute(self, context):
 
-        print('Importing to folder', self.directory)
+        log.info(f'Importing to folder {self.directory}')
         t = time.mktime(datetime.datetime.now().timetuple())
         export_b3d.exportRes(context, self, self.directory)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
-        print('Finished importing in', t, 'seconds')
+        log.info(f'Finished importing in {t} seconds')
 
         return {'FINISHED'}
 
@@ -345,7 +369,7 @@ class ImportB3D(Operator, ImportHelper):
             t0.join()
 
             tt = time.mktime(datetime.datetime.now().timetuple()) - tt
-            print('All RES imported in', tt, 'seconds')
+            log.info(f'All RES imported in {tt} seconds')
 
         # importing B3d
         evens = [cn for i,cn in enumerate(self.files) if i%2==0]
@@ -364,7 +388,7 @@ class ImportB3D(Operator, ImportHelper):
         t2.join()
 
         tt = time.mktime(datetime.datetime.now().timetuple()) - tt
-        print('All B3D imported in', tt, 'seconds')
+        log.info(f'All B3D imported in {tt} seconds')
         self.report({'INFO'}, 'B3D imported')
 
         return {'FINISHED'}
@@ -477,17 +501,17 @@ class ExportB3D(Operator, ExportHelper):
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
-        print('Exporting to folder', self.filepath)
+        log.info(f'Exporting to folder {self.filepath}')
         if self.to_export_res:
             t = time.mktime(datetime.datetime.now().timetuple())
             export_b3d.exportRes(context, self, self.filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
-            print('Finished exporting RES in', t, 'seconds')
+            log.info(f'Finished exporting RES in {t} seconds')
 
         t = time.mktime(datetime.datetime.now().timetuple())
         export_b3d.exportB3d(context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
-        print('Finished exporting B3D in', t, 'seconds')
+        log.info(f'Finished exporting B3D in {t} seconds')
         self.report({'INFO'}, 'B3D exported')
         return {'FINISHED'}
 
@@ -549,12 +573,12 @@ class ImportRAW(Operator, ImportHelper):
         for rawfile in self.files:
             filepath = os.path.join(self.directory, rawfile.name)
 
-            print('Importing file', filepath)
+            log.info(f'Importing file {filepath}')
             t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
                 import_b3d.importRaw(file, context, self, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
-            print('Finished importing in', t, 'seconds')
+            log.info(f'Finished importing in {t} seconds')
 
         return {'FINISHED'}
 
@@ -616,11 +640,11 @@ class ExportWAY(Operator, ExportHelper):
     def execute(self, context):
         from . import export_way
 
-        print('Exporting to folder', self.filepath)
+        log.info(f'Exporting to folder {self.filepath}')
         t = time.mktime(datetime.datetime.now().timetuple())
         export_way.exportWay(context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
-        print('Finished exporting in', t, 'seconds')
+        log.info(f'Finished exporting in {t} seconds')
         self.report({'INFO'}, 'WAY exported')
         return {'FINISHED'}
 

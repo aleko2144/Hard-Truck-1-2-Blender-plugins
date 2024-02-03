@@ -85,8 +85,8 @@ from .common import (
 )
 
 from ..common import (
-    log,
-    recalcToLocalCoord
+    recalcToLocalCoord,
+    createLogger
 )
 
 import bpy
@@ -99,16 +99,20 @@ from math import atan2
 
 import re
 
+#Setup module logger
+log = createLogger("import_b3d")
+
+
 def thread_import_b3d(self, files, context):
     for b3dfile in files:
         filepath = os.path.join(self.directory, b3dfile.name)
 
-        print('Importing file', filepath)
+        log.info(f'Importing file {filepath}')
         t = time.mktime(datetime.datetime.now().timetuple())
         with open(filepath, 'rb') as file:
             importB3d(file, context, self, filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
-        print('Finished importing in', t, 'seconds')
+        log.info(f'Finished importing in {t} seconds')
 
 def import_common_dot_res(self, context, commonResPath):
     scene = context.scene
@@ -116,12 +120,12 @@ def import_common_dot_res(self, context, commonResPath):
 
     mytool.isImporting = True
 
-    print('Importing file', commonResPath)
+    log.info(f'Importing file {commonResPath}')
     t = time.mktime(datetime.datetime.now().timetuple())
     with open(commonResPath, 'rb') as file:
         importRes(file, context, self, commonResPath)
     t = time.mktime(datetime.datetime.now().timetuple()) - t
-    print('Finished importing in', t, 'seconds')
+    log.info('Finished importing in {t} seconds')
 
     mytool.isImporting = False
 
@@ -136,17 +140,16 @@ def import_multiple_res(self, files, context):
     mytool.isImporting = True
 
     for resfile in self.files:
-        log.info(resfile.name)
         filepath = os.path.join(self.directory, "{}.{}".format(os.path.splitext(resfile.name)[0], self.res_extension))
 
         if filepath != commonResPath: #COMMON.RES imported before
 
-            print('Importing file', filepath)
+            log.info(f'Importing file {filepath}')
             t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
                 importRes(file, context, self, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
-            print('Finished importing in', t, 'seconds')
+            log.info(f'Finished importing in {t} seconds')
 
     mytool.isImporting = False
 
@@ -454,7 +457,7 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
         else:
             result = getTXRParams(imgPath)
         imgName = "{}.{}".format(os.path.basename(noExtPath), image_format)
-        log.debug('Importing image {}'.format(imgName))
+        log.debug(f'Importing image {imgName}')
 
         imgPath = "{}.{}".format(noExtPath, image_format)
         texture.tex_name = imgName
@@ -544,7 +547,7 @@ def importResources(filepath, resModules, unpack_res = True, image_format = 'tga
         resModule = resModules[resIndex]
     if resModule:
         #delete RES module
-        print("Removing resModule " + str(resIndex))
+        log.info(f"Removing resModule {str(resIndex)}" )
         resModules.remove(resIndex)
 
     resModule = resModules.add()
@@ -2461,7 +2464,7 @@ def importB3d(file, context, self, filepath):
 
             t2 = time.perf_counter()
 
-            log.info("Time: {:.6f} | Block #{}: {}".format(t2-t1, type, realName))
+            log.debug(f"Time: {(t2-t1):.6f} | Block #{type}: {realName}")
 
     #create room borders(30)
     transfCollection = bpy.data.collections.get(BORDER_COLLECTION)
@@ -2632,7 +2635,7 @@ def saveTextureParams(texture, params):
 
 
 def unpackRES(resModule, filepath, saveOnDisk = True):
-    log.info("Unpacking {}:".format(filepath))
+    log.info(f"Unpacking {filepath}:")
 
     resdir = getRESFolder(filepath)
     curfolder = resdir
@@ -2673,7 +2676,7 @@ def unpackRES(resModule, filepath, saveOnDisk = True):
                         binfileBase = Path(binfileBase)
                         binfileBase.mkdir(exist_ok=True, parents=True)
                         with open(binfilePath, "wb") as binfile:
-                            log.info("Saving file {}".format(binfile.name))
+                            log.info(f"Saving file {binfile.name}")
                             binfile.write(data['bytes'])
 
                     if sectionName == "TEXTUREFILES":
