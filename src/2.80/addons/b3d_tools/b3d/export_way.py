@@ -3,11 +3,11 @@ import struct
 import os
 
 from .common import (
-    isRootObj,
-    getNonCopyName,
-    getNotNumericName,
+    is_root_obj,
+    get_non_copy_name,
+    get_not_numeric_name,
     BLOCK_TYPE,
-    writeSize
+    write_size
 )
 
 from ..common import (
@@ -19,56 +19,56 @@ from .scripts import (
 )
 
 from .class_descr import (
-    b_50, b_51, b_52
+    Blk050, Blk051, Blk052
 )
 
 #Setup module logger
 log = exportway_logger
 
 
-def writeName(file, name):
+def write_name(file, name):
     name = name.rstrip('\0') + '\0'
-    nameLen = len(name)
-    fillLen = 0
-    if nameLen % 4:
-        fillLen = ((nameLen >> 2) + 1) * 4 - nameLen
+    name_len = len(name)
+    fill_len = 0
+    if name_len % 4:
+        fill_len = ((name_len >> 2) + 1) * 4 - name_len
     file.write(name.encode('cp1251'))
-    file.write(b"\x00" * fillLen)
+    file.write(b"\x00" * fill_len)
 
 
-def writeType(file, type):
-    file.write(type.encode('cp1251'))
+def write_type(file, type_abbr):
+    file.write(type_abbr.encode('cp1251'))
 
 
-def write_NAM(file, type, name):
-    writeType(file, type)
-    name = getNotNumericName(name)
+def write_nam(file, type_abbr, name):
+    write_type(file, type_abbr)
+    name = get_not_numeric_name(name)
     file.write(struct.pack('<i', len(name)+1))
-    writeName(file, name)
+    write_name(file, name)
 
 
-def writeATTR(file, block):
-    writeType(file, "ATTR")
+def write_attr(file, block):
+    write_type(file, "ATTR")
     file.write(struct.pack('<i', 16))
-    file.write(struct.pack('<i', block.get(prop(b_50.Attr1))))
-    file.write(struct.pack('<d', block.get(prop(b_50.Attr2))))
-    file.write(struct.pack('<i', block.get(prop(b_50.Attr3))))
+    file.write(struct.pack('<i', block.get(prop(Blk050.Attr1))))
+    file.write(struct.pack('<d', block.get(prop(Blk050.Attr2))))
+    file.write(struct.pack('<i', block.get(prop(Blk050.Attr3))))
 
 
-def writeRTEN(file, block):
-    rten_name = block.get(prop(b_50.Rten))
+def write_rten(file, block):
+    rten_name = block.get(prop(Blk050.Rten))
     if rten_name is not None and len(rten_name) > 0:
-        write_NAM(file, type, "RTEN")
+        write_nam(file, "RTEN", rten_name)
 
 
-def writeWDTH(file, block):
-    writeType(file, "WDTH")
+def write_wdth(file, block):
+    write_type(file, "WDTH")
     file.write(struct.pack('<i', 16))
-    file.write(struct.pack('<d', block.get(prop(b_50.Width1))))
-    file.write(struct.pack('<d', block.get(prop(b_50.Width2))))
+    file.write(struct.pack('<d', block.get(prop(Blk050.Width1))))
+    file.write(struct.pack('<d', block.get(prop(Blk050.Width2))))
 
-def writeVDAT(file, block):
-    writeType(file, "VDAT")
+def write_vdat(file, block):
+    write_type(file, "VDAT")
     points = block.data.splines[0].points
     file.write(struct.pack("<i", 4+len(points)*24))
     file.write(struct.pack("<i", len(points)))
@@ -76,8 +76,8 @@ def writeVDAT(file, block):
         file.write(struct.pack("<ddd", *(block.matrix_world @ point.co.xyz)))
 
 
-def writeORTN(file, block):
-    writeType(file, "ORTN")
+def write_ortn(file, block):
+    write_type(file, "ORTN")
     file.write(struct.pack('<i', 96))
     for i in range(3): #ortn
         for j in range(3):
@@ -85,38 +85,38 @@ def writeORTN(file, block):
     file.write(struct.pack("<ddd", *block.location))
 
 
-def writePOSN(file, block):
-    writeType(file, "POSN")
+def write_posn(file, block):
+    write_type(file, "POSN")
     file.write(struct.pack('<i', 24))
     file.write(struct.pack("<ddd", *block.location))
 
 
-def exportWay(context, op, exportDir):
+def export_way(context, op, export_dir):
 
-    exportedModules = [sn.name for sn in op.res_modules if sn.state == True]
-    if not os.path.isdir(exportDir):
-        exportDir = os.path.dirname(exportDir)
+    exported_modules = [sn.name for sn in op.res_modules if sn.state == True]
+    if not os.path.isdir(export_dir):
+        export_dir = os.path.dirname(export_dir)
 
-    for objName in exportedModules:
+    for obj_name in exported_modules:
 
-        filepath = os.path.join(exportDir, f"{objName}.way")
+        filepath = os.path.join(export_dir, f"{obj_name}.way")
 
         file = open(filepath, 'wb')
 
-        rootObj = bpy.data.objects[f"{objName}.b3d"]
+        root_obj = bpy.data.objects[f"{obj_name}.b3d"]
 
         #Header
-        writeType(file, "WTWR")
-        WTWR_write_ms = file.tell()
+        write_type(file, "WTWR")
+        wtwr_write_ms = file.tell()
         file.write(struct.pack("<i", 0))
-        WTWR_ms = file.tell()
-        write_NAM(file, "MNAM", objName)
-        writeType(file, "GDAT")
-        GDAT_write_ms = file.tell()
+        wtwr_ms = file.tell()
+        write_nam(file, "MNAM", obj_name)
+        write_type(file, "GDAT")
+        gdat_write_ms = file.tell()
         file.write(struct.pack("<i", 0))
-        GDAT_ms = file.tell()
+        gdat_ms = file.tell()
 
-        rooms = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) == 19]
+        rooms = [cn for cn in root_obj.children if cn.get(BLOCK_TYPE) == 19]
 
         for room in rooms:
             segs = [cn for cn in room.children if cn.get(BLOCK_TYPE) in [50]]
@@ -126,571 +126,55 @@ def exportWay(context, op, exportDir):
             ways.extend(segs)
 
             if len(ways) > 0:
-                writeType(file, "GROM")
-                GROM_write_ms = file.tell()
+                write_type(file, "GROM")
+                grom_write_ms = file.tell()
                 file.write(struct.pack("<i", 0))
-                GROM_ms = file.tell()
-                write_NAM(file, "RNAM", room.name)
-                for wayObj in ways:
-                    wayName = getNonCopyName(wayObj.name)
-                    type = wayObj.get(BLOCK_TYPE)
-                    if type == 50:
-                        writeType(file, "RSEG")
-                        RSEG_write_ms = file.tell()
+                grom_ms = file.tell()
+                write_nam(file, "RNAM", room.name)
+                for way_obj in ways:
+                    way_name = get_non_copy_name(way_obj.name)
+                    obj_type = way_obj.get(BLOCK_TYPE)
+                    if obj_type == 50:
+                        write_type(file, "RSEG")
+                        rseg_write_ms = file.tell()
                         file.write(struct.pack("<i", 0))
-                        RSEG_ms = file.tell()
-                        writeATTR(file, wayObj)
-                        writeWDTH(file, wayObj)
-                        writeRTEN(file, wayObj)
-                        writeVDAT(file, wayObj)
-                        writeSize(file, RSEG_ms, RSEG_write_ms)
-                    elif type == 51:
-                        writeType(file, "RNOD")
-                        RNOD_write_ms = file.tell()
+                        rseg_ms = file.tell()
+                        write_attr(file, way_obj)
+                        write_wdth(file, way_obj)
+                        write_rten(file, way_obj)
+                        write_vdat(file, way_obj)
+                        write_size(file, rseg_ms, rseg_write_ms)
+                    elif obj_type == 51:
+                        write_type(file, "RNOD")
+                        rnod_write_ms = file.tell()
                         file.write(struct.pack("<i", 0))
-                        RNOD_ms = file.tell()
-                        write_NAM(file, "NNAM", wayName)
-                        writePOSN(file, wayObj)
+                        rnod_ms = file.tell()
+                        write_nam(file, "NNAM", way_name)
+                        write_posn(file, way_obj)
                         # flag
-                        writeType(file, "FLAG")
+                        write_type(file, "FLAG")
                         file.write(struct.pack("<i", 4))
-                        file.write(struct.pack("<i", wayObj[prop(b_51.Flag)]))
-                        writeSize(file, RNOD_ms, RNOD_write_ms)
-                    elif type == 52:
-                        writeType(file, "RNOD")
-                        RNOD_write_ms = file.tell()
+                        file.write(struct.pack("<i", way_obj[prop(Blk051.Flag)]))
+                        write_size(file, rnod_ms, rnod_write_ms)
+                    elif obj_type == 52:
+                        write_type(file, "RNOD")
+                        rnod_write_ms = file.tell()
                         file.write(struct.pack("<i", 0))
-                        RNOD_ms = file.tell()
-                        write_NAM(file, "NNAM", wayName)
-                        writePOSN(file, wayObj)
-                        writeORTN(file, wayObj)
+                        rnod_ms = file.tell()
+                        write_nam(file, "NNAM", way_name)
+                        write_posn(file, way_obj)
+                        write_ortn(file, way_obj)
                         # flag
-                        writeType(file, "FLAG")
+                        write_type(file, "FLAG")
                         file.write(struct.pack("<i", 4))
-                        file.write(struct.pack("<i", wayObj[prop(b_52.Flag)]))
-                        writeSize(file, RNOD_ms, RNOD_write_ms)
+                        file.write(struct.pack("<i", way_obj[prop(Blk052.Flag)]))
+                        write_size(file, rnod_ms, rnod_write_ms)
 
-                writeSize(file, GROM_ms, GROM_write_ms)
+                write_size(file, grom_ms, grom_write_ms)
 
-        writeSize(file, GDAT_ms, GDAT_write_ms)
-        writeSize(file, WTWR_ms, WTWR_write_ms)
+        write_size(file, gdat_ms, gdat_write_ms)
+        write_size(file, wtwr_ms, wtwr_write_ms)
 
         file.close()
 
     return {'FINISHED'}
-
-
-def SetBytesLength(object, root):
-    if (not root):
-        if object.name[0:4] == 'VDAT':
-            for subcurve in object.data.splines:
-                bytes_len = (len(subcurve.points) * 24) + 4 + 4 + 4
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        if object.name[0:4] == 'ATTR':
-            bytes_len = 24
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'WDTH':
-            bytes_len = 24
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'ORTN':
-            bytes_len = 96
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'POSN':
-            bytes_len = 32
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'RSEG':
-            bytes_len = 8
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'RNAM':
-
-            text_len = 0
-
-            if (len(str(object['str'])) > 15):
-                text_len = 20
-
-            elif (11 < len(str(object['str'])) < 15 or len(str(object['str'])) == 15):
-                text_len = 16
-
-            elif (7 < len(str(object['str'])) < 11 or len(str(object['str'])) == 11):
-                text_len = 12
-
-            elif (3 < len(str(object['str'])) < 7 or len(str(object['str'])) == 7):
-                text_len = 8
-
-            elif (len(str(object['str'])) < 3 or len(str(object['str'])) == 3):
-                text_len = 4
-
-            bytes_len = 8 + text_len
-
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'RNOD':
-            bytes_len = 8
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'NNAM':
-            text_len = 0
-
-            if (len(str(object['str'])) > 15):
-                text_len = 20
-
-            elif (11 < len(str(object['str'])) < 15 or len(str(object['str'])) == 15):
-                text_len = 16
-
-            elif (7 < len(str(object['str'])) < 11 or len(str(object['str'])) == 11):
-                text_len = 12
-
-            elif (3 < len(str(object['str'])) < 7 or len(str(object['str'])) == 7):
-                text_len = 8
-
-            elif (len(str(object['str'])) < 3 or len(str(object['str'])) == 3):
-                text_len = 4
-
-            bytes_len = 8 + text_len
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'GROM':
-            bytes_len = 8
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'GDAT':
-            bytes_len = 8
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'MNAM':
-            text_len = 0
-
-            if (len(str(object['str'])) > 15):
-                text_len = 20
-
-            elif (11 < len(str(object['str'])) < 15 or len(str(object['str'])) == 15):
-                text_len = 16
-
-            elif (7 < len(str(object['str'])) < 11 or len(str(object['str'])) == 11):
-                text_len = 12
-
-            elif (3 < len(str(object['str'])) < 7 or len(str(object['str'])) == 7):
-                text_len = 8
-
-            elif (len(str(object['str'])) < 3 or len(str(object['str'])) == 3):
-                text_len = 4
-
-            bytes_len = 8 + text_len
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'WTWR':
-            bytes_len = 8
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-
-        elif object.name[0:4] == 'FLAG':
-            bytes_len = 12
-            object['bytes_len'] = bytes_len
-            object['c_bytes_len'] = 0
-            #object['flag'] = 1
-
-    for child in object.children:
-        SetBytesLength(child,False)
-
-
-def SetCBytesLength(object, root):
-    varCB = 0
-    if (not root):
-        if object.name[0:4] == 'RSEG':
-            bytes_len = 8
-
-        elif object.name[0:4] == 'RNOD':
-            for x in range (len(object.children)):
-                varCB += object.children[x]['bytes_len']
-
-            object['c_bytes_len'] = varCB
-
-    for child in object.children:
-        SetCBytesLength(child,False)
-
-def SetRS(object, root):
-    varRS = 0
-    if (not root):
-        if object.name[0:4] == 'RSEG':
-            for r in range (len(object.children)):
-                varRS += object.children[r]['bytes_len'] + object.children[r]['c_bytes_len']
-
-            object['c_bytes_len'] = varRS
-
-    for child in object.children:
-        SetRS(child, False)
-
-def SetGR(object, root):
-    varGR = 0
-    if (not root):
-        if object.name[0:4] == 'GROM':
-            for j in range (len(object.children)):
-                varGR += object.children[j]['bytes_len'] + object.children[j]['c_bytes_len']
-
-            object['c_bytes_len'] = varGR
-
-    for child in object.children:
-        SetGR(child, False)
-
-def SetGD(object, root):
-    variable = 0
-    if (not root):
-        if object.name[0:4] == 'GDAT':
-            for n in range (len(object.children)):
-                variable += object.children[n]['bytes_len'] + object.children[n]['c_bytes_len']
-
-            object['c_bytes_len'] = variable
-
-    for child in object.children:
-        SetGD(child, False)
-
-def SetMN(object, root):
-    varMN = 0
-    if (not root):
-        if object.name[0:4] == 'MNAM':
-            for i in range (len(object.children)):
-                varMN = object.children[i]['bytes_len'] + object.children[i]['c_bytes_len']
-
-            object['c_bytes_len'] = varMN
-
-    for child in object.children:
-        SetMN(child, False)
-
-def SetWT(object, root):
-    varWT = 0
-    if (not root):
-        if object.name[0:4] == 'WTWR':
-            for i in range (len(object.children)):
-                varWT = object.children[i]['bytes_len'] + object.children[i]['c_bytes_len']
-
-            object['c_bytes_len'] = varWT
-
-    for child in object.children:
-        SetWT(child, False)
-
-
-def GetCBytesLength(object, root):
-    var1 = 0
-    if (not root):
-        #for object in bpy.data.objects:
-        if (object.children):
-            for i in range (len(object.children)):
-                var1 = object.children[i]['bytes_len'] + object['bytes_len']
-                #object['c_bytes_len'] = var1
-                object['c_bytes_len'] = var1 + object['c_bytes_len']
-            print(str(var1))
-
-    for child in object.children:
-        GetCBytesLength(child,False)
-
-def SetRSEGBytes(object, root):
-    if (not root):
-        if object['type'] == 'rseg':
-            for subcurve in object.data.splines:
-                object['bytes_len'] = 68 + len(subcurve.points) * 24
-
-            room = object.parent
-            room['c_bytes_len'] += object['bytes_len']
-
-    for child in object.children:
-        SetRSEGBytes(child, False)
-
-def SetNodeBytes(object, root):
-    var_node = 0
-    print("SetNodeBytes")
-    try:
-        if object['type'] == 'rnod' or object['type'] == 'ortn':
-            object_name = object.name.split(".")[0]
-            text_len1 = 0
-            if (len(str(object_name)) > 15):
-                text_len1 = 20
-
-            elif (11 < len(str(object_name)) < 15 or len(str(object_name)) == 15):
-                text_len1 = 16
-
-            elif (7 < len(str(object_name)) < 11 or len(str(object_name)) == 11):
-                text_len1 = 12
-
-            elif (3 < len(str(object_name)) < 7 or len(str(object_name)) == 7):
-                text_len1 = 8
-
-            elif (len(str(object_name)) < 3 or len(str(object_name)) == 3):
-                text_len1 = 4
-
-            var_node = text_len1 + 16 + 32 + 12
-            if object['type'] == "ortn":
-                var_node += 104
-            object['bytes_len'] = var_node
-
-            #object.parent['c_bytes_len'] += var_node
-            room = object.parent
-            room['c_bytes_len'] += var_node
-
-        for child in object.children:
-            SetNodeBytes(child, False)
-    except:
-        pass
-
-def SetRoomBytes(object, root):
-    var_r = 0
-    if object['type'] == 'room':
-        object_name = object.name.split(".")[0]
-        text_len1 = 0
-        if (len(str(object_name)) > 15):
-            text_len1 = 20
-
-        elif (11 < len(str(object_name)) < 15 or len(str(object_name)) == 15):
-            text_len1 = 16
-
-        elif (7 < len(str(object_name)) < 11 or len(str(object_name)) == 11):
-            text_len1 = 12
-
-        elif (3 < len(str(object_name)) < 7 or len(str(object_name)) == 7):
-            text_len1 = 8
-
-        elif (len(str(object_name)) < 3 or len(str(object_name)) == 3):
-            text_len1 = 4
-
-        var_r = text_len1 + 16
-
-        object['bytes_len'] = var_r #+ 8
-
-        #way = object.parent
-        #way['c_bytes_len'] += object['bytes_len']
-
-    for child in object.children:
-        SetRoomBytes(child, False)
-
-def SetWayBytes(object, root):
-    if object['type'] == 'room':
-        way = object.parent
-        print(object['bytes_len'])
-        way['c_bytes_len'] = way['c_bytes_len'] + object['c_bytes_len'] + object['bytes_len']
-
-    for child in object.children:
-        SetWayBytes(child, False)
-
-def SetWayBytes1(object, root):
-    if object['type'] == 'way':
-        object['bytes_len'] = 20 + object['c_bytes_len']
-
-    for child in object.children:
-        SetWayBytes1(child, False)
-
-
-def ClearBytes(object, root):
-    if object['type'] == 'room':
-        object['bytes_len'] = 0
-        object['c_bytes_len'] = 0
-
-    if object['type'] == 'way':
-        object['bytes_len'] = 0
-        object['c_bytes_len'] = 0
-
-    for child in object.children:
-        ClearBytes(child, False)
-
-def writeWTWR(object, file):
-    file.write(str.encode('WTWR'))
-    file.write(struct.pack("<i", object['bytes_len']))
-
-    file.write(str.encode('MNAM'))
-    file.write(struct.pack("<i", len(str(object['mnam'])) + 1))
-    file.write(str.encode(str(object['mnam']))+bytearray(b'\x00'*2))
-
-    file.write(str.encode('GDAT'))
-    file.write(struct.pack("<i", object['c_bytes_len']))
-
-def forChild(object, root, file):
-    if (not root):
-        #for object in bpy.data.objects:
-        bytes_len = 0
-        obj_len = len(object.children)
-        if object['type'] == 'rseg':
-            file.write(str.encode('RSEG'))
-
-            for subcurve in object.data.splines:
-                object['bytes_len'] = 68 + len(subcurve.points) * 24
-                object['c_bytes_len'] = 60 + len(subcurve.points) * 24
-                file.write(struct.pack("<i", object['c_bytes_len']))
-
-            file.write(str.encode('ATTR'))
-            file.write(struct.pack("<i", 16))
-            file.write(struct.pack("<i", object['attr1']))
-            file.write(struct.pack("<d", object['attr2']))
-            file.write(struct.pack("<i", object['attr3']))
-
-            file.write(str.encode('WDTH'))
-            file.write(struct.pack("<i", 16))
-            file.write(struct.pack("<d", object['wdth']))
-            file.write(struct.pack("<d", object['wdth']))
-
-            for subcurve in object.data.splines:
-                file.write(str.encode('VDAT'))
-                bytes_len = (len(subcurve.points) * 24) + 4
-                file.write(struct.pack("<i",bytes_len))
-                file.write(struct.pack("<i",len(subcurve.points)))
-            for point in subcurve.points:
-                file.write(struct.pack("<d",point.co.x))
-                file.write(struct.pack("<d",point.co.y))
-                file.write(struct.pack("<d",point.co.z))
-
-        elif object['type'] == 'rnod' or object['type'] == "ortn":
-            file.write(str.encode('RNOD'))
-            object_name = object.name.split(".")[0]
-            text_len1 = 0
-            if (len(str(object_name)) > 15):
-                text_len1 = 20
-
-            elif (11 < len(str(object_name)) < 15 or len(str(object_name)) == 15):
-                text_len1 = 16
-
-            elif (7 < len(str(object_name)) < 11 or len(str(object_name)) == 11):
-                text_len1 = 12
-
-            elif (3 < len(str(object_name)) < 7 or len(str(object_name)) == 7):
-                text_len1 = 8
-
-            elif (len(str(object_name)) < 3 or len(str(object_name)) == 3):
-                text_len1 = 4
-
-            object['c_bytes_len'] = text_len1 + 8 + 32 + 12
-
-            if object['type'] == "ortn":
-                object['c_bytes_len'] += 104
-
-            file.write(struct.pack("<i", object['c_bytes_len']))
-
-            file.write(str.encode('NNAM'))
-            file.write(struct.pack("<i", len(str(object_name)) + 1))
-            text_len = 0
-
-            if (len(str(object_name)) > 15):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(20-len(str(object_name)))))
-                text_len = 20
-
-            elif (11 < len(str(object_name)) < 15 or len(str(object_name)) == 15):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(16-len(str(object_name)))))
-                text_len = 16
-
-            elif (7 < len(str(object_name)) < 11 or len(str(object_name)) == 11):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(12-len(str(object_name)))))
-                text_len = 12
-
-            elif (3 < len(str(object_name)) < 7 or len(str(object_name)) == 7):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(8-len(str(object_name)))))
-                text_len = 8
-
-            elif (len(str(object_name)) < 3 or len(str(object_name)) == 3):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(4-len(str(object_name)))))
-                text_len = 4
-
-            #bytes_len = 8 + text_len
-
-            file.write(str.encode('POSN'))
-            file.write(struct.pack("<i", 24))
-            file.write(struct.pack("<d", object.location.x))
-            file.write(struct.pack("<d", object.location.y))
-            file.write(struct.pack("<d", object.location.z))
-
-            if object['type'] == "ortn":
-                object_matrix = object.matrix_world.to_3x3()
-
-                file.write(str.encode('ORTN'))
-                file.write(struct.pack("<i", 96))
-
-                file.write(struct.pack("<d",object_matrix[0][0]))
-                file.write(struct.pack("<d",object_matrix[0][1]))
-                file.write(struct.pack("<d",object_matrix[0][2]))
-
-                file.write(struct.pack("<d",object_matrix[1][0]))
-                file.write(struct.pack("<d",object_matrix[1][1]))
-                file.write(struct.pack("<d",object_matrix[1][2]))
-
-                file.write(struct.pack("<d",object_matrix[2][0]))
-                file.write(struct.pack("<d",object_matrix[2][1]))
-                file.write(struct.pack("<d",object_matrix[2][2]))
-
-                file.write(struct.pack("<d", object.location.x))
-                file.write(struct.pack("<d", object.location.y))
-                file.write(struct.pack("<d", object.location.z))
-
-            file.write(str.encode('FLAG'))
-            file.write(struct.pack("<ii", 4, object['flag']))
-
-        elif object['type'] == "room":
-            file.write(str.encode('GROM'))
-
-            object_name = object.name.split(".")[0]
-            text_len1 = 0
-            if (len(str(object_name)) > 15):
-                text_len1 = 20
-
-            elif (11 < len(str(object_name)) < 15 or len(str(object_name)) == 15):
-                text_len1 = 16
-
-            elif (7 < len(str(object_name)) < 11 or len(str(object_name)) == 11):
-                text_len1 = 12
-
-            elif (3 < len(str(object_name)) < 7 or len(str(object_name)) == 7):
-                text_len1 = 8
-
-            elif (len(str(object_name)) < 3 or len(str(object_name)) == 3):
-                text_len1 = 4
-
-            object['bytes_len'] = 8 + text_len1 + object['c_bytes_len']
-            object['c_bytes_len'] = object['c_bytes_len'] + 20
-
-            file.write(struct.pack("<i", object['c_bytes_len']))
-
-            file.write(str.encode('RNAM'))
-            file.write(struct.pack("<i", len(str(object_name)) + 1))
-            text_len = 0
-
-            if (len(str(object_name)) > 15):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(20-len(str(object_name)))))
-                text_len = 20
-
-            elif (11 < len(str(object_name)) < 15 or len(str(object_name)) == 15):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(16-len(str(object_name)))))
-                text_len = 16
-
-            elif (7 < len(str(object_name)) < 11 or len(str(object_name)) == 11):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(12-len(str(object_name)))))
-                text_len = 12
-
-            elif (3 < len(str(object_name)) < 7 or len(str(object_name)) == 7):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(8-len(str(object_name)))))
-                text_len = 8
-
-            elif (len(str(object_name)) < 3 or len(str(object_name)) == 3):
-                file.write(str.encode(object_name)+bytearray(b'\x00'*(4-len(str(object_name)))))
-                text_len = 4
-
-    for child in object.children:
-        forChild(child,False,file)
-
-
-
-
-
-
-

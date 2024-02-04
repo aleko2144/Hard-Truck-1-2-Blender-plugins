@@ -46,8 +46,8 @@ from bpy.types import (Operator,
                        UIList)
 
 from .common import (
-    getCurrentRESModule,
-    updateColorPreview
+    get_current_res_module,
+    update_color_preview
 )
 
 # -------------------------------------------------------------------
@@ -57,14 +57,14 @@ from .common import (
 def action_invoke_color(self, context, event, arr_bname = False):
     scn = context.scene
     idx = getattr(scn, self.customindex)
-    mytool = scn.my_tool
+    blocktool = scn.block_tool
 
-    resModule = getCurrentRESModule()
+    res_module = get_current_res_module()
 
     if arr_bname:
-        param = getattr(getattr(mytool, self.bname)[self.bindex], self.pname)
+        param = getattr(getattr(blocktool, self.bname)[self.bindex], self.pname)
     else:
-        param = getattr(getattr(mytool, self.bname), self.pname)
+        param = getattr(getattr(blocktool, self.bname), self.pname)
 
     try:
         item = param[idx]
@@ -74,16 +74,16 @@ def action_invoke_color(self, context, event, arr_bname = False):
         if self.action == 'DOWN' and idx < len(param) - 1:
             param.move(idx, idx+1)
             setattr(scn, self.customindex, idx+1)
-            updateColorPreview(resModule, idx)
-            updateColorPreview(resModule, idx+1)
+            update_color_preview(res_module, idx)
+            update_color_preview(res_module, idx+1)
             info = f'Item "{item.name}" moved to position {idx+1}'
             self.report({'INFO'}, info)
 
         elif self.action == 'UP' and idx >= 1:
             param.move(idx, idx-1)
             setattr(scn, self.customindex, idx-1)
-            updateColorPreview(resModule, idx)
-            updateColorPreview(resModule, idx-1)
+            update_color_preview(res_module, idx)
+            update_color_preview(res_module, idx-1)
             info = f'Item "{item.name}" moved to position {idx+1}'
             self.report({'INFO'}, info)
 
@@ -92,13 +92,13 @@ def action_invoke_color(self, context, event, arr_bname = False):
             setattr(scn, self.customindex, idx-1)
             param.remove(idx)
             for i in range(idx-1, len(param)-1):
-                updateColorPreview(resModule, i)
+                update_color_preview(res_module, i)
             self.report({'INFO'}, info)
 
     if self.action == 'ADD':
         if context.object:
             item = param.add()
-            updateColorPreview(resModule, len(param)-1)
+            update_color_preview(res_module, len(param)-1)
             for i in range(len(param)-1, idx+1, -1):
                 param.move(i, i-1)
             setattr(scn, self.customindex, idx)
@@ -109,12 +109,12 @@ def action_invoke_color(self, context, event, arr_bname = False):
 def action_invoke(self, context, event, arr_bname = False):
     scn = context.scene
     idx = getattr(scn, self.customindex)
-    mytool = scn.my_tool
+    blocktool = scn.block_tool
 
     if arr_bname:
-        param = getattr(getattr(mytool, self.bname)[self.bindex], self.pname)
+        param = getattr(getattr(blocktool, self.bname)[self.bindex], self.pname)
     else:
-        param = getattr(getattr(mytool, self.bname), self.pname)
+        param = getattr(getattr(blocktool, self.bname), self.pname)
 
     try:
         item = param[idx]
@@ -303,38 +303,38 @@ class CUSTOM_PT_objectList(Panel):
         col.operator("custom.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
 
-def drawListControls(layout, list_type, bname, bindex, pname, custom_index):
-        col = layout.column(align=True)
+def draw_list_controls(layout, list_type, bname, bindex, pname, custom_index):
+    col = layout.column(align=True)
 
-        props = col.operator(list_type, icon='ADD', text="")
-        props.action = 'ADD'
-        props.bname = bname
-        props.bindex = bindex
-        props.pname = pname
-        props.customindex = custom_index
+    props = col.operator(list_type, icon='ADD', text="")
+    props.action = 'ADD'
+    props.bname = bname
+    props.bindex = bindex
+    props.pname = pname
+    props.customindex = custom_index
 
-        props = col.operator(list_type, icon='REMOVE', text="")
-        props.action = 'REMOVE'
-        props.bname = bname
-        props.bindex = bindex
-        props.pname = pname
-        props.customindex = custom_index
+    props = col.operator(list_type, icon='REMOVE', text="")
+    props.action = 'REMOVE'
+    props.bname = bname
+    props.bindex = bindex
+    props.pname = pname
+    props.customindex = custom_index
 
-        col.separator()
+    col.separator()
 
-        props = col.operator(list_type, icon='TRIA_UP', text="")
-        props.action = 'UP'
-        props.bname = bname
-        props.bindex = bindex
-        props.pname = pname
-        props.customindex = custom_index
+    props = col.operator(list_type, icon='TRIA_UP', text="")
+    props.action = 'UP'
+    props.bname = bname
+    props.bindex = bindex
+    props.pname = pname
+    props.customindex = custom_index
 
-        props = col.operator(list_type, icon='TRIA_DOWN', text="")
-        props.action = 'DOWN'
-        props.bname = bname
-        props.bindex = bindex
-        props.pname = pname
-        props.customindex = custom_index
+    props = col.operator(list_type, icon='TRIA_DOWN', text="")
+    props.action = 'DOWN'
+    props.bname = bname
+    props.bindex = bindex
+    props.pname = pname
+    props.customindex = custom_index
 
 
 # -------------------------------------------------------------------

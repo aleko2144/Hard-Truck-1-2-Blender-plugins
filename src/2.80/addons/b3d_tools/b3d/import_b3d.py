@@ -6,48 +6,48 @@ import datetime
 from pathlib import Path
 
 from .class_descr import (
-    b_1,
-    b_2,
-    # b_3,
-    b_4,
-    b_5,
-    b_6,
-    b_7,
-    # b_8,
-    b_9,
-    b_10,
-    b_11,
-    b_12,
-    b_13,
-    b_14,
-    b_15,
-    b_16,
-    b_17,
-    b_18,
-    b_20,
-    b_21,
-    b_22,
-    b_23,
-    b_24,
-    b_25,
-    b_26,
-    b_27,
-    b_28,
-    b_29,
-    b_30,
-    b_31,
-    b_33,
-    b_34,
-    b_35,
-    b_36,
-    b_37,
-    b_39,
-    b_40,
-    pfb_8,
-    pfb_28,
-    pfb_35,
-    pvb_8,
-    pvb_35
+    Blk001,
+    Blk002,
+    # Blk003,
+    Blk004,
+    Blk005,
+    Blk006,
+    Blk007,
+    # Blk008,
+    Blk009,
+    Blk010,
+    Blk011,
+    Blk012,
+    Blk013,
+    Blk014,
+    Blk015,
+    Blk016,
+    Blk017,
+    Blk018,
+    Blk020,
+    Blk021,
+    Blk022,
+    Blk023,
+    Blk024,
+    Blk025,
+    Blk026,
+    Blk027,
+    Blk028,
+    Blk029,
+    Blk030,
+    Blk031,
+    Blk033,
+    Blk034,
+    Blk035,
+    Blk036,
+    Blk037,
+    Blk039,
+    Blk040,
+    Pfb008,
+    Pfb028,
+    Pfb035,
+    Pvb008,
+    Pvb035
 )
 
 from ..consts import (
@@ -58,41 +58,40 @@ from ..consts import (
 
 from .scripts import (
     prop,
-    createCustomAttribute
+    create_custom_attribute
 )
 
 
 from .imghelp import (
-    convertTXRtoTGA32,
-    MSKtoTGA32,
-    parsePLM,
-    getTXRParams
+    convert_txr_to_tga32,
+    msk_to_tga32,
+    parse_plm,
+    get_txr_params
 )
 from .common import (
-    getColPropertyByName,
-    getColPropertyIndexByName,
-    getUsedFace,
-    getUsedVerticesAndTransform,
-    getPolygonsBySelectedVertices,
-    getCenterCoord,
-    updateColorPreview,
-    getActivePaletteModule,
-    getColorImgName,
-    unmaskBits,
-    readRESSections,
+    get_col_property_by_name,
+    get_col_property_index_by_name,
+    get_used_face,
+    get_used_vertices_and_transform,
+    get_polygons_by_selected_vertices,
+    get_center_coord,
+    update_color_preview,
+    get_active_palette_module,
+    get_color_img_name,
+    unmask_bits,
+    read_res_sections,
     srgb_to_rgb,
-    getMatTextureRefDict
+    get_mat_texture_ref_dict
 )
 
 from ..common import (
-    recalcToLocalCoord,
+    recalc_to_local_coord,
     importb3d_logger
 )
 
 import bpy
 import os.path
 import os
-from bpy.props import *
 
 from math import sqrt
 from math import atan2
@@ -110,24 +109,24 @@ def thread_import_b3d(self, files, context):
         log.info(f'Importing file {filepath}')
         t = time.mktime(datetime.datetime.now().timetuple())
         with open(filepath, 'rb') as file:
-            importB3d(file, context, self, filepath)
+            import_b3d(file, context, self, filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         log.info(f'Finished importing in {t} seconds')
 
-def import_common_dot_res(self, context, commonResPath):
+def import_common_dot_res(self, context, common_res_path):
     scene = context.scene
     mytool = scene.my_tool
 
-    mytool.isImporting = True
+    mytool.is_importing = True
 
-    log.info(f'Importing file {commonResPath}')
+    log.info(f'Importing file {common_res_path}')
     t = time.mktime(datetime.datetime.now().timetuple())
-    with open(commonResPath, 'rb') as file:
-        importRes(file, context, self, commonResPath)
+    with open(common_res_path, 'rb') as file:
+        import_res(file, context, self, common_res_path)
     t = time.mktime(datetime.datetime.now().timetuple()) - t
     log.info('Finished importing in {t} seconds')
 
-    mytool.isImporting = False
+    mytool.is_importing = False
 
 
 def import_multiple_res(self, files, context):
@@ -135,23 +134,23 @@ def import_multiple_res(self, files, context):
     scene = context.scene
     mytool = scene.my_tool
 
-    commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+    common_res_path = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
 
-    mytool.isImporting = True
+    mytool.is_importing = True
 
     for resfile in self.files:
         filepath = os.path.join(self.directory, "{}.{}".format(os.path.splitext(resfile.name)[0], self.res_extension))
 
-        if filepath != commonResPath: #COMMON.RES imported before
+        if filepath != common_res_path: #COMMON.RES imported before
 
             log.info(f'Importing file {filepath}')
             t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
-                importRes(file, context, self, filepath)
+                import_res(file, context, self, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             log.info(f'Finished importing in {t} seconds')
 
-    mytool.isImporting = False
+    mytool.is_importing = False
 
 class ChunkType(enum.Enum):
     END_CHUNK = 0
@@ -175,17 +174,17 @@ def openclose(file):
 def onebyte(file):
     return (file.read(1))
 
-def readName(file):
-    objName = file.read(32)
-    if (objName[0] == 0):
-        objName = EMPTY_NAME
+def read_name(file):
+    obj_name = file.read(32)
+    if (obj_name[0] == 0):
+        obj_name = EMPTY_NAME
         #objname = "Untitled_0x" + str(hex(pos-36))
     else:
-        objName = (objName.decode("cp1251").rstrip('\0'))
-    return objName
+        obj_name = (obj_name.decode("cp1251").rstrip('\0'))
+    return obj_name
 
 
-def Triangulate(faces):
+def triangulate(faces):
     faces_new = []
     for t in range(len(faces)-2):
         faces_new.extend([faces[t],faces[t+1],faces[t+2]])
@@ -202,7 +201,7 @@ def Triangulate(faces):
     return faces_new
 
 
-def MakePolyOk(faces):
+def make_poly_ok(faces):
     faces1 = []
     face = []
     for j in range(len(faces)):
@@ -216,68 +215,6 @@ def MakePolyOk(faces):
     faces.extend(faces1)
     return faces
 
-def parse_plm(input_file, color_format):
-    with open (input_file,'r+b') as file:
-        struct.unpack('<i',file.read(4))[0] #== 5065808:
-        data_len = struct.unpack('<i',file.read(4))[0]
-
-
-        ##### PALT #####
-        PALT = struct.unpack('<i',file.read(4))[0]
-
-        PALT_len = struct.unpack('<i',file.read(4))[0]
-
-        colors_list = []
-
-        for i in range(PALT_len):
-            R = 0
-            G = 0
-            B = 0
-
-            R_dat = struct.unpack('<b',file.read(1))[0]
-            if (R_dat <= 1):
-                R = 255 + R_dat
-            else:
-                R = R_dat
-            G_dat = struct.unpack('<b',file.read(1))[0]
-            if (G_dat <= -1):
-                G = 255 + G_dat
-            else:
-                G = G_dat
-            B_dat = struct.unpack('<b',file.read(1))[0]
-            if (B_dat <= -1):
-                B = 255 + B_dat
-            else:
-                B = B_dat
-
-            col_1 = 0
-            col_2 = 0
-            col_3 = 0
-
-            if (color_format[0] == "R"):
-                col_1 = R
-            elif (color_format[0] == "G"):
-                col_1 = G
-            elif (color_format[0] == "B"):
-                col_1 = B
-
-            if (color_format[1] == "R"):
-                col_2 = R
-            elif (color_format[1] == "G"):
-                col_2 = G
-            elif (color_format[1] == "B"):
-                col_2 = B
-
-            if (color_format[2] == "R"):
-                col_3 = R
-            elif (color_format[2] == "G"):
-                col_3 = G
-            elif (color_format[2] == "B"):
-                col_3 = B
-
-            colors_list.append( (col_1, col_2, col_3) )
-
-        return colors_list
 
 def parse_pro(input_file, colors_list):
     with open (input_file,'r') as file:
@@ -305,12 +242,12 @@ def parse_pro(input_file, colors_list):
         material_colors = []
 
         for i in range(materials_num):
-            colNum_str = str(re.findall(r'col\s+\d+', materials[i]))
-            colNum = 0
-            if (colNum_str != "[]"):
-                colNum_final = str(re.findall(r'\d+', colNum_str[2:-2]))[2:-2]
-                colNum = int(colNum_final) #[5:-2] нужно чтобы убрать ['tex и '], например: ['tex 10'] -> 10
-                material_colors.append(str(colors_list[colNum]))
+            colnum_str = str(re.findall(r'col\s+\d+', materials[i]))
+            colnum = 0
+            if (colnum_str != "[]"):
+                colnum_final = str(re.findall(r'\d+', colnum_str[2:-2]))[2:-2]
+                colnum = int(colnum_final) #[5:-2] нужно чтобы убрать ['tex и '], например: ['tex 10'] -> 10
+                material_colors.append(str(colors_list[colnum]))
             else:
                 material_colors.append("[]")
 
@@ -319,12 +256,12 @@ def parse_pro(input_file, colors_list):
         material_textures = []
 
         for i in range(materials_num):
-            texNum_str = str(re.findall(r't\wx\s+\d+', materials[i])) # t\wx - так как помимо tex, ещё бывает ttx
-            texNum = 0
-            if (texNum_str != "[]"):
-                texNum_final = str(re.findall(r'\d+', texNum_str[2:-2]))[2:-2]
-                texNum = int(texNum_final) #[5:-2] нужно чтобы убрать ['tex и '], например: ['tex 10'] -> 10
-                material_textures.append(texturefiles[texNum-1])
+            texnum_str = str(re.findall(r't\wx\s+\d+', materials[i])) # t\wx - так как помимо tex, ещё бывает ttx
+            texnum = 0
+            if (texnum_str != "[]"):
+                texnum_final = str(re.findall(r'\d+', texnum_str[2:-2]))[2:-2]
+                texnum = int(texnum_final) #[5:-2] нужно чтобы убрать ['tex и '], например: ['tex 10'] -> 10
+                material_textures.append(texturefiles[texnum-1])
             else:
                 material_textures.append(material_colors[i])
 
@@ -332,7 +269,7 @@ def parse_pro(input_file, colors_list):
 
         return material_textures
 
-def importRaw(file, context, op, filepath):
+def import_raw(file, context, op, filepath):
 
     basename1 = os.path.basename(filepath)[:-4]
     basename2 = basename1+"_2"
@@ -348,7 +285,7 @@ def importRaw(file, context, op, filepath):
 
     for i in range(width):
         for j in range(width):
-            vertexes.append((i*10,j*10,struct.unpack('<B',file.read(1))[0]))
+            vertexes.append((i*10,j*10,struct.unpack('<b',file.read(1))[0]))
             file.read(1)
 
     for i in range(width-1):
@@ -368,114 +305,114 @@ def importRaw(file, context, op, filepath):
                 faces2.append((counter, counter+1, counter+width+1, counter+width))
 
 
-    b3dMesh1 = bpy.data.meshes.new(basename1)
-    b3dMesh2 = bpy.data.meshes.new(basename2)
+    b3d_mesh1 = bpy.data.meshes.new(basename1)
+    b3d_mesh2 = bpy.data.meshes.new(basename2)
 
-    b3dMesh1.from_pydata(vertexes,[],faces1)
+    b3d_mesh1.from_pydata(vertexes,[],faces1)
 
     # Ev = threading.Event()
-    # Tr = threading.Thread(target=b3dMesh1.from_pydata, args = (vertexes,[],faces1))
+    # Tr = threading.Thread(target=b3d_mesh1.from_pydata, args = (vertexes,[],faces1))
     # Tr.start()
     # Ev.set()
     # Tr.join()
 
-    b3dMesh2.from_pydata(vertexes,[],faces2)
+    b3d_mesh2.from_pydata(vertexes,[],faces2)
 
     # Ev = threading.Event()
-    # Tr = threading.Thread(target=b3dMesh2.from_pydata, args = (vertexes,[],faces2))
+    # Tr = threading.Thread(target=b3d_mesh2.from_pydata, args = (vertexes,[],faces2))
     # Tr.start()
     # Ev.set()
     # Tr.join()
 
 
-    b3dObj1 = bpy.data.objects.new(basename1, b3dMesh1)
-    context.collection.objects.link(b3dObj1)
+    b3d_obj1 = bpy.data.objects.new(basename1, b3d_mesh1)
+    context.collection.objects.link(b3d_obj1)
 
-    b3dObj2 = bpy.data.objects.new(basename2, b3dMesh2)
-    context.collection.objects.link(b3dObj2)
+    b3d_obj2 = bpy.data.objects.new(basename2, b3d_mesh2)
+    context.collection.objects.link(b3d_obj2)
 
 
-def createMaterials(resModule):
+def create_materials(res_module):
 
-    materialList = resModule.materials
+    material_list = res_module.materials
 
-    for material in materialList:
-        createMaterial(resModule, material)
+    for material in material_list:
+        create_material(res_module, material)
 
 #https://blender.stackexchange.com/questions/118646/add-a-texture-to-an-object-using-python-and-blender-2-8
-def createMaterial(resModule, mat):
+def create_material(res_module, mat):
     mytool = bpy.context.scene.my_tool
 
-    textureList = resModule.textures
-    paletteModule = getActivePaletteModule(resModule)
-    palette = paletteModule.palette_colors
+    texture_list = res_module.textures
+    palette_module = get_active_palette_module(res_module)
+    palette = palette_module.palette_colors
 
 
-    newMat = bpy.data.materials.get(mat.mat_name)
-    if newMat is None:
-        newMat = bpy.data.materials.new(name=mat.mat_name)
-    newMat.use_nodes = True
-    bsdf = newMat.node_tree.nodes["Principled BSDF"]
+    new_mat = bpy.data.materials.get(mat.mat_name)
+    if new_mat is None:
+        new_mat = bpy.data.materials.new(name=mat.mat_name)
+    new_mat.use_nodes = True
+    bsdf = new_mat.node_tree.nodes["Principled BSDF"]
 
     for link in bsdf.inputs['Base Color'].links:
-        newMat.node_tree.nodes.remove(link.from_node)
+        new_mat.node_tree.nodes.remove(link.from_node)
 
     for link in bsdf.inputs['Alpha'].links:
-        newMat.node_tree.nodes.remove(link.from_node)
+        new_mat.node_tree.nodes.remove(link.from_node)
 
     if (mat.is_tex and int(mat.tex) > 0):
-        path = textureList[mat.tex-1].tex_name
-        texImage = newMat.node_tree.nodes.new("ShaderNodeTexImage")
-        texImage.image = bpy.data.images.get(path)
-        newMat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
-        newMat.node_tree.links.new(bsdf.inputs['Alpha'], texImage.outputs['Alpha'])
+        path = texture_list[mat.tex-1].tex_name
+        tex_image = new_mat.node_tree.nodes.new("ShaderNodeTexImage")
+        tex_image.image = bpy.data.images.get(path)
+        new_mat.node_tree.links.new(bsdf.inputs['Base Color'], tex_image.outputs['Color'])
+        new_mat.node_tree.links.new(bsdf.inputs['Alpha'], tex_image.outputs['Alpha'])
 
     elif mat.is_col and int(mat.col) > 0:
-        texColor = newMat.node_tree.nodes.new("ShaderNodeRGB")
-        texColor.outputs['Color'].default_value = palette[mat.col-1].value
-        newMat.node_tree.links.new(bsdf.inputs['Base Color'], texColor.outputs['Color'])
+        tex_color = new_mat.node_tree.nodes.new("ShaderNodeRGB")
+        tex_color.outputs['Color'].default_value = palette[mat.col-1].value
+        new_mat.node_tree.links.new(bsdf.inputs['Base Color'], tex_color.outputs['Color'])
 
 
 
 
-def loadTexturefiles(basedir, resModule, image_format, convert_txr):
-    maatToTexture, textureToMat = getMatTextureRefDict(resModule)
-    paletteModule = getActivePaletteModule(resModule)
-    palette = paletteModule.palette_colors
+def load_texturefiles(basedir, res_module, image_format, convert_txr):
+    mat_to_texture, texture_to_mat = get_mat_texture_ref_dict(res_module)
+    palette_module = get_active_palette_module(res_module)
+    palette = palette_module.palette_colors
 
-    for i, texture in enumerate(resModule.textures):
-        usedInMat = resModule.materials[textureToMat[i]]
-        transpColor = (0,0,0)
-        if usedInMat.tex_type == 'ttx' and usedInMat.is_col:
-            transpColor = srgb_to_rgb(*(palette[usedInMat.col-1].value[:3]))
+    for i, texture in enumerate(res_module.textures):
+        used_in_mat = res_module.materials[texture_to_mat[i]]
+        transp_color = (0,0,0)
+        if used_in_mat.tex_type == 'ttx' and used_in_mat.is_col:
+            transp_color = srgb_to_rgb(*(palette[used_in_mat.col-1].value[:3]))
 
-        noExtPath = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.tex_name))[0]
+        no_ext_path = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.tex_name))[0]
         result = None
-        imgPath = f"{noExtPath}.txr"
+        img_path = f"{no_ext_path}.txr"
         if convert_txr:
-            result = convertTXRtoTGA32(imgPath, transpColor)
+            result = convert_txr_to_tga32(img_path, transp_color)
         else:
-            result = getTXRParams(imgPath)
-        filename_no_ext = os.path.basename(noExtPath)
-        imgName = f"{filename_no_ext}.{image_format}"
-        log.debug(f'Importing image {imgName}')
+            result = get_txr_params(img_path)
+        filename_no_ext = os.path.basename(no_ext_path)
+        img_name = f"{filename_no_ext}.{image_format}"
+        log.debug(f'Importing image {img_name}')
 
-        imgPath = f"{noExtPath}.{image_format}"
-        texture.tex_name = imgName
-        img = bpy.data.images.get(imgName)
+        img_path = f"{no_ext_path}.{image_format}"
+        texture.tex_name = img_name
+        img = bpy.data.images.get(img_name)
         if img is None:
             # bpy.data.images.remove(img)
-            img = bpy.data.images.load(imgPath)
+            img = bpy.data.images.load(img_path)
         texture.id_tex = img
 
         img_format = result['format']
         if img_format is not None:
-            R = unmaskBits(img_format[0])[1]
-            G = unmaskBits(img_format[1])[1]
-            B = unmaskBits(img_format[2])[1]
-            A = unmaskBits(img_format[3])[1]
+            r = unmask_bits(img_format[0])[1]
+            g = unmask_bits(img_format[1])[1]
+            b = unmask_bits(img_format[2])[1]
+            a = unmask_bits(img_format[3])[1]
 
-            format_str = str(A) + str(R) + str(G) + str(B)
+            format_str = str(a) + str(r) + str(g) + str(b)
             if format_str not in ['4444', '0565']:
                 format_str = '4444'
             texture.img_format = format_str
@@ -483,103 +420,103 @@ def loadTexturefiles(basedir, resModule, image_format, convert_txr):
         texture.has_mipmap = result['has_mipmap']
 
 
-def loadMaskfiles(basedir, resModule, image_format, convert_txr):
-    for maskfile in resModule.maskfiles:
-        noExtPath = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.msk_name))[0]
+def load_maskfiles(basedir, res_module, image_format, convert_txr):
+    for maskfile in res_module.maskfiles:
+        no_ext_path = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.msk_name))[0]
         if convert_txr:
-            MSKtoTGA32(f"{noExtPath}.msk")
-        filename_no_ext = os.path.basename(noExtPath)
-        imgName = f"{filename_no_ext}.{image_format}"
-        imgPath = f"{noExtPath}.{image_format}"
-        maskfile.msk_name = imgName
-        img = bpy.data.images.get(imgName)
+            msk_to_tga32(f"{no_ext_path}.msk")
+        filename_no_ext = os.path.basename(no_ext_path)
+        img_name = f"{filename_no_ext}.{image_format}"
+        img_path = f"{no_ext_path}.{image_format}"
+        maskfile.msk_name = img_name
+        img = bpy.data.images.get(img_name)
         if img is None:
             # bpy.data.images.remove(img)
-            img = bpy.data.images.load(imgPath)
+            img = bpy.data.images.load(img_path)
         maskfile.id_msk = img
 
-def loadMaterials(resModule):
+def load_materials(res_module):
     mytool = bpy.context.scene.my_tool
-    for mat in resModule.materials:
+    for mat in res_module.materials:
         material = bpy.data.materials.get(mat.mat_name)
         if material is not None:
             mat.id_mat = material
             if mat.is_col:
-                paletteModule = getActivePaletteModule(resModule)
-                palette = paletteModule.palette_colors
+                palette_module = get_active_palette_module(res_module)
+                palette = palette_module.palette_colors
                 if palette:
-                    image = bpy.data.images.get(getColorImgName(paletteModule.value, mat.col))
+                    image = bpy.data.images.get(get_color_img_name(palette_module.value, mat.col))
                     if image is not None:
                         mat.id_col = image
 
             if mat.is_tex:
-                image = resModule.textures[mat.tex-1]
+                image = res_module.textures[mat.tex-1]
                 if image and image.id_tex:
                     mat.id_tex = image.id_tex
 
             if mat.is_msk:
-                image = resModule.maskfiles[mat.msk-1]
+                image = res_module.maskfiles[mat.msk-1]
                 if image and image.id_msk:
                     mat.id_msk = image.id_msk
 
             if mat.is_att:
-                image = resModule.materials[mat.att-1]
+                image = res_module.materials[mat.att-1]
                 if image and image.id_mat:
                     mat.id_att = image.id_mat
 
-def loadPaletteFiles(basedir, resModule):
-    if len(resModule.palette_name) > 0:
-        palettePath = os.path.join(basedir, "PALETTEFILES", resModule.palette_subpath, resModule.palette_name)
-        parsePLM(resModule, palettePath)
-        for i, pal_color in enumerate(resModule.palette_colors):
-            updateColorPreview(resModule, i)
+def load_palette_files(basedir, res_module):
+    if len(res_module.palette_name) > 0:
+        palette_path = os.path.join(basedir, "PALETTEFILES", res_module.palette_subpath, res_module.palette_name)
+        parse_plm(res_module, palette_path)
+        for i, pal_color in enumerate(res_module.palette_colors):
+            update_color_preview(res_module, i)
 
 
-def importResources(filepath, resModules, unpack_res = True, image_format = 'tga', convert_txr = True):
+def import_resources(filepath, res_modules, to_unpack_res = True, image_format = 'tga', convert_txr = True):
 
     res_basepath = os.path.dirname(filepath)
     res_basename = os.path.basename(filepath)[:-4] #cut extension
 
-    unpackPath = os.path.join(res_basepath, res_basename + r"_unpack")
+    unpack_path = os.path.join(res_basepath, res_basename + r"_unpack")
 
-    resIndex = getColPropertyIndexByName(resModules, res_basename)
-    resModule = None
+    res_index = get_col_property_index_by_name(res_modules, res_basename)
+    res_module = None
 
-    if resIndex >= 0:
-        resModule = resModules[resIndex]
-    if resModule:
+    if res_index >= 0:
+        res_module = res_modules[res_index]
+    if res_module:
         #delete RES module
-        log.info(f"Removing resModule {str(resIndex)}" )
-        resModules.remove(resIndex)
+        log.info(f"Removing res_module {str(res_index)}" )
+        res_modules.remove(res_index)
 
-    resModule = resModules.add()
-    resModule.value = res_basename
+    res_module = res_modules.add()
+    res_module.value = res_basename
 
-    unpackRES(resModule, filepath, unpack_res)
+    unpack_res(res_module, filepath, to_unpack_res)
 
-    loadPaletteFiles(unpackPath, resModule)
+    load_palette_files(unpack_path, res_module)
 
-    loadTexturefiles(unpackPath, resModule, image_format, convert_txr)
+    load_texturefiles(unpack_path, res_module, image_format, convert_txr)
 
-    loadMaskfiles(unpackPath, resModule, image_format, convert_txr)
+    load_maskfiles(unpack_path, res_module, image_format, convert_txr)
 
 
-def importRes(file, context, self, filepath):
+def import_res(file, context, self, filepath):
 
     scene = context.scene
     mytool = scene.my_tool
 
-    resModules = getattr(mytool, "resModules")
+    res_modules = getattr(mytool, "res_modules")
     res_basename = os.path.basename(filepath)[:-4] #cut extension
 
-    importResources(filepath, resModules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
+    import_resources(filepath, res_modules, self.to_unpack_res, self.textures_format, self.to_convert_txr)
 
-    resModule = getColPropertyByName(resModules, res_basename)
-    createMaterials(resModule)
-    loadMaterials(resModule)
+    res_module = get_col_property_by_name(res_modules, res_basename)
+    create_materials(res_module)
+    load_materials(res_module)
 
 
-def importB3d(file, context, self, filepath):
+def import_b3d(file, context, self, filepath):
     if file.read(3) == b'b3d':
         log.info("correct file")
     else:
@@ -590,28 +527,24 @@ def importB3d(file, context, self, filepath):
     #skip to materials list
     file.seek(21,1)
 
-    resModules = getattr(mytool, "resModules")
+    res_modules = getattr(mytool, "res_modules")
 
-    noextPath, ext = os.path.splitext(filepath)
-    basepath = os.path.dirname(filepath)
-    basename = os.path.basename(filepath)[:-4] #cut extension
-
-    resPath = ''
+    res_path = ''
     if len(self.res_location) > 0 and os.path.exists(self.res_location):
-        resPath = self.res_location
+        res_path = self.res_location
     else:
-        resPath = filepath
+        res_path = filepath
 
-    res_basename = os.path.basename(resPath)[:-4] #cut extension
+    res_basename = os.path.basename(res_path)[:-4] #cut extension
 
     if self.to_import_textures:
-        resModule = getColPropertyByName(resModules, res_basename)
+        res_module = get_col_property_by_name(res_modules, res_basename)
 
-    blocksToImport = self.blocks_to_import
+    blocks_to_import = self.blocks_to_import
 
-    usedBlocks = {}
-    for block in blocksToImport:
-        usedBlocks[block.name] = block.state
+    used_blocks = {}
+    for block in blocks_to_import:
+        used_blocks[block.name] = block.state
 
     # Parsing b3d
     material_textures = []
@@ -620,8 +553,8 @@ def importB3d(file, context, self, filepath):
     # Adding Materials
     for i in range(materials_count):
 
-        SNImg = file.read(32).decode("utf-8").rstrip('\0') #читаю имя
-        material_list.append(SNImg)
+        sn_img = file.read(32).decode("utf-8").rstrip('\0') #читаю имя
+        material_list.append(sn_img)
 
     file.seek(4,1) #Skip Begin_Chunks(111)
 
@@ -631,42 +564,41 @@ def importB3d(file, context, self, filepath):
     i = 0
     lvl = 0
     cnt = 0
-    levelGroups = []
+    level_groups = []
     vertexes = []
     normals = []
     formats = []
-    format = 0
     #
     vertex_block_uvs = []
     poly_block_uvs = []
     # 30 block
     borders = {}
-    currentRoomName = ""
+    current_room_name = ""
 
 
     uv = []
 
-    b3dName = os.path.basename(filepath)
+    b3d_name = os.path.basename(filepath)
 
-    b3dObj = bpy.data.objects.get(b3dName)
-    if b3dObj is None:
-        b3dObj = bpy.data.objects.new(b3dName, None)
-        b3dObj[BLOCK_TYPE] = 111
-        context.collection.objects.link(b3dObj) # root object
+    b3d_obj = bpy.data.objects.get(b3d_name)
+    if b3d_obj is None:
+        b3d_obj = bpy.data.objects.new(b3d_name, None)
+        b3d_obj[BLOCK_TYPE] = 111
+        context.collection.objects.link(b3d_obj) # root object
 
-    objString = [b3dObj.name]
+    obj_string = [b3d_obj.name]
 
     while ex!=ChunkType.END_CHUNKS:
 
         ex = openclose(file)
         if ex == ChunkType.END_CHUNK:
 
-            parentObj = context.scene.objects.get(objString[-2])
-            if parentObj.get(BLOCK_TYPE) in [9, 10, 21]:
-                del objString[-1]
+            parent_obj = context.scene.objects.get(obj_string[-2])
+            if parent_obj.get(BLOCK_TYPE) in [9, 10, 21]:
+                del obj_string[-1]
 
-            del objString[-1]
-            levelGroups[lvl] = 0
+            del obj_string[-1]
+            level_groups[lvl] = 0
             lvl-=1
 
         elif ex == ChunkType.END_CHUNKS:
@@ -674,229 +606,228 @@ def importB3d(file, context, self, filepath):
             break
 
         elif ex == ChunkType.GROUP_CHUNK:
-            if len(levelGroups) <= lvl:
-                for i in range(lvl+1-len(levelGroups)):
-                    levelGroups.append(0)
+            if len(level_groups) <= lvl:
+                for i in range(lvl+1-len(level_groups)):
+                    level_groups.append(0)
 
             if lvl > 0:
 
-                levelGroups[lvl] +=1
-                parentObj = context.scene.objects.get(objString[-1])
+                level_groups[lvl] +=1
+                parent_obj = context.scene.objects.get(obj_string[-1])
 
-                if parentObj.name[:6] == 'GROUP_':
-                    del objString[-1]
-                    parentObj = context.scene.objects.get(objString[-1])
+                if parent_obj.name[:6] == 'GROUP_':
+                    del obj_string[-1]
+                    parent_obj = context.scene.objects.get(obj_string[-1])
 
-                if levelGroups[lvl] > 0:
+                if level_groups[lvl] > 0:
 
-                    if len(parentObj.children) == 0:
-                        groupObjName = 'GROUP_0'
+                    if len(parent_obj.children) == 0:
+                        group_obj_name = 'GROUP_0'
 
-                        b3dObj = bpy.data.objects.new(groupObjName, None)
-                        b3dObj[BLOCK_TYPE] = 444
+                        b3d_obj = bpy.data.objects.new(group_obj_name, None)
+                        b3d_obj[BLOCK_TYPE] = 444
 
-                        b3dObj.parent = parentObj
-                        context.collection.objects.link(b3dObj)
-                        # objString.append(b3dObj.name)
+                        b3d_obj.parent = parent_obj
+                        context.collection.objects.link(b3d_obj)
+                        # obj_string.append(b3d_obj.name)
 
-                groupObjName = f'GROUP_{levelGroups[lvl]}'
+                group_obj_name = f'GROUP_{level_groups[lvl]}'
 
-                b3dObj = bpy.data.objects.new(groupObjName, None)
-                b3dObj[BLOCK_TYPE] = 444
+                b3d_obj = bpy.data.objects.new(group_obj_name, None)
+                b3d_obj[BLOCK_TYPE] = 444
 
-                b3dObj.parent = context.scene.objects.get(objString[-1])
-                context.collection.objects.link(b3dObj)
+                b3d_obj.parent = context.scene.objects.get(obj_string[-1])
+                context.collection.objects.link(b3d_obj)
 
-                objString.append(b3dObj.name)
+                obj_string.append(b3d_obj.name)
 
             continue
         elif ex == ChunkType.BEGIN_CHUNK:
             lvl+=1
-            if len(levelGroups) <= lvl:
-                for i in range(lvl+1-len(levelGroups)):
-                    levelGroups.append(0)
+            if len(level_groups) <= lvl:
+                for i in range(lvl+1-len(level_groups)):
+                    level_groups.append(0)
 
             t1 = time.perf_counter()
 
-            parentObj = context.scene.objects.get(objString[-1])
+            parent_obj = context.scene.objects.get(obj_string[-1])
 
-            if parentObj.get(BLOCK_TYPE) in [9, 10, 21]:
+            if parent_obj.get(BLOCK_TYPE) in [9, 10, 21]:
 
-                groupObjName = 'GROUP_0'
+                group_obj_name = 'GROUP_0'
 
-                b3dObj = bpy.data.objects.new(groupObjName, None)
-                b3dObj[BLOCK_TYPE] = 444
+                b3d_obj = bpy.data.objects.new(group_obj_name, None)
+                b3d_obj[BLOCK_TYPE] = 444
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
 
-                objString.append(b3dObj.name)
+                obj_string.append(b3d_obj.name)
 
-            objString.append("")
+            obj_string.append("")
 
-            onlyName = readName(file)
-            type = struct.unpack("<i",file.read(4))[0]
-            # objName = "{}_{}".format(str(type).zfill(2), onlyName)
-            objName = onlyName
-            realName = onlyName
+            only_name = read_name(file)
+            block_type = struct.unpack("<i",file.read(4))[0]
+            # obj_name = "{}_{}".format(str(block_type).zfill(2), only_name)
+            obj_name = only_name
+            real_name = only_name
 
-            parentObj = context.scene.objects.get(objString[-2])
+            parent_obj = context.scene.objects.get(obj_string[-2])
 
 
 
-            # log.debug("{}_{}".format(type, objName))
-            # log.debug("{}_{}".format(lvl - 1, levelGroups))
-            # log.info("Importing block #{}: {}".format(type, objName))
-            # log.info("type: {}, active: {}".format(type, usedBlocks[str(type)]))
-            if (type == 0): # Empty Block
+            # log.debug("{}_{}".format(block_type, obj_name))
+            # log.debug("{}_{}".format(lvl - 1, level_groups))
+            # log.info("Importing block #{}: {}".format(block_type, obj_name))
+            # log.info("block_type: {}, active: {}".format(block_type, used_blocks[str(block_type)]))
+            if (block_type == 0): # Empty Block
 
                 # bounding_sphere = struct.unpack("<4f",file.read(16))
                 ff = file.seek(44,1)
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 1):
-                name1 = readName(file) #?
-                name2 = readName(file) #?
+            elif (block_type == 1):
+                name1 = read_name(file) #?
+                name2 = read_name(file) #?
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_1.Name1)] = name1
-                b3dObj[prop(b_1.Name2)] = name2
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj[prop(Blk001.Name1)] = name1
+                b3d_obj[prop(Blk001.Name2)] = name2
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
 
-            elif (type == 2):    #контейнер хз
+            elif (block_type == 2):    #контейнер хз
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 unknown_sphere = struct.unpack("<4f",file.read(16))
-                childCnt = struct.unpack("<i",file.read(4))
+                child_cnt = struct.unpack("<i",file.read(4))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_2.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_2.R)] = bounding_sphere[3]
-                b3dObj[prop(b_2.Unk_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_2.Unk_R)] = unknown_sphere[3]
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk002.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk002.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk002.Unk_XYZ)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk002.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
 
-            elif (type == 3):    #
+            elif (block_type == 3):    #
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                childCnt = struct.unpack("<i",file.read(4))
+                child_cnt = struct.unpack("<i",file.read(4))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_3.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_3.R)] = bounding_sphere[3]
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk003.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk003.r)] = bounding_sphere[3]
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
 
-            elif (type == 4):    #похоже на контейнер 05 совмещенный с 12
+            elif (block_type == 4):    #похоже на контейнер 05 совмещенный с 12
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                name1 = readName(file)
-                name2 = readName(file)
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                name1 = read_name(file)
+                name2 = read_name(file)
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_4.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_4.R)] = bounding_sphere[3]
-                b3dObj[prop(b_4.Name1)] = name1
-                b3dObj[prop(b_4.Name2)] = name2
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk004.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk004.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk004.Name1)] = name1
+                b3d_obj[prop(Blk004.Name2)] = name2
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 5): #общий контейнер
+            elif (block_type == 5): #общий контейнер
 
                 # bounding_sphere
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                name = readName(file)
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                name = read_name(file)
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
-                b3dObj = bpy.data.objects.new(objName, None) #create empty
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_5.XYZ)] = (bounding_sphere[0:3])
-                # b3dObj[prop(b_5.R)] = (bounding_sphere[3])
-                b3dObj[prop(b_5.Name1)] = name
+                b3d_obj = bpy.data.objects.new(obj_name, None) #create empty
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk005.XYZ)] = (bounding_sphere[0:3])
+                # b3d_obj[prop(Blk005.r)] = (bounding_sphere[3])
+                b3d_obj[prop(Blk005.Name1)] = name
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 6):
+            elif (block_type == 6):
                 vertexes = []
                 uv = []
                 normals = []
                 normals_off = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                name1 = readName(file)
-                name2 = readName(file)
-                vertexCount = struct.unpack("<i",file.read(4))[0]
-                for i in range (vertexCount):
+                name1 = read_name(file)
+                name2 = read_name(file)
+                vertex_count = struct.unpack("<i",file.read(4))[0]
+                for i in range (vertex_count):
                     vertexes.append(struct.unpack("<3f",file.read(12)))
                     uv.append(struct.unpack("<2f",file.read(8)))
                     normals.append((0.0, 0.0, 0.0))
                     normals_off.append(1.0)
 
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_6.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_6.R)] = bounding_sphere[3]
-                b3dObj[prop(b_6.Name1)] = name1
-                b3dObj[prop(b_6.Name2)] = name2
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk006.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk006.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk006.Name1)] = name1
+                b3d_obj[prop(Blk006.Name2)] = name2
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 7):    #25? xyzuv TailLight? похоже на "хвост" движения    mesh
-                format = 0
+            elif (block_type == 7):    #25? xyzuv TailLight? похоже на "хвост" движения    mesh
                 vertexes = []
                 normals = []
                 normals_off = []
@@ -906,10 +837,10 @@ def importB3d(file, context, self, filepath):
                 vertex_block_uvs.append([])
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                groupName = readName(file) #0-0
+                group_name = read_name(file) #0-0
 
-                vertexCount = struct.unpack("<i",file.read(4))[0]
-                for i in range(vertexCount):
+                vertex_count = struct.unpack("<i",file.read(4))[0]
+                for i in range(vertex_count):
                     vertexes.append(struct.unpack("<3f",file.read(12)))
                     vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
                     normals.append((0.0, 0.0, 0.0))
@@ -917,75 +848,75 @@ def importB3d(file, context, self, filepath):
                     # uv.append(struct.unpack("<2f",file.read(8)))
 
 
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_7.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_7.R)] = bounding_sphere[3]
-                b3dObj[prop(b_7.Name1)] = groupName
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk007.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk007.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk007.Name1)] = group_name
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 8):    #тоже фейсы        face
+            elif (block_type == 8):    #тоже фейсы        face
                 faces = []
                 faces_all = []
                 overriden_uvs = []
                 texnums = {}
                 uv_indexes = []
                 formats = []
-                unkFs = []
-                unkInts = []
+                unk_floats = []
+                unk_ints = []
                 l_normals = normals
                 l_normals_off = normals_off
 
 
                 bounding_sphere = struct.unpack("<4f",file.read(16)) # skip bounding sphere
-                polygonCount = struct.unpack("<i",file.read(4))[0]
+                polygon_count = struct.unpack("<i",file.read(4))[0]
 
-                for i in range(polygonCount):
+                for i in range(polygon_count):
                     faces = []
                     faces_new = []
 
-                    formatRaw = struct.unpack("<i",file.read(4))[0]
-                    format = formatRaw ^ 1
-                    uvCount = ((format & 0xFF00) >> 8) #ah
-                    triangulateOffset = format & 0b10000000
+                    format_raw = struct.unpack("<i",file.read(4))[0]
+                    poly_format = format_raw ^ 1
+                    uv_count = ((poly_format & 0xFF00) >> 8) #ah
+                    triangulate_offset = poly_format & 0b10000000
 
-                    if format & 0b10:
-                        uvCount += 1
+                    if poly_format & 0b10:
+                        uv_count += 1
 
                     poly_block_uvs = [{}]
 
                     poly_block_len = len(poly_block_uvs)
 
-                    for i in range(uvCount - poly_block_len):
+                    for i in range(uv_count - poly_block_len):
                         poly_block_uvs.append({})
 
-                    unkF = struct.unpack("<f",file.read(4))[0]
-                    unkInt = struct.unpack("<i",file.read(4))[0]
+                    unk_float = struct.unpack("<f",file.read(4))[0]
+                    unk_int = struct.unpack("<i",file.read(4))[0]
                     texnum = str(struct.unpack("<i",file.read(4))[0])
 
-                    vertexCount = struct.unpack("<i",file.read(4))[0]
+                    vertex_count = struct.unpack("<i",file.read(4))[0]
 
-                    for j in range(vertexCount):
+                    for j in range(vertex_count):
                         face = struct.unpack("<i",file.read(4))[0]
                         faces.append(face)
-                        if format & 0b10:
+                        if poly_format & 0b10:
                             # uv override
-                            for k in range(uvCount):
+                            for k in range(uv_count):
                                 poly_block_uvs[k][face] = struct.unpack("<2f",file.read(8))
                         else:
                             poly_block_uvs[0][face] = vertex_block_uvs[0][face]
                         # if used with no-normals vertex blocks(6,7) use this normals
-                        if format & 0b100000 and format & 0b10000:
-                            if format & 0b1:
+                        if poly_format & 0b100000 and poly_format & 0b10000:
+                            if poly_format & 0b1:
                                 l_normals[face] = struct.unpack("<3f",file.read(12))
                             else:
                                 l_normals_off[face] = struct.unpack("<f",file.read(4))
@@ -1011,7 +942,7 @@ def importB3d(file, context, self, filepath):
 
                     #Triangulating faces
                     for t in range(len(faces)-2):
-                        if not triangulateOffset:
+                        if not triangulate_offset:
                             if t%2 == 0:
                                 faces_new.append([faces[t-1],faces[t],faces[t+1]])
                             else:
@@ -1027,192 +958,192 @@ def importB3d(file, context, self, filepath):
                                 overriden_uvs[u].append((over_uv[faces_new[t][0]], over_uv[faces_new[t][1]], over_uv[faces_new[t][2]]))
 
                         uv_indexes.append(faces_new[t])
-                        formats.append(formatRaw)
-                        unkFs.append(unkF)
-                        unkInts.append(unkInt)
+                        formats.append(format_raw)
+                        unk_floats.append(unk_float)
+                        unk_ints.append(unk_int)
 
                     faces_all.extend(faces_new)
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dMesh = (bpy.data.meshes.new(objName))
+                b3d_mesh = (bpy.data.meshes.new(obj_name))
 
-                curVertexes, curFaces, indices, oldNewTransf, newOldTransf = getUsedVerticesAndTransform(vertexes, faces_all)
+                cur_vertexes, cur_faces, indices, old_new_transf, new_old_transf = get_used_vertices_and_transform(vertexes, faces_all)
 
-                curNormals = []
-                curNormalsOff = []
-                for i in range(len(curVertexes)):
-                    curNormals.append(l_normals[newOldTransf[i]])
-                    curNormalsOff.append(l_normals_off[newOldTransf[i]])
+                cur_normals = []
+                cur_normals_off = []
+                for i in range(len(cur_vertexes)):
+                    cur_normals.append(l_normals[new_old_transf[i]])
+                    cur_normals_off.append(l_normals_off[new_old_transf[i]])
 
-                curVertexes = recalcToLocalCoord(bounding_sphere[:3], curVertexes)
+                cur_vertexes = recalc_to_local_coord(bounding_sphere[:3], cur_vertexes)
 
-                b3dMesh.from_pydata(curVertexes,[],curFaces)
+                b3d_mesh.from_pydata(cur_vertexes,[],cur_faces)
 
                 # Ev = threading.Event()
-                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
+                # Tr = threading.Thread(target=b3d_mesh.from_pydata, args = (cur_vertexes,[],cur_faces))
                 # Tr.start()
                 # Ev.set()
                 # Tr.join()
 
-                # newIndices = getUserVertices(curFaces)
+                # newIndices = get_user_vertices(cur_faces)
 
                 if len(normals) > 0:
-                    b3dMesh.use_auto_smooth = True
-                    normalList = []
-                    for i,vert in enumerate(b3dMesh.vertices):
-                        normalList.append(normals[newOldTransf[i]])
-                        # b3dMesh.vertices[idx].normal = normals[idx]
-                    b3dMesh.normals_split_custom_set_from_vertices(normalList)
+                    b3d_mesh.use_auto_smooth = True
+                    normal_list = []
+                    for i,vert in enumerate(b3d_mesh.vertices):
+                        normal_list.append(normals[new_old_transf[i]])
+                        # b3d_mesh.vertices[idx].normal = normals[idx]
+                    b3d_mesh.normals_split_custom_set_from_vertices(normal_list)
 
                 #Setup UV
-                # customUV = b3dMesh.uv_layers.new()
-                # customUV.name = "UVmap"
+                # custom_uv = b3d_mesh.uv_layers.new()
+                # custom_uv.name = "UVmap"
 
-                # for k, texpoly in enumerate(b3dMesh.polygons):
+                # for k, texpoly in enumerate(b3d_mesh.polygons):
                 #     for j,loop in enumerate(texpoly.loop_indices):
-                #         uvsMesh = (uvs[k][j][0], 1-uvs[k][j][1])
-                #         customUV.data[loop].uv = uvsMesh
+                #         uvs_mesh = (uvs[k][j][0], 1-uvs[k][j][1])
+                #         custom_uv.data[loop].uv = uvs_mesh
 
                 # for simplicity
                 # for u, uvMap in enumerate(vertex_block_uvs):
 
-                #     customUV = b3dMesh.uv_layers.new()
-                #     customUV.name = "UVmapVert{}".format(u)
-                #     uvsMesh = []
+                #     custom_uv = b3d_mesh.uv_layers.new()
+                #     custom_uv.name = "UVmapVert{}".format(u)
+                #     uvs_mesh = []
 
-                #     for i, texpoly in enumerate(b3dMesh.polygons):
+                #     for i, texpoly in enumerate(b3d_mesh.polygons):
                 #         for j,loop in enumerate(texpoly.loop_indices):
-                #             uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                #             customUV.data[loop].uv = uvsMesh
+                #             uvs_mesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                #             custom_uv.data[loop].uv = uvs_mesh
 
-                for u, uvOver in enumerate(overriden_uvs):
+                for u, uv_over in enumerate(overriden_uvs):
 
-                    customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVMap"
-                    uvsMesh = []
+                    custom_uv = b3d_mesh.uv_layers.new()
+                    custom_uv.name = "UVMap"
+                    uvs_mesh = []
 
-                    for i, texpoly in enumerate(b3dMesh.polygons):
+                    for i, texpoly in enumerate(b3d_mesh.polygons):
                         for j,loop in enumerate(texpoly.loop_indices):
-                            uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
-                            customUV.data[loop].uv = uvsMesh
+                            uvs_mesh = [uv_over[i][j][0],1 - uv_over[i][j][1]]
+                            custom_uv.data[loop].uv = uvs_mesh
 
-                createCustomAttribute(b3dMesh, formats, pfb_8, pfb_8.Format_Flags)
+                create_custom_attribute(b3d_mesh, formats, Pfb008, Pfb008.Format_Flags)
 
                 # those are usually consts in all objects
-                # createCustomAttribute(b3dMesh, unkFs, pfb_8, pfb_8.Unk_Float1)
-                # createCustomAttribute(b3dMesh, unkInts, pfb_8, pfb_8.Unk_Int2)
+                # create_custom_attribute(b3d_mesh, unk_floats, Pfb008, Pfb008.Unk_Float1)
+                # create_custom_attribute(b3d_mesh, unk_ints, Pfb008, Pfb008.Unk_Int2)
 
                 # cancel for now, maybe find workaround later
-                # createCustomAttribute(b3dMesh, curNormalsOff, pvb_8, pvb_8.Normal_Switch)
-                # createCustomAttribute(b3dMesh, curNormals, pvb_8, pvb_8.Custom_Normal)
+                # create_custom_attribute(b3d_mesh, cur_normals_off, Pvb008, Pvb008.Normal_Switch)
+                # create_custom_attribute(b3d_mesh, cur_normals, Pvb008, Pvb008.Custom_Normal)
 
                 #Create Object
 
-                b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj.location = bounding_sphere[0:3]
-                # b3dObj[prop(b_8.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_8.R)] = bounding_sphere[3]
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj = bpy.data.objects.new(obj_name, b3d_mesh)
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj.location = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk008.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk008.r)] = bounding_sphere[3]
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
                 if self.to_import_textures:
-                    #For assignMaterialByVertices just-in-case
+                    #For assign_material_by_vertices just-in-case
                     # bpy.ops.object.mode_set(mode = 'OBJECT')
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = resModule.materials[int(texnum)].id_mat
-                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
-                            b3dMesh.materials.append(mat)
-                            lastIndex = len(b3dMesh.materials)-1
+                            mat = res_module.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                            b3d_mesh.materials.append(mat)
+                            last_index = len(b3d_mesh.materials)-1
 
-                            for vertArr in texnums[texnum]:
-                                newVertArr = getUsedFace(vertArr, oldNewTransf)
+                            for vert_arr in texnums[texnum]:
+                                new_vert_arr = get_used_face(vert_arr, old_new_transf)
                                 # self.lock.acquire()
-                                assignMaterialByVertices(b3dObj, newVertArr, lastIndex)
+                                assign_material_by_vertices(b3d_obj, new_vert_arr, last_index)
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = resModule.materials[int(texnum)].id_mat
-                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
-                            b3dMesh.materials.append(mat)
+                            mat = res_module.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                            b3d_mesh.materials.append(mat)
 
 
 
-            elif (type == 9 or type == 22):
-
-                bounding_sphere = struct.unpack("<4f",file.read(16))
-                unknown_sphere = struct.unpack("<4f",file.read(16))
-                childCnt = struct.unpack("<i",file.read(4))[0]
-
-                if not usedBlocks[str(type)]:
-                    continue
-
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_9.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_9.R)] = bounding_sphere[3]
-                b3dObj[prop(b_9.Unk_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_9.Unk_R)] = unknown_sphere[3]
-
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
-
-            elif (type == 10): #контейнер, хз о чем LOD
+            elif (block_type == 9 or block_type == 22):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 unknown_sphere = struct.unpack("<4f",file.read(16))
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_10.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_10.R)] = bounding_sphere[3]
-                b3dObj[prop(b_10.LOD_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_10.LOD_R)] = unknown_sphere[3]
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk009.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk009.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk009.Unk_XYZ)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk009.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
+
+            elif (block_type == 10): #контейнер, хз о чем LOD
+
+                bounding_sphere = struct.unpack("<4f",file.read(16))
+                unknown_sphere = struct.unpack("<4f",file.read(16))
+                child_cnt = struct.unpack("<i",file.read(4))[0]
+
+                if not used_blocks[str(block_type)]:
+                    continue
+
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk010.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk010.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk010.LOD_XYZ)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk010.LOD_R)] = unknown_sphere[3]
+
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
 
-            elif (type == 11):
+            elif (block_type == 11):
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 unknown_point1 = struct.unpack("<3f",file.read(12))
                 unknown_point2 = struct.unpack("<3f",file.read(12))
                 unknown_r1 = struct.unpack("<i",file.read(4))[0]
                 unknown_r2 = struct.unpack("<i",file.read(4))[0]
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_11.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_11.R)] = bounding_sphere[3]
-                b3dObj[prop(b_11.Unk_XYZ1)] = unknown_point1
-                b3dObj[prop(b_11.Unk_XYZ2)] = unknown_point2
-                b3dObj[prop(b_11.Unk_R1)] = unknown_r1
-                b3dObj[prop(b_11.Unk_R2)] = unknown_r2
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk011.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk011.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk011.Unk_XYZ1)] = unknown_point1
+                b3d_obj[prop(Blk011.Unk_XYZ2)] = unknown_point2
+                b3d_obj[prop(Blk011.Unk_R1)] = unknown_r1
+                b3d_obj[prop(Blk011.Unk_R2)] = unknown_r2
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 12):
+            elif (block_type == 12):
 
                 l_params = []
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1223,25 +1154,25 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_12.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_12.R)] = bounding_sphere[3]
-                b3dObj[prop(b_12.Unk_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_12.Unk_R)] = unknown_sphere[3]
-                b3dObj[prop(b_12.Unk_Int1)] = unknown1
-                b3dObj[prop(b_12.Unk_Int2)] = unknown2
-                b3dObj[prop(b_12.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk012.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk012.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk012.Unk_XYZ)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk012.Unk_R)] = unknown_sphere[3]
+                b3d_obj[prop(Blk012.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk012.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk012.Unk_List)] = l_params
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 13):
+            elif (block_type == 13):
 
                 l_params = []
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1251,23 +1182,23 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_13.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_13.R)] = bounding_sphere[3]
-                b3dObj[prop(b_13.Unk_Int1)] = unknown1
-                b3dObj[prop(b_13.Unk_Int2)] = unknown2
-                b3dObj[prop(b_13.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk013.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk013.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk013.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk013.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk013.Unk_List)] = l_params
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 14): #sell_ ?
+            elif (block_type == 14): #sell_ ?
 
                 l_params = []
 
@@ -1281,25 +1212,25 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_14.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_14.R)] = bounding_sphere[3]
-                b3dObj[prop(b_14.Unk_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_14.Unk_R)] = unknown_sphere[3]
-                b3dObj[prop(b_14.Unk_Int1)] = unknown1
-                b3dObj[prop(b_14.Unk_Int2)] = unknown2
-                b3dObj[prop(b_14.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk014.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk014.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk014.Unk_XYZ)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk014.Unk_R)] = unknown_sphere[3]
+                b3d_obj[prop(Blk014.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk014.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk014.Unk_List)] = l_params
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 15):
+            elif (block_type == 15):
 
                 l_params = []
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -1309,23 +1240,23 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_15.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_15.R)] = bounding_sphere[3]
-                b3dObj[prop(b_15.Unk_Int1)] = unknown1
-                b3dObj[prop(b_15.Unk_Int2)] = unknown2
-                b3dObj[prop(b_15.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk015.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk015.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk015.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk015.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk015.Unk_List)] = l_params
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 16):
+            elif (block_type == 16):
 
                 l_params = []
 
@@ -1341,28 +1272,28 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_16.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_16.R)] = bounding_sphere[3]
-                b3dObj[prop(b_16.Unk_XYZ1)] = vector1
-                b3dObj[prop(b_16.Unk_XYZ2)] = vector2
-                b3dObj[prop(b_16.Unk_Float1)] = unk1
-                b3dObj[prop(b_16.Unk_Float2)] = unk2
-                b3dObj[prop(b_16.Unk_Int1)] = unknown1
-                b3dObj[prop(b_16.Unk_Int2)] = unknown2
-                b3dObj[prop(b_13.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk016.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk016.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk016.Unk_XYZ1)] = vector1
+                b3d_obj[prop(Blk016.Unk_XYZ2)] = vector2
+                b3d_obj[prop(Blk016.Unk_Float1)] = unk1
+                b3d_obj[prop(Blk016.Unk_Float2)] = unk2
+                b3d_obj[prop(Blk016.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk016.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk013.Unk_List)] = l_params
 
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 17):
+            elif (block_type == 17):
 
                 l_params = []
 
@@ -1378,71 +1309,71 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_17.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_17.R)] = bounding_sphere[3]
-                b3dObj[prop(b_17.Unk_XYZ1)] = vector1
-                b3dObj[prop(b_17.Unk_XYZ2)] = vector2
-                b3dObj[prop(b_17.Unk_Float1)] = unk1
-                b3dObj[prop(b_17.Unk_Float2)] = unk2
-                b3dObj[prop(b_17.Unk_Int1)] = unknown1
-                b3dObj[prop(b_17.Unk_Int2)] = unknown2
-                b3dObj[prop(b_17.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk017.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk017.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk017.Unk_XYZ1)] = vector1
+                b3d_obj[prop(Blk017.Unk_XYZ2)] = vector2
+                b3d_obj[prop(Blk017.Unk_Float1)] = unk1
+                b3d_obj[prop(Blk017.Unk_Float2)] = unk2
+                b3d_obj[prop(Blk017.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk017.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk017.Unk_List)] = l_params
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 18):    #контейнер "применить к"
+            elif (block_type == 18):    #контейнер "применить к"
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                space_name = readName(file)
-                add_name = readName(file)
-                # b3dObj['space_name'] = file.read(32).decode("utf-8").rstrip('\0')
-                # b3dObj['add_name'] = file.read(32).decode("utf-8").rstrip('\0')
+                space_name = read_name(file)
+                add_name = read_name(file)
+                # b3d_obj['space_name'] = file.read(32).decode("utf-8").rstrip('\0')
+                # b3d_obj['add_name'] = file.read(32).decode("utf-8").rstrip('\0')
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_18.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_18.R)] = bounding_sphere[3]
-                b3dObj[prop(b_18.Add_Name)] = add_name
-                b3dObj[prop(b_18.Space_Name)] = space_name
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk018.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk018.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk018.Add_Name)] = add_name
+                b3d_obj[prop(Blk018.Space_Name)] = space_name
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
 
-            elif (type == 19):
+            elif (block_type == 19):
 
-                childCnt = struct.unpack("i",file.read(4))[0]
+                child_cnt = struct.unpack("i",file.read(4))[0]
 
-                currentRoomName = f"{res_basename}:{objName}"
+                current_room_name = f"{res_basename}:{obj_name}"
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.get(objName)
-                if b3dObj is None:
-                    b3dObj = bpy.data.objects.new(objName, None)
-                    b3dObj[BLOCK_TYPE] = type
+                b3d_obj = bpy.data.objects.get(obj_name)
+                if b3d_obj is None:
+                    b3d_obj = bpy.data.objects.new(obj_name, None)
+                    b3d_obj[BLOCK_TYPE] = block_type
 
-                    b3dObj.parent = parentObj
-                    context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                    b3d_obj.parent = parent_obj
+                    context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
 
-            elif (type == 20):
+            elif (block_type == 20):
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
                 verts_count = struct.unpack("i",file.read(4))[0]
@@ -1459,70 +1390,70 @@ def importB3d(file, context, self, filepath):
                 for i in range(verts_count):
                     coords.append(struct.unpack("fff",file.read(12)))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                curveData = bpy.data.curves.new('curve', type='CURVE')
+                curve_data = bpy.data.curves.new('curve', type='CURVE')
 
-                curveData.dimensions = '2D'
-                curveData.resolution_u = 2
+                curve_data.dimensions = '2D'
+                curve_data.resolution_u = 2
 
                 # map coords to spline
-                polyline = curveData.splines.new('POLY')
+                polyline = curve_data.splines.new('POLY')
                 polyline.points.add(len(coords)-1)
 
                 if len(coords) > 0:
-                    originPoint = coords[0]
+                    origin_point = coords[0]
                 else:
-                    originPoint = bounding_sphere[0:3]
+                    origin_point = bounding_sphere[0:3]
 
-                newCoords = recalcToLocalCoord(originPoint, coords)
+                new_coords = recalc_to_local_coord(origin_point, coords)
 
-                for i, coord in enumerate(newCoords):
+                for i, coord in enumerate(new_coords):
                     x,y,z = coord
                     polyline.points[i].co = (x, y, z, 1)
 
-                curveData.bevel_depth = 0
-                curveData.extrude = 10
+                curve_data.bevel_depth = 0
+                curve_data.extrude = 10
 
                 # create Object
-                b3dObj = bpy.data.objects.new(objName, curveData)
-                # b3dObj.location = (0,0,0)
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj.location = originPoint
-                # b3dObj[prop(b_20.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_20.R)] = bounding_sphere[3]
-                b3dObj[prop(b_20.Unk_Int1)] = unknown1
-                b3dObj[prop(b_20.Unk_Int2)] = unknown2
-                b3dObj[prop(b_20.Unk_List)] = unknowns
+                b3d_obj = bpy.data.objects.new(obj_name, curve_data)
+                # b3d_obj.location = (0,0,0)
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj.location = origin_point
+                # b3d_obj[prop(Blk020.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk020.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk020.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk020.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk020.Unk_List)] = unknowns
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 21): #testkey???
+            elif (block_type == 21): #testkey???
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                groupCnt = struct.unpack("<i",file.read(4))[0]
+                group_cnt = struct.unpack("<i",file.read(4))[0]
                 unknown2 = struct.unpack("<i",file.read(4))[0]
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_21.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_21.R)] = bounding_sphere[3]
-                b3dObj[prop(b_21.GroupCnt)] = groupCnt
-                b3dObj[prop(b_21.Unk_Int2)] = unknown2
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk021.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk021.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk021.GroupCnt)] = group_cnt
+                b3d_obj[prop(Blk021.Unk_Int2)] = unknown2
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 23): #colision mesh
+            elif (block_type == 23): #colision mesh
 
                 var1 = struct.unpack("<i",file.read(4))[0]
                 ctype = struct.unpack("<i",file.read(4))[0]
@@ -1531,45 +1462,45 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     unknowns.append(struct.unpack("<i",file.read(4))[0])
 
-                vertsBlockNum = struct.unpack("<i",file.read(4))[0]
+                verts_block_num = struct.unpack("<i",file.read(4))[0]
                 num = 0
                 faces = []
                 l_vertexes = []
-                for i in range(vertsBlockNum):
-                    vertsInBlock = struct.unpack("<i",file.read(4))[0]
+                for i in range(verts_block_num):
+                    verts_in_block = struct.unpack("<i",file.read(4))[0]
 
 
                     face = []
-                    for j in range(vertsInBlock):
+                    for j in range(verts_in_block):
                         face.append(num)
                         num+=1
                         l_vertexes.append(struct.unpack("<3f",file.read(12)))
                     faces.append(face)
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dMesh = (bpy.data.meshes.new(objName))
+                b3d_mesh = (bpy.data.meshes.new(obj_name))
 
-                centroid = getCenterCoord(l_vertexes)
+                centroid = get_center_coord(l_vertexes)
 
-                l_vertexes = recalcToLocalCoord(centroid, l_vertexes)
+                l_vertexes = recalc_to_local_coord(centroid, l_vertexes)
 
-                b3dMesh.from_pydata(l_vertexes,[],faces)
+                b3d_mesh.from_pydata(l_vertexes,[],faces)
 
-                b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj.location = centroid
-                b3dObj[prop(b_23.Unk_Int1)] = var1
-                b3dObj[prop(b_23.Surface)] = ctype
-                b3dObj[prop(b_23.Unk_List)] = unknowns
+                b3d_obj = bpy.data.objects.new(obj_name, b3d_mesh)
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj.location = centroid
+                b3d_obj[prop(Blk023.Unk_Int1)] = var1
+                b3d_obj[prop(Blk023.Surface)] = ctype
+                b3d_obj[prop(Blk023.Unk_List)] = unknowns
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 24): #настройки положения обьекта
+            elif (block_type == 24): #настройки положения обьекта
 
                 m11 = struct.unpack("<f",file.read(4))[0]
                 m12 = struct.unpack("<f",file.read(4))[0]
@@ -1586,16 +1517,16 @@ def importB3d(file, context, self, filepath):
                 sp_pos = struct.unpack("<fff",file.read(12))
 
                 flag = struct.unpack("<i",file.read(4))[0]
-                childCnt = struct.unpack("<i", file.read(4))[0]
+                child_cnt = struct.unpack("<i", file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
                 x_d = 0.0
                 y_d = 0.0
                 z_d = 0.0
 
-                PI = 3.14159265358979
+                pi = 3.14159265358979
                 test_var = 0.0
                 test_var = ((m33*m33) + (m31*m31))
                 var_cy = sqrt(test_var)
@@ -1611,53 +1542,53 @@ def importB3d(file, context, self, filepath):
                     y_d = 0
                     # log.debug("LESS than 16")
 
-                rot_x = ((x_d * 180) / PI)
-                rot_y = ((y_d * 180) / PI)
-                rot_z = ((z_d * 180) / PI)
+                rot_x = ((x_d * 180) / pi)
+                rot_y = ((y_d * 180) / pi)
+                rot_z = ((z_d * 180) / pi)
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj.rotation_euler[0] = x_d
-                b3dObj.rotation_euler[1] = y_d
-                b3dObj.rotation_euler[2] = z_d
-                b3dObj.location = sp_pos
-                b3dObj.empty_display_type = 'ARROWS'
-                b3dObj[prop(b_24.Flag)] = flag
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj.rotation_euler[0] = x_d
+                b3d_obj.rotation_euler[1] = y_d
+                b3d_obj.rotation_euler[2] = z_d
+                b3d_obj.location = sp_pos
+                b3d_obj.empty_display_type = 'ARROWS'
+                b3d_obj[prop(Blk024.Flag)] = flag
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 25): #copSiren????/ контейнер
+            elif (block_type == 25): #copSiren????/ контейнер
 
                 unknown1 = struct.unpack("<3i",file.read(12))
 
-                name = readName(file)
+                name = read_name(file)
                 unknown_sphere1 = struct.unpack("<3f",file.read(12))
                 unknown_sphere2 = struct.unpack("<3f",file.read(12))
                 unknown2 = struct.unpack("<5f",file.read(20))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj[prop(b_25.XYZ)] = unknown1
-                b3dObj[prop(b_25.Name)] = name
-                b3dObj[prop(b_25.Unk_XYZ1)] = unknown_sphere1
-                b3dObj[prop(b_25.Unk_XYZ2)] = unknown_sphere2
-                b3dObj[prop(b_25.Unk_Float1)] = unknown2[0]
-                b3dObj[prop(b_25.Unk_Float2)] = unknown2[1]
-                b3dObj[prop(b_25.Unk_Float3)] = unknown2[2]
-                b3dObj[prop(b_25.Unk_Float4)] = unknown2[3]
-                b3dObj[prop(b_25.Unk_Float5)] = unknown2[4]
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj[prop(Blk025.XYZ)] = unknown1
+                b3d_obj[prop(Blk025.Name)] = name
+                b3d_obj[prop(Blk025.Unk_XYZ1)] = unknown_sphere1
+                b3d_obj[prop(Blk025.Unk_XYZ2)] = unknown_sphere2
+                b3d_obj[prop(Blk025.Unk_Float1)] = unknown2[0]
+                b3d_obj[prop(Blk025.Unk_Float2)] = unknown2[1]
+                b3d_obj[prop(Blk025.Unk_Float3)] = unknown2[2]
+                b3d_obj[prop(Blk025.Unk_Float4)] = unknown2[3]
+                b3d_obj[prop(Blk025.Unk_Float5)] = unknown2[4]
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 26):
+            elif (block_type == 26):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
@@ -1665,49 +1596,49 @@ def importB3d(file, context, self, filepath):
                 unknown_sphere2 = struct.unpack("<3f",file.read(12))
                 unknown_sphere3 = struct.unpack("<3f",file.read(12))
 
-                childCnt = struct.unpack("<i",file.read(4))
+                child_cnt = struct.unpack("<i",file.read(4))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_26.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_26.R)] = bounding_sphere[3]
-                b3dObj[prop(b_26.Unk_XYZ1)] = unknown_sphere1
-                b3dObj[prop(b_26.Unk_XYZ2)] = unknown_sphere2
-                b3dObj[prop(b_26.Unk_XYZ3)] = unknown_sphere3
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk026.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk026.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk026.Unk_XYZ1)] = unknown_sphere1
+                b3d_obj[prop(Blk026.Unk_XYZ2)] = unknown_sphere2
+                b3d_obj[prop(Blk026.Unk_XYZ3)] = unknown_sphere3
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 27):
+            elif (block_type == 27):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 flag1 = struct.unpack("<i",file.read(4))
                 unknown_sphere = struct.unpack("<3f",file.read(12))
 
-                materialId = struct.unpack("<i",file.read(4))
+                material_id = struct.unpack("<i",file.read(4))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_27.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_27.R)] = bounding_sphere[3]
-                b3dObj[prop(b_27.Flag)] = flag1
-                b3dObj[prop(b_27.Unk_XYZ)] = unknown_sphere
-                b3dObj[prop(b_27.Material)] = materialId
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk027.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk027.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk027.Flag)] = flag1
+                b3d_obj[prop(Blk027.Unk_XYZ)] = unknown_sphere
+                b3d_obj[prop(Blk027.Material)] = material_id
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 28): #face
+            elif (block_type == 28): #face
 
                 l_vertexes = []
                 l_faces = []
@@ -1722,23 +1653,23 @@ def importB3d(file, context, self, filepath):
                 overriden_uvs = []
                 uv_indexes = []
                 formats = []
-                unkFs = []
-                unkInts = []
+                unk_floats = []
+                unk_ints = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 sprite_center = struct.unpack("<3f",file.read(12))
 
-                polygonCount = struct.unpack("<i",file.read(4))[0]
+                polygon_count = struct.unpack("<i",file.read(4))[0]
 
-                for i in range(polygonCount):
+                for i in range(polygon_count):
 
-                    formatRaw = struct.unpack("<i",file.read(4))[0]
-                    format = formatRaw & 0xFFFF
-                    uvCount = ((formatRaw & 0xFF00) >> 8) + 1 #ah
-                    triangulateOffset = format & 0b10000000
+                    format_raw = struct.unpack("<i",file.read(4))[0]
+                    poly_format = format_raw & 0xFFFF
+                    uv_count = ((format_raw & 0xFF00) >> 8) + 1 #ah
+                    triangulate_offset = poly_format & 0b10000000
 
-                    unkF = struct.unpack("<f",file.read(4))[0]
-                    unkInt = struct.unpack("<i",file.read(4))[0]
+                    unk_float = struct.unpack("<f",file.read(4))[0]
+                    unk_int = struct.unpack("<i",file.read(4))[0]
                     texnum = struct.unpack("<i",file.read(4))[0]
 
                     vert_num = struct.unpack("<i", file.read(4))[0]
@@ -1747,7 +1678,7 @@ def importB3d(file, context, self, filepath):
 
                     poly_block_len = len(poly_block_uvs)
 
-                    for i in range(uvCount - poly_block_len):
+                    for i in range(uv_count - poly_block_len):
                         poly_block_uvs.append({})
 
                     l_faces = []
@@ -1758,10 +1689,10 @@ def importB3d(file, context, self, filepath):
                         scale_v = struct.unpack("<f", file.read(4))[0]
                         l_vertexes.append((sprite_center[0], sprite_center[1]-scale_u*scale_base, sprite_center[2]+scale_v*scale_base))
                         l_faces.append(curface)
-                        if format & 0b10:
+                        if poly_format & 0b10:
                             vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
                             poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
-                            for j in range(uvCount-1):
+                            for j in range(uv_count-1):
                                 poly_block_uvs[j][curface] = struct.unpack("<2f",file.read(8))
                         # else:
                         #     poly_block_uvs[0][curface] = vertex_block_uvs[0][curface]
@@ -1782,7 +1713,7 @@ def importB3d(file, context, self, filepath):
 
                     #Triangulating faces
                     for t in range(len(l_faces)-2):
-                        if not triangulateOffset:
+                        if not triangulate_offset:
                             if t%2 == 0:
                                 faces_new.append([l_faces[t-1],l_faces[t],l_faces[t+1]])
                             else:
@@ -1799,24 +1730,24 @@ def importB3d(file, context, self, filepath):
 
                     # store face indexes for setting uv coords later
                         uv_indexes.append(faces_new[t])
-                        formats.append(formatRaw)
-                        unkFs.append(unkF)
-                        unkInts.append(unkInt)
+                        formats.append(format_raw)
+                        unk_floats.append(unk_float)
+                        unk_ints.append(unk_int)
 
                     l_faces_all.extend(faces_new)
 
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dMesh = (bpy.data.meshes.new(objName))
+                b3d_mesh = (bpy.data.meshes.new(obj_name))
 
-                l_vertexes = recalcToLocalCoord(bounding_sphere[:3], l_vertexes)
+                l_vertexes = recalc_to_local_coord(bounding_sphere[:3], l_vertexes)
 
-                b3dMesh.from_pydata(l_vertexes,[],l_faces_all)
+                b3d_mesh.from_pydata(l_vertexes,[],l_faces_all)
 
                 # Ev = threading.Event()
-                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces_all))
+                # Tr = threading.Thread(target=b3d_mesh.from_pydata, args = (l_vertexes,[],l_faces_all))
                 # Tr.start()
                 # Ev.set()
                 # Tr.join()
@@ -1825,66 +1756,66 @@ def importB3d(file, context, self, filepath):
                 # for simplicity
                 # for u, uvMap in enumerate(vertex_block_uvs):
                 #     if len(uvMap):
-                #         customUV = b3dMesh.uv_layers.new()
-                #         customUV.name = "UVmapVert{}".format(u)
-                #         uvsMesh = []
+                #         custom_uv = b3d_mesh.uv_layers.new()
+                #         custom_uv.name = "UVmapVert{}".format(u)
+                #         uvs_mesh = []
 
-                #         for i, texpoly in enumerate(b3dMesh.polygons):
+                #         for i, texpoly in enumerate(b3d_mesh.polygons):
                 #             for j,loop in enumerate(texpoly.loop_indices):
-                #                 uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                #                 customUV.data[loop].uv = uvsMesh
+                #                 uvs_mesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                #                 custom_uv.data[loop].uv = uvs_mesh
 
-                for u, uvOver in enumerate(overriden_uvs):
-                    if len(uvOver):
-                        customUV = b3dMesh.uv_layers.new()
-                        customUV.name = "UVMap"
-                        uvsMesh = []
+                for u, uv_over in enumerate(overriden_uvs):
+                    if len(uv_over):
+                        custom_uv = b3d_mesh.uv_layers.new()
+                        custom_uv.name = "UVMap"
+                        uvs_mesh = []
 
-                        for i, texpoly in enumerate(b3dMesh.polygons):
+                        for i, texpoly in enumerate(b3d_mesh.polygons):
                             for j,loop in enumerate(texpoly.loop_indices):
-                                uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
-                                customUV.data[loop].uv = uvsMesh
+                                uvs_mesh = [uv_over[i][j][0],1 - uv_over[i][j][1]]
+                                custom_uv.data[loop].uv = uvs_mesh
 
                 if self.to_import_textures:
-                    #For assignMaterialByVertices just-in-case
+                    #For assign_material_by_vertices just-in-case
                     # bpy.ops.object.mode_set(mode = 'OBJECT')
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = resModule.materials[int(texnum)].id_mat
-                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
-                            b3dMesh.materials.append(mat)
-                            lastIndex = len(b3dMesh.materials)-1
+                            mat = res_module.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                            b3d_mesh.materials.append(mat)
+                            last_index = len(b3d_mesh.materials)-1
 
-                            for vertArr in texnums[texnum]:
+                            for vert_arr in texnums[texnum]:
                                 # self.lock.acquire()
-                                assignMaterialByVertices(b3dObj, vertArr, lastIndex)
+                                assign_material_by_vertices(b3d_obj, vert_arr, last_index)
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = resModule.materials[int(texnum)].id_mat
-                            # mat = bpy.data.materials.get(resModule.materials[int(texnum)].mat_name)
-                            b3dMesh.materials.append(mat)
+                            mat = res_module.materials[int(texnum)].id_mat
+                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                            b3d_mesh.materials.append(mat)
 
-                createCustomAttribute(b3dMesh, formats, pfb_28, pfb_28.Format_Flags)
+                create_custom_attribute(b3d_mesh, formats, Pfb028, Pfb028.Format_Flags)
 
                 # those are usually consts in all objects
-                # createCustomAttribute(b3dMesh, unkFs, pfb_28, pfb_28.Unk_Float1)
-                # createCustomAttribute(b3dMesh, unkInts, pfb_28, pfb_28.Unk_Int2)
+                # create_custom_attribute(b3d_mesh, unk_floats, Pfb028, Pfb028.Unk_Float1)
+                # create_custom_attribute(b3d_mesh, unk_ints, Pfb028, Pfb028.Unk_Int2)
 
-                b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_28.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_28.R)] = bounding_sphere[3]
-                b3dObj[prop(b_28.Sprite_Center)] = sprite_center
-                b3dObj.location = bounding_sphere[0:3]
+                b3d_obj = bpy.data.objects.new(obj_name, b3d_mesh)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk028.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk028.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk028.Sprite_Center)] = sprite_center
+                b3d_obj.location = bounding_sphere[0:3]
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj) #добавляем в сцену обьект
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj) #добавляем в сцену обьект
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 29):
+            elif (block_type == 29):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 num0 = struct.unpack("<i",file.read(4))[0]
@@ -1895,79 +1826,79 @@ def importB3d(file, context, self, filepath):
                 if num0 > 0:
                     f = struct.unpack("<"+str(num0)+"f",file.read(4*num0))
 
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_29.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_29.R)] = bounding_sphere[3]
-                b3dObj[prop(b_29.Unk_Int1)] = num0
-                b3dObj[prop(b_29.Unk_Int2)] = num1
-                b3dObj[prop(b_29.Unk_XYZ)] = unknown_sphere[0:3]
-                b3dObj[prop(b_29.Unk_R)] = unknown_sphere[3]
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk029.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk029.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk029.Unk_Int1)] = num0
+                b3d_obj[prop(Blk029.Unk_Int2)] = num1
+                b3d_obj[prop(Blk029.Unk_XYZ)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk029.Unk_R)] = unknown_sphere[3]
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 30):
+            elif (block_type == 30):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                connectedRoomName = readName(file)
+                connected_room_name = read_name(file)
 
                 p1 = struct.unpack("<3f",file.read(12))
                 p2 = struct.unpack("<3f",file.read(12))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                splitted = connectedRoomName.split(":")
-                moduleName = ""
-                roomName = ""
+                splitted = connected_room_name.split(":")
+                module_name = ""
+                room_name = ""
 
                 if len(splitted) == 2:
-                    moduleName = splitted[0]
-                    roomName = splitted[1]
+                    module_name = splitted[0]
+                    room_name = splitted[1]
                 elif len(splitted) == 1:
-                    moduleName = res_basename
-                    roomName = splitted[0]
+                    module_name = res_basename
+                    room_name = splitted[0]
 
-                fullRoomName = f"{moduleName}:{roomName}"
+                full_room_name = f"{module_name}:{room_name}"
 
-                sortedRooms = sorted([currentRoomName, fullRoomName])
-
-
-                borderName = "|".join(sortedRooms)
+                sorted_rooms = sorted([current_room_name, full_room_name])
 
 
-                if not borderName in borders:
-                    borders[borderName] = {
+                border_name = "|".join(sorted_rooms)
+
+
+                if not border_name in borders:
+                    borders[border_name] = {
                         "bounding_point": bounding_sphere[0:3],
                         "bounding_rad": bounding_sphere[3],
                         "points": [None]*4
                     }
 
 
-                    if sortedRooms[0] == currentRoomName:
-                        borders[borderName]["points"] = [
+                    if sorted_rooms[0] == current_room_name:
+                        borders[border_name]["points"] = [
                             (p1[0], p1[1], p1[2]),
                             (p1[0], p1[1], p2[2]),
                             (p2[0], p2[1], p2[2]),
                             (p2[0], p2[1], p1[2]),
                         ]
                     else:
-                        borders[borderName]["points"] = [
+                        borders[border_name]["points"] = [
                             (p1[0], p1[1], p2[2]),
                             (p1[0], p1[1], p1[2]),
                             (p2[0], p2[1], p1[2]),
                             (p2[0], p2[1], p2[2]),
                         ]
 
-            elif (type == 31):
+            elif (block_type == 31):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
@@ -1978,29 +1909,29 @@ def importB3d(file, context, self, filepath):
                 for i in range(num):
                     struct.unpack("<fi",file.read(8))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_31.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_31.R)] = bounding_sphere[3]
-                b3dObj[prop(b_31.Unk_Int1)] = num
-                b3dObj[prop(b_31.Unk_XYZ1)] = unknown_sphere[0:3]
-                b3dObj[prop(b_31.Unk_R)] = unknown_sphere[3]
-                b3dObj[prop(b_31.Unk_Int2)] = num2
-                b3dObj[prop(b_31.Unk_XYZ2)] = unknown
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk031.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk031.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk031.Unk_Int1)] = num
+                b3d_obj[prop(Blk031.Unk_XYZ1)] = unknown_sphere[0:3]
+                b3d_obj[prop(Blk031.Unk_R)] = unknown_sphere[3]
+                b3d_obj[prop(Blk031.Unk_Int2)] = num2
+                b3d_obj[prop(Blk031.Unk_XYZ2)] = unknown
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 33): #lamp
+            elif (block_type == 33): #lamp
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
-                useLights = struct.unpack("<i",file.read(4))[0]
+                use_lights = struct.unpack("<i",file.read(4))[0]
                 light_type = struct.unpack("<i",file.read(4))[0]
                 flag1 = struct.unpack("<i",file.read(4))[0]
 
@@ -2012,37 +1943,37 @@ def importB3d(file, context, self, filepath):
                 intensity = struct.unpack("<f",file.read(4))[0]
                 unknown3 = struct.unpack("<f",file.read(4))[0]
                 unknown4 = struct.unpack("<f",file.read(4))[0]
-                RGB = struct.unpack("<3f",file.read(12))
+                rgb = struct.unpack("<3f",file.read(12))
 
-                childCnt = struct.unpack("<i",file.read(4))[0]
+                child_cnt = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_33.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_33.R)] = bounding_sphere[3]
-                b3dObj[prop(b_33.Use_Lights)] = useLights
-                b3dObj[prop(b_33.Light_Type)] = light_type
-                b3dObj[prop(b_33.Flag)] = flag1
-                b3dObj[prop(b_33.Unk_XYZ1)] = unknown_vector1
-                b3dObj[prop(b_33.Unk_XYZ2)] = unknown_vector2
-                b3dObj[prop(b_33.Unk_Float1)] = unknown1
-                b3dObj[prop(b_33.Unk_Float2)] = unknown2
-                b3dObj[prop(b_33.Light_R)] = light_radius
-                b3dObj[prop(b_33.Intens)] = intensity
-                b3dObj[prop(b_33.Unk_Float3)] = unknown3
-                b3dObj[prop(b_33.Unk_Float4)] = unknown4
-                b3dObj[prop(b_33.RGB)] = RGB
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk033.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk033.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk033.Use_Lights)] = use_lights
+                b3d_obj[prop(Blk033.Light_Type)] = light_type
+                b3d_obj[prop(Blk033.Flag)] = flag1
+                b3d_obj[prop(Blk033.Unk_XYZ1)] = unknown_vector1
+                b3d_obj[prop(Blk033.Unk_XYZ2)] = unknown_vector2
+                b3d_obj[prop(Blk033.Unk_Float1)] = unknown1
+                b3d_obj[prop(Blk033.Unk_Float2)] = unknown2
+                b3d_obj[prop(Blk033.Light_R)] = light_radius
+                b3d_obj[prop(Blk033.Intens)] = intensity
+                b3d_obj[prop(Blk033.Unk_Float3)] = unknown3
+                b3d_obj[prop(Blk033.Unk_Float4)] = unknown4
+                b3d_obj[prop(Blk033.RGB)] = rgb
 
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 34): #lamp
+            elif (block_type == 34): #lamp
                 num = 0
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
@@ -2056,87 +1987,87 @@ def importB3d(file, context, self, filepath):
                     l_coords.append(struct.unpack("<3f",file.read(12)))
                     unknown1 = struct.unpack("<i",file.read(4))[0]
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                curveData = bpy.data.curves.new('curve', type='CURVE')
+                curve_data = bpy.data.curves.new('curve', type='CURVE')
 
-                curveData.dimensions = '3D'
-                curveData.resolution_u = 2
+                curve_data.dimensions = '3D'
+                curve_data.resolution_u = 2
 
                 # map coords to spline
-                polyline = curveData.splines.new('POLY')
+                polyline = curve_data.splines.new('POLY')
                 polyline.points.add(len(l_coords)-1)
                 for i, coord in enumerate(l_coords):
                     x,y,z = coord
                     polyline.points[i].co = (x, y, z, 1)
 
-                curveData.bevel_depth = 0.01
+                curve_data.bevel_depth = 0.01
 
-                b3dObj = bpy.data.objects.new(objName, curveData)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_34.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_34.R)] = bounding_sphere[3]
-                b3dObj[prop(b_34.UnkInt)] = unknown1
+                b3d_obj = bpy.data.objects.new(obj_name, curve_data)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk034.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk034.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk034.UnkInt)] = unknown1
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 35): #mesh
+            elif (block_type == 35): #mesh
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 faces_all = []
                 faces = []
                 poly_block_uvs = []
 
-                mType = struct.unpack("<i",file.read(4))[0]
-                texNum = struct.unpack("<i",file.read(4))[0]
-                polygonCount = struct.unpack("<i",file.read(4))[0]
+                m_type = struct.unpack("<i",file.read(4))[0]
+                texnum = struct.unpack("<i",file.read(4))[0]
+                polygon_count = struct.unpack("<i",file.read(4))[0]
                 overriden_uvs = []
                 uv_indexes = []
                 l_normals = normals
                 l_normals_off = normals_off
 
                 formats = []
-                unkFs = []
-                unkInts = []
+                unk_floats = []
+                unk_ints = []
 
-                for i in range(polygonCount):
+                for i in range(polygon_count):
                     faces = []
-                    formatRaw = struct.unpack("<i",file.read(4))[0]
-                    format = formatRaw ^ 1
-                    uvCount = ((format & 0xFF00) >> 8) #ah
-                    triangulateOffset = format & 0b10000000
+                    format_raw = struct.unpack("<i",file.read(4))[0]
+                    poly_format = format_raw ^ 1
+                    uv_count = ((poly_format & 0xFF00) >> 8) #ah
+                    triangulate_offset = poly_format & 0b10000000
 
-                    if format & 0b10:
-                        uvCount += 1
+                    if poly_format & 0b10:
+                        uv_count += 1
 
                     poly_block_uvs = [{}]
 
                     poly_block_len = len(poly_block_uvs)
 
-                    for i in range(uvCount - poly_block_len):
+                    for i in range(uv_count - poly_block_len):
                         poly_block_uvs.append({})
 
-                    unkF = struct.unpack("<f",file.read(4))[0]
-                    unkInt = struct.unpack("<i",file.read(4))[0]
+                    unk_float = struct.unpack("<f",file.read(4))[0]
+                    unk_int = struct.unpack("<i",file.read(4))[0]
                     texnum = str(struct.unpack("<i",file.read(4))[0])
 
-                    vertexCount = struct.unpack("<i",file.read(4))[0]
+                    vertex_count = struct.unpack("<i",file.read(4))[0]
 
-                    for j in range(vertexCount):
+                    for j in range(vertex_count):
                         face = struct.unpack("<i",file.read(4))[0]
                         faces.append(face)
-                        if format & 0b10:
+                        if poly_format & 0b10:
                             # uv override
-                            for k in range(uvCount):
+                            for k in range(uv_count):
                                 poly_block_uvs[k][face] = struct.unpack("<2f",file.read(8))
                         else:
                             poly_block_uvs[0][face] = vertex_block_uvs[0][face]
-                        if format & 0b100000 and format & 0b10000:
-                            if format & 0b1:
+                        if poly_format & 0b100000 and poly_format & 0b10000:
+                            if poly_format & 0b1:
                                 l_normals[face] = struct.unpack("<3f",file.read(12))
                             else:
                                 l_normals_off[face] = struct.unpack("<f",file.read(4))
@@ -2144,9 +2075,9 @@ def importB3d(file, context, self, filepath):
 
                     faces_all.append(faces)
 
-                    formats.append(formatRaw)
-                    unkFs.append(unkF)
-                    unkInts.append(unkInt)
+                    formats.append(format_raw)
+                    unk_floats.append(unk_float)
+                    unk_ints.append(unk_int)
 
                     # store uv coords for each face
                     if len(poly_block_uvs) > len(overriden_uvs):
@@ -2171,111 +2102,111 @@ def importB3d(file, context, self, filepath):
                     # intens_set.extend(list(intencities[faces[2]]))
                     # intens_set.extend([intencities[faces[0]], intencities[faces[1]], intencities[faces[2]]])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
                 # log.debug(vertex_block_uvs)
                 # log.debug(overriden_uvs)
 
-                b3dMesh = (bpy.data.meshes.new(objName))
-                curVertexes, curFaces, indices, oldNewTransf, newOldTransf = getUsedVerticesAndTransform(vertexes, faces_all)
+                b3d_mesh = (bpy.data.meshes.new(obj_name))
+                cur_vertexes, cur_faces, indices, old_new_transf, new_old_transf = get_used_vertices_and_transform(vertexes, faces_all)
 
-                curNormals = []
-                curNormalsOff = []
-                for i in range(len(curVertexes)):
-                    curNormals.append(l_normals[newOldTransf[i]])
-                    curNormalsOff.append(l_normals_off[newOldTransf[i]])
+                cur_normals = []
+                cur_normals_off = []
+                for i in range(len(cur_vertexes)):
+                    cur_normals.append(l_normals[new_old_transf[i]])
+                    cur_normals_off.append(l_normals_off[new_old_transf[i]])
 
-                curVertexes = recalcToLocalCoord(bounding_sphere[:3], curVertexes)
+                cur_vertexes = recalc_to_local_coord(bounding_sphere[:3], cur_vertexes)
 
-                b3dMesh.from_pydata(curVertexes,[],curFaces)
+                b3d_mesh.from_pydata(cur_vertexes,[],cur_faces)
 
                 # Ev = threading.Event()
-                # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (curVertexes,[],curFaces))
+                # Tr = threading.Thread(target=b3d_mesh.from_pydata, args = (cur_vertexes,[],cur_faces))
                 # Tr.start()
                 # Ev.set()
                 # Tr.join()
 
-                # newIndices = getUserVertices(curFaces)
+                # newIndices = get_user_vertices(cur_faces)
 
                 # blender generates his own normals, so imported vertex normals doesn't affect
                 # them too much.
                 if len(normals) > 0:
-                    b3dMesh.use_auto_smooth = True
-                    normalList = []
-                    for i,vert in enumerate(b3dMesh.vertices):
-                        normalList.append(normals[newOldTransf[i]])
-                        # b3dMesh.vertices[idx].normal = normals[idx]
-                    # log.debug(normalList)
-                    b3dMesh.normals_split_custom_set_from_vertices(normalList)
+                    b3d_mesh.use_auto_smooth = True
+                    normal_list = []
+                    for i,vert in enumerate(b3d_mesh.vertices):
+                        normal_list.append(normals[new_old_transf[i]])
+                        # b3d_mesh.vertices[idx].normal = normals[idx]
+                    # log.debug(normal_list)
+                    b3d_mesh.normals_split_custom_set_from_vertices(normal_list)
 
                 # if len(normals) > 0:
                 #     for i,idx in enumerate(newIndices):
-                #         b3dMesh.vertices[idx].normal = normals[idx]
+                #         b3d_mesh.vertices[idx].normal = normals[idx]
 
 
                 # for simplicity
                 # for u, uvMap in enumerate(vertex_block_uvs):
 
-                #     customUV = b3dMesh.uv_layers.new()
-                #     customUV.name = "UVmapVert{}".format(u)
-                #     uvsMesh = []
+                #     custom_uv = b3d_mesh.uv_layers.new()
+                #     custom_uv.name = "UVmapVert{}".format(u)
+                #     uvs_mesh = []
 
-                #     for i, texpoly in enumerate(b3dMesh.polygons):
+                #     for i, texpoly in enumerate(b3d_mesh.polygons):
                 #         for j,loop in enumerate(texpoly.loop_indices):
-                #             uvsMesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
-                #             customUV.data[loop].uv = uvsMesh
+                #             uvs_mesh = (uvMap[uv_indexes[i][j]][0],1 - uvMap[uv_indexes[i][j]][1])
+                #             custom_uv.data[loop].uv = uvs_mesh
 
-                for u, uvOver in enumerate(overriden_uvs):
+                for u, uv_over in enumerate(overriden_uvs):
 
-                    customUV = b3dMesh.uv_layers.new()
-                    customUV.name = "UVMap"
-                    uvsMesh = []
+                    custom_uv = b3d_mesh.uv_layers.new()
+                    custom_uv.name = "UVMap"
+                    uvs_mesh = []
 
-                    for i, texpoly in enumerate(b3dMesh.polygons):
+                    for i, texpoly in enumerate(b3d_mesh.polygons):
                         for j,loop in enumerate(texpoly.loop_indices):
-                            uvsMesh = [uvOver[i][j][0],1 - uvOver[i][j][1]]
-                            customUV.data[loop].uv = uvsMesh
+                            uvs_mesh = [uv_over[i][j][0],1 - uv_over[i][j][1]]
+                            custom_uv.data[loop].uv = uvs_mesh
 
 
-                # b3dMesh.attributes["my_normal"].data.foreach_set("vector", normals_set)
+                # b3d_mesh.attributes["my_normal"].data.foreach_set("vector", normals_set)
 
-                createCustomAttribute(b3dMesh, formats, pfb_35, pfb_35.Format_Flags)
+                create_custom_attribute(b3d_mesh, formats, Pfb035, Pfb035.Format_Flags)
                 # those are usually consts in all objects
-                # createCustomAttribute(b3dMesh, unkFs, pfb_35, pfb_35.Unk_Float1)
-                # createCustomAttribute(b3dMesh, unkInts, pfb_35, pfb_35.Unk_Int2)
+                # create_custom_attribute(b3d_mesh, unk_floats, Pfb035, Pfb035.Unk_Float1)
+                # create_custom_attribute(b3d_mesh, unk_ints, Pfb035, Pfb035.Unk_Int2)
 
                 # cancel for now, maybe find workaround later
-                # createCustomAttribute(b3dMesh, curNormalsOff, pvb_35, pvb_35.Normal_Switch)
-                # createCustomAttribute(b3dMesh, curNormals, pvb_35, pvb_35.Custom_Normal)
+                # create_custom_attribute(b3d_mesh, cur_normals_off, Pvb035, Pvb035.Normal_Switch)
+                # create_custom_attribute(b3d_mesh, cur_normals, Pvb035, Pvb035.Custom_Normal)
 
                 if self.to_import_textures:
-                    mat = resModule.materials[int(texnum)].id_mat
-                    # mat = bpy.data.materials.get(resModule.materials[int(texNum)].mat_name)
-                    b3dMesh.materials.append(mat)
+                    mat = res_module.materials[int(texnum)].id_mat
+                    # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                    b3d_mesh.materials.append(mat)
 
 
-                b3dObj = bpy.data.objects.new(objName, b3dMesh)
-                b3dObj.parent = parentObj
-                b3dObj[BLOCK_TYPE] = type
-                b3dObj.location = bounding_sphere[0:3]
-                # b3dObj[prop(b_35.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_35.R)] = bounding_sphere[3]
-                b3dObj[prop(b_35.MType)] = mType
-                b3dObj[prop(b_35.TexNum)] = texNum
-                # b3dObj['FType'] = 0
+                b3d_obj = bpy.data.objects.new(obj_name, b3d_mesh)
+                b3d_obj.parent = parent_obj
+                b3d_obj[BLOCK_TYPE] = block_type
+                b3d_obj.location = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk035.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk035.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk035.MType)] = m_type
+                b3d_obj[prop(Blk035.TexNum)] = texnum
+                # b3d_obj['FType'] = 0
                 # try:
-                #     b3dObj['SType'] = b3dObj.parent['SType']
+                #     b3d_obj['SType'] = b3d_obj.parent['SType']
                 # except:
-                #     b3dObj['SType'] = 2
-                # b3dObj['BType'] = 35
-                realName = b3dObj.name
-                # for face in b3dMesh.polygons:
+                #     b3d_obj['SType'] = 2
+                # b3d_obj['BType'] = 35
+                real_name = b3d_obj.name
+                # for face in b3d_mesh.polygons:
                 #     face.use_smooth = True
-                context.collection.objects.link(b3dObj) #добавляем в сцену обьект
-                objString[-1] = b3dObj.name
+                context.collection.objects.link(b3d_obj) #добавляем в сцену обьект
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 36):
+            elif (block_type == 36):
 
                 vertexes = []
                 normals = []
@@ -2284,55 +2215,55 @@ def importB3d(file, context, self, filepath):
                 vertex_block_uvs = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
-                name1 = readName(file)
-                name2 = readName(file)
+                name1 = read_name(file)
+                name2 = read_name(file)
 
-                formatRaw = struct.unpack("<i",file.read(4))[0]
-                uvCount = formatRaw >> 8
-                format = formatRaw & 0xFF
+                format_raw = struct.unpack("<i",file.read(4))[0]
+                uv_count = format_raw >> 8
+                vert_format = format_raw & 0xFF
 
                 vertex_block_uvs.append([])
-                for i in range(uvCount):
+                for i in range(uv_count):
                     vertex_block_uvs.append([])
 
-                vertexCount = struct.unpack("<i",file.read(4))[0]
-                if format == 0:
+                vertex_count = struct.unpack("<i",file.read(4))[0]
+                if vert_format == 0:
                     pass
                 else:
-                    for i in range(vertexCount):
+                    for i in range(vertex_count):
                         vertexes.append(struct.unpack("<3f",file.read(12)))
                         vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
-                        for j in range(uvCount):
+                        for j in range(uv_count):
                             vertex_block_uvs[j+1].append(struct.unpack("<2f",file.read(8)))
-                        if format == 1 or format == 2:    #Vertex with normals
+                        if vert_format == 1 or vert_format == 2:    #Vertex with normals
                             normals.append(struct.unpack("<3f",file.read(12)))
                             normals_off.append(1.0)
-                        elif format == 3: #отличается от шаблона 010Editor
+                        elif vert_format == 3: #отличается от шаблона 010Editor
                             normals.append((0.0, 0.0, 0.0))
                             normals_off.append(struct.unpack("<f",file.read(4))[0])
                         else:
                             normals.append((0.0, 0.0, 0.0))
                             normals_off.append(1.0)
 
-                childCnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
+                child_cnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_36.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_36.R)] = bounding_sphere[3]
-                b3dObj[prop(b_36.Name1)] = name1
-                b3dObj[prop(b_36.Name2)] = name2
-                b3dObj[prop(b_36.VType)] = formatRaw
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk036.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk036.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk036.Name1)] = name1
+                b3d_obj[prop(Blk036.Name2)] = name2
+                b3d_obj[prop(Blk036.VType)] = format_raw
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 37):
+            elif (block_type == 37):
 
                 vertexes = []
                 normals = []
@@ -2342,95 +2273,95 @@ def importB3d(file, context, self, filepath):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
-                groupName = readName(file)
+                group_name = read_name(file)
 
-                formatRaw = struct.unpack("<i",file.read(4))[0]
-                uvCount = formatRaw >> 8
-                format = formatRaw & 0xFF
+                format_raw = struct.unpack("<i",file.read(4))[0]
+                uv_count = format_raw >> 8
+                vert_format = format_raw & 0xFF
 
                 vertex_block_uvs.append([])
-                for i in range(uvCount):
+                for i in range(uv_count):
                     vertex_block_uvs.append([])
 
 
-                vertexCount = struct.unpack("<i",file.read(4))[0]
+                vertex_count = struct.unpack("<i",file.read(4))[0]
 
-                if vertexCount > 0:
+                if vertex_count > 0:
 
-                    if format == 0:
+                    if vert_format == 0:
                         pass
                     else:
-                        for i in range(vertexCount):
+                        for i in range(vertex_count):
                             vertexes.append(struct.unpack("<3f",file.read(12)))
                             vertex_block_uvs[0].append(struct.unpack("<2f",file.read(8)))
-                            for j in range(uvCount):
+                            for j in range(uv_count):
                                 vertex_block_uvs[j+1].append(struct.unpack("<2f",file.read(8)))
-                            if format == 1 or format == 2:    #Vertex with normals
+                            if vert_format == 1 or vert_format == 2:    #Vertex with normals
                                 normals.append(struct.unpack("<3f",file.read(12)))
                                 normals_off.append(1.0)
-                            elif format == 3: #отличается от шаблона 010Editor
+                            elif vert_format == 3: #отличается от шаблона 010Editor
                                 normals.append((0.0, 0.0, 0.0))
                                 normals_off.append(struct.unpack("<f",file.read(4))[0])
                             else:
                                 normals.append((0.0, 0.0, 0.0))
                                 normals_off.append(1.0)
 
-                childCnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
+                child_cnt = struct.unpack("<i",file.read(4))[0]#01 00 00 00 subblocks count
 
                 # if len(vertex_block_uvs) == 2:
                 #     vertex_block_uvs = [vertex_block_uvs[1], vertex_block_uvs[0]]
 
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None) #create empty
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_37.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_37.R)] = bounding_sphere[3]
-                b3dObj[prop(b_37.Name1)] = groupName
-                b3dObj[prop(b_37.VType)] = formatRaw
+                b3d_obj = bpy.data.objects.new(obj_name, None) #create empty
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk037.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk037.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk037.Name1)] = group_name
+                b3d_obj[prop(Blk037.VType)] = format_raw
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 39):
+            elif (block_type == 39):
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
                 color_r = struct.unpack("<i",file.read(4))
                 unknown = struct.unpack("<f",file.read(4))
                 fog_start = struct.unpack("<f",file.read(4))
                 fog_end = struct.unpack("<f",file.read(4))
-                colorId = struct.unpack("<i",file.read(4))
-                childCnt = struct.unpack("<i",file.read(4))
+                color_id = struct.unpack("<i",file.read(4))
+                child_cnt = struct.unpack("<i",file.read(4))
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_39.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_39.R)] = bounding_sphere[3]
-                b3dObj[prop(b_39.Color_R)] = color_r
-                b3dObj[prop(b_39.Unk_Float1)] = unknown
-                b3dObj[prop(b_39.Fog_Start)] = fog_start
-                b3dObj[prop(b_39.Fog_End)] = fog_end
-                b3dObj[prop(b_39.Color_Id)] = colorId
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk039.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk039.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk039.Color_R)] = color_r
+                b3d_obj[prop(Blk039.Unk_Float1)] = unknown
+                b3d_obj[prop(Blk039.Fog_Start)] = fog_start
+                b3d_obj[prop(Blk039.Fog_End)] = fog_end
+                b3d_obj[prop(Blk039.Color_Id)] = color_id
 
-                b3dObj.parent = parentObj
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
+                obj_string[-1] = b3d_obj.name
 
-            elif (type == 40):
+            elif (block_type == 40):
                 l_params = []
 
                 bounding_sphere = struct.unpack("<4f",file.read(16))
 
-                name1 = readName(file)
-                name2 = readName(file)
+                name1 = read_name(file)
+                name2 = read_name(file)
 
                 unknown1 = struct.unpack("<i",file.read(4))[0]
                 unknown2 = struct.unpack("<i",file.read(4))[0]
@@ -2439,46 +2370,46 @@ def importB3d(file, context, self, filepath):
                 for i in range(cnt):
                     l_params.append(struct.unpack("f",file.read(4))[0])
 
-                if not usedBlocks[str(type)]:
+                if not used_blocks[str(block_type)]:
                     continue
 
-                b3dObj = bpy.data.objects.new(objName, None)
-                b3dObj[BLOCK_TYPE] = type
-                # b3dObj[prop(b_40.XYZ)] = bounding_sphere[0:3]
-                # b3dObj[prop(b_40.R)] = bounding_sphere[3]
-                b3dObj[prop(b_40.Name1)] = name1
-                b3dObj[prop(b_40.Name2)] = name2
-                b3dObj[prop(b_40.Unk_Int1)] = unknown1
-                b3dObj[prop(b_40.Unk_Int2)] = unknown2
-                b3dObj[prop(b_40.Unk_List)] = l_params
+                b3d_obj = bpy.data.objects.new(obj_name, None)
+                b3d_obj[BLOCK_TYPE] = block_type
+                # b3d_obj[prop(Blk040.XYZ)] = bounding_sphere[0:3]
+                # b3d_obj[prop(Blk040.r)] = bounding_sphere[3]
+                b3d_obj[prop(Blk040.Name1)] = name1
+                b3d_obj[prop(Blk040.Name2)] = name2
+                b3d_obj[prop(Blk040.Unk_Int1)] = unknown1
+                b3d_obj[prop(Blk040.Unk_Int2)] = unknown2
+                b3d_obj[prop(Blk040.Unk_List)] = l_params
 
-                b3dObj.location = bounding_sphere[:3]
-                b3dObj.empty_display_type = 'SPHERE'
-                b3dObj.empty_display_size = bounding_sphere[3]
-                context.collection.objects.link(b3dObj)
-                realName = b3dObj.name
+                b3d_obj.location = bounding_sphere[:3]
+                b3d_obj.empty_display_type = 'SPHERE'
+                b3d_obj.empty_display_size = bounding_sphere[3]
+                context.collection.objects.link(b3d_obj)
+                real_name = b3d_obj.name
 
-                b3dObj.parent = parentObj
-                objString[-1] = b3dObj.name
+                b3d_obj.parent = parent_obj
+                obj_string[-1] = b3d_obj.name
             else:
                 log.warning('smthng wrng')
                 return
 
             t2 = time.perf_counter()
 
-            log.debug(f"Time: {(t2-t1):.6f} | Block #{type}: {realName}")
+            log.debug(f"Time: {(t2-t1):.6f} | Block #{block_type}: {real_name}")
 
     #create room borders(30)
-    transfCollection = bpy.data.collections.get(BORDER_COLLECTION)
-    if transfCollection is None:
-        transfCollection = bpy.data.collections.new(BORDER_COLLECTION)
-        bpy.context.scene.collection.children.link(transfCollection)
+    transf_collection = bpy.data.collections.get(BORDER_COLLECTION)
+    if transf_collection is None:
+        transf_collection = bpy.data.collections.new(BORDER_COLLECTION)
+        bpy.context.scene.collection.children.link(transf_collection)
 
     for key in borders.keys():
 
         border = borders[key]
 
-        b3dMesh = (bpy.data.meshes.new(f"{key}_mesh"))
+        b3d_mesh = (bpy.data.meshes.new(f"{key}_mesh"))
         #0-x
         #1-y
         #2-z
@@ -2493,20 +2424,20 @@ def importB3d(file, context, self, filepath):
         ]
 
 
-        l_vertexes = recalcToLocalCoord(border["bounding_point"], l_vertexes)
+        l_vertexes = recalc_to_local_coord(border["bounding_point"], l_vertexes)
 
         l_faces = [
             (0,1,2,3)
         ]
 
-        b3dMesh.from_pydata(l_vertexes,[],l_faces)
+        b3d_mesh.from_pydata(l_vertexes,[],l_faces)
 
-        # Tr = threading.Thread(target=b3dMesh.from_pydata, args = (l_vertexes,[],l_faces))
+        # Tr = threading.Thread(target=b3d_mesh.from_pydata, args = (l_vertexes,[],l_faces))
         # Tr.start()
         # Tr.join()
-        roomNames = key.split("|")
-        splitted1 = roomNames[0].split(":")
-        splitted2 = roomNames[1].split(":")
+        room_names = key.split("|")
+        splitted1 = room_names[0].split(":")
+        splitted2 = room_names[1].split(":")
 
         res_name1 = splitted1[0]
         room_name1 = splitted1[1]
@@ -2514,24 +2445,24 @@ def importB3d(file, context, self, filepath):
         res_name2 = splitted2[0]
         room_name2 = splitted2[1]
 
-        b3dObj = bpy.data.objects.new(key, b3dMesh)
-        b3dObj[BLOCK_TYPE] = 30
-        b3dObj.location = border["bounding_point"]
-        # b3dObj[prop(b_30.XYZ)] = border["bounding_point"]
-        # b3dObj[prop(b_30.R)] = border["bounding_rad"]
-        b3dObj[prop(b_30.ResModule1)] = res_name1
-        b3dObj[prop(b_30.RoomName1)] = room_name1
-        b3dObj[prop(b_30.ResModule2)] = res_name2
-        b3dObj[prop(b_30.RoomName2)] = room_name2
-        # b3dObj[prop(b_30.Name)] = connectedRoomName
-        # b3dObj[prop(b_30.XYZ1)] = p1
-        # b3dObj[prop(b_30.XYZ2)] = p2
+        b3d_obj = bpy.data.objects.new(key, b3d_mesh)
+        b3d_obj[BLOCK_TYPE] = 30
+        b3d_obj.location = border["bounding_point"]
+        # b3d_obj[prop(Blk030.XYZ)] = border["bounding_point"]
+        # b3d_obj[prop(Blk030.r)] = border["bounding_rad"]
+        b3d_obj[prop(Blk030.ResModule1)] = res_name1
+        b3d_obj[prop(Blk030.RoomName1)] = room_name1
+        b3d_obj[prop(Blk030.ResModule2)] = res_name2
+        b3d_obj[prop(Blk030.RoomName2)] = room_name2
+        # b3d_obj[prop(Blk030.Name)] = connected_room_name
+        # b3d_obj[prop(Blk030.XYZ1)] = p1
+        # b3d_obj[prop(Blk030.XYZ2)] = p2
 
-        b3dObj.parent = None
-        transfCollection.objects.link(b3dObj)
+        b3d_obj.parent = None
+        transf_collection.objects.link(b3d_obj)
 
 
-def assignMaterialByVertices(obj, vertIndexes, matIndex):
+def assign_material_by_vertices(obj, vert_indexes, mat_index):
     bpy.context.view_layer.objects.active = obj
     # bpy.ops is slow https://blender.stackexchange.com/questions/2848/why-avoid-bpy-ops#comment11187_2848
     # bpy.ops.object.mode_set(mode = 'EDIT')
@@ -2548,50 +2479,50 @@ def assignMaterialByVertices(obj, vertIndexes, matIndex):
     for i in vert:
         i.select=False
 
-    for idx in vertIndexes:
+    for idx in vert_indexes:
         obj.data.vertices[idx].select = True
-    selectedPolygons = getPolygonsBySelectedVertices(bpy.context.view_layer.objects.active)
-    for poly in selectedPolygons:
-        poly.material_index = matIndex
+    selected_polygons = get_polygons_by_selected_vertices(bpy.context.view_layer.objects.active)
+    for poly in selected_polygons:
+        poly.material_index = mat_index
 
-def getRESFolder(filepath):
+def get_res_folder(filepath):
     basename = os.path.basename(filepath)
     basepath = os.path.dirname(filepath)
     return os.path.join(basepath, f"{basename[:-4]}_unpack")
 
-def saveMaterial(resModule, materialStr):
-    nameSplit = materialStr.split(" ")
-    name = nameSplit[0]
-    params = nameSplit[1:]
+def save_material(res_module, material_str):
+    name_split = material_str.split(" ")
+    name = name_split[0]
+    params = name_split[1:]
 
-    material = resModule.materials.add()
+    material = res_module.materials.add()
     material.mat_name = name
     i = 0
     while i < len(params):
-        paramName = params[i].replace('"', '')
-        if len(paramName) > 0:
-            if paramName in ["tex", "ttx", "itx"]:
+        param_name = params[i].replace('"', '')
+        if len(param_name) > 0:
+            if param_name in ["tex", "ttx", "itx"]:
                 setattr(material, "is_tex", True)
                 setattr(material, "tex", int(params[i+1]))
-                setattr(material, "tex_type", paramName)
+                setattr(material, "tex_type", param_name)
                 i+=1
-            elif paramName in ["col", "att", "msk", "power", "coord"]:
-                setattr(material, "is_" + paramName, True)
-                setattr(material, paramName, int(params[i+1]))
+            elif param_name in ["col", "att", "msk", "power", "coord"]:
+                setattr(material, "is_" + param_name, True)
+                setattr(material, param_name, int(params[i+1]))
                 i+=1
-            elif paramName in ["reflect", "specular", "transp", "rot"]:
-                setattr(material, paramName, float(params[i+1]))
+            elif param_name in ["reflect", "specular", "transp", "rot"]:
+                setattr(material, param_name, float(params[i+1]))
                 i+=1
-            elif paramName in ["noz", "nof", "notile", "notileu", "notilev", \
+            elif param_name in ["noz", "nof", "notile", "notileu", "notilev", \
                                 "alphamirr", "bumpcoord", "usecol", "wave"]:
-                setattr(material, "is_" + paramName, True)
+                setattr(material, "is_" + param_name, True)
                 # i+=1
-            elif paramName in ["RotPoint", "move"]:
-                setattr(material, "is_" + paramName, True)
-                setattr(material, paramName, [float(params[i+1]), float(params[i+2])])
+            elif param_name in ["RotPoint", "move"]:
+                setattr(material, "is_" + param_name, True)
+                setattr(material, param_name, [float(params[i+1]), float(params[i+2])])
                 i+=2
-            elif paramName[0:3] == "env":
-                envid = paramName[3:]
+            elif param_name[0:3] == "env":
+                envid = param_name[3:]
                 if len(envid) > 0:
                     setattr(material, "is_envId", True)
                     setattr(material, "envId", int(envid))
@@ -2601,100 +2532,100 @@ def saveMaterial(resModule, materialStr):
                     i+=2
         i+=1
 
-def saveMaskfileParams(maskfile, params):
+def save_maskfile_params(maskfile, params):
     i = 0
     while i < len(params):
-        paramName = params[i].replace('"', '')
-        if paramName == "noload":
+        param_name = params[i].replace('"', '')
+        if param_name == "noload":
             setattr(maskfile, "is_noload", True)
         else:
-            someInt = None
+            some_int = None
             try:
-                someInt = int(params[i])
+                some_int = int(params[i])
             except:
                 pass
-            if someInt:
+            if some_int:
                 setattr(maskfile, "is_someint", True)
-                setattr(maskfile, "someint", someInt)
+                setattr(maskfile, "someint", some_int)
         i+=1
 
-def saveTextureParams(texture, params):
+def save_texture_params(texture, params):
     i = 0
     while i < len(params):
-        paramName = params[i].replace('"', '')
-        if paramName in ["noload", "bumpcoord", "memfix"]:
-            setattr(texture, "is_" + paramName, True)
+        param_name = params[i].replace('"', '')
+        if param_name in ["noload", "bumpcoord", "memfix"]:
+            setattr(texture, "is_" + param_name, True)
         else:
-            someInt = None
+            some_int = None
             try:
-                someInt = int(params[i])
+                some_int = int(params[i])
             except:
                 pass
-            if someInt:
+            if some_int:
                 setattr(texture, "is_someint", True)
-                setattr(texture, "someint", someInt)
+                setattr(texture, "someint", some_int)
         i+=1
 
 
-def unpackRES(resModule, filepath, saveOnDisk = True):
+def unpack_res(res_module, filepath, save_on_disk = True):
     log.info(f"Unpacking {filepath}:")
 
-    resdir = getRESFolder(filepath)
+    resdir = get_res_folder(filepath)
     curfolder = resdir
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
-    sections = readRESSections(filepath)
+    sections = read_res_sections(filepath)
 
     for section in sections:
-        sectionName = section["name"]
+        section_name = section["name"]
         if section["cnt"] > 0:
-            curfolder = os.path.join(resdir, sectionName)
-            if sectionName in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
-                binfilePath = os.path.join(curfolder, f"{sectionName}.txt")
-                if saveOnDisk:
-                    binfileBase = os.path.dirname(binfilePath)
-                    binfileBase = Path(binfileBase)
-                    binfileBase.mkdir(exist_ok=True, parents=True)
-                    with open(binfilePath, "wb") as outFile:
+            curfolder = os.path.join(resdir, section_name)
+            if section_name in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
+                binfile_path = os.path.join(curfolder, f"{section_name}.txt")
+                if save_on_disk:
+                    binfile_base = os.path.dirname(binfile_path)
+                    binfile_base = Path(binfile_base)
+                    binfile_base.mkdir(exist_ok=True, parents=True)
+                    with open(binfile_path, "wb") as out_file:
                         for data in section['data']:
-                            outFile.write((data['row']+"\n").encode("UTF-8"))
-                if sectionName == "MATERIALS":
+                            out_file.write((data['row']+"\n").encode("UTF-8"))
+                if section_name == "MATERIALS":
                     for data in section['data']:
-                        saveMaterial(resModule, data['row'])
+                        save_material(res_module, data['row'])
             else:
                 for data in section['data']:
-                    nameSplit = data['row'].split(" ")
-                    fullname = nameSplit[0]
-                    params = nameSplit[1:]
-                    pathSplit = fullname.split("\\")
-                    name = pathSplit[-1]
+                    name_split = data['row'].split(" ")
+                    fullname = name_split[0]
+                    params = name_split[1:]
+                    path_split = fullname.split("\\")
+                    name = path_split[-1]
                     subpath = ""
-                    if len(pathSplit) > 1:
-                        subpath = "\\".join(pathSplit[:-1])
-                    binfilePath = os.path.join(curfolder, f"{fullname}")
-                    if saveOnDisk:
-                        binfileBase = os.path.dirname(binfilePath)
-                        binfileBase = Path(binfileBase)
-                        binfileBase.mkdir(exist_ok=True, parents=True)
-                        with open(binfilePath, "wb") as binfile:
+                    if len(path_split) > 1:
+                        subpath = "\\".join(path_split[:-1])
+                    binfile_path = os.path.join(curfolder, f"{fullname}")
+                    if save_on_disk:
+                        binfile_base = os.path.dirname(binfile_path)
+                        binfile_base = Path(binfile_base)
+                        binfile_base.mkdir(exist_ok=True, parents=True)
+                        with open(binfile_path, "wb") as binfile:
                             log.info(f"Saving file {binfile.name}")
                             binfile.write(data['bytes'])
 
-                    if sectionName == "TEXTUREFILES":
-                        texture = resModule.textures.add()
+                    if section_name == "TEXTUREFILES":
+                        texture = res_module.textures.add()
                         texture.tex_name = name
                         texture.subpath = subpath
-                        saveTextureParams(texture, params)
+                        save_texture_params(texture, params)
 
-                    elif sectionName == "MASKFILES":
-                        maskfile = resModule.maskfiles.add()
+                    elif section_name == "MASKFILES":
+                        maskfile = res_module.maskfiles.add()
                         maskfile.msk_name = name
                         maskfile.subpath = subpath
-                        saveMaskfileParams(maskfile, params)
+                        save_maskfile_params(maskfile, params)
 
-                    elif sectionName == "PALETTEFILES":
-                        resModule.palette_subpath = subpath
-                        resModule.palette_name = name
+                    elif section_name == "PALETTEFILES":
+                        res_module.palette_subpath = subpath
+                        res_module.palette_name = name
 
     return

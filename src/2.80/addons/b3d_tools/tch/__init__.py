@@ -15,7 +15,7 @@ def read_tch(context, filepath, use_some_setting):
 
     file = open(filepath, 'r')
 
-    CollisionPlane = []
+    collision_plane = []
 
     CPlanes_num = 0
 
@@ -27,20 +27,20 @@ def read_tch(context, filepath, use_some_setting):
 
     for line in file:
         ColPlane_line = ""
-        if "CollisionPlane" in line:
-            CollisionPlane.append(line)
+        if "collision_plane" in line:
+            collision_plane.append(line)
             #CPlanes_num += 1
     file.close()
 
-    #print(str(CollisionPlane))
+    #print(str(collision_plane))
     ColPlane_vector = []
 
 
-    for i in range(len(CollisionPlane)):#(CPlanes_num):
+    for i in range(len(collision_plane)):#(CPlanes_num):
         if i < 10:
-            ColPlane_vector.append((CollisionPlane[i])[16:].split(" "))
+            ColPlane_vector.append((collision_plane[i])[16:].split(" "))
         else:
-            ColPlane_vector.append((CollisionPlane[i])[17:].split(" "))
+            ColPlane_vector.append((collision_plane[i])[17:].split(" "))
         #print(str(i))
 
 
@@ -143,8 +143,8 @@ def forChild(object, root, file, CollisionPlane_num):
                 v_num += 1
                 file.write("Corner_Mark_W" + str(v_num) + "=" + str(round(vert.co.x, 6)) + " " + str(round(-vert.co.z, 6)) + " " + str(round(vert.co.y, 6)) + "\n")
 
-        if object.name.find("CollisionPlane") != "Null" or "None":
-            if object.name != "CollisionPlane":
+        if object.name.find("collision_plane") != "Null" or "None":
+            if object.name != "collision_plane":
                 verticesL = []
                 uvs = []
                 faces = []
@@ -183,12 +183,12 @@ def forChild(object, root, file, CollisionPlane_num):
                 vector_length = sqrt(vector_to_plane.x ** 2 + vector_to_plane.y ** 2 + vector_to_plane.z ** 2)
                 vector_to_plane = vector_to_plane.normalized()
 
-                #file.write("CollisionPlane" + str(v_num) + "=" + str(round(vert.co.x, 6)) + " " + str(round(-vert.co.z, 6)) + " " + str(round(vert.co.y, 6)) + "\n")
+                #file.write("collision_plane" + str(v_num) + "=" + str(round(vert.co.x, 6)) + " " + str(round(-vert.co.z, 6)) + " " + str(round(vert.co.y, 6)) + "\n")
                 #print(vector_to_plane)
-                #file.write("CollisionPlane" + str(v_num) + "=" + str(vector_to_plane) + "\n")
+                #file.write("collision_plane" + str(v_num) + "=" + str(vector_to_plane) + "\n")
 
                 #if (vector_to_plane.x != 0 and vector_to_plane.y != 0 and vector_to_plane.z != 0):
-                file.write("CollisionPlane" + str(CollisionPlane_num) + "=" + str(round(vector_to_plane.x, 6)) + " " + str(round(vector_to_plane.y, 6)) + " " + str(round(vector_to_plane.z, 6)) + " " + str(round(vector_length, 6)) + "\n")
+                file.write("collision_plane" + str(CollisionPlane_num) + "=" + str(round(vector_to_plane.x, 6)) + " " + str(round(vector_to_plane.y, 6)) + " " + str(round(vector_to_plane.z, 6)) + " " + str(round(vector_length, 6)) + "\n")
                 CollisionPlane_num += 1
 
     for child in object.children:

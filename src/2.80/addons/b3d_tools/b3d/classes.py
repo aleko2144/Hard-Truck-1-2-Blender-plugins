@@ -12,80 +12,85 @@ from bpy.props import (StringProperty,
                         )
 
 from .class_descr import (
-    fieldType,
+    FieldType,
     FloatBlock
 )
 
-from .class_descr import (
-    b_1,
-    b_2,
-    # b_3,
-    b_4,
-    b_5,
-    b_6,
-    b_7,
-    # b_8,
-    b_9,
-    b_10,
-    b_11,
-    b_12,
-    b_13,
-    b_14,
-    b_15,
-    b_16,
-    b_17,
-    b_18,
-    b_20,
-    b_21,
-    b_22,
-    b_23,
-    b_24,
-    b_25,
-    b_26,
-    b_27,
-    b_28,
-    b_29,
-    b_30,
-    b_31,
-    b_33,
-    b_34,
-    b_35,
-    b_36,
-    b_37,
-    b_39,
-    b_40,
+from ..common import (
+    classes_logger
+)
 
-    pfb_8,
-    pfb_28,
-    pfb_35,
-    pvb_8,
-    pvb_35,
+log = classes_logger
+
+from .class_descr import (
+    Blk001,
+    Blk002,
+    # Blk003,
+    Blk004,
+    Blk005,
+    Blk006,
+    Blk007,
+    # Blk008,
+    Blk009,
+    Blk010,
+    Blk011,
+    Blk012,
+    Blk013,
+    Blk014,
+    Blk015,
+    Blk016,
+    Blk017,
+    Blk018,
+    Blk020,
+    Blk021,
+    Blk022,
+    Blk023,
+    Blk024,
+    Blk025,
+    Blk026,
+    Blk027,
+    Blk028,
+    Blk029,
+    Blk030,
+    Blk031,
+    Blk033,
+    Blk034,
+    Blk035,
+    Blk036,
+    Blk037,
+    Blk039,
+    Blk040,
+
+    Pfb008,
+    Pfb028,
+    Pfb035,
+    Pvb008,
+    Pvb035,
     # way objs
-    b_50,
-    b_51,
-    b_52
+    Blk050,
+    Blk051,
+    Blk052
 )
 
 from .common import (
-    resMaterialsCallback,
-    spacesCallback,
-    referenceablesCallback,
-    roomsCallback,
-    modulesCallback,
-    getMytoolBlockNameByClass
+    res_materials_callback,
+    spaces_callback,
+    referenceables_callback,
+    rooms_callback,
+    modules_callback
 )
 
 
-def setCustObjValue(subtype, bname, pname):
+def set_cust_obj_value(subtype, bname, pname):
     def callback_func(self, context):
 
         mytool = context.scene.my_tool
         result = getattr(getattr(mytool, bname), f'{pname}_enum')
-        if subtype == fieldType.INT:
+        if subtype == FieldType.INT:
             result = int(result)
-        elif subtype == fieldType.FLOAT:
+        elif subtype == FieldType.FLOAT:
             result = float(result)
-        elif subtype == fieldType.STRING:
+        elif subtype == FieldType.STRING:
             result = str(result)
 
         setattr(
@@ -96,402 +101,355 @@ def setCustObjValue(subtype, bname, pname):
 
     return callback_func
 
-def createTypeClass(zclass, multipleEdit = True):
-    attrs = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+class BlockClassHandler():
 
-    bname, bnum = getMytoolBlockNameByClass(zclass, multipleEdit)
+    PER_FACE_BLOCK = 'per_face_block'
+    PER_VERTEX_BLOCK = 'per_vertex_block'
+    BLOCK = 'block'
 
-    block_num = zclass.__name__.split('_')[1]
-    attributes = {
-        '__annotations__' : {}
-    }
-    for attr in attrs:
-        obj = zclass.__dict__[attr]
-        pname = obj['prop']
-        prop = None
+    block_classes = [
+        None, Blk001, Blk002, None, Blk004, Blk005, Blk006, Blk007, None, Blk009,
+        Blk010, Blk011, Blk012, Blk013, Blk014, Blk015, Blk016, Blk017, Blk018, None,
+        Blk020, Blk021, Blk022, Blk023, Blk024, Blk025, Blk026, Blk027, Blk028, Blk029,
+        Blk030, Blk031, None, Blk033, Blk034, Blk035, Blk036, Blk037, None, Blk039,
+        Blk040, None, None, None, None, None, None, None, None, None,
+        Blk050, Blk051, Blk052, None, None, None, None, None, None, None,
+    ]
 
-        if multipleEdit: # lock switches only for multiple edit
-            lockProp = BoolProperty(
-                name = "On./Off.",
-                description = "Enable/Disable param for editing",
-                default = True
-            )
+    per_face_block_classes = [
+        None, None, None, None, None, None, None, None, Pfb008, None,
+        None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, None, None, None, None, Pfb028, None,
+        None, None, None, None, None, Pfb035, None, None, None, None
+    ]
 
-        if obj['type'] == fieldType.STRING \
-        or obj['type'] == fieldType.COORD \
-        or obj['type'] == fieldType.RAD \
-        or obj['type'] == fieldType.FLOAT \
-        or obj['type'] == fieldType.INT \
-        or obj['type'] == fieldType.LIST:
+    per_vertex_block_classes = [
+        None, None, None, None, None, None, None, None, Pvb008, None,
+        None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, None, Pvb035, None, None, None, None
+    ]
 
-            if multipleEdit: # lock switches only for multiple edit
-                attributes['__annotations__']["show_"+pname] = lockProp
+    block_classes_gen = []
+    per_face_block_classes_gen = []
+    per_vertex_block_classes_gen = []
 
-            if obj['type'] == fieldType.STRING and multipleEdit:
-                prop = StringProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    default = obj['default'],
-                    maxlen = 32
+    @staticmethod
+    def get_block_type_from_bclass(bclass):
+        return bclass.__name__[:3]
+
+    @staticmethod
+    def get_block_num_from_bclass(bclass):
+        return int(bclass.__name__[3:])
+
+    @staticmethod
+    def get_class_def_by_type(block_num):
+        if block_num > 100:
+            return None
+        return BlockClassHandler.block_classes[block_num]
+
+    @staticmethod
+    def create_type_class(bclass, multiple_edit = True):
+        attrs = [obj for obj in bclass.__dict__.keys() if not obj.startswith('__')]
+
+        bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(bclass, multiple_edit)
+
+        attributes = {
+            '__annotations__' : {}
+        }
+        for attr in attrs:
+            obj = bclass.__dict__[attr]
+            pname = obj['prop']
+            prop = None
+
+            if multiple_edit: # lock switches only for multiple edit
+                lock_prop = BoolProperty(
+                    name = "On./Off.",
+                    description = "Enable/Disable param for editing",
+                    default = True
                 )
 
-            elif obj['type'] == fieldType.COORD and multipleEdit:
-                prop = FloatVectorProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    default = obj['default']
+            if obj['type'] == FieldType.STRING \
+            or obj['type'] == FieldType.COORD \
+            or obj['type'] == FieldType.RAD \
+            or obj['type'] == FieldType.FLOAT \
+            or obj['type'] == FieldType.INT \
+            or obj['type'] == FieldType.LIST:
+
+                if multiple_edit: # lock switches only for multiple edit
+                    attributes['__annotations__']["show_"+pname] = lock_prop
+
+                if obj['type'] == FieldType.STRING and multiple_edit:
+                    prop = StringProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        default = obj['default'],
+                        maxlen = 32
+                    )
+
+                elif obj['type'] == FieldType.COORD and multiple_edit:
+                    prop = FloatVectorProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        default = obj['default']
+                    )
+
+                elif (obj['type'] == FieldType.RAD or obj['type'] == FieldType.FLOAT) and multiple_edit:
+                    prop = FloatProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        default = obj['default']
+                    )
+
+                elif obj['type'] == FieldType.INT and multiple_edit:
+                    prop = IntProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        default = obj['default']
+                    )
+
+                elif obj['type'] == FieldType.LIST:
+                    prop = CollectionProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        type = FloatBlock
+                    )
+
+                attributes['__annotations__'][pname] = prop
+
+            elif obj['type'] == FieldType.ENUM \
+            or obj['type'] == FieldType.ENUM_DYN:
+
+
+                if multiple_edit: # lock switches only for multiple edit
+                    attributes['__annotations__']["show_"+pname] = lock_prop
+
+                enum_callback = None
+                subtype = obj.get('subtype')
+
+                if obj.get('callback') == FieldType.SPACE_NAME:
+                    enum_callback = spaces_callback
+                elif obj.get('callback') == FieldType.REFERENCEABLE:
+                    enum_callback = referenceables_callback
+                elif obj.get('callback') == FieldType.MATERIAL_IND:
+                    enum_callback = res_materials_callback
+                elif obj.get('callback') == FieldType.ROOM:
+                    enum_callback = rooms_callback(bname, f'{pname}_res')
+                elif obj.get('callback') == FieldType.RES_MODULE:
+                    enum_callback = modules_callback
+
+                if obj['type'] == FieldType.ENUM:
+                    prop = None
+                    prop_enum = None
+                    prop_switch = None
+
+                    prop_switch = BoolProperty(
+                        name = 'Use dropdown',
+                        description = 'Dropdown selection',
+                        default = False
+                    )
+
+                    prop_enum = EnumProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        items = obj['items'],
+                        default = obj['default'],
+                        update = set_cust_obj_value(subtype, bname, pname)
+                    )
+
+                    if multiple_edit:
+                        if subtype == FieldType.STRING:
+                            prop = StringProperty(
+                                name = obj['name'],
+                                description = obj['description'],
+                                default = obj['default'],
+                                maxlen = 32
+                            )
+                        elif subtype == FieldType.INT:
+                            prop = IntProperty(
+                                name = obj['name'],
+                                description = obj['description'],
+                                default = obj['default']
+                            )
+
+                    attributes['__annotations__'][f'{pname}_switch'] = prop_switch
+                    attributes['__annotations__'][f'{pname}_enum'] = prop_enum
+
+                    if multiple_edit:
+                        attributes['__annotations__'][f'{pname}'] = prop
+
+                elif obj['type'] == FieldType.ENUM_DYN:
+                    # prop = None
+                    prop_enum = None
+                    prop_switch = None
+
+                    prop_switch = BoolProperty(
+                        name = 'Use dropdown',
+                        description = 'Dropdown selection',
+                        default = False
+                    )
+
+                    prop_enum = EnumProperty(
+                        name = obj['name'],
+                        description = obj['description'],
+                        items = enum_callback,
+                        update = set_cust_obj_value(subtype, bname, pname)
+                    )
+
+
+                    if multiple_edit:
+                        if subtype == FieldType.STRING:
+                            prop = StringProperty(
+                                name = obj['name'],
+                                description = obj['description'],
+                                maxlen = 32
+                            )
+                        elif subtype == FieldType.INT:
+                            prop = IntProperty(
+                                name = obj['name'],
+                                description = obj['description']
+                            )
+
+                    attributes['__annotations__'][f'{pname}_switch'] = prop_switch
+                    attributes['__annotations__'][f'{pname}_enum'] = prop_enum
+
+                    if multiple_edit:
+                        attributes['__annotations__'][f'{pname}'] = prop
+
+            elif obj['type'] == FieldType.V_FORMAT: # currently only available in vertex edit
+
+                attributes['__annotations__'][f"show_{pname}"] = lock_prop
+
+                prop1 = BoolProperty(
+                    name = 'Triangulation offset',
+                    description = 'Order in which vertexes are read depends on that',
+                    default = True
                 )
+                attributes['__annotations__'][f'{pname}_triang_offset'] = prop1
 
-            elif (obj['type'] == fieldType.RAD or obj['type'] == fieldType.FLOAT) and multipleEdit:
-                prop = FloatProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    default = obj['default']
+                prop2 = BoolProperty(
+                    name = 'Use UV',
+                    description = 'If active, writes UV during export.',
+                    default = True
                 )
+                attributes['__annotations__'][f'{pname}_use_uvs'] = prop2
 
-            elif obj['type'] == fieldType.INT and multipleEdit:
-                prop = IntProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    default = obj['default']
+                prop3 = BoolProperty(
+                    name = 'Use normals',
+                    description = 'If active, writes normal during export.',
+                    default = True
                 )
+                attributes['__annotations__'][f'{pname}_use_normals'] = prop3
 
-            elif obj['type'] == fieldType.LIST:
-                prop = CollectionProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    type = FloatBlock
+                prop4 = BoolProperty(
+                    name = 'Normal switch',
+                    description = 'If active, use <float> for en(dis)abling normals. If not active use <float vector> for common normals. Is ignored if "Use normals" is inactive',
+                    default = True
                 )
+                attributes['__annotations__'][f'{pname}_normal_flag'] = prop4
 
-            attributes['__annotations__'][pname] = prop
+        if multiple_edit:
+            newclass = type(f"{bclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
+        else:
+            newclass = type(f"s_{bclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
+        return newclass
 
-        elif obj['type'] == fieldType.ENUM \
-        or obj['type'] == fieldType.ENUM_DYN:
+    @staticmethod
+    def create_block_properties():
 
+        BlockClassHandler.block_classes_gen = []
+        BlockClassHandler.per_face_block_classes_gen = []
+        BlockClassHandler.per_vertex_block_classes_gen = []
 
-            if multipleEdit: # lock switches only for multiple edit
-                attributes['__annotations__']["show_"+pname] = lockProp
+        attributes = {
+            '__annotations__' : {}
+        }
 
-            enum_callback = None
-            subtype = obj.get('subtype')
+        for bclass in [bc for bc in BlockClassHandler.block_classes if bc is not None]:
+            bnum = BlockClassHandler.get_block_num_from_bclass(bclass)
+            btype = BlockClassHandler.BLOCK
 
-            if obj.get('callback') == fieldType.SPACE_NAME:
-                enum_callback = spacesCallback
-            elif obj.get('callback') == fieldType.REFERENCEABLE:
-                enum_callback = referenceablesCallback
-            elif obj.get('callback') == fieldType.MATERIAL_IND:
-                enum_callback = resMaterialsCallback
-            elif obj.get('callback') == fieldType.ROOM:
-                enum_callback = roomsCallback(bname, f'{pname}_res')
-            elif obj.get('callback') == fieldType.RES_MODULE:
-                enum_callback = modulesCallback
+            gen_class = BlockClassHandler.create_type_class(bclass)
+            attributes['__annotations__'][f'{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            BlockClassHandler.block_classes_gen.append(gen_class)
 
-            if obj['type'] == fieldType.ENUM:
-                prop = None
-                prop_enum = None
-                prop_switch = None
+            gen_class = BlockClassHandler.create_type_class(bclass, False)
+            attributes['__annotations__'][f's_{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            BlockClassHandler.block_classes_gen.append(gen_class)
 
-                prop_switch = BoolProperty(
-                    name = 'Use dropdown',
-                    description = 'Dropdown selection',
-                    default = False
-                )
+        for bclass in [bc for bc in BlockClassHandler.per_face_block_classes if bc is not None]:
+            bnum = BlockClassHandler.get_block_num_from_bclass(bclass)
+            btype = BlockClassHandler.PER_FACE_BLOCK
 
-                prop_enum = EnumProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    items = obj['items'],
-                    default = obj['default'],
-                    update = setCustObjValue(subtype, bname, pname)
-                )
+            gen_class = BlockClassHandler.create_type_class(bclass)
+            attributes['__annotations__'][f'{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            BlockClassHandler.per_face_block_classes_gen.append(gen_class)
 
-                if multipleEdit:
-                    if subtype == fieldType.STRING:
-                        prop = StringProperty(
-                            name = obj['name'],
-                            description = obj['description'],
-                            default = obj['default'],
-                            maxlen = 32
-                        )
-                    elif subtype == fieldType.INT:
-                        prop = IntProperty(
-                            name = obj['name'],
-                            description = obj['description'],
-                            default = obj['default']
-                        )
+        for bclass in [bc for bc in BlockClassHandler.per_vertex_block_classes if bc is not None]:
+            bnum = BlockClassHandler.get_block_num_from_bclass(bclass)
+            btype = BlockClassHandler.PER_VERTEX_BLOCK
 
-                attributes['__annotations__'][f'{pname}_switch'] = prop_switch
-                attributes['__annotations__'][f'{pname}_enum'] = prop_enum
-
-                if multipleEdit:
-                    attributes['__annotations__'][f'{pname}'] = prop
-
-            elif obj['type'] == fieldType.ENUM_DYN:
-                # prop = None
-                prop_enum = None
-                prop_switch = None
-
-                prop_switch = BoolProperty(
-                    name = 'Use dropdown',
-                    description = 'Dropdown selection',
-                    default = False
-                )
-
-                prop_enum = EnumProperty(
-                    name = obj['name'],
-                    description = obj['description'],
-                    items = enum_callback,
-                    update = setCustObjValue(subtype, bname, pname)
-                )
+            gen_class = BlockClassHandler.create_type_class(bclass)
+            attributes['__annotations__'][f'{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            BlockClassHandler.per_vertex_block_classes_gen.append(gen_class)
 
 
-                if multipleEdit:
-                    if subtype == fieldType.STRING:
-                        prop = StringProperty(
-                            name = obj['name'],
-                            description = obj['description'],
-                            maxlen = 32
-                        )
-                    elif subtype == fieldType.INT:
-                        prop = IntProperty(
-                            name = obj['name'],
-                            description = obj['description']
-                        )
+        return type("BlockSettings", (bpy.types.PropertyGroup,), attributes)
 
-                attributes['__annotations__'][f'{pname}_switch'] = prop_switch
-                attributes['__annotations__'][f'{pname}_enum'] = prop_enum
+    @staticmethod
+    def get_mytool_block_name_by_class(bclass, multiple_class = True):
+        bname = ''
+        btype = BlockClassHandler.get_block_type_from_bclass(bclass)
+        bnum = BlockClassHandler.get_block_num_from_bclass(bclass)
+        if btype == 'Blk':
+            if multiple_class:
+                bname = f'{BlockClassHandler.BLOCK}_{bnum}'
+            else:
+                bname = f's_{BlockClassHandler.BLOCK}_{bnum}'
+        elif btype == 'Pfb':
+            bname = f'{BlockClassHandler.PER_FACE_BLOCK}_{bnum}'
+        elif btype == 'Pvb':
+            bname = f'{BlockClassHandler.PER_VERTEX_BLOCK}_{bnum}'
 
-                if multipleEdit:
-                    attributes['__annotations__'][f'{pname}'] = prop
+        return [bname, bnum]
 
-        elif obj['type'] == fieldType.V_FORMAT: # currently only available in vertex edit
+    @staticmethod
+    def get_mytool_block_name(btype, bnum, multiple_class = False):
+        bname = ''
+        if btype == 'Blk':
+            if multiple_class:
+                bname = f'{BlockClassHandler.BLOCK}_{bnum}'
+            else:
+                bname = f's_{BlockClassHandler.BLOCK}_{bnum}'
+        elif btype == 'Pfb':
+            bname = f'{BlockClassHandler.PER_FACE_BLOCK}_{bnum}'
+        elif btype == 'Pvb':
+            bname = f'{BlockClassHandler.PER_VERTEX_BLOCK}_{bnum}'
 
-            attributes['__annotations__'][f"show_{pname}"] = lockProp
+        return bname
 
-            prop1 = BoolProperty(
-                name = 'Triangulation offset',
-                description = 'Order in which vertexes are read depends on that',
-                default = True
-            )
-            attributes['__annotations__'][f'{pname}_triang_offset'] = prop1
+BlockSettings = BlockClassHandler.create_block_properties()
 
-            prop2 = BoolProperty(
-                name = 'Use UV',
-                description = 'If active, writes UV during export.',
-                default = True
-            )
-            attributes['__annotations__'][f'{pname}_use_uvs'] = prop2
-
-            prop3 = BoolProperty(
-                name = 'Use normals',
-                description = 'If active, writes normal during export.',
-                default = True
-            )
-            attributes['__annotations__'][f'{pname}_use_normals'] = prop3
-
-            prop4 = BoolProperty(
-                name = 'Normal switch',
-                description = 'If active, use <float> for en(dis)abling normals. If not active use <float vector> for common normals. Is ignored if "Use normals" is inactive',
-                default = True
-            )
-            attributes['__annotations__'][f'{pname}_normal_flag'] = prop4
-
-    if multipleEdit:
-        newclass = type(f"{zclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
-    else:
-        newclass = type(f"s_{zclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
-    return newclass
-
-
-perFaceBlock_8 = createTypeClass(pfb_8)
-perFaceBlock_28 = createTypeClass(pfb_28)
-perFaceBlock_35 = createTypeClass(pfb_35)
-
-perVertBlock_8 = createTypeClass(pvb_8)
-perVertBlock_35 = createTypeClass(pvb_35)
-
-s_block_1 = createTypeClass(b_1, False)
-s_block_2 = createTypeClass(b_2, False)
-# s_block_3 = createTypeClass(b_3, False)
-s_block_4 = createTypeClass(b_4, False)
-s_block_5 = createTypeClass(b_5, False)
-s_block_6 = createTypeClass(b_6, False)
-s_block_7 = createTypeClass(b_7, False)
-# s_block_8 = createTypeClass(b_8, False)
-s_block_9 = createTypeClass(b_9, False)
-s_block_10 = createTypeClass(b_10, False)
-s_block_11 = createTypeClass(b_11, False)
-s_block_12 = createTypeClass(b_12, False)
-s_block_13 = createTypeClass(b_13, False)
-s_block_14 = createTypeClass(b_14, False)
-s_block_15 = createTypeClass(b_15, False)
-s_block_16 = createTypeClass(b_16, False)
-s_block_17 = createTypeClass(b_17, False)
-s_block_18 = createTypeClass(b_18, False)
-s_block_20 = createTypeClass(b_20, False)
-s_block_21 = createTypeClass(b_21, False)
-s_block_22 = createTypeClass(b_22, False)
-s_block_23 = createTypeClass(b_23, False)
-s_block_24 = createTypeClass(b_24, False)
-s_block_25 = createTypeClass(b_25, False)
-s_block_26 = createTypeClass(b_26, False)
-s_block_27 = createTypeClass(b_27, False)
-s_block_28 = createTypeClass(b_28, False)
-s_block_29 = createTypeClass(b_29, False)
-s_block_30 = createTypeClass(b_30, False)
-s_block_31 = createTypeClass(b_31, False)
-s_block_33 = createTypeClass(b_33, False)
-s_block_34 = createTypeClass(b_34, False)
-s_block_35 = createTypeClass(b_35, False)
-s_block_36 = createTypeClass(b_36, False)
-s_block_37 = createTypeClass(b_37, False)
-s_block_39 = createTypeClass(b_39, False)
-s_block_40 = createTypeClass(b_40, False)
-
-s_block_50 = createTypeClass(b_50, False)
-s_block_51 = createTypeClass(b_51, False)
-s_block_52 = createTypeClass(b_52, False)
-
-
-block_1 = createTypeClass(b_1)
-block_2 = createTypeClass(b_2)
-# block_3 = createTypeClass(b_3)
-block_4 = createTypeClass(b_4)
-block_5 = createTypeClass(b_5)
-block_6 = createTypeClass(b_6)
-block_7 = createTypeClass(b_7)
-# block_8 = createTypeClass(b_8)
-block_9 = createTypeClass(b_9)
-block_10 = createTypeClass(b_10)
-block_11 = createTypeClass(b_11)
-block_12 = createTypeClass(b_12)
-block_13 = createTypeClass(b_13)
-block_14 = createTypeClass(b_14)
-block_15 = createTypeClass(b_15)
-block_16 = createTypeClass(b_16)
-block_17 = createTypeClass(b_17)
-block_18 = createTypeClass(b_18)
-block_20 = createTypeClass(b_20)
-block_21 = createTypeClass(b_21)
-block_22 = createTypeClass(b_22)
-block_23 = createTypeClass(b_23)
-block_24 = createTypeClass(b_24)
-block_25 = createTypeClass(b_25)
-block_26 = createTypeClass(b_26)
-block_27 = createTypeClass(b_27)
-block_28 = createTypeClass(b_28)
-block_29 = createTypeClass(b_29)
-block_30 = createTypeClass(b_30)
-block_31 = createTypeClass(b_31)
-block_33 = createTypeClass(b_33)
-block_34 = createTypeClass(b_34)
-block_35 = createTypeClass(b_35)
-block_36 = createTypeClass(b_36)
-block_37 = createTypeClass(b_37)
-block_39 = createTypeClass(b_39)
-block_40 = createTypeClass(b_40)
-
-block_50 = createTypeClass(b_50)
-block_51 = createTypeClass(b_51)
-block_52 = createTypeClass(b_52)
-
-_classes = [
-    s_block_1,
-    s_block_2,
-    # s_block_3,
-    s_block_4,
-    s_block_5,
-    s_block_6,
-    s_block_7,
-    # s_block_8,
-    s_block_9,
-    s_block_10,
-    s_block_11,
-    s_block_12,
-    s_block_13,
-    s_block_14,
-    s_block_15,
-    s_block_16,
-    s_block_17,
-    s_block_18,
-    s_block_20,
-    s_block_21,
-    s_block_22,
-    s_block_23,
-    s_block_24,
-    s_block_25,
-    s_block_26,
-    s_block_27,
-    s_block_28,
-    s_block_29,
-    s_block_30,
-    s_block_31,
-    s_block_33,
-    s_block_34,
-    s_block_35,
-    s_block_36,
-    s_block_37,
-    s_block_39,
-    s_block_40,
-
-    s_block_50,
-    s_block_51,
-    s_block_52,
-
-    block_1,
-    block_2,
-    # block_3,
-    block_4,
-    block_5,
-    block_6,
-    block_7,
-    # block_8,
-    block_9,
-    block_10,
-    block_11,
-    block_12,
-    block_13,
-    block_14,
-    block_15,
-    block_16,
-    block_17,
-    block_18,
-    block_20,
-    block_21,
-    block_22,
-    block_23,
-    block_24,
-    block_25,
-    block_26,
-    block_27,
-    block_28,
-    block_29,
-    block_30,
-    block_31,
-    block_33,
-    block_34,
-    block_35,
-    block_36,
-    block_37,
-    block_39,
-    block_40,
-
-    block_50,
-    block_51,
-    block_52,
-
-    perFaceBlock_8,
-    perFaceBlock_28,
-    perFaceBlock_35,
-
-    perVertBlock_8,
-    perVertBlock_35
-]
+_classes = [BlockSettings]
 
 def register():
+    for cls in BlockClassHandler.block_classes_gen:
+        bpy.utils.register_class(cls)
+    for cls in BlockClassHandler.per_face_block_classes_gen:
+        bpy.utils.register_class(cls)
+    for cls in BlockClassHandler.per_vertex_block_classes_gen:
+        bpy.utils.register_class(cls)
     for cls in _classes:
         bpy.utils.register_class(cls)
+    bpy.types.Scene.block_tool = bpy.props.PointerProperty(type=BlockSettings)
 
 def unregister():
-    for cls in _classes[::-1]: #reversed
+    del bpy.types.Scene.block_tool
+    for cls in _classes[::-1]:
+        bpy.utils.unregister_class(cls)
+    for cls in BlockClassHandler.per_vertex_block_classes_gen[::-1]: #reversed
+        bpy.utils.unregister_class(cls)
+    for cls in BlockClassHandler.per_face_block_classes_gen[::-1]: #reversed
+        bpy.utils.unregister_class(cls)
+    for cls in BlockClassHandler.block_classes_gen[::-1]: #reversed
         bpy.utils.unregister_class(cls)

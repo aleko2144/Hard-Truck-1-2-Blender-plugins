@@ -30,9 +30,9 @@ from . import (
     import_b3d, export_b3d
 )
 from .common import (
-    resModulesCallback,
-    modulesCallback,
-    getColPropertyByName
+    res_modules_callback,
+    modules_callback,
+    get_col_property_by_name
 )
 from ..common import (
     menus_logger,
@@ -68,21 +68,21 @@ class HTImportPreferences(AddonPreferences):
         row = layout.row()
         row.prop(self, 'logger_level', expand=False)
 
-def drawMultiSelectList(self, layout, listName, perRow):
+def draw_multi_select_list(self, layout, list_name, per_row):
 
     i = 0
-    listObj = getattr(self, listName)
-    rowcnt = math.floor(len(listObj)/perRow)
+    list_obj = getattr(self, list_name)
+    rowcnt = math.floor(len(list_obj)/per_row)
 
-    if len(listObj) > 0:
+    if len(list_obj) > 0:
 
         for j in range(rowcnt):
             row = layout.row()
-            for block in listObj[i:i+perRow]:
+            for block in list_obj[i:i+per_row]:
                 row.prop(block, 'state', text=block['name'], toggle=True)
-            i+=perRow
+            i+=per_row
         row = layout.row()
-        for block in listObj[i:]:
+        for block in list_obj[i:]:
             row.prop(block, 'state', text=block['name'], toggle=True)
     else:
         layout.label(text='No items')
@@ -135,27 +135,29 @@ class ImportRES(Operator, ImportHelper):
 
         # importing Res
         mytool = bpy.context.scene.my_tool
-        resModules = mytool.resModules
+        res_modules = mytool.res_modules
 
         #importing COMMON.RES(Hard Truck 2)
-        commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
-        commonResModule = getColPropertyByName(resModules, 'COMMON')
+        common_res_path = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+        common_res_module = get_col_property_by_name(res_modules, 'COMMON')
 
-        if (commonResModule is None or self.to_reload_common_res) and os.path.exists(commonResPath):
-            import_b3d.import_common_dot_res(self, context, commonResPath)
+        tt1 = time.mktime(datetime.datetime.now().timetuple())
+        if (common_res_module is None or self.to_reload_common_res) and os.path.exists(common_res_path):
+            import_b3d.import_common_dot_res(self, context, common_res_path)
             t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
 
-            tt = time.mktime(datetime.datetime.now().timetuple())
+            tt2 = time.mktime(datetime.datetime.now().timetuple())
 
             t0.start()
             t0.join()
 
-            tt = time.mktime(datetime.datetime.now().timetuple()) - tt
+            tt2 = time.mktime(datetime.datetime.now().timetuple()) - tt2
 
         else:
             self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
-        log.info(f'All RES imported in {tt} seconds')
+        tt1 = time.mktime(datetime.datetime.now().timetuple()) - tt1
+        log.info(f'All RES imported in {tt1} seconds')
 
         return {'FINISHED'}
 
@@ -207,7 +209,7 @@ class ExportRES(Operator, ExportHelper):
 
         # RES modules
         self.res_modules.clear()
-        for module in resModulesCallback(self, None):
+        for module in res_modules_callback(self, None):
             item = self.res_modules.add()
             item.name = str(module[0])
             item.state = False
@@ -220,7 +222,7 @@ class ExportRES(Operator, ExportHelper):
 
         log.info(f'Importing to folder {self.directory}')
         t = time.mktime(datetime.datetime.now().timetuple())
-        export_b3d.exportRes(context, self, self.directory)
+        export_b3d.export_res(context, self, self.directory)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         log.info(f'Finished importing in {t} seconds')
 
@@ -234,7 +236,7 @@ class ExportRES(Operator, ExportHelper):
         layout.label(text="Modules to export:")
         box1 = layout.box()
         # RES modules
-        drawMultiSelectList(self, box1, 'res_modules', 1)
+        draw_multi_select_list(self, box1, 'res_modules', 1)
 
         layout.label(text="RES Settings:")
         box2 = layout.box()
@@ -248,7 +250,7 @@ class ExportRES(Operator, ExportHelper):
         col = box3.column()
 
         # RES sections
-        drawMultiSelectList(self, col, 'res_sections', 1)
+        draw_multi_select_list(self, col, 'res_sections', 1)
 
         if self.to_merge:
             col.enabled = True
@@ -342,14 +344,14 @@ class ImportB3D(Operator, ImportHelper):
         # importing Res
 
         mytool = bpy.context.scene.my_tool
-        resModules = mytool.resModules
+        res_modules = mytool.res_modules
 
         #importing COMMON.RES(Hard Truck 2)
-        commonResPath = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
-        commonResModule = getColPropertyByName(resModules, 'COMMON')
+        common_res_path = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+        common_res_module = get_col_property_by_name(res_modules, 'COMMON')
 
-        if (commonResModule is None or self.to_reload_common_res) and self.to_import_textures and os.path.exists(commonResPath):
-            import_b3d.import_common_dot_res(self, context, commonResPath)
+        if (common_res_module is None or self.to_reload_common_res) and self.to_import_textures and os.path.exists(common_res_path):
+            import_b3d.import_common_dot_res(self, context, common_res_path)
         else:
             self.report({'ERROR'}, "Common.res path is wrong or is not set. There might be problems with imported textures! Please, set path to Common.res in addon preferences.")
 
@@ -427,7 +429,7 @@ class ImportB3D(Operator, ImportHelper):
             for block in self.blocks_to_import:
                 block.state = False
 
-        drawMultiSelectList(self, box1, 'blocks_to_import', 8)
+        draw_multi_select_list(self, box1, 'blocks_to_import', 8)
 
 
 class ExportB3D(Operator, ExportHelper):
@@ -486,7 +488,7 @@ class ExportB3D(Operator, ExportHelper):
 
         # RES modules
         self.res_modules.clear()
-        for module in modulesCallback(self, None):
+        for module in modules_callback(self, None):
             item = self.res_modules.add()
             item.name = str(module[0])
             item.state = False
@@ -498,12 +500,12 @@ class ExportB3D(Operator, ExportHelper):
         log.info(f'Exporting to folder {self.filepath}')
         if self.to_export_res:
             t = time.mktime(datetime.datetime.now().timetuple())
-            export_b3d.exportRes(context, self, self.filepath)
+            export_b3d.export_res(context, self, self.filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             log.info(f'Finished exporting RES in {t} seconds')
 
         t = time.mktime(datetime.datetime.now().timetuple())
-        export_b3d.exportB3d(context, self, self.filepath)
+        export_b3d.export_b3d(context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         log.info(f'Finished exporting B3D in {t} seconds')
         self.report({'INFO'}, 'B3D exported')
@@ -515,7 +517,7 @@ class ExportB3D(Operator, ExportHelper):
 
         layout.label(text="Modules to export:")
         box1 = layout.box()
-        drawMultiSelectList(self, box1, 'res_modules', 1)
+        draw_multi_select_list(self, box1, 'res_modules', 1)
 
         layout.label(text="B3D Settings:")
 
@@ -535,7 +537,7 @@ class ExportB3D(Operator, ExportHelper):
         col = box4.column()
 
         # RES sections
-        drawMultiSelectList(self, col, 'res_sections', 1)
+        draw_multi_select_list(self, col, 'res_sections', 1)
 
         if self.to_merge:
             col.enabled = True
@@ -570,7 +572,7 @@ class ImportRAW(Operator, ImportHelper):
             log.info(f'Importing file {filepath}')
             t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
-                import_b3d.importRaw(file, context, self, filepath)
+                import_b3d.import_raw(file, context, self, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             log.info(f'Finished importing in {t} seconds')
 
@@ -602,7 +604,7 @@ class ImportWAY(Operator, ImportHelper):
             log.info(f'Importing file {filepath}')
             t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
-                import_way.importWay(file, context, filepath)
+                import_way.import_way(file, context, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             log.info(f'Finished importing in {t} seconds')
 
@@ -630,7 +632,7 @@ class ExportWAY(Operator, ExportHelper):
         wm = context.window_manager
 
         self.res_modules.clear()
-        for module in modulesCallback(self, None):
+        for module in modules_callback(self, None):
             item = self.res_modules.add()
             item.name = str(module[0])
             item.state = False
@@ -644,7 +646,7 @@ class ExportWAY(Operator, ExportHelper):
 
         log.info(f'Exporting to folder {self.filepath}')
         t = time.mktime(datetime.datetime.now().timetuple())
-        export_way.exportWay(context, self, self.filepath)
+        export_way.export_way(context, self, self.filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         log.info(f'Finished exporting in {t} seconds')
         self.report({'INFO'}, 'WAY exported')
@@ -658,7 +660,7 @@ class ExportWAY(Operator, ExportHelper):
         layout.label(text="Modules to export:")
         box1 = layout.box()
 
-        drawMultiSelectList(self, box1, 'res_modules', 1)
+        draw_multi_select_list(self, box1, 'res_modules', 1)
 
 
 def menu_func_import(self, context):

@@ -1,7 +1,4 @@
-
-
 import bpy
-import logging
 
 from ..common import (
     getRegion,
@@ -11,77 +8,47 @@ from ..common import (
 from .. import consts
 
 from .common import (
-    isRootObj
+    is_root_obj
 )
 from .scripts import (
-    applyRemoveTransforms,
-    hideLOD,
-    showLOD,
-    showConditionals,
-    hideConditionals,
-    showHideObjByType,
+    apply_remove_transforms,
+    hide_lod,
+    show_lod,
+    show_conditionals,
+    hide_conditionals,
+    show_hide_obj_by_type,
     prop,
-    drawCommon,
-    drawAllFieldsByType,
-    getAllObjsByType,
-    setAllObjsByType,
-    getPerFaceByType,
-    setPerFaceByType,
-    getPerVertexByType,
-    setPerVertexByType,
-    showHideSphere,
-    getObjByProp,
-    setObjByProp,
-    createCustomAttribute
+    draw_common,
+    draw_all_fields_by_type,
+    get_all_objs_by_type,
+    set_all_objs_by_type,
+    get_per_face_by_type,
+    set_per_face_by_type,
+    get_per_vertex_by_type,
+    set_per_vertex_by_type,
+    show_hide_sphere,
+    get_obj_by_prop,
+    set_obj_by_prop,
+    create_custom_attribute
 )
-
 
 from .classes import (
-    block_1,block_2, \
-    # block_3,
-    block_4,block_5,block_6,block_7, \
-    # block_8,
-    block_9,block_10,\
-    block_11,block_12,block_13,block_14,block_15,block_16,block_17,block_18,block_20,\
-    block_21,block_22,block_23,block_24,block_25,block_26,block_27,block_28,block_29,\
-    block_30,block_31,block_33,block_34,block_35,block_36,block_37,block_39,block_40,\
-
-    perFaceBlock_8, perFaceBlock_28, perFaceBlock_35, perVertBlock_8, perVertBlock_35,\
-
-    block_50, block_51, block_52,\
-
-    s_block_1,s_block_2, \
-    # s_block_3,
-    s_block_4,s_block_5,s_block_6,s_block_7, \
-    # s_block_8,
-    s_block_9,s_block_10,\
-    s_block_11,s_block_12,s_block_13,s_block_14,s_block_15,s_block_16,s_block_17,s_block_18,s_block_20,\
-    s_block_21,s_block_22,s_block_23,s_block_24,s_block_25,s_block_26,s_block_27,s_block_28,s_block_29,\
-    s_block_30,s_block_31,s_block_33,s_block_34,s_block_35,s_block_36,s_block_37,s_block_39,s_block_40,\
-
-    s_block_50,s_block_51,s_block_52
+    BlockClassHandler
 )
+
 from .class_descr import (
-    getClassDefByType,
-    b_1,b_2, \
-    # b_3,
-    b_4,b_5,b_6,b_7, \
-    # b_8,
-    b_9,b_10,\
-    b_11,b_12,b_13,b_14,b_15,b_16,b_17,b_18,b_20,\
-    b_21,b_22,b_23,b_24,b_25,b_26,b_27,b_28,b_29,b_30,\
-    b_31,b_33,b_34,b_35,b_36,b_37,b_39,b_40,\
-    pfb_8, pfb_28, pfb_35, pvb_8, pvb_35,
-    b_50,b_51,b_52,
+    Blk020,Blk021,Blk023,
+    Pfb008, Pfb028, Pfb035, Pvb008, Pvb035,
+    Blk050,
     ResBlock
 )
 
 from .common import (
-    getCurrentRESIndex
+    get_current_res_index
 )
 
-from .custom_UIList import (
-    drawListControls
+from .custom_ui_list import (
+    draw_list_controls
 )
 
 
@@ -95,164 +62,64 @@ from bpy.props import (StringProperty,
                         CollectionProperty
                         )
 
-from bpy.types import (Panel,
-                        Operator,
-                        PropertyGroup,
-                        )
-
-
 #Setup module logger
 log = panel_logger
-
-
 
 # ------------------------------------------------------------------------
 #    store properties in the active scene
 # ------------------------------------------------------------------------
 
-def resModuleCallback(scene, context):
+def res_module_callback(scene, context):
 
     mytool = context.scene.my_tool
-    resModules = mytool.resModules
+    res_modules = mytool.res_modules
 
-    enumProperties = [("-1", "None", "")]
+    enum_properties = [("-1", "None", "")]
 
-    enumProperties.extend([(str(i), cn.value, "") for i, cn in enumerate(resModules)])
+    enum_properties.extend([(str(i), cn.value, "") for i, cn in enumerate(res_modules)])
 
-    return enumProperties
-
-
+    return enum_properties
 
 class PanelSettings(bpy.types.PropertyGroup):
 
-    sBlock1: PointerProperty(type=s_block_1)
-    sBlock2: PointerProperty(type=s_block_2)
-    # sBlock3: PointerProperty(type=s_block_3)
-    sBlock4: PointerProperty(type=s_block_4)
-    sBlock5: PointerProperty(type=s_block_5)
-    sBlock6: PointerProperty(type=s_block_6)
-    sBlock7: PointerProperty(type=s_block_7)
-    # sBlock8: PointerProperty(type=s_block_8)
-    sBlock9: PointerProperty(type=s_block_9)
-    sBlock10: PointerProperty(type=s_block_10)
-    sBlock11: PointerProperty(type=s_block_11)
-    sBlock12: PointerProperty(type=s_block_12)
-    sBlock13: PointerProperty(type=s_block_13)
-    sBlock14: PointerProperty(type=s_block_14)
-    sBlock15: PointerProperty(type=s_block_15)
-    sBlock16: PointerProperty(type=s_block_16)
-    sBlock17: PointerProperty(type=s_block_17)
-    sBlock18: PointerProperty(type=s_block_18)
-    sBlock20: PointerProperty(type=s_block_20)
-    sBlock21: PointerProperty(type=s_block_21)
-    sBlock22: PointerProperty(type=s_block_22)
-    sBlock23: PointerProperty(type=s_block_23)
-    sBlock24: PointerProperty(type=s_block_24)
-    sBlock25: PointerProperty(type=s_block_25)
-    sBlock26: PointerProperty(type=s_block_26)
-    sBlock27: PointerProperty(type=s_block_27)
-    sBlock28: PointerProperty(type=s_block_28)
-    sBlock29: PointerProperty(type=s_block_29)
-    sBlock30: PointerProperty(type=s_block_30)
-    sBlock31: PointerProperty(type=s_block_31)
-    sBlock33: PointerProperty(type=s_block_33)
-    sBlock34: PointerProperty(type=s_block_34)
-    sBlock35: PointerProperty(type=s_block_35)
-    sBlock36: PointerProperty(type=s_block_36)
-    sBlock37: PointerProperty(type=s_block_37)
-    sBlock39: PointerProperty(type=s_block_39)
-    sBlock40: PointerProperty(type=s_block_40)
+    res_modules: CollectionProperty(type=ResBlock)
 
-    sBlock50: PointerProperty(type=s_block_50)
-    sBlock51: PointerProperty(type=s_block_51)
-    sBlock52: PointerProperty(type=s_block_52)
-
-    block1: PointerProperty(type=block_1)
-    block2: PointerProperty(type=block_2)
-    # block3: PointerProperty(type=block_3)
-    block4: PointerProperty(type=block_4)
-    block5: PointerProperty(type=block_5)
-    block6: PointerProperty(type=block_6)
-    block7: PointerProperty(type=block_7)
-    # block8: PointerProperty(type=block_8)
-    block9: PointerProperty(type=block_9)
-    block10: PointerProperty(type=block_10)
-    block11: PointerProperty(type=block_11)
-    block12: PointerProperty(type=block_12)
-    block13: PointerProperty(type=block_13)
-    block14: PointerProperty(type=block_14)
-    block15: PointerProperty(type=block_15)
-    block16: PointerProperty(type=block_16)
-    block17: PointerProperty(type=block_17)
-    block18: PointerProperty(type=block_18)
-    block20: PointerProperty(type=block_20)
-    block21: PointerProperty(type=block_21)
-    block22: PointerProperty(type=block_22)
-    block23: PointerProperty(type=block_23)
-    block24: PointerProperty(type=block_24)
-    block25: PointerProperty(type=block_25)
-    block26: PointerProperty(type=block_26)
-    block27: PointerProperty(type=block_27)
-    block28: PointerProperty(type=block_28)
-    block29: PointerProperty(type=block_29)
-    block30: PointerProperty(type=block_30)
-    block31: PointerProperty(type=block_31)
-    block33: PointerProperty(type=block_33)
-    block34: PointerProperty(type=block_34)
-    block35: PointerProperty(type=block_35)
-    block36: PointerProperty(type=block_36)
-    block37: PointerProperty(type=block_37)
-    block39: PointerProperty(type=block_39)
-    block40: PointerProperty(type=block_40)
-
-    block50: PointerProperty(type=block_50)
-    block51: PointerProperty(type=block_51)
-    block52: PointerProperty(type=block_52)
-
-    perFaceBlock8: PointerProperty(type=perFaceBlock_8)
-    perFaceBlock28: PointerProperty(type=perFaceBlock_28)
-    perFaceBlock35: PointerProperty(type=perFaceBlock_35)
-    perVertBlock8: PointerProperty(type=perVertBlock_8)
-    perVertBlock35: PointerProperty(type=perVertBlock_35)
-
-    resModules: CollectionProperty(type=ResBlock)
-
-    isImporting: bpy.props.BoolProperty(
+    is_importing: bpy.props.BoolProperty(
         name ='isRESImporting',
         default = False
     )
 
-    selectedResModule: EnumProperty(
+    selected_res_module: EnumProperty(
         name="RES module",
         description="Selected RES module",
-        items=resModuleCallback
+        items=res_module_callback
     )
 
-    conditionGroup : bpy.props.IntProperty(
+    condition_group : bpy.props.IntProperty(
         name='Event number',
         description='Event number(object group), that should be shown/hidden. If -1, then all events are chosen. If event number is too big, closest suitable number is chosen.',
         default=-1,
         min=-1
     )
 
-    BlockName_string : bpy.props.StringProperty(
+    block_name_string : bpy.props.StringProperty(
         name="Block name",
         default="",
         maxlen=30,
-        )
+    )
 
-    addBlockType_enum : bpy.props.EnumProperty(
+    add_block_type_enum : bpy.props.EnumProperty(
         name="Block type",
         items= consts.blockTypeList
         )
 
-    Radius : bpy.props.FloatProperty(
+    radius : bpy.props.FloatProperty(
         name = "Block rad",
         description = "Block rendering distance",
         default = 1.0,
         )
 
-    castType_enum : bpy.props.EnumProperty(
+    cast_type_enum : bpy.props.EnumProperty(
         name="Cast type",
         items=[
             ('mesh', "Mesh", "Cast selected meshes to vertices(6,7,36,37) polygons blocks(8,35)"),
@@ -262,7 +129,7 @@ class PanelSettings(bpy.types.PropertyGroup):
         ]
     )
 
-    vertexBlock_enum : bpy.props.EnumProperty(
+    vertex_block_enum : bpy.props.EnumProperty(
         name="Vertex block type",
         default = '37',
         items=[
@@ -273,7 +140,7 @@ class PanelSettings(bpy.types.PropertyGroup):
         ]
     )
 
-    polyBlock_enum : bpy.props.EnumProperty(
+    poly_block_enum : bpy.props.EnumProperty(
         name="Poly block type",
         default = '8',
         items=[
@@ -283,7 +150,7 @@ class PanelSettings(bpy.types.PropertyGroup):
     )
 
 
-    addBlocks_enum : bpy.props.EnumProperty(
+    add_blocks_enum : bpy.props.EnumProperty(
         name="Assembly type",
         items=[
                 ('LOD_9', "Trigger(9)", "Trigger(9)"),
@@ -306,21 +173,21 @@ class PanelSettings(bpy.types.PropertyGroup):
                ]
         )
 
-    LODLevel_int : bpy.props.IntProperty(
+    lod_level_int : bpy.props.IntProperty(
         name='LOD level',
         description='LOD level',
         default=0,
         min=0
     )
 
-    addRoomNameIndex_string : bpy.props.StringProperty(
+    add_room_name_index_string : bpy.props.StringProperty(
         name="Room name",
         description="",
         default="aa_000",
         maxlen=30,
         )
 
-    mirrorType_enum : bpy.props.EnumProperty(
+    mirror_type_enum : bpy.props.EnumProperty(
         name="Block type",
         items=[ ('x', "x", ""),
                 ('y', "y", ""),
@@ -384,18 +251,15 @@ class SingleAddOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        global block_type
+        block_type = int(mytool.add_block_type_enum)
 
-        block_type = int(mytool.addBlockType_enum)
-
-        global cursor_pos
         cursor_pos = bpy.context.scene.cursor.location
 
-        parentObj = bpy.context.object
+        parent_obj = bpy.context.object
 
-        object_name = mytool.BlockName_string
+        object_name = mytool.block_name_string
 
-        zclass = getClassDefByType(block_type)
+        zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         # objects that are located in 0,0,0(technical empties)
         if block_type in [
@@ -414,53 +278,53 @@ class SingleAddOperator(bpy.types.Operator):
             # 40 - generator
             51,52
         ]:
-            object = bpy.data.objects.new(object_name, None)
-            object.location=(0.0,0.0,0.0)
-            object[consts.BLOCK_TYPE] = block_type
-            if parentObj is not None and block_type != 111:
-                object.parent = parentObj
+            b3d_obj = bpy.data.objects.new(object_name, None)
+            b3d_obj.location=(0.0,0.0,0.0)
+            b3d_obj[consts.BLOCK_TYPE] = block_type
+            if parent_obj is not None and block_type != 111:
+                b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
-                setAllObjsByType(context, object, zclass)
-            context.collection.objects.link(object)
+                set_all_objs_by_type(context, b3d_obj, zclass)
+            context.collection.objects.link(b3d_obj)
 
             if block_type in [9,10,22,21]: #objects with subgroups
 
-                groupCnt = 0
+                group_cnt = 0
                 if block_type in [9,10,21]:
-                    groupCnt = 2
+                    group_cnt = 2
                 elif block_type == 21:
-                    groupCnt = object[prop(b_21.GroupCnt)]
+                    group_cnt = b3d_obj[prop(Blk021.GroupCnt)]
 
-                for i in range(groupCnt):
+                for i in range(group_cnt):
                     group = bpy.data.objects.new(f"GROUP_{i}", None)
                     group.location=(0.0,0.0,0.0)
                     group[consts.BLOCK_TYPE] = 444
-                    group.parent = object
+                    group.parent = b3d_obj
                     context.collection.objects.link(group)
 
         elif block_type in [24, 40, 51, 52]: # empties which location is important
 
-            object = bpy.data.objects.new(object_name, None)
-            object.location=cursor_pos
-            object[consts.BLOCK_TYPE] = block_type
-            if parentObj is not None and block_type != 111:
-                object.parent = parentObj
+            b3d_obj = bpy.data.objects.new(object_name, None)
+            b3d_obj.location=cursor_pos
+            b3d_obj[consts.BLOCK_TYPE] = block_type
+            if parent_obj is not None and block_type != 111:
+                b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
-                setAllObjsByType(context, object, zclass)
+                set_all_objs_by_type(context, b3d_obj, zclass)
 
             if block_type in [24, 52]:
-                object.empty_display_type = 'ARROWS'
+                b3d_obj.empty_display_type = 'ARROWS'
             elif block_type == 40:
-                object.empty_display_type = 'SPHERE'
-                object.empty_display_size = 5
+                b3d_obj.empty_display_type = 'SPHERE'
+                b3d_obj.empty_display_size = 5
             elif block_type == 51:
-                object.empty_display_type = 'PLAIN_AXES'
+                b3d_obj.empty_display_type = 'PLAIN_AXES'
 
-            context.collection.objects.link(object)
+            context.collection.objects.link(b3d_obj)
 
         elif block_type in [28, 30]:
 
-            spriteCenter = cursor_pos
+            sprite_center = cursor_pos
 
             l_vertexes = []
 
@@ -481,17 +345,17 @@ class SingleAddOperator(bpy.types.Operator):
 
             l_faces = [(0,1,2,3)]
 
-            b3dMesh = (bpy.data.meshes.new(object_name))
-            b3dMesh.from_pydata(l_vertexes,[],l_faces)
+            b3d_mesh = (bpy.data.meshes.new(object_name))
+            b3d_mesh.from_pydata(l_vertexes,[],l_faces)
 
-            object = bpy.data.objects.new(object_name, b3dMesh)
-            object.location=spriteCenter
-            object[consts.BLOCK_TYPE] = block_type
-            if parentObj is not None and block_type != 111:
-                object.parent = parentObj
+            b3d_obj = bpy.data.objects.new(object_name, b3d_mesh)
+            b3d_obj.location=sprite_center
+            b3d_obj[consts.BLOCK_TYPE] = block_type
+            if parent_obj is not None and block_type != 111:
+                b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
-                setAllObjsByType(context, object, zclass)
-            context.collection.objects.link(object)
+                set_all_objs_by_type(context, b3d_obj, zclass)
+            context.collection.objects.link(b3d_obj)
 
         return {'FINISHED'}
 
@@ -503,43 +367,40 @@ class TemplateAddOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        global type
+        block_type = mytool.add_blocks_enum
 
-        type = mytool.addBlocks_enum
-
-        global cursor_pos
         cursor_pos = bpy.context.scene.cursor_location
 
         def type05(name, radius, add_name):
             object_name = name
-            object = bpy.data.objects.new(object_name, None)
-            object[consts.BLOCK_TYPE] = 5
-            object.location=cursor_pos
-            object['node_radius'] = radius
-            object['add_name'] = add_name
-            bpy.context.scene.objects.link(object)
-            object.select = True
+            b3d_obj = bpy.data.objects.new(object_name, None)
+            b3d_obj[consts.BLOCK_TYPE] = 5
+            b3d_obj.location=cursor_pos
+            b3d_obj['node_radius'] = radius
+            b3d_obj['add_name'] = add_name
+            bpy.context.scene.objects.link(b3d_obj)
+            b3d_obj.select = True
 
         def type19(name):
             object_name = name
-            object = bpy.data.objects.new(object_name, None)
-            object[consts.BLOCK_TYPE] = 19
-            object.location=cursor_pos
-            bpy.context.scene.objects.link(object)
-            object.select = True
+            b3d_obj = bpy.data.objects.new(object_name, None)
+            b3d_obj[consts.BLOCK_TYPE] = 19
+            b3d_obj.location=cursor_pos
+            bpy.context.scene.objects.link(b3d_obj)
+            b3d_obj.select = True
 
-        if type == "room":
-            type19("room_" + mytool.addRoomNameIndex_string)
+        if block_type == "room":
+            type19("room_" + mytool.add_room_name_index_string)
             room = bpy.context.selected_objects[0]
 
-            type05(("road_" + mytool.addRoomNameIndex_string), mytool.Radius, ("hit_road_" + mytool.addRoomNameIndex_string))
+            type05(("road_" + mytool.add_room_name_index_string), mytool.radius, ("hit_road_" + mytool.add_room_name_index_string))
             road = bpy.context.selected_objects[0]
 
-            type05(("obj_" + mytool.addRoomNameIndex_string), mytool.Radius, ("hit_obj_" + mytool.addRoomNameIndex_string))
+            type05(("obj_" + mytool.add_room_name_index_string), mytool.radius, ("hit_obj_" + mytool.add_room_name_index_string))
             obj = bpy.context.selected_objects[0]
 
-            hit_road = type05(("hit_road_" + mytool.addRoomNameIndex_string), 0, "")
-            hit_obj = type05(("hit_obj_" + mytool.addRoomNameIndex_string), 0, "")
+            hit_road = type05(("hit_road_" + mytool.add_room_name_index_string), 0, "")
+            hit_obj = type05(("hit_obj_" + mytool.add_room_name_index_string), 0, "")
 
             bpy.ops.object.select_all(action='DESELECT')
 
@@ -565,135 +426,135 @@ class CastAddOperator(bpy.types.Operator):
 
         cursor_pos = bpy.context.scene.cursor.location
 
-        castType = mytool.castType_enum
-        parentObj = bpy.data.objects.get(mytool.parent_str)
+        cast_type = mytool.cast_type_enum
+        parent_obj = bpy.data.objects.get(mytool.parent_str)
 
-        toCopy = int(mytool.cast_copy)
+        to_copy = int(mytool.cast_copy)
 
-        if castType == 'mesh':
-            vertType = int(mytool.vertexBlock_enum)
-            polyType = int(mytool.polyBlock_enum)
+        if cast_type == 'mesh':
+            vert_type = int(mytool.vertex_block_enum)
+            poly_type = int(mytool.poly_block_enum)
 
-            vertclass = getClassDefByType(vertType)
-            polyclass = getClassDefByType(polyType)
+            vertclass = BlockClassHandler.get_class_def_by_type(vert_type)
+            polyclass = BlockClassHandler.get_class_def_by_type(poly_type)
 
             #creating vertex block
-            vertObj = bpy.data.objects.new(consts.EMPTY_NAME, None)
-            vertObj.location=(0.0,0.0,0.0)
-            vertObj[consts.BLOCK_TYPE] = vertType
-            vertObj.parent = parentObj
-            setAllObjsByType(context, vertObj, vertclass)
-            context.collection.objects.link(vertObj)
+            vert_obj = bpy.data.objects.new(consts.EMPTY_NAME, None)
+            vert_obj.location=(0.0,0.0,0.0)
+            vert_obj[consts.BLOCK_TYPE] = vert_type
+            vert_obj.parent = parent_obj
+            set_all_objs_by_type(context, vert_obj, vertclass)
+            context.collection.objects.link(vert_obj)
 
             # creating poly blocks
-            for polyObj in context.selected_objects:
-                if polyObj.type == 'MESH':
+            for poly_obj in context.selected_objects:
+                if poly_obj.type == 'MESH':
 
-                    if toCopy:
-                        newObj = polyObj.copy()
-                        newObj.data = polyObj.data.copy()
-                        newObj[consts.BLOCK_TYPE] = polyType
-                        newObj.parent = vertObj
-                        if polyType != 8:
-                            setAllObjsByType(context, newObj, polyclass)
+                    if to_copy:
+                        new_obj = poly_obj.copy()
+                        new_obj.data = poly_obj.data.copy()
+                        new_obj[consts.BLOCK_TYPE] = poly_type
+                        new_obj.parent = vert_obj
+                        if poly_type != 8:
+                            set_all_objs_by_type(context, new_obj, polyclass)
 
-                        formats = [2]*len(newObj.data.polygons)
-                        if polyType == 8:
-                            createCustomAttribute(newObj.data, formats, pfb_8, pfb_8.Format_Flags)
-                        elif polyType == 35:
-                            createCustomAttribute(newObj.data, formats, pfb_35, pfb_35.Format_Flags)
+                        formats = [2]*len(new_obj.data.polygons)
+                        if poly_type == 8:
+                            create_custom_attribute(new_obj.data, formats, Pfb008, Pfb008.Format_Flags)
+                        elif poly_type == 35:
+                            create_custom_attribute(new_obj.data, formats, Pfb035, Pfb035.Format_Flags)
 
-                        context.collection.objects.link(newObj)
+                        context.collection.objects.link(new_obj)
 
-                        log.info(f"Created new B3D object: {newObj.name}.")
+                        log.info(f"Created new B3D object: {new_obj.name}.")
                     else:
-                        polyObj[consts.BLOCK_TYPE] = polyType
-                        polyObj.parent = vertObj
-                        if polyType != 8:
-                            setAllObjsByType(context, polyObj, polyclass)
-                        formats = [2]*len(polyObj.data.polygons)
-                        if polyType == 8:
-                            createCustomAttribute(polyObj.data, formats, pfb_8, pfb_8.Format_Flags)
-                        elif polyType == 35:
-                            createCustomAttribute(polyObj.data, formats, pfb_35, pfb_35.Format_Flags)
+                        poly_obj[consts.BLOCK_TYPE] = poly_type
+                        poly_obj.parent = vert_obj
+                        if poly_type != 8:
+                            set_all_objs_by_type(context, poly_obj, polyclass)
+                        formats = [2]*len(poly_obj.data.polygons)
+                        if poly_type == 8:
+                            create_custom_attribute(poly_obj.data, formats, Pfb008, Pfb008.Format_Flags)
+                        elif poly_type == 35:
+                            create_custom_attribute(poly_obj.data, formats, Pfb035, Pfb035.Format_Flags)
 
-                        log.info(f"Cast existing B3D object: {polyObj.name}.")
+                        log.info(f"Cast existing B3D object: {poly_obj.name}.")
 
                 else:
-                    log.info(f"Selected object {polyObj.name} is not Mesh. Changes not applied.")
+                    log.info(f"Selected object {poly_obj.name} is not Mesh. Changes not applied.")
 
-        elif castType == 'colis3D':
+        elif cast_type == 'colis3D':
 
-            for polyObj in context.selected_objects:
-                if polyObj.type == 'MESH':
+            for poly_obj in context.selected_objects:
+                if poly_obj.type == 'MESH':
 
-                    if toCopy:
-                        newObj = polyObj.copy()
-                        newObj.data = polyObj.data.copy()
-                        newObj[consts.BLOCK_TYPE] = 23
-                        newObj.parent = parentObj
-                        setAllObjsByType(context, newObj, b_23)
-                        context.collection.objects.link(newObj)
-                        log.info(f"Created new B3D 3d collision: {newObj.name}.")
+                    if to_copy:
+                        new_obj = poly_obj.copy()
+                        new_obj.data = poly_obj.data.copy()
+                        new_obj[consts.BLOCK_TYPE] = 23
+                        new_obj.parent = parent_obj
+                        set_all_objs_by_type(context, new_obj, Blk023)
+                        context.collection.objects.link(new_obj)
+                        log.info(f"Created new B3D 3d collision: {new_obj.name}.")
                     else:
-                        polyObj[consts.BLOCK_TYPE] = 23
-                        polyObj.parent = parentObj
-                        setAllObjsByType(context, polyObj, b_23)
-                        log.info(f"Cast existing object to B3D 3d collision: {polyObj.name}.")
+                        poly_obj[consts.BLOCK_TYPE] = 23
+                        poly_obj.parent = parent_obj
+                        set_all_objs_by_type(context, poly_obj, Blk023)
+                        log.info(f"Cast existing object to B3D 3d collision: {poly_obj.name}.")
                 else:
-                    log.info(f"Selected object {polyObj.name} is not Mesh. Changes not applied.")
+                    log.info(f"Selected object {poly_obj.name} is not Mesh. Changes not applied.")
 
-        elif castType == 'colis2D':
+        elif cast_type == 'colis2D':
 
-            for polyObj in context.selected_objects:
-                if polyObj.type == 'CURVE':
+            for poly_obj in context.selected_objects:
+                if poly_obj.type == 'CURVE':
 
-                    if toCopy:
-                        newObj = polyObj.copy()
-                        newObj.data = polyObj.data.copy()
-                        newObj[consts.BLOCK_TYPE] = 20
-                        newObj.data.bevel_depth = 0
-                        newObj.data.extrude = 10
-                        newObj.parent = parentObj
-                        setAllObjsByType(context, newObj, b_20)
-                        context.collection.objects.link(newObj)
-                        log.info(f"Created new B3D 2d colision: {newObj.name}.")
+                    if to_copy:
+                        new_obj = poly_obj.copy()
+                        new_obj.data = poly_obj.data.copy()
+                        new_obj[consts.BLOCK_TYPE] = 20
+                        new_obj.data.bevel_depth = 0
+                        new_obj.data.extrude = 10
+                        new_obj.parent = parent_obj
+                        set_all_objs_by_type(context, new_obj, Blk020)
+                        context.collection.objects.link(new_obj)
+                        log.info(f"Created new B3D 2d colision: {new_obj.name}.")
                     else:
-                        polyObj[consts.BLOCK_TYPE] = 20
-                        polyObj.data.bevel_depth = 0
-                        polyObj.data.extrude = 10
-                        polyObj.parent = parentObj
-                        setAllObjsByType(context, polyObj, b_20)
-                        log.info(f"Cast exiting object to B3D 2d colision: {polyObj.name}.")
-
-                else:
-                    log.info(f"Selected object {polyObj.name} is not Curve. Changes not applied.")
-
-        elif castType == 'way':
-
-            for polyObj in context.selected_objects:
-                if polyObj.type == 'CURVE':
-
-                    if toCopy:
-                        newObj = polyObj.copy()
-                        newObj.data = polyObj.data.copy()
-                        newObj[consts.BLOCK_TYPE] = 50
-                        newObj.data.bevel_depth = 0.3
-                        newObj.data.bevel_mode = 'ROUND'
-                        newObj.parent = parentObj
-                        setAllObjsByType(context, newObj, b_50)
-                        context.collection.objects.link(newObj)
-                        log.info(f"Created new WAY Path: {newObj.name}.")
-                    else:
-                        polyObj[consts.BLOCK_TYPE] = 50
-                        polyObj.data.bevel_depth = 0.3
-                        polyObj.data.bevel_mode = 'ROUND'
-                        polyObj.parent = parentObj
-                        setAllObjsByType(context, polyObj, b_50)
-                        log.info(f"Cast existing object to WAY Path: {polyObj.name}.")
+                        poly_obj[consts.BLOCK_TYPE] = 20
+                        poly_obj.data.bevel_depth = 0
+                        poly_obj.data.extrude = 10
+                        poly_obj.parent = parent_obj
+                        set_all_objs_by_type(context, poly_obj, Blk020)
+                        log.info(f"Cast exiting object to B3D 2d colision: {poly_obj.name}.")
 
                 else:
-                    log.info(f"Selected object {polyObj.name} is not Curve. Changes not applied.")
+                    log.info(f"Selected object {poly_obj.name} is not Curve. Changes not applied.")
+
+        elif cast_type == 'way':
+
+            for poly_obj in context.selected_objects:
+                if poly_obj.type == 'CURVE':
+
+                    if to_copy:
+                        new_obj = poly_obj.copy()
+                        new_obj.data = poly_obj.data.copy()
+                        new_obj[consts.BLOCK_TYPE] = 50
+                        new_obj.data.bevel_depth = 0.3
+                        new_obj.data.bevel_mode = 'ROUND'
+                        new_obj.parent = parent_obj
+                        set_all_objs_by_type(context, new_obj, Blk050)
+                        context.collection.objects.link(new_obj)
+                        log.info(f"Created new WAY Path: {new_obj.name}.")
+                    else:
+                        poly_obj[consts.BLOCK_TYPE] = 50
+                        poly_obj.data.bevel_depth = 0.3
+                        poly_obj.data.bevel_mode = 'ROUND'
+                        poly_obj.parent = parent_obj
+                        set_all_objs_by_type(context, poly_obj, Blk050)
+                        log.info(f"Cast existing object to WAY Path: {poly_obj.name}.")
+
+                else:
+                    log.info(f"Selected object {poly_obj.name} is not Curve. Changes not applied.")
 
 
         return {'FINISHED'}
@@ -703,13 +564,13 @@ class GetVertexValuesOperator(bpy.types.Operator):
     bl_label = "Get block values"
 
     def execute(self, context):
-        object = bpy.context.selected_objects[0]
-        block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.selected_objects[0]
+        block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
-            getPerVertexByType(context, object, pvb_8)
+            get_per_vertex_by_type(context, b3d_obj, Pvb008)
         elif block_type == 35:
-            getPerVertexByType(context, object, pvb_35)
+            get_per_vertex_by_type(context, b3d_obj, Pvb035)
 
         return {'FINISHED'}
 
@@ -718,15 +579,15 @@ class GetFaceValuesOperator(bpy.types.Operator):
     bl_label = "Get block values"
 
     def execute(self, context):
-        object = bpy.context.selected_objects[0]
-        block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.selected_objects[0]
+        block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
-            getPerFaceByType(context, object, pfb_8)
+            get_per_face_by_type(context, b3d_obj, Pfb008)
         elif block_type == 28:
-            getPerFaceByType(context, object, pfb_28)
+            get_per_face_by_type(context, b3d_obj, Pfb028)
         elif block_type == 35:
-            getPerFaceByType(context, object, pfb_35)
+            get_per_face_by_type(context, b3d_obj, Pfb035)
 
         return {'FINISHED'}
 
@@ -738,13 +599,13 @@ class GetValuesOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        object = bpy.context.object
-        block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.object
+        block_type = b3d_obj[consts.BLOCK_TYPE]
 
-        zclass = getClassDefByType(block_type)
+        zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            getAllObjsByType(context, object, zclass)
+            get_all_objs_by_type(context, b3d_obj, zclass)
 
         return {'FINISHED'}
 
@@ -758,13 +619,13 @@ class GetPropValueOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        object = bpy.context.object
-        block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.object
+        block_type = b3d_obj[consts.BLOCK_TYPE]
 
-        zclass = getClassDefByType(block_type)
+        zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            getObjByProp(context, object, zclass, self.pname)
+            get_obj_by_prop(context, b3d_obj, zclass, self.pname)
 
         return {'FINISHED'}
 
@@ -778,15 +639,15 @@ class SetFaceValuesOperator(bpy.types.Operator):
 
         for i in range(len(objects)):
 
-            object = objects[i]
-            block_type = object[consts.BLOCK_TYPE]
+            b3d_obj = objects[i]
+            block_type = b3d_obj[consts.BLOCK_TYPE]
 
             if block_type == 8:
-                setPerFaceByType(context, object, pfb_8)
+                set_per_face_by_type(context, b3d_obj, Pfb008)
             elif block_type == 28:
-                setPerFaceByType(context, object, pfb_28)
+                set_per_face_by_type(context, b3d_obj, Pfb028)
             elif block_type == 35:
-                setPerFaceByType(context, object, pfb_35)
+                set_per_face_by_type(context, b3d_obj, Pfb035)
 
         return {'FINISHED'}
 
@@ -800,13 +661,13 @@ class SetVertexValuesOperator(bpy.types.Operator):
 
         for i in range(len(objects)):
 
-            object = objects[i]
-            block_type = object[consts.BLOCK_TYPE]
+            b3d_obj = objects[i]
+            block_type = b3d_obj[consts.BLOCK_TYPE]
 
             if block_type == 8:
-                setPerVertexByType(context, object, pvb_8)
+                set_per_vertex_by_type(context, b3d_obj, Pvb008)
             elif block_type == 35:
-                setPerVertexByType(context, object, pvb_35)
+                set_per_vertex_by_type(context, b3d_obj, Pvb035)
 
         return {'FINISHED'}
 
@@ -818,9 +679,7 @@ class SetValuesOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        global block_type
-        global lenStr
-        #object = bpy.context.selected_objects[0]
+        block_type = ''
 
         active_obj = bpy.context.object
 
@@ -830,19 +689,19 @@ class SetValuesOperator(bpy.types.Operator):
 
         for i in range(len(objects)):
 
-            object = objects[i]
+            b3d_obj = objects[i]
 
-            if consts.BLOCK_TYPE in object:
-                block_type = object[consts.BLOCK_TYPE]
+            if consts.BLOCK_TYPE in b3d_obj:
+                block_type = b3d_obj[consts.BLOCK_TYPE]
             else:
                 block_type = 0
 
-            object[consts.BLOCK_TYPE] = block_type
+            b3d_obj[consts.BLOCK_TYPE] = block_type
 
-            zclass = getClassDefByType(block_type)
+            zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
             if zclass is not None:
-                setAllObjsByType(context, object, zclass)
+                set_all_objs_by_type(context, b3d_obj, zclass)
 
         return {'FINISHED'}
 
@@ -856,13 +715,13 @@ class SetPropValueOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        object = bpy.context.object
-        block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.object
+        block_type = b3d_obj[consts.BLOCK_TYPE]
 
-        zclass = getClassDefByType(block_type)
+        zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            setObjByProp(context, object, zclass, self.pname)
+            set_obj_by_prop(context, b3d_obj, zclass, self.pname)
 
         return {'FINISHED'}
 
@@ -874,16 +733,14 @@ class DelValuesOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        global block_type
-        global lenStr
-        #object = bpy.context.selected_objects[0]
+        #b3d_obj = bpy.context.selected_objects[0]
 
         for i in range(len(bpy.context.selected_objects)):
 
-            object = bpy.context.selected_objects[i]
+            b3d_obj = bpy.context.selected_objects[i]
 
-            if consts.BLOCK_TYPE in object:
-                del object[consts.BLOCK_TYPE]
+            if consts.BLOCK_TYPE in b3d_obj:
+                del b3d_obj[consts.BLOCK_TYPE]
 
         return {'FINISHED'}
 
@@ -895,7 +752,7 @@ class FixUVOperator(bpy.types.Operator):
 
         for i in range(len(bpy.context.selected_objects)):
 
-            object = bpy.context.selected_objects[i]
+            b3d_obj = bpy.context.selected_objects[i]
 
             bpy.ops.object.mode_set(mode = 'EDIT')
 
@@ -934,7 +791,7 @@ class FixVertsOperator(bpy.types.Operator):
 
         for i in range(len(bpy.context.selected_objects)):
 
-            object = bpy.context.selected_objects[i]
+            b3d_obj = bpy.context.selected_objects[i]
 
             bpy.ops.object.mode_set(mode = 'EDIT')
             bpy.ops.mesh.select_mode(type="FACE")
@@ -960,24 +817,24 @@ class MirrorAndFlipObjectsOperator(bpy.types.Operator):
         y = False
         z = False
 
-        if (mytool.mirrorType_enum) == "x":
+        if (mytool.mirror_type_enum) == "x":
             x = True
         else:
             x = False
 
-        if (mytool.mirrorType_enum) == "y":
+        if (mytool.mirror_type_enum) == "y":
             y = True
         else:
             y = False
 
-        if (mytool.mirrorType_enum) == "z":
+        if (mytool.mirror_type_enum) == "z":
             z = True
         else:
             z = False
 
-        for object in context.selected_objects:
-            if object.type == 'MESH':
-                #object = bpy.context.selected_objects[i]
+        for b3d_obj in context.selected_objects:
+            if b3d_obj.type == 'MESH':
+                #b3d_obj = bpy.context.selected_objects[i]
                 bpy.ops.transform.mirror(constraint_axis=(x, y, z), constraint_orientation='GLOBAL')
                 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
@@ -1006,7 +863,7 @@ class ApplyTransformsOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        applyRemoveTransforms(self)
+        apply_remove_transforms(self)
 
         return {'FINISHED'}
 
@@ -1019,7 +876,7 @@ class ShowHide2DCollisionsOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        showHideObjByType(self, 20)
+        show_hide_obj_by_type(self, 20)
 
         return {'FINISHED'}
 
@@ -1032,7 +889,7 @@ class ShowHideCollisionsOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        showHideObjByType(self, 23)
+        show_hide_obj_by_type(self, 23)
 
         return {'FINISHED'}
 
@@ -1045,7 +902,7 @@ class ShowHideRoomBordersOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        showHideObjByType(self, 30)
+        show_hide_obj_by_type(self, 30)
 
         return {'FINISHED'}
 
@@ -1058,7 +915,7 @@ class ShowHideGeneratorsOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        showHideObjByType(self, 40)
+        show_hide_obj_by_type(self, 40)
 
         return {'FINISHED'}
 
@@ -1074,10 +931,10 @@ class ShowLODOperator(bpy.types.Operator):
 
         objs = context.selected_objects
         if not len(objs):
-            objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+            objs = [cn for cn in bpy.data.objects if is_root_obj(cn)]
 
         for obj in objs:
-            showLOD(obj)
+            show_lod(obj)
         self.report({'INFO'}, f"{len(objs)} LOD objects(block 10) are shown")
 
         return {'FINISHED'}
@@ -1094,10 +951,10 @@ class HideLODOperator(bpy.types.Operator):
 
         objs = context.selected_objects
         if not len(objs):
-            objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+            objs = [cn for cn in bpy.data.objects if is_root_obj(cn)]
 
         for obj in objs:
-            hideLOD(obj)
+            hide_lod(obj)
         self.report({'INFO'}, f"{len(objs)} LOD objects(block 10) are hidden")
 
         return {'FINISHED'}
@@ -1116,10 +973,10 @@ class ShowConditionalsOperator(bpy.types.Operator):
 
         objs = context.selected_objects
         if not len(objs):
-            objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+            objs = [cn for cn in bpy.data.objects if is_root_obj(cn)]
 
         for obj in objs:
-            showConditionals(obj, self.group)
+            show_conditionals(obj, self.group)
         self.report({'INFO'}, f"{len(objs)} Conditional objects(block 21) are shown")
 
 
@@ -1139,10 +996,10 @@ class HideConditionalsOperator(bpy.types.Operator):
 
         objs = context.selected_objects
         if not len(objs):
-            objs = [cn for cn in bpy.data.objects if isRootObj(cn)]
+            objs = [cn for cn in bpy.data.objects if is_root_obj(cn)]
 
         for obj in objs:
-            hideConditionals(obj, self.group)
+            hide_conditionals(obj, self.group)
         self.report({'INFO'}, f"{len(objs)} Conditional objects(block 21) are hidden")
 
         return {'FINISHED'}
@@ -1160,7 +1017,7 @@ class ShowHideSphereOperator(bpy.types.Operator):
 
         obj = context.object
 
-        showHideSphere(context, obj, self.pname)
+        show_hide_sphere(context, obj, self.pname)
 
         self.report({'INFO'}, "Sphere shown or hidden")
 
@@ -1186,12 +1043,12 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        object = bpy.context.object
+        b3d_obj = bpy.context.object
 
-        objectName = '' if object is None else object.name
+        object_name = '' if b3d_obj is None else b3d_obj.name
 
         box = layout.box()
-        box.label(text="Selected object: " + str(objectName))
+        box.label(text="Selected object: " + str(object_name))
 
 class OBJECT_PT_b3d_single_add_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_single_add_panel"
@@ -1214,17 +1071,16 @@ class OBJECT_PT_b3d_single_add_panel(bpy.types.Panel):
         # print(bpy.types.Scene.my_tool)
         # print(dir(bpy.types.Scene.my_tool))
         # print(dir(context.scene.my_tool))
-        global block_type
-        block_type = int(mytool.addBlockType_enum)
+        block_type = int(mytool.add_block_type_enum)
 
         self.layout.label(text="Block type:")
-        layout.prop(mytool, "addBlockType_enum", text="")
-        layout.prop(mytool, "BlockName_string")
+        layout.prop(mytool, "add_block_type_enum", text="")
+        layout.prop(mytool, "block_name_string")
 
-        zclass = getClassDefByType(block_type)
+        zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            drawAllFieldsByType(self, context, zclass)
+            draw_all_fields_by_type(self, context, zclass)
 
         layout.operator("wm.single_add_operator")
 
@@ -1245,33 +1101,33 @@ class OBJECT_PT_b3d_template_add_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        type = mytool.addBlocks_enum
+        block_type = mytool.add_blocks_enum
 
-        layout.prop(mytool, "addBlocks_enum")
+        layout.prop(mytool, "add_blocks_enum")
 
-        if type == "LOD_9":
+        if block_type == "LOD_9":
 
-            layout.prop(mytool, "LODLevel_int")
+            layout.prop(mytool, "lod_level_int")
 
-            zclass = getClassDefByType(9)
-            drawAllFieldsByType(self, context, zclass)
+            zclass = BlockClassHandler.get_class_def_by_type(9)
+            draw_all_fields_by_type(self, context, zclass)
 
-        elif type == "LOD_10":
+        elif block_type == "LOD_10":
 
-            layout.prop(mytool, "LODLevel_int")
+            layout.prop(mytool, "lod_level_int")
 
-            zclass = getClassDefByType(10)
-            drawAllFieldsByType(self, context, zclass)
+            zclass = BlockClassHandler.get_class_def_by_type(10)
+            draw_all_fields_by_type(self, context, zclass)
 
-        elif type == "LOD_21":
+        elif block_type == "LOD_21":
 
-            layout.prop(mytool, "LODLevel_int")
+            layout.prop(mytool, "lod_level_int")
 
-            zclass = getClassDefByType(21)
-            drawAllFieldsByType(self, context, zclass)
+            zclass = BlockClassHandler.get_class_def_by_type(21)
+            draw_all_fields_by_type(self, context, zclass)
 
-            # layout.prop(mytool, "addRoomNameIndex_string")
-            # layout.prop(mytool, "Radius")
+            # layout.prop(mytool, "add_room_name_index_string")
+            # layout.prop(mytool, "radius")
 
 
         layout.operator("wm.template_add_operator")
@@ -1299,13 +1155,13 @@ class OBJECT_PT_b3d_cast_add_panel(bpy.types.Panel):
         c = split.column()
         c.operator("wm.set_parent_operator")
 
-        layout.prop(mytool, "castType_enum")
-        castType = mytool.castType_enum
+        layout.prop(mytool, "cast_type_enum")
+        cast_type = mytool.cast_type_enum
         layout.prop(mytool, "cast_copy")
         box = layout.box()
-        if castType == 'mesh':
-            box.prop(mytool, "vertexBlock_enum")
-            box.prop(mytool, "polyBlock_enum")
+        if cast_type == 'mesh':
+            box.prop(mytool, "vertex_block_enum")
+            box.prop(mytool, "poly_block_enum")
 
         box.operator("wm.cast_add_operator")
 
@@ -1320,9 +1176,9 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 
     @classmethod
     def poll(self,context):
-        object = bpy.context.object
-        if consts.BLOCK_TYPE in object:
-            block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.object
+        if consts.BLOCK_TYPE in b3d_obj:
+            block_type = b3d_obj[consts.BLOCK_TYPE]
         else:
             block_type = None
 
@@ -1332,21 +1188,21 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        object = bpy.context.object
+        b3d_obj = bpy.context.object
 
-        if object is not None:
+        if b3d_obj is not None:
 
-            if consts.BLOCK_TYPE in object:
-                block_type = object[consts.BLOCK_TYPE]
+            if consts.BLOCK_TYPE in b3d_obj:
+                block_type = b3d_obj[consts.BLOCK_TYPE]
             else:
                 block_type = None
 
             if block_type == 8:
-                drawAllFieldsByType(self, context, pfb_8)
+                draw_all_fields_by_type(self, context, Pfb008)
             if block_type == 28:
-                drawAllFieldsByType(self, context, pfb_28)
+                draw_all_fields_by_type(self, context, Pfb028)
             if block_type == 35:
-                drawAllFieldsByType(self, context, pfb_35)
+                draw_all_fields_by_type(self, context, Pfb035)
 
             if block_type in [8, 28, 35]:
                 layout.operator("wm.get_face_values_operator")
@@ -1366,9 +1222,9 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
         #Disabled for now. More analyze needed.
         return False
 
-        object = bpy.context.object
-        if consts.BLOCK_TYPE in object:
-            block_type = object[consts.BLOCK_TYPE]
+        b3d_obj = bpy.context.object
+        if consts.BLOCK_TYPE in b3d_obj:
+            block_type = b3d_obj[consts.BLOCK_TYPE]
         else:
             block_type = None
 
@@ -1378,19 +1234,19 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        object = bpy.context.object
+        b3d_obj = bpy.context.object
 
-        if object is not None:
+        if b3d_obj is not None:
 
-            if consts.BLOCK_TYPE in object:
-                block_type = object[consts.BLOCK_TYPE]
+            if consts.BLOCK_TYPE in b3d_obj:
+                block_type = b3d_obj[consts.BLOCK_TYPE]
             else:
                 block_type = None
 
             if block_type == 8:
-                drawAllFieldsByType(self, context, pvb_8)
+                draw_all_fields_by_type(self, context, Pvb008)
             if block_type == 35:
-                drawAllFieldsByType(self, context, pvb_35)
+                draw_all_fields_by_type(self, context, Pvb035)
 
             if block_type in [8, 28, 35]:
                 layout.operator("wm.get_vertex_values_operator")
@@ -1412,9 +1268,9 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        object = bpy.context.object
-        if object is not None:
-            drawCommon(self, object)
+        b3d_obj = bpy.context.object
+        if b3d_obj is not None:
+            draw_common(self, b3d_obj)
 
 class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_pob_edit_panel"
@@ -1433,29 +1289,29 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        type(context)
+        block_type = ''
         #for i in range(len(bpy.context.selected_objects)):
 
-        object = bpy.context.object
+        b3d_obj = bpy.context.object
 
         # if len(bpy.context.selected_objects):
         #     for i in range(1):
-        if object is not None:
+        if b3d_obj is not None:
 
-            if consts.BLOCK_TYPE in object:
-                block_type = object[consts.BLOCK_TYPE]
+            if consts.BLOCK_TYPE in b3d_obj:
+                block_type = b3d_obj[consts.BLOCK_TYPE]
             else:
                 block_type = None
 
-            lenStr = str(len(object.children))
+            len_str = str(len(b3d_obj.children))
 
-            zclass = getClassDefByType(block_type)
+            zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
             layout.operator("wm.get_block_values_operator")
             layout.operator("wm.set_block_values_operator")
 
             if zclass is not None:
-                drawAllFieldsByType(self, context, zclass)
+                draw_all_fields_by_type(self, context, zclass)
 
             # else:
             #     self.layout.label(text="Выбранный объект не имеет типа.")
@@ -1482,26 +1338,25 @@ class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        type(context)
         #for i in range(len(bpy.context.selected_objects)):
 
-        object = bpy.context.object
+        b3d_obj = bpy.context.object
 
         # if len(bpy.context.selected_objects):
         #     for i in range(1):
-        if object is not None:
+        if b3d_obj is not None:
 
-            if consts.BLOCK_TYPE in object:
-                block_type = object[consts.BLOCK_TYPE]
+            if consts.BLOCK_TYPE in b3d_obj:
+                block_type = b3d_obj[consts.BLOCK_TYPE]
             else:
                 block_type = None
 
-            lenStr = str(len(object.children))
+            len_str = str(len(b3d_obj.children))
 
-            zclass = getClassDefByType(block_type)
+            zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
             if zclass is not None:
-                drawAllFieldsByType(self, context, zclass, False)
+                draw_all_fields_by_type(self, context, zclass, False)
 
             # else:
             #     self.layout.label(text="Выбранный объект не имеет типа.")
@@ -1531,7 +1386,7 @@ class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
         mytool = scene.my_tool
 
 
-        # layout.prop(mytool, "mirrorType_enum")
+        # layout.prop(mytool, "mirror_type_enum")
 
         # layout.operator("wm.mirror_objects_operator")
         layout.operator("wm.apply_transforms_operator")
@@ -1545,11 +1400,11 @@ class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
         box.operator("wm.hide_lod_operator")
 
         box = layout.box()
-        box.prop(mytool, "conditionGroup")
+        box.prop(mytool, "condition_group")
         oper = box.operator("wm.show_conditional_operator")
-        oper.group = getattr(mytool, 'conditionGroup')
+        oper.group = getattr(mytool, 'condition_group')
         oper = box.operator("wm.hide_conditional_operator")
-        oper.group = getattr(mytool, 'conditionGroup')
+        oper.group = getattr(mytool, 'condition_group')
 
 class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_res_module_panel"
@@ -1567,7 +1422,7 @@ class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool
 
-        layout.prop(mytool, "selectedResModule")
+        layout.prop(mytool, "selected_res_module")
 
 
 class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
@@ -1587,20 +1442,20 @@ class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool
 
-        resInd = getCurrentRESIndex()
-        if resInd != -1:
-            curResModule = mytool.resModules[resInd]
+        res_ind = get_current_res_index()
+        if res_ind != -1:
+            cur_res_module = mytool.res_modules[res_ind]
 
             box = self.layout.box()
 
-            box.prop(curResModule, "palette_subpath", text="Subpath")
-            box.prop(curResModule, "palette_name", text="Path")
+            box.prop(cur_res_module, "palette_subpath", text="Subpath")
+            box.prop(cur_res_module, "palette_name", text="Path")
 
             rows = 2
             row = box.row()
-            row.template_list("CUSTOM_UL_colors", "palette_list", curResModule, "palette_colors", scene, "palette_index", type='GRID', columns = 2, rows=rows)
+            row.template_list("CUSTOM_UL_colors", "palette_list", cur_res_module, "palette_colors", scene, "palette_index", type='GRID', columns = 2, rows=rows)
 
-            drawListControls(row, "custom.list_action_color", "resModules", resInd, "palette_colors", "palette_index")
+            draw_list_controls(row, "custom.list_action_color", "res_modules", res_ind, "palette_colors", "palette_index")
 
 
 class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
@@ -1620,33 +1475,33 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool
 
-        resInd = getCurrentRESIndex()
-        if resInd != -1:
-            curResModule = mytool.resModules[resInd]
+        res_ind = get_current_res_index()
+        if res_ind != -1:
+            cur_res_module = mytool.res_modules[res_ind]
 
             box = self.layout.box()
 
             rows = 2
             row = box.row()
-            row.template_list("CUSTOM_UL_maskfiles", "maskfiles_list", curResModule, "maskfiles", scene, "maskfiles_index", rows=rows)
+            row.template_list("CUSTOM_UL_maskfiles", "maskfiles_list", cur_res_module, "maskfiles", scene, "maskfiles_index", rows=rows)
 
-            drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "maskfiles", "maskfiles_index")
+            draw_list_controls(row, "custom.list_action_arrbname", "res_modules", res_ind, "maskfiles", "maskfiles_index")
 
             maskfiles_index = scene.maskfiles_index
-            if len(curResModule.maskfiles):
-                curMaskfile = curResModule.maskfiles[maskfiles_index]
+            if len(cur_res_module.maskfiles):
+                cur_maskfile = cur_res_module.maskfiles[maskfiles_index]
 
-                box.prop(curMaskfile, "subpath", text="Subpath")
-                box.prop(curMaskfile, "name", text="Path")
+                box.prop(cur_maskfile, "subpath", text="Subpath")
+                box.prop(cur_maskfile, "name", text="Path")
 
-                box.prop(curMaskfile, "is_noload", text="Noload")
+                box.prop(cur_maskfile, "is_noload", text="Noload")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaskfile, "is_someint", text="?Someint?")
+                split.prop(cur_maskfile, "is_someint", text="?Someint?")
                 col = split.column()
-                col.prop(curMaskfile, "someint")
+                col.prop(cur_maskfile, "someint")
 
-                col.enabled = curMaskfile.is_someint
+                col.enabled = cur_maskfile.is_someint
 
 class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_textures_panel"
@@ -1665,39 +1520,39 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool
 
-        resInd = getCurrentRESIndex()
-        if resInd != -1:
-            curResModule = mytool.resModules[resInd]
+        res_ind = get_current_res_index()
+        if res_ind != -1:
+            cur_res_module = mytool.res_modules[res_ind]
 
             box = self.layout.box()
 
             rows = 2
             row = box.row()
-            row.template_list("CUSTOM_UL_textures", "textures_list", curResModule, "textures", scene, "textures_index", rows=rows)
+            row.template_list("CUSTOM_UL_textures", "textures_list", cur_res_module, "textures", scene, "textures_index", rows=rows)
 
-            drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "textures", "textures_index")
+            draw_list_controls(row, "custom.list_action_arrbname", "res_modules", res_ind, "textures", "textures_index")
 
-            textureIndex = scene.textures_index
-            if (len(curResModule.textures)):
-                curTexture = curResModule.textures[textureIndex]
+            texture_index = scene.textures_index
+            if (len(cur_res_module.textures)):
+                cur_texture = cur_res_module.textures[texture_index]
 
-                box.prop(curTexture, "subpath", text="Subpath")
-                box.prop(curTexture, "name", text="Path")
+                box.prop(cur_texture, "subpath", text="Subpath")
+                box.prop(cur_texture, "name", text="Path")
 
-                box.prop(curTexture, "img_type", text="Image type")
-                box.prop(curTexture, "has_mipmap", text="Has mipmap")
-                box.prop(curTexture, "img_format", text="Image format")
+                box.prop(cur_texture, "img_type", text="Image type")
+                box.prop(cur_texture, "has_mipmap", text="Has mipmap")
+                box.prop(cur_texture, "img_format", text="Image format")
 
-                box.prop(curTexture, "is_memfix", text="Memfix")
-                box.prop(curTexture, "is_noload", text="Noload")
-                box.prop(curTexture, "is_bumpcoord", text="Bympcoord")
+                box.prop(cur_texture, "is_memfix", text="Memfix")
+                box.prop(cur_texture, "is_noload", text="Noload")
+                box.prop(cur_texture, "is_bumpcoord", text="Bympcoord")
 
                 split = box.split(factor=0.3)
-                split.prop(curTexture, "is_someint", text="?Someint?")
+                split.prop(cur_texture, "is_someint", text="?Someint?")
                 col = split.column()
-                col.prop(curTexture, "someint")
+                col.prop(cur_texture, "someint")
 
-                col.enabled = curTexture.is_someint
+                col.enabled = cur_texture.is_someint
 
 class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_materials_panel"
@@ -1716,9 +1571,9 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool
 
-        resInd = getCurrentRESIndex()
-        if resInd != -1:
-            curResModule = mytool.resModules[resInd]
+        res_ind = get_current_res_index()
+        if res_ind != -1:
+            cur_res_module = mytool.res_modules[res_ind]
 
 
             # self.layout.template_ID(item, 'id_value')
@@ -1727,125 +1582,125 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
 
             rows = 2
             row = box.row()
-            row.template_list("CUSTOM_UL_materials", "materials_list", curResModule, "materials", scene, "materials_index", rows=rows)
+            row.template_list("CUSTOM_UL_materials", "materials_list", cur_res_module, "materials", scene, "materials_index", rows=rows)
 
-            drawListControls(row, "custom.list_action_arrbname", "resModules", resInd, "materials", "materials_index")
+            draw_list_controls(row, "custom.list_action_arrbname", "res_modules", res_ind, "materials", "materials_index")
 
-            textureIndex = scene.materials_index
-            if (len(curResModule.materials)):
-                curMaterial = curResModule.materials[textureIndex]
-
-                split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_reflect", text="Reflect")
-                col = split.column()
-                col.enabled = curMaterial.is_reflect
-                col.prop(curMaterial, "reflect")
+            texture_index = scene.materials_index
+            if (len(cur_res_module.materials)):
+                cur_material = cur_res_module.materials[texture_index]
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_specular", text="Specular")
+                split.prop(cur_material, "is_reflect", text="Reflect")
                 col = split.column()
-                col.enabled = curMaterial.is_specular
-                col.prop(curMaterial, "specular")
+                col.enabled = cur_material.is_reflect
+                col.prop(cur_material, "reflect")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_transp", text="Transparency")
+                split.prop(cur_material, "is_specular", text="Specular")
                 col = split.column()
-                col.enabled = curMaterial.is_transp
-                col.prop(curMaterial, "transp")
+                col.enabled = cur_material.is_specular
+                col.prop(cur_material, "specular")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_rot", text="Rotation")
+                split.prop(cur_material, "is_transp", text="Transparency")
                 col = split.column()
-                col.enabled = curMaterial.is_rot
-                col.prop(curMaterial, "rot")
+                col.enabled = cur_material.is_transp
+                col.prop(cur_material, "transp")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_col", text="Color")
+                split.prop(cur_material, "is_rot", text="Rotation")
                 col = split.column()
-                col.enabled = curMaterial.is_col
-                col.prop(curMaterial, "col_switch")
-                if curMaterial.col_switch:
-                    col.prop(curMaterial, "id_col", text="Col num")
+                col.enabled = cur_material.is_rot
+                col.prop(cur_material, "rot")
+
+                split = box.split(factor=0.3)
+                split.prop(cur_material, "is_col", text="Color")
+                col = split.column()
+                col.enabled = cur_material.is_col
+                col.prop(cur_material, "col_switch")
+                if cur_material.col_switch:
+                    col.prop(cur_material, "id_col", text="Col num")
                 else:
-                    col.prop(curMaterial, "col", text="Col num")
+                    col.prop(cur_material, "col", text="Col num")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_tex", text="Texture TEX")
+                split.prop(cur_material, "is_tex", text="Texture TEX")
                 col = split.column()
-                col.enabled = curMaterial.is_tex
-                col.prop(curMaterial, "tex_type")
-                col.prop(curMaterial, "tex_switch")
-                if curMaterial.tex_switch:
-                    col.prop(curMaterial, "id_tex", text="Tex num")
+                col.enabled = cur_material.is_tex
+                col.prop(cur_material, "tex_type")
+                col.prop(cur_material, "tex_switch")
+                if cur_material.tex_switch:
+                    col.prop(cur_material, "id_tex", text="Tex num")
                 else:
-                    col.prop(curMaterial, "tex", text="Tex num")
+                    col.prop(cur_material, "tex", text="Tex num")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_att", text="Att")
+                split.prop(cur_material, "is_att", text="Att")
                 col = split.column()
-                col.enabled = curMaterial.is_att
-                col.prop(curMaterial, "att_switch")
-                if curMaterial.att_switch:
-                    col.prop(curMaterial, "id_att", text="Att num")
+                col.enabled = cur_material.is_att
+                col.prop(cur_material, "att_switch")
+                if cur_material.att_switch:
+                    col.prop(cur_material, "id_att", text="Att num")
                 else:
-                    col.prop(curMaterial, "att", text="Att num")
+                    col.prop(cur_material, "att", text="Att num")
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_msk", text="Maskfile")
+                split.prop(cur_material, "is_msk", text="Maskfile")
                 col = split.column()
-                col.enabled = curMaterial.is_msk
-                col.prop(curMaterial, "msk_switch")
-                if curMaterial.msk_switch:
-                    col.prop(curMaterial, "id_msk", text="Msk num")
+                col.enabled = cur_material.is_msk
+                col.prop(cur_material, "msk_switch")
+                if cur_material.msk_switch:
+                    col.prop(cur_material, "id_msk", text="Msk num")
                 else:
-                    col.prop(curMaterial, "msk", text="Msk num")
+                    col.prop(cur_material, "msk", text="Msk num")
 
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_power", text="Power")
+                split.prop(cur_material, "is_power", text="Power")
                 col = split.column()
-                col.prop(curMaterial, "power")
-                col.enabled = curMaterial.is_power
+                col.prop(cur_material, "power")
+                col.enabled = cur_material.is_power
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_coord", text="Coord")
+                split.prop(cur_material, "is_coord", text="Coord")
                 col = split.column()
-                col.prop(curMaterial, "coord")
-                col.enabled = curMaterial.is_coord
+                col.prop(cur_material, "coord")
+                col.enabled = cur_material.is_coord
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_envId", text="Env")
+                split.prop(cur_material, "is_envId", text="Env")
                 col = split.column()
-                col.prop(curMaterial, "envId")
-                col.enabled = curMaterial.is_envId
+                col.prop(cur_material, "envId")
+                col.enabled = cur_material.is_envId
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_env", text="Env")
+                split.prop(cur_material, "is_env", text="Env")
                 col = split.column()
-                col.prop(curMaterial, "env")
-                col.enabled = curMaterial.is_env
+                col.prop(cur_material, "env")
+                col.enabled = cur_material.is_env
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_RotPoint", text="Rotation Center")
+                split.prop(cur_material, "is_RotPoint", text="Rotation Center")
                 col = split.column()
-                col.prop(curMaterial, "RotPoint")
-                col.enabled = curMaterial.is_RotPoint
+                col.prop(cur_material, "RotPoint")
+                col.enabled = cur_material.is_RotPoint
 
                 split = box.split(factor=0.3)
-                split.prop(curMaterial, "is_move", text="Movement")
+                split.prop(cur_material, "is_move", text="Movement")
                 col = split.column()
-                col.prop(curMaterial, "move")
-                col.enabled = curMaterial.is_move
+                col.prop(cur_material, "move")
+                col.enabled = cur_material.is_move
 
-                box.prop(curMaterial, "is_noz", text="No Z")
-                box.prop(curMaterial, "is_nof", text="No F")
-                box.prop(curMaterial, "is_notile", text="No tiling")
-                box.prop(curMaterial, "is_notileu", text="No tiling U")
-                box.prop(curMaterial, "is_notilev", text="No tiling V")
-                box.prop(curMaterial, "is_alphamirr", text="Alphamirr")
-                box.prop(curMaterial, "is_bumpcoord", text="Bympcoord")
-                box.prop(curMaterial, "is_usecol", text="UseCol")
-                box.prop(curMaterial, "is_wave", text="Wave")
+                box.prop(cur_material, "is_noz", text="No Z")
+                box.prop(cur_material, "is_nof", text="No F")
+                box.prop(cur_material, "is_notile", text="No tiling")
+                box.prop(cur_material, "is_notileu", text="No tiling U")
+                box.prop(cur_material, "is_notilev", text="No tiling V")
+                box.prop(cur_material, "is_alphamirr", text="Alphamirr")
+                box.prop(cur_material, "is_bumpcoord", text="Bympcoord")
+                box.prop(cur_material, "is_usecol", text="UseCol")
+                box.prop(cur_material, "is_wave", text="Wave")
 
 class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_misc_panel"

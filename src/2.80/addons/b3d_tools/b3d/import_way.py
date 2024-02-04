@@ -5,7 +5,7 @@ import sys
 import logging
 
 from ..common import (
-    recalcToLocalCoord,
+    recalc_to_local_coord,
     importway_logger
 )
 
@@ -19,18 +19,18 @@ from .scripts import (
 )
 
 from .class_descr import (
-    b_50,b_51,b_52
+    Blk050,Blk051,Blk052
 )
 
 #Setup module logger
 log = importway_logger
 
-globalInd = None
+global_ind = None
 
-def readBlockType(file):
+def read_block_type(file):
     return file.read(4).decode("cp1251").rstrip('\0')
 
-def readName(file, text_len):
+def read_name(file, text_len):
     # text_len = 0
     str_len = 0
     fill_len = 0
@@ -49,25 +49,25 @@ def openclose(file, path):
     else:
         return 2
 
-def getNumberedName(name):
-    global globalInd
-    name = f"{globalInd:04d}|{name}"
-    globalInd += 1
+def get_numbered_name(name):
+    global global_ind
+    name = f"{global_ind:04d}|{name}"
+    global_ind += 1
     return name
 
-def importWay(file, context, filepath):
+def import_way(file, context, filepath):
     # file_path = file
     # file = open(file, 'rb')
 
-    global globalInd
-    globalInd = 0
+    global global_ind
+    global_ind = 0
 
     ex = 0
-    rootName = os.path.basename(filepath)
-    # rootObject = None
+    root_name = os.path.basename(filepath)
+    # root_object = None
 
-    readingHeader = True
-    moduleName = rootName
+    reading_header = True
+    module_name = root_name
 
     while ex!=1:
         ex = openclose(file, filepath)
@@ -79,62 +79,62 @@ def importWay(file, context, filepath):
 
             global curRoom
 
-            while readingHeader:
-                subtype = readBlockType(file)
+            while reading_header:
+                subtype = read_block_type(file)
 
                 if subtype == "WTWR":
                     log.debug("Reading type WTWR")
-                    subtypeSize = struct.unpack("<i",file.read(4))[0]
+                    subtype_size = struct.unpack("<i",file.read(4))[0]
 
                 elif subtype == "MNAM":
                     log.debug("Reading type MNAM")
-                    subtypeSize = struct.unpack("<i",file.read(4))[0]
-                    moduleName = readName(file, subtypeSize)
+                    subtype_size = struct.unpack("<i",file.read(4))[0]
+                    module_name = read_name(file, subtype_size)
 
                 elif subtype == "GDAT":
                     log.debug("Reading type GDAT")
-                    subtypeSize = struct.unpack("<i",file.read(4))[0]
+                    subtype_size = struct.unpack("<i",file.read(4))[0]
                 else:
-                    readingHeader = False
+                    reading_header = False
 
-                    rootName = f'{moduleName}.b3d'
+                    root_name = f'{module_name}.b3d'
 
-                    rootObject = bpy.data.objects.get(rootName)
-                    if rootObject is None:
-                        rootObject = bpy.data.objects.new(rootName, None)
-                        rootObject[BLOCK_TYPE] = 111 # 111
-                        rootObject.name = rootName
-                        rootObject.location=(0,0,0)
-                        context.collection.objects.link(rootObject)
+                    root_object = bpy.data.objects.get(root_name)
+                    if root_object is None:
+                        root_object = bpy.data.objects.new(root_name, None)
+                        root_object[BLOCK_TYPE] = 111 # 111
+                        root_object.name = root_name
+                        root_object.location=(0,0,0)
+                        context.collection.objects.link(root_object)
 
                     file.seek(-4, 1)
 
-            type = readBlockType(file)
+            block_type = read_block_type(file)
 
-            if type == "GROM": #GROM
+            if block_type == "GROM": #GROM
                 log.debug("Reading type GROM")
                 grom_size = struct.unpack("<i",file.read(4))[0]
 
-                objName = ''
-                subtype = readBlockType(file)
+                obj_name = ''
+                subtype = read_block_type(file)
                 if subtype == "RNAM":
                     log.debug("Reading subtype RNAM")
-                    nameLen = struct.unpack("<i",file.read(4))[0]
-                    objName = readName(file, nameLen)
+                    name_len = struct.unpack("<i",file.read(4))[0]
+                    obj_name = read_name(file, name_len)
 
-                curObj = bpy.data.objects.get(objName)
+                cur_obj = bpy.data.objects.get(obj_name)
                 # for test
-                # objName = getNumberedName(objName)
-                if curObj is None:
-                    curObj = bpy.data.objects.new(objName, None)
-                    curObj.location=(0,0,0)
-                    curObj[BLOCK_TYPE] = 19
-                    curObj.parent = rootObject
-                    context.collection.objects.link(curObj)
+                # obj_name = get_numbered_name(obj_name)
+                if cur_obj is None:
+                    cur_obj = bpy.data.objects.new(obj_name, None)
+                    cur_obj.location=(0,0,0)
+                    cur_obj[BLOCK_TYPE] = 19
+                    cur_obj.parent = root_object
+                    context.collection.objects.link(cur_obj)
 
-                curRoom = bpy.data.objects[curObj.name]
+                curRoom = bpy.data.objects[cur_obj.name]
 
-            elif type == "RSEG": #RSEG
+            elif block_type == "RSEG": #RSEG
                 log.debug("Reading type RSEG")
                 rseg_size = struct.unpack("<i",file.read(4))[0]
                 rseg_size_cur = rseg_size
@@ -145,11 +145,11 @@ def importWay(file, context, filepath):
                 attr3 = None
                 wdth1 = None
                 wdth2 = None
-                unkName = ''
+                unk_name = ''
 
                 while rseg_size_cur > 0:
-                    subtype = readBlockType(file)
-                    subtypeSize = struct.unpack("<i",file.read(4))[0]
+                    subtype = read_block_type(file)
+                    subtype_size = struct.unpack("<i",file.read(4))[0]
 
                     if subtype == "ATTR":
                         log.debug("Reading subtype ATTR")
@@ -157,7 +157,7 @@ def importWay(file, context, filepath):
                         attr2 = struct.unpack("<d",file.read(8))[0]
                         attr3 = struct.unpack("<i",file.read(4))[0]
 
-                        rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rseg_size_cur -= (subtype_size+8) #subtype+subtype_size
 
                     elif subtype == "WDTH":
                         log.debug("Reading subtype WDTH")
@@ -166,7 +166,7 @@ def importWay(file, context, filepath):
 
                         log.debug(f"WDTH: {str(wdth1)} {str(wdth2)}")
 
-                        rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rseg_size_cur -= (subtype_size+8) #subtype+subtype_size
 
                     elif subtype == "VDAT":
                         log.debug("Reading subtype VDAT")
@@ -174,56 +174,56 @@ def importWay(file, context, filepath):
                         for i in range (len_points):
                             points.append(struct.unpack("ddd",file.read(24)))
 
-                        rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rseg_size_cur -= (subtype_size+8) #subtype+subtype_size
 
                     elif subtype == "RTEN":
                         log.debug("Reading subtype RTEN")
-                        unkName = readName(file, subtypeSize)
+                        unk_name = read_name(file, subtype_size)
 
-                        subtypeSize = ((subtypeSize >> 2) + 1) * 4
+                        subtype_size = ((subtype_size >> 2) + 1) * 4
 
-                        rseg_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rseg_size_cur -= (subtype_size+8) #subtype+subtype_size
 
                 if len(points):
 
-                    curveData = bpy.data.curves.new('curve', type='CURVE')
+                    curve_data = bpy.data.curves.new('curve', type='CURVE')
 
-                    curveData.dimensions = '3D'
-                    curveData.resolution_u = 2
+                    curve_data.dimensions = '3D'
+                    curve_data.resolution_u = 2
 
-                    newPoints = recalcToLocalCoord(points[0], points)
+                    new_points = recalc_to_local_coord(points[0], points)
 
-                    polyline = curveData.splines.new('POLY')
-                    polyline.points.add(len(newPoints)-1)
-                    for i, coord in enumerate(newPoints):
+                    polyline = curve_data.splines.new('POLY')
+                    polyline.points.add(len(new_points)-1)
+                    for i, coord in enumerate(new_points):
                         x,y,z = coord
                         polyline.points[i].co = (x, y, z, 1)
 
 
-                    curveData.bevel_depth = 0.3
-                    curveData.bevel_mode = 'ROUND'
-                    objName = EMPTY_NAME
-                    # objName = getNumberedName(EMPTY_NAME)
-                    curObj = bpy.data.objects.new(objName, curveData)
-                    # curveData.bevel_mode = ''
+                    curve_data.bevel_depth = 0.3
+                    curve_data.bevel_mode = 'ROUND'
+                    obj_name = EMPTY_NAME
+                    # obj_name = get_numbered_name(EMPTY_NAME)
+                    cur_obj = bpy.data.objects.new(obj_name, curve_data)
+                    # curve_data.bevel_mode = ''
 
-                    curObj.location = (points[0])
-                    curObj[BLOCK_TYPE] = 50
-                    curObj[prop(b_50.Attr1)] = attr1
-                    curObj[prop(b_50.Attr2)] = attr2
-                    curObj[prop(b_50.Attr3)] = attr3
-                    curObj[prop(b_50.Width1)] = wdth1
-                    curObj[prop(b_50.Width2)] = wdth2
-                    curObj[prop(b_50.Rten)] = unkName
-                    curObj.parent = curRoom
-                    context.collection.objects.link(curObj)
+                    cur_obj.location = (points[0])
+                    cur_obj[BLOCK_TYPE] = 50
+                    cur_obj[prop(Blk050.Attr1)] = attr1
+                    cur_obj[prop(Blk050.Attr2)] = attr2
+                    cur_obj[prop(Blk050.Attr3)] = attr3
+                    cur_obj[prop(Blk050.Width1)] = wdth1
+                    cur_obj[prop(Blk050.Width2)] = wdth2
+                    cur_obj[prop(Blk050.Rten)] = unk_name
+                    cur_obj.parent = curRoom
+                    context.collection.objects.link(cur_obj)
 
-            elif type == "RNOD": #RNOD
+            elif block_type == "RNOD": #RNOD
                 log.debug("Reading type RNOD")
                 rnod_size = struct.unpack("<i",file.read(4))[0]
                 rnod_size_cur = rnod_size
 
-                objName = ''
+                obj_name = ''
                 object_matrix = None
                 pos = None
                 flag = None
@@ -231,54 +231,54 @@ def importWay(file, context, filepath):
                 cur_pos = (0.0,0.0,0.0)
 
                 while rnod_size_cur > 0:
-                    subtype = readBlockType(file)
-                    subtypeSize = struct.unpack("<i",file.read(4))[0]
+                    subtype = read_block_type(file)
+                    subtype_size = struct.unpack("<i",file.read(4))[0]
                     if subtype == "NNAM":
                         log.debug("Reading subtype NNAM")
-                        objName = readName(file, subtypeSize)
+                        obj_name = read_name(file, subtype_size)
 
-                        realSize = ((subtypeSize >> 2) + 1) * 4
-                        rnod_size_cur -= (realSize+8) #subtype+subtypeSize
+                        real_size = ((subtype_size >> 2) + 1) * 4
+                        rnod_size_cur -= (real_size+8) #subtype+subtype_size
                     elif subtype == "POSN":
                         log.debug("Reading subtype POSN")
                         pos = struct.unpack("ddd",file.read(24))
 
-                        rnod_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rnod_size_cur -= (subtype_size+8) #subtype+subtype_size
                     elif subtype == "ORTN":
                         log.debug("Reading subtype ORTN")
                         object_matrix = []
                         for i in range(4):
                             object_matrix.append(struct.unpack("<ddd",file.read(24)))
 
-                        rnod_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rnod_size_cur -= (subtype_size+8) #subtype+subtype_size
                     elif subtype == "FLAG":
                         log.debug("Reading subtype FLAG")
                         flag = struct.unpack("<i",file.read(4))[0]
 
-                        rnod_size_cur -= (subtypeSize+8) #subtype+subtypeSize
+                        rnod_size_cur -= (subtype_size+8) #subtype+subtype_size
 
                     if object_matrix is not None:
                         cur_pos = object_matrix[3]
                     elif pos is not None:
                         cur_pos = pos
 
-                # objName = getNumberedName(objName)
-                curObj = bpy.data.objects.new(objName, None)
+                # obj_name = get_numbered_name(obj_name)
+                cur_obj = bpy.data.objects.new(obj_name, None)
                 if object_matrix is not None:
-                    curObj[BLOCK_TYPE] = 52
-                    curObj[prop(b_52.Flag)] = flag
-                    curObj.empty_display_type = 'ARROWS'
+                    cur_obj[BLOCK_TYPE] = 52
+                    cur_obj[prop(Blk052.Flag)] = flag
+                    cur_obj.empty_display_type = 'ARROWS'
                     for i in range(3):
                         for j in range(3):
-                            curObj.matrix_world[i][j] = object_matrix[j][i]
+                            cur_obj.matrix_world[i][j] = object_matrix[j][i]
                 else:
-                    curObj[BLOCK_TYPE] = 51
-                    curObj[prop(b_51.Flag)] = flag
-                    curObj.empty_display_type = 'PLAIN_AXES'
-                curObj.empty_display_size = 5
-                curObj.location = cur_pos
-                curObj.parent = curRoom
-                context.collection.objects.link(curObj)
+                    cur_obj[BLOCK_TYPE] = 51
+                    cur_obj[prop(Blk051.Flag)] = flag
+                    cur_obj.empty_display_type = 'PLAIN_AXES'
+                cur_obj.empty_display_size = 5
+                cur_obj.location = cur_pos
+                cur_obj.parent = curRoom
+                context.collection.objects.link(cur_obj)
             else:
-                log.error(f"Unknown type: {type} on position {str(file.tell())}")
+                log.error(f"Unknown type: {block_type} on position {str(file.tell())}")
 

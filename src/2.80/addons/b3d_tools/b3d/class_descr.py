@@ -22,11 +22,11 @@ from ..consts import (
 )
 
 from .common import (
-    getColPropertyIndex,
-    getColPropertyByName,
-    getCurrentRESModule,
-    getCurrentRESIndex,
-    updateColorPreview
+    get_col_property_index,
+    get_col_property_by_name,
+    get_current_res_module,
+    get_current_res_index,
+    update_color_preview
 )
 
 # Dynamic block exmaple
@@ -42,7 +42,7 @@ from .common import (
 #                 description='',
 #                 default=(0.0, 0.0, 0.0)
 #             ),
-#         'R': FloatProperty(
+#         'r': FloatProperty(
 #                 name = "Block border rad",
 #                 description = "",
 
@@ -50,7 +50,7 @@ from .common import (
 #     }
 # })
 
-class fieldType(enum.Enum):
+class FieldType(enum.Enum):
     IGNORE = 0
     STRING = 1
     COORD = 2
@@ -82,93 +82,89 @@ class FloatBlock(bpy.types.PropertyGroup):
 
 def update_palette_index(self, context):
 
-    if not bpy.context.scene.my_tool.isImporting:
-        index = getColPropertyIndex(self)
-        resModule = getCurrentRESModule()
-        if resModule is not None:
-            updateColorPreview(resModule, index)
+    if not bpy.context.scene.my_tool.is_importing:
+        index = get_col_property_index(self)
+        res_module = get_current_res_module()
+        if res_module is not None:
+            update_color_preview(res_module, index)
 
-def getImageIndexInModule(field, imageName, colName='id_value'):
-    mytool = bpy.context.scene.my_tool
+def get_image_index_in_module(field, image_name, col_name='id_value'):
 
-    resModule = getCurrentRESModule()
-    if resModule is not None:
-        for i, t in enumerate(getattr(resModule, field)): #maskfiles, textures, materials
-            id_value = getattr(t, colName)
-            if id_value and id_value.name == imageName:
+    res_module = get_current_res_module()
+    if res_module is not None:
+        for i, t in enumerate(getattr(res_module, field)): #maskfiles, textures, materials
+            id_value = getattr(t, col_name)
+            if id_value and id_value.name == image_name:
                 return i
         return -1
 
 def callback_only_maskfiles(self, context):
-    mytool = bpy.context.scene.my_tool
 
-    ind = getCurrentRESIndex()
+    ind = get_current_res_index()
     if(ind > -1):
-        return (getImageIndexInModule('maskfiles', context.name, 'id_msk') > -1)
+        return (get_image_index_in_module('maskfiles', context.name, 'id_msk') > -1)
 
 
 def callback_only_materials(self, context):
-    mytool = bpy.context.scene.my_tool
 
-    ind = getCurrentRESIndex()
+    ind = get_current_res_index()
     if(ind > -1):
-        return (getImageIndexInModule('materials', context.name, 'id_mat') > -1)
+        return (get_image_index_in_module('materials', context.name, 'id_mat') > -1)
 
 
 def callback_only_textures(self, context):
-    mytool = bpy.context.scene.my_tool
 
-    ind = getCurrentRESIndex()
+    ind = get_current_res_index()
     if(ind > -1):
-        return (getImageIndexInModule('textures', context.name, 'id_tex') > -1)
+        return (get_image_index_in_module('textures', context.name, 'id_tex') > -1)
 
 
 def callback_only_colors(self, context):
     mytool = bpy.context.scene.my_tool
-    resModules = mytool.resModules
+    res_modules = mytool.res_modules
 
-    resModule = getCurrentRESModule()
-    if resModule is not None:
-        commonResModule = getColPropertyByName(resModules, 'COMMON')
+    res_module = get_current_res_module()
+    if res_module is not None:
+        common_res_module = get_col_property_by_name(res_modules, 'COMMON')
 
-        nameSplit = context.name.split('_')
-        if len(nameSplit) != 3:
+        name_split = context.name.split('_')
+        if len(name_split) != 3:
             return False
         ind = -1
         module = "COMMON"
         try:
-            ind = int(nameSplit[2])
+            ind = int(name_split[2])
         except:
             return False
-        maxInd = len(commonResModule.palette_colors)
-        if len(resModule.palette_colors) > 0:
-            module = resModule.value
-            maxInd = len(resModule.palette_colors)
+        max_ind = len(common_res_module.palette_colors)
+        if len(res_module.palette_colors) > 0:
+            module = res_module.value
+            max_ind = len(res_module.palette_colors)
 
-        return nameSplit[0] == 'col' and nameSplit[1] == module and ind <= maxInd
+        return name_split[0] == 'col' and name_split[1] == module and ind <= max_ind
 
 
-def setTexInd(self, context):
-    index = getImageIndexInModule("textures", self.id_tex.name, 'id_tex')
+def set_tex_ind(self, context):
+    index = get_image_index_in_module("textures", self.id_tex.name, 'id_tex')
     if index:
         self.tex = index + 1
 
-def setMskInd(self, context):
-    index = getImageIndexInModule("maskfiles", self.id_msk.name, 'id_msk')
+def set_msk_ind(self, context):
+    index = get_image_index_in_module("maskfiles", self.id_msk.name, 'id_msk')
     if index:
         self.msk = index + 1
 
-def setMatInd(self, context):
-    index = getImageIndexInModule("materials", self.id_att.name, 'id_mat')
+def set_mat_ind(self, context):
+    index = get_image_index_in_module("materials", self.id_att.name, 'id_mat')
     if index:
         self.att = index + 1
 
-def setColInd(self, context):
+def set_col_ind(self, context):
     if self.id_col is not None:
-        nameSplit = self.id_col.name.split('_')
+        name_split = self.id_col.name.split('_')
     ind = 0
     try:
-        ind = int(nameSplit[2])
+        ind = int(name_split[2])
     except:
         pass
     self.col = ind
@@ -261,7 +257,7 @@ class MaterialBlock(bpy.types.PropertyGroup):
         name='Colors',
         type=bpy.types.Image,
         poll=callback_only_colors,
-        update=setColInd
+        update=set_col_ind
     )
     col: IntProperty(default=0)
 
@@ -282,7 +278,7 @@ class MaterialBlock(bpy.types.PropertyGroup):
         name='Texture',
         type=bpy.types.Image,
         poll=callback_only_textures,
-        update=setTexInd
+        update=set_tex_ind
     )
     tex: IntProperty(default=0)
 
@@ -296,7 +292,7 @@ class MaterialBlock(bpy.types.PropertyGroup):
         name='Material',
         type=bpy.types.Material,
         poll=callback_only_materials,
-        update=setMatInd
+        update=set_mat_ind
     )
     att: IntProperty(default=0)
 
@@ -310,7 +306,7 @@ class MaterialBlock(bpy.types.PropertyGroup):
         name='Maskfile',
         type=bpy.types.Image,
         poll=callback_only_maskfiles,
-        update=setMskInd
+        update=set_msk_ind
     )
     msk: IntProperty(default=0)
 
@@ -351,8 +347,6 @@ class ResBlock(bpy.types.PropertyGroup):
     materials: CollectionProperty(type=MaterialBlock)
     maskfiles: CollectionProperty(type=MaskfileBlock)
 
-borderSphereGroup = 'border_sphere'
-
 # class_descr configuration:
 
 # prop - Required - Key used to save property in Blenders custom properties.
@@ -360,257 +354,257 @@ borderSphereGroup = 'border_sphere'
 # type - Required - Type of the field.
 # Type specific configurations
 
-# fieldType.STRING
+# FieldType.STRING
     # 'name': 'name',
     # 'description': '',
     # 'default': ''
 
-# fieldType.COORD
+# FieldType.COORD
     # 'name': 'Name',
     # 'description': '',
     # 'default': (0.0, 0.0, 0.0)
 
-# fieldType.INT
+# FieldType.INT
     # 'name': 'Name',
     # 'description': '',
     # 'default': 0
 
-# fieldType.FLOAT
+# FieldType.FLOAT
     # 'name': 'Name',
     # 'description': '',
     # 'default': 0.0
 
-# fieldType.ENUM - static
-    # 'subtype': fieldType.INT,
+# FieldType.ENUM - static
+    # 'subtype': FieldType.INT,
     # 'name': 'Name',
     # 'description': ''
 
-# fieldType.LIST
+# FieldType.LIST
     # 'name': 'Name',
     # 'description': ''
 
-# fieldType.ENUM_DYN - dynamic
-    # 'subtype': fieldType.STRING
-    # 'callback': fieldType.SPACE_NAME,
+# FieldType.ENUM_DYN - dynamic
+    # 'subtype': FieldType.STRING
+    # 'callback': FieldType.SPACE_NAME,
     # 'name': 'Name',
     # 'description': ''
 
-# fieldType.V_FORMAT
+# FieldType.V_FORMAT
 
 # Used as subtypes
-# fieldType.MATERIAL_IND
-# fieldType.SPACE_NAME
-# fieldType.REFERENCEABLE
-# fieldType.ROOM
-# fieldType.RES_MODULE
+# FieldType.MATERIAL_IND
+# FieldType.SPACE_NAME
+# FieldType.REFERENCEABLE
+# FieldType.ROOM
+# FieldType.RES_MODULE
 
 # Custom operators
-# fieldType.SPHERE_EDIT
+# FieldType.SPHERE_EDIT
 
 
-class pvb_8():
+class Pvb008():
     pass
     # disabled for now. Reason: 1) hard to edit
     # todo: analyze more
     # Normal_Switch = {
     #     'prop': 'normal_switch',
-    #     'type': fieldType.FLOAT,
+    #     'type': FieldType.FLOAT,
     #     'name': 'Normal switcher',
     #     'description': '',
     #     'default': 0.0
     # }
     # Custom_Normal = {
     #     'prop': 'custom_normal',
-    #     'type': fieldType.COORD,
+    #     'type': FieldType.COORD,
     #     'name': 'Custom normal',
     #     'description': '',
     #     'default': (0.0, 0.0, 0.0)
     # }
 
 
-class pvb_35():
+class Pvb035():
     pass
     # disabled for now. Reason: 1) hard to edit
     # todo: analyze more
     # Normal_Switch = {
     #     'prop': 'normal_switch',
-    #     'type': fieldType.FLOAT,
+    #     'type': FieldType.FLOAT,
     #     'name': 'Normal switcher',
     #     'description': '',
     #     'default': 0.0
     # }
     # Custom_Normal = {
     #     'prop': 'custom_normal',
-    #     'type': fieldType.COORD,
+    #     'type': FieldType.COORD,
     #     'name': 'Custom normal',
     #     'description': '',
     #     'default': (0.0, 0.0, 0.0)
     # }
 
 
-class pfb_8():
+class Pfb008():
     Format_Flags = {
         'prop': 'format_flags',
-        'type': fieldType.V_FORMAT,
+        'type': FieldType.V_FORMAT,
     }
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
     # Unk_Float1 = {
     #     'prop': 'float1',
-    #     'type': fieldType.FLOAT,
+    #     'type': FieldType.FLOAT,
     #     'name': 'Unk. 1',
     #     'description': '',
     #     'default': 0.0
     # }
     # Unk_Int2 = {
     #     'prop': 'int2',
-    #     'type': fieldType.INT,
+    #     'type': FieldType.INT,
     #     'name': 'Unk. 2',
     #     'description': '',
     #     'default': 0
     # }
 
 
-class pfb_28():
+class Pfb028():
     Format_Flags = {
         'prop': 'format_flags',
-        'type': fieldType.V_FORMAT,
+        'type': FieldType.V_FORMAT,
     }
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
     # Unk_Float1 = {
     #     'prop': 'float1',
-    #     'type': fieldType.FLOAT,
+    #     'type': FieldType.FLOAT,
     #     'name': 'Unk. 1',
     #     'description': '',
     #     'default': 0.0
     # }
     # Unk_Int2 = {
     #     'prop': 'int2',
-    #     'type': fieldType.INT,
+    #     'type': FieldType.INT,
     #     'name': 'Unk. 2',
     #     'description': '',
     #     'default': 0
     # }
 
 
-class pfb_35():
+class Pfb035():
     Format_Flags = {
         'prop': 'format_flags',
-        'type': fieldType.V_FORMAT,
+        'type': FieldType.V_FORMAT,
     }
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
     # Unk_Float1 = {
     #     'prop': 'float1',
-    #     'type': fieldType.FLOAT,
+    #     'type': FieldType.FLOAT,
     #     'name': 'Unk. 1',
     #     'description': '',
     #     'default': 0.0
     # }
     # Unk_Int2 = {
     #     'prop': 'int2',
-    #     'type': fieldType.INT,
+    #     'type': FieldType.INT,
     #     'name': 'Unk. 2',
     #     'description': '',
     #     'default': 0
     # }
 
 
-class b_1():
+class Blk001():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Unk. name 1',
         'description': '',
         'default': ''
     }
     Name2 = {
         'prop': 'name2',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Unk. name 2',
         'description': '',
         'default': ''
     }
 
 
-class b_2():
+class Blk002():
     Unk_XYZ = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R = {
         'prop': 'unk_R',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
 
 
-class b_4():
+class Blk004():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.SPACE_NAME,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.SPACE_NAME,
         'name': 'Place',
         'description': ''
     }
     Name2 = {
         'prop': 'name2',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 2',
         'description': '',
         'default': ''
     }
 
 
-class b_5():
+class Blk005():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Block name',
         'description': '',
         'default': ''
     }
 
 
-class b_6():
+class Blk006():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 1',
         'description': '',
         'default': ''
     }
     Name2 = {
         'prop': 'name2',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 2',
         'description': '',
         'default': ''
     }
 
 
-class b_7():
+class Blk007():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Group name',
         'description': '',
         'default': ''
     }
 
 
-class b_9():
+class Blk009():
     Unk_XYZ = {
         'prop': 'b3d_b9_center',
         'group': 'b9_group',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
@@ -618,7 +612,7 @@ class b_9():
     Unk_R = {
         'prop': 'b3d_b9_rad',
         'group': 'b9_group',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
@@ -626,15 +620,15 @@ class b_9():
     Set_B9 = {
         'prop': 'b3d_b9',
         'group': 'b9_group',
-        'type': fieldType.SPHERE_EDIT
+        'type': FieldType.SPHERE_EDIT
     }
 
 
-class b_10():
+class Blk010():
     LOD_XYZ = {
         'prop': 'b3d_LOD_center',
         'group': 'LOD_group',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'LOD coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
@@ -642,7 +636,7 @@ class b_10():
     LOD_R = {
         'prop': 'b3d_LOD_rad',
         'group': 'LOD_group',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'LOD rad',
         'description': '',
         'default': 0.0
@@ -650,351 +644,351 @@ class b_10():
     Set_LOD = {
         'prop': 'b3d_LOD',
         'group': 'LOD_group',
-        'type': fieldType.SPHERE_EDIT
+        'type': FieldType.SPHERE_EDIT
     }
 
 
-class b_11():
+class Blk011():
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R1 = {
         'prop': 'unk_R1',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
     Unk_R2 = {
         'prop': 'unk_R1',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
 
 
-class b_12():
+class Blk012():
     Unk_XYZ = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R = {
         'prop': 'unk_R',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_13():
+class Blk013():
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_14():
+class Blk014():
     Unk_XYZ = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R = {
         'prop': 'unk_R',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_15():
+class Blk015():
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_16():
+class Blk016():
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 2',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_Float1 = {
         'prop': 'float1',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0.0
     }
     Unk_Float2 = {
         'prop': 'float2',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0.0
     }
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 3',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 4',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_17():
+class Blk017():
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 2',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_Float1 = {
         'prop': 'float1',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0.0
     }
     Unk_Float2 = {
         'prop': 'float2',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0.0
     }
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 3',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 4',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_18():
+class Blk018():
     Space_Name = {
         'prop': 'space_name',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.SPACE_NAME,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.SPACE_NAME,
         'name': 'Place name (24)',
         'description': ''
     }
     Add_Name = {
         'prop': 'add_name',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.REFERENCEABLE,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.REFERENCEABLE,
         'name': 'Transfer block name',
         'description': ''
     }
 
 
-class b_20():
+class Blk020():
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_21():
+class Blk021():
     GroupCnt = {
         'prop': 'group_cnt',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Group count',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
 
 
-class b_22():
+class Blk022():
     Unk_XYZ = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R = {
         'prop': 'unk_R',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
 
 
-class b_23():
+class Blk023():
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Surface = {
         'prop': 'CType',
-        'type': fieldType.ENUM,
-        'subtype': fieldType.INT,
+        'type': FieldType.ENUM,
+        'subtype': FieldType.INT,
         'name': 'Surface type',
         'description': '',
         'default': 0,
@@ -1002,17 +996,17 @@ class b_23():
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
 
-class b_24():
+class Blk024():
     Flag = {
         'prop': 'flag',
-        'type': fieldType.ENUM,
-        'subtype': fieldType.INT,
+        'type': FieldType.ENUM,
+        'subtype': FieldType.INT,
         'name': 'Show flag',
         'description': '',
         'default': 0,
@@ -1020,124 +1014,124 @@ class b_24():
     }
 
 
-class b_25():
+class Blk025():
     XYZ = {
         'prop': 'XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Name = {
         'prop': 'name',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 1',
         'description': '',
         'default': ''
     }
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 2',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_Float1 = {
         'prop': 'float1',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0.0
     }
     Unk_Float2 = {
         'prop': 'float2',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0.0
     }
     Unk_Float3 = {
         'prop': 'float3',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 3',
         'description': '',
         'default': 0.0
     }
     Unk_Float4 = {
         'prop': 'float4',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 4',
         'description': '',
         'default': 0.0
     }
     Unk_Float5 = {
         'prop': 'float5',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 5',
         'description': '',
         'default': 0.0
     }
 
 
-class b_26():
+class Blk026():
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 2',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ3 = {
         'prop': 'unk_XYZ3',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 3',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
 
 
-class b_27():
+class Blk027():
     Flag = {
         'prop': 'flag',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Flag',
         'description': '',
         'default': 0
     }
     Unk_XYZ = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Material = {
         'prop': 'material',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Material',
         'description': '',
         'default': 0
     }
 
 
-class b_28():
+class Blk028():
     Sprite_Center = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Sprite center coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
@@ -1145,44 +1139,44 @@ class b_28():
      #todo: check
 
 
-class b_29():
+class Blk029():
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_XYZ = {
         'prop': 'unk_XYZ',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R = {
         'prop': 'unk_R',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
 
 
-class b_30():
+class Blk030():
     ResModule1 = {
         'prop': '1_roomName_res',
         'group': 'resModule1',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.RES_MODULE,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.RES_MODULE,
         'name': '1. module',
         'description': '',
         'default': ''
@@ -1190,9 +1184,9 @@ class b_30():
     RoomName1 = {
         'prop': '1_roomName',
         'group': 'resModule1',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.ROOM,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.ROOM,
         'name': '1. room',
         'description': '',
         'default': ''
@@ -1200,9 +1194,9 @@ class b_30():
     ResModule2 = {
         'prop': '2_roomName_res',
         'group': 'resModule2',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.RES_MODULE,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.RES_MODULE,
         'name': '2. module',
         'description': '',
         'default': ''
@@ -1210,47 +1204,47 @@ class b_30():
     RoomName2 = {
         'prop': '2_roomName',
         'group': 'resModule2',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.STRING,
-        'callback': fieldType.ROOM,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.STRING,
+        'callback': FieldType.ROOM,
         'name': '2. room',
         'description': '',
         'default': ''
     }
 
 
-class b_31():
+class Blk031():
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_R = {
         'prop': 'unk_R',
-        'type': fieldType.RAD,
+        'type': FieldType.RAD,
         'name': 'Unk. rad',
         'description': '',
         'default': 0.0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
@@ -1258,140 +1252,140 @@ class b_31():
     #todo: check
 
 
-class b_33():
+class Blk033():
     Use_Lights = {
         'prop': 'useLight',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Use lights',
         'description': '',
         'default': 0
     }
     Light_Type = {
         'prop': 'lType',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Light type',
         'description': '',
         'default': 0
     }
     Flag = {
         'prop': 'flag',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Flag',
         'description': '',
         'default': 0
     }
     Unk_XYZ1 = {
         'prop': 'unk_XYZ1',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 1',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_XYZ2 = {
         'prop': 'unk_XYZ2',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'Unk. coord 2',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
     Unk_Float1 = {
         'prop': 'float1',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0.0
     }
     Unk_Float2 = {
         'prop': 'float2',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0.0
     }
     Light_R = {
         'prop': 'light_radius',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Light rad',
         'description': '',
         'default': 0.0
     }
     Intens = {
         'prop': 'intensity',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Light intensity',
         'description': '',
         'default': 0.0
     }
     Unk_Float3 = {
         'prop': 'float3',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 3',
         'description': '',
         'default': 0.0
     }
     Unk_Float4 = {
         'prop': 'float4',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 4',
         'description': '',
         'default': 0.0
     }
     RGB = {
         'prop': 'rgb',
-        'type': fieldType.COORD,
+        'type': FieldType.COORD,
         'name': 'RGB',
         'description': '',
         'default': (0.0, 0.0, 0.0)
     }
 
 
-class b_34():
+class Blk034():
     UnkInt = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
 
 
-class b_35():
+class Blk035():
     MType = {
-        'prop': 'mType',
-        'type': fieldType.INT,
+        'prop': 'm_type',
+        'type': FieldType.INT,
         'name': 'Type',
         'description': '',
         'default': 0
     }
     TexNum = {
         'prop': 'texnum',
-        'type': fieldType.ENUM_DYN,
-        'subtype': fieldType.INT,
-        'callback': fieldType.MATERIAL_IND,
+        'type': FieldType.ENUM_DYN,
+        'subtype': FieldType.INT,
+        'callback': FieldType.MATERIAL_IND,
         'name': 'Texture',
         'description': '',
     }
 
 
-class b_36():
+class Blk036():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 1',
         'description': '',
         'default': ''
     }
     Name2 = {
         'prop': 'name2',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 2',
         'description': '',
         'default': ''
     }
     VType = {
         'prop': 'vType',
-        'type': fieldType.ENUM,
-        'subtype': fieldType.INT,
+        'type': FieldType.ENUM,
+        'subtype': FieldType.INT,
         'name': 'Vertex type',
         'description': '',
         'default': 2,
@@ -1399,18 +1393,18 @@ class b_36():
     }
 
 
-class b_37():
+class Blk037():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 1',
         'description': '',
         'default': ''
     }
     VType = {
         'prop': 'vType',
-        'type': fieldType.ENUM,
-        'subtype': fieldType.INT,
+        'type': FieldType.ENUM,
+        'subtype': FieldType.INT,
         'name': 'Vertex type',
         'description': '',
         'default': 2,
@@ -1418,56 +1412,56 @@ class b_37():
     }
 
 
-class b_39():
+class Blk039():
     Color_R = {
         'prop': 'color_r',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Color rad',
         'description': '',
         'default': 0
     }
     Unk_Float1 = {
         'prop': 'float1',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0.0
     }
     Fog_Start = {
         'prop': 'fog_start',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 3',
         'description': '',
         'default': 0.0
     }
     Fog_End = {
         'prop': 'fog_end',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Unk. 4',
         'description': '',
         'default': 0.0
     }
     Color_Id = {
         'prop': 'color_id',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Color ID',
         'description': '',
         'default': 0
     }
 
 
-class b_40():
+class Blk040():
     Name1 = {
         'prop': 'name1',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Name 1',
         'description': '',
         'default': ''
     }
     Name2 = {
         'prop': 'name2',
-        'type': fieldType.ENUM,
-        'subtype': fieldType.STRING,
+        'type': FieldType.ENUM,
+        'subtype': FieldType.STRING,
         'name': 'Generator type',
         'description': '',
         'default': '$$TreeGenerator',
@@ -1475,178 +1469,101 @@ class b_40():
     }
     Unk_Int1 = {
         'prop': 'int1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 1',
         'description': '',
         'default': 0
     }
     Unk_Int2 = {
         'prop': 'int2',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Unk. 2',
         'description': '',
         'default': 0
     }
     Unk_List = {
         'prop': 'list1',
-        'type': fieldType.LIST,
+        'type': FieldType.LIST,
         'name': 'Unk. params',
         'description': '',
     }
 
-# b_50 - segment
-# b_51 - unoriented node
-# b_52 - oriented node
+# Blk050 - segment
+# Blk051 - unoriented node
+# Blk052 - oriented node
 
-class b_50():
+class Blk050():
     Attr1 = {
         'prop': 'attr1',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Attr. 1',
         'description': '',
         'default': 0
     }
     Attr2 = {
         'prop': 'attr2',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Attr. 2',
         'description': '',
         'default': 0
     }
     Attr3 = {
         'prop': 'attr3',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Attr. 3',
         'description': '',
         'default': 0
     }
     Rten = {
         'prop': 'rten',
-        'type': fieldType.STRING,
+        'type': FieldType.STRING,
         'name': 'Unk. name',
         'description': '',
         'default': ''
     }
     Width1 = {
         'prop': 'wdth1',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Width 1',
         'description': '',
         'default': 0
     }
     Width2 = {
         'prop': 'wdth2',
-        'type': fieldType.FLOAT,
+        'type': FieldType.FLOAT,
         'name': 'Width 2',
         'description': '',
         'default': 0
     }
 
 
-class b_51():
+class Blk051():
     Flag = {
         'prop': 'flag',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Flag',
         'description': '',
         'default': 0
     }
 
 
-class b_52():
+class Blk052():
     Flag = {
         'prop': 'flag',
-        'type': fieldType.INT,
+        'type': FieldType.INT,
         'name': 'Flag',
         'description': '',
         'default': 0
     }
 
-
-def getClassDefByType(blockNum):
-    zclass = None
-    if blockNum == 1:
-        zclass = b_1
-    elif blockNum == 2:
-        zclass = b_2
-    # elif blockNum == 3:
-    #     zclass = b_3
-    elif blockNum == 4:
-        zclass = b_4
-    elif blockNum == 5:
-        zclass = b_5
-    elif blockNum == 6:
-        zclass = b_6
-    elif blockNum == 7:
-        zclass = b_7
-    # elif blockNum == 8:
-    #     zclass = b_8
-    elif blockNum == 9:
-        zclass = b_9
-    elif blockNum == 10:
-        zclass = b_10
-    elif blockNum == 11:
-        zclass = b_11
-    elif blockNum == 12:
-        zclass = b_12
-    elif blockNum == 13:
-        zclass = b_13
-    elif blockNum == 14:
-        zclass = b_14
-    elif blockNum == 15:
-        zclass = b_15
-    elif blockNum == 16:
-        zclass = b_16
-    elif blockNum == 17:
-        zclass = b_17
-    elif blockNum == 18:
-        zclass = b_18
-    elif blockNum == 20:
-        zclass = b_20
-    elif blockNum == 21:
-        zclass = b_21
-    elif blockNum == 22:
-        zclass = b_22
-    elif blockNum == 23:
-        zclass = b_23
-    elif blockNum == 24:
-        zclass = b_24
-    elif blockNum == 25:
-        zclass = b_25
-    elif blockNum == 26:
-        zclass = b_26
-    elif blockNum == 27:
-        zclass = b_27
-    elif blockNum == 28:
-        zclass = b_28
-    elif blockNum == 29:
-        zclass = b_29
-    elif blockNum == 30:
-        zclass = b_30
-    elif blockNum == 31:
-        zclass = b_31
-    elif blockNum == 33:
-        zclass = b_33
-    elif blockNum == 34:
-        zclass = b_34
-    elif blockNum == 35:
-        zclass = b_35
-    elif blockNum == 36:
-        zclass = b_36
-    elif blockNum == 37:
-        zclass = b_37
-    elif blockNum == 39:
-        zclass = b_39
-    elif blockNum == 40:
-        zclass = b_40
-
-    elif blockNum == 50:
-        zclass = b_50
-    elif blockNum == 51:
-        zclass = b_51
-    elif blockNum == 52:
-        zclass = b_52
-    return zclass
+block_classes = [
+    None, Blk001, Blk002, None, Blk004, Blk005, Blk006, Blk007, None, Blk009,
+    Blk010, Blk011, Blk012, Blk013, Blk014, Blk015, Blk016, Blk017, Blk018, None,
+    Blk020, Blk021, Blk022, Blk023, Blk024, Blk025, Blk026, Blk027, Blk028, Blk029,
+    Blk030, Blk031, None, Blk033, Blk034, Blk035, Blk036, Blk037, None, Blk039,
+    Blk040, None, None, None, None, None, None, None, None, None,
+    Blk050, Blk051, Blk052, None, None, None, None, None, None, None,
+]
 
 _classes = [
     BoolBlock,

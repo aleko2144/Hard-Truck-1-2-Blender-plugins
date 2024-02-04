@@ -21,9 +21,6 @@
 if "bpy" in locals():
     print("Reimporting modules!!!")
     import importlib
-    # importlib.reload(object_UIList)
-    # importlib.reload(material_UIList)
-    # importlib.reload(custom_UIList)
     importlib.reload(common)
     importlib.reload(consts)
     importlib.reload(tch)
@@ -31,9 +28,6 @@ if "bpy" in locals():
 else:
     import bpy
     from . import (
-        # object_UIList,
-        # material_UIList,
-        # custom_UIList,
         common,
         consts,
         tch,
@@ -60,17 +54,11 @@ bl_info = {
 # ------------------------------------------------------------------------
 
 def register():
-    # custom_UIList.register()
-    # way.register()
     b3d.register()
-    # tch_register()
     common.updateLoggers(None, None)
 
 def unregister():
     b3d.unregister()
-    # way.unregister()
-    # custom_UIList.unregister()
-    # tch_unregister()
 
 if __name__ == "__main__":
     register()

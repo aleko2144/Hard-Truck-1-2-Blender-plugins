@@ -3,7 +3,6 @@ import bpy
 import re
 from mathutils import Vector
 import math
-import logging
 
 from ..common import common_logger
 from ..consts import (
@@ -14,45 +13,45 @@ from ..consts import (
 #Setup module logger
 log = common_logger
 
-def writeSize(file, ms, writeMs=None):
-    if writeMs is None:
-        writeMs = ms
-    endMs = file.tell()
-    size = endMs - ms
-    file.seek(writeMs, 0)
+def write_size(file, ms, write_ms=None):
+    if write_ms is None:
+        write_ms = ms
+    end_ms = file.tell()
+    size = end_ms - ms
+    file.seek(write_ms, 0)
     file.write(struct.pack("<i", size))
-    file.seek(endMs, 0)
+    file.seek(end_ms, 0)
 
-def getNotNumericName(name):
-    reIsCopy = re.compile(r'\|')
-    matchInd = reIsCopy.search(name)
+def get_not_numeric_name(name):
+    re_is_copy = re.compile(r'\|')
+    match_ind = re_is_copy.search(name)
     result = name
-    if matchInd:
-        result = name[matchInd.span()[0]+1:]
+    if match_ind:
+        result = name[match_ind.span()[0]+1:]
     return result
 
-def getNonCopyName(name):
-    reIsCopy = re.compile(r'\.[0-9]*$')
-    matchInd = reIsCopy.search(name)
+def get_non_copy_name(name):
+    re_is_copy = re.compile(r'\.[0-9]*$')
+    match_ind = re_is_copy.search(name)
     result = name
-    if matchInd:
-        result = name[:matchInd.span()[0]]
+    if match_ind:
+        result = name[:match_ind.span()[0]]
     return result
 
-def isRootObj(obj):
+def is_root_obj(obj):
     return obj.parent is None and obj.name[-4:] == '.b3d'
 
-def getRootObj(obj):
+def get_root_obj(obj):
     result = obj
-    while not isRootObj(result):
+    while not is_root_obj(result):
         result = result.parent
     return result
 
-def isEmptyName(name):
-    reIsEmpty = re.compile(fr'.*{EMPTY_NAME}.*')
-    return reIsEmpty.search(name)
+def is_empty_name(name):
+    re_is_empty = re.compile(fr'.*{EMPTY_NAME}.*')
+    return re_is_empty.search(name)
 
-def isMeshBlock(obj):
+def is_mesh_block(obj):
     # 18 - for correct transform apply
     return obj.get("block_type") is not None \
         and (obj["block_type"]==8 or obj["block_type"]==35\
@@ -60,27 +59,27 @@ def isMeshBlock(obj):
         # or obj["block_type"]==18
         )
 
-def isRefBlock(obj):
+def is_ref_block(obj):
     return obj.get("block_type") is not None and obj["block_type"]==18
 
-def unmaskTemplate(templ):
+def unmask_template(templ):
     offset = 0
     unmasks = []
-    tA = int(templ[0])
-    tR = int(templ[1])
-    tG = int(templ[2])
-    tB = int(templ[3])
-    totalBytes = tR + tG + tB + tA
+    t_a = int(templ[0])
+    t_r = int(templ[1])
+    t_g = int(templ[2])
+    t_b = int(templ[3])
+    total_bytes = t_r + t_g + t_b + t_a
     for i in range(4):
-        curInt = int(templ[i])
+        cur_int = int(templ[i])
         lzeros = offset
-        bits = curInt
-        rzeros = totalBytes - lzeros - bits
+        bits = cur_int
+        rzeros = total_bytes - lzeros - bits
         unmasks.append([lzeros, bits, rzeros])
-        offset += curInt
+        offset += cur_int
     return unmasks
 
-def unmaskBits(num, bytes=2):
+def unmask_bits(num, bytes_cnt=2):
     bits = [int(digit) for digit in bin(num)[2:]]
     lzeros = 0
     rzeros = 0
@@ -92,11 +91,11 @@ def unmaskBits(num, bytes=2):
             ones+=1
         else:
             rzeros+=1
-        lzeros = bytes*8 - len(bits)
+        lzeros = bytes_cnt*8 - len(bits)
     return [lzeros, ones, rzeros]
 
 
-def readCString(file):
+def read_cstring(file):
     try:
         chrs = []
         i = 0
@@ -106,48 +105,48 @@ def readCString(file):
             i += 1
         return "".join(chrs[:-1])
     except TypeError as e:
-        log.warning("Error in readCString. Nothing to read")
+        log.warning("Error in read_cstring. Nothing to read")
         return ""
 
 
-def readRESSections(filepath):
+def read_res_sections(filepath):
     sections = []
     with open(filepath, "rb") as file:
         k = 0
         while 1:
-            category = readCString(file)
+            category = read_cstring(file)
             if(len(category) > 0):
-                resSplit = category.split(" ")
-                id = resSplit[0]
-                cnt = int(resSplit[1])
+                res_split = category.split(" ")
+                cat_id = res_split[0]
+                cnt = int(res_split[1])
 
                 sections.append({})
 
-                sections[k]["name"] = id
+                sections[k]["name"] = cat_id
                 sections[k]["cnt"] = cnt
                 sections[k]["data"] = []
 
-                log.info(f"Reading category {id}")
+                log.info(f"Reading category {cat_id}")
                 log.info(f"Element count in category is {cnt}.")
                 if cnt > 0:
                     log.info("Start processing...")
-                    resData = []
-                    if id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
+                    res_data = []
+                    if cat_id in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
                         for i in range(cnt):
                             data = {}
-                            data['row'] = readCString(file)
-                            resData.append(data)
+                            data['row'] = read_cstring(file)
+                            res_data.append(data)
 
                     else: #PALETTEFILES, SOUNDFILES, BACKFILES, MASKFILES, TEXTUREFILES
                         for i in range(cnt):
 
                             data = {}
-                            data['row'] = readCString(file)
+                            data['row'] = read_cstring(file)
                             data['size'] = struct.unpack("<i",file.read(4))[0]
                             data['bytes'] = file.read(data['size'])
-                            resData.append(data)
+                            res_data.append(data)
 
-                    sections[k]['data'] = resData
+                    sections[k]['data'] = res_data
 
                 else:
                     log.info("Skip category")
@@ -188,90 +187,91 @@ class HTMaterial():
         self.usecol = False # bool
         self.wave = False # bool
 
-def getColPropertyByName(colProperty, value, colName = 'value'):
+def get_col_property_by_name(col_property, value, col_name = 'value'):
     result = None
-    for item in colProperty:
-        if getattr(item, colName) == value:
+    for item in col_property:
+        if getattr(item, col_name) == value:
             result = item
             break
     return result
 
-def getColPropertyIndexByName(colProperty, value, colName='value'):
+def get_col_property_index_by_name(col_property, value, col_name='value'):
     result = -1
-    for idx, item in enumerate(colProperty):
-        if getattr(item, colName) == value:
+    for idx, item in enumerate(col_property):
+        if getattr(item, col_name) == value:
             result = idx
             break
     return result
 
-def existsColPropertyByName(colProperty, value, colName='value'):
-    for item in colProperty:
-        if getattr(item, colName) == value:
+def exists_col_property_by_name(col_property, value, col_name='value'):
+    for item in col_property:
+        if getattr(item, col_name) == value:
             return True
     return False
 
-def getMaterialIndexInRES(matName, resModuleName):
-    resModules = bpy.context.scene.my_tool.resModules
-    curModule = getColPropertyByName(resModules, resModuleName)
-    curMaterialInd = getColPropertyIndexByName(curModule.materials, matName, 'mat_name')
-    if curMaterialInd == -1:
-        curMaterialInd = 1
-    return curMaterialInd
+def get_material_index_in_res(mat_name, res_module_name):
+    res_modules = bpy.context.scene.my_tool.res_modules
+    cur_module = get_col_property_by_name(res_modules, res_module_name)
+    cur_material_ind = get_col_property_index_by_name(cur_module.materials, mat_name, 'mat_name')
+    if cur_material_ind == -1:
+        cur_material_ind = 1
+    return cur_material_ind
 
-def getColorImgName(moduleName, index):
-    return f"col_{moduleName}_{index:03d}"
+def get_color_img_name(module_name, index):
+    return f"col_{module_name}_{index:03d}"
 
 # https://blenderartists.org/t/index-lookup-in-a-collection/512818/2
-def getColPropertyIndex(prop):
+def get_col_property_index(prop):
     txt = prop.path_from_id()
     pos = txt.rfind('[')
-    colIndex = txt[pos+1: len(txt)-1]
-    return int(colIndex)
+    col_index = txt[pos+1: len(txt)-1]
+    return int(col_index)
 
-def getCurrentRESIndex():
+def get_current_res_index():
     mytool = bpy.context.scene.my_tool
-    return int(mytool.selectedResModule)
+    return int(mytool.selected_res_module)
 
-def getCurrentRESModule():
+def get_current_res_module():
     mytool = bpy.context.scene.my_tool
-    resModule = None
-    ind = getCurrentRESIndex()
+    res_module = None
+    ind = get_current_res_index()
     if ind > -1:
-        resModule = mytool.resModules[ind]
-    return resModule
+        res_module = mytool.res_modules[ind]
+    return res_module
 
-def getActivePaletteModule(resModule):
+def get_active_palette_module(res_module):
     mytool = bpy.context.scene.my_tool
-    if resModule:
-        if len(resModule.palette_colors) > 0:
-            return resModule
-        commonResModule = getColPropertyByName(mytool.resModules, 'COMMON')
-        if len(commonResModule.palette_colors) > 0:
-            return commonResModule
+    if res_module:
+        if len(res_module.palette_colors) > 0:
+            return res_module
+        log.debug(mytool)
+        common_res_module = get_col_property_by_name(mytool.res_modules, 'COMMON')
+        if len(common_res_module.palette_colors) > 0:
+            return common_res_module
     return None
 
-def updateColorPreview(resModule, ind):
-    moduleName = resModule.value
-    bpyImage = bpy.data.images.get(getColorImgName(moduleName, ind+1))
-    if bpyImage is None:
-        bpyImage = bpy.data.images.new(getColorImgName(moduleName, ind+1), width=1, height=1, alpha=1)
-    bpyImage.pixels[0] = resModule.palette_colors[ind].value[0]
-    bpyImage.pixels[1] = resModule.palette_colors[ind].value[1]
-    bpyImage.pixels[2] = resModule.palette_colors[ind].value[2]
-    bpyImage.pixels[3] = resModule.palette_colors[ind].value[3]
-    bpyImage.preview_ensure()
-    bpyImage.preview.reload()
+def update_color_preview(res_module, ind):
+    module_name = res_module.value
+    bpy_image = bpy.data.images.get(get_color_img_name(module_name, ind+1))
+    if bpy_image is None:
+        bpy_image = bpy.data.images.new(get_color_img_name(module_name, ind+1), width=1, height=1, alpha=1)
+    bpy_image.pixels[0] = res_module.palette_colors[ind].value[0]
+    bpy_image.pixels[1] = res_module.palette_colors[ind].value[1]
+    bpy_image.pixels[2] = res_module.palette_colors[ind].value[2]
+    bpy_image.pixels[3] = res_module.palette_colors[ind].value[3]
+    bpy_image.preview_ensure()
+    bpy_image.preview.reload()
 
 
-def getMatTextureRefDict(resModule):
-    matToTexture = {}
-    textureToMat = {}
-    for i, mat in enumerate(resModule.materials):
+def get_mat_texture_ref_dict(res_module):
+    mat_to_texture = {}
+    texture_to_mat = {}
+    for i, mat in enumerate(res_module.materials):
         if mat.is_tex:
-            matToTexture[i] = mat.tex-1
-            textureToMat[mat.tex-1] = i
+            mat_to_texture[i] = mat.tex-1
+            texture_to_mat[mat.tex-1] = i
 
-    return [matToTexture, textureToMat]
+    return [mat_to_texture, texture_to_mat]
 
 
 def rgb_to_srgb(r, g, b, alpha = 1):
@@ -328,38 +328,38 @@ def srgb_to_rgb(r, g, b):
 #     return tuple([srgb_to_linearrgb(c/0xff) for c in (r,g,b)] + [alpha])
 
 
-def getUsedVerticesAndTransform(vertices, faces):
+def get_used_vertices_and_transform(vertices, faces):
     indices = set()
-    oldNewTransf = {}
-    newOldTransf = {}
-    newVertexes = []
-    newFaces = []
+    old_new_transf = {}
+    new_old_transf = {}
+    new_vertexes = []
+    new_faces = []
     for face in faces:
         for idx in face:
             indices.add(idx)
     indices = sorted(indices)
     for idx in indices:
-        oldNewTransf[idx] = len(newVertexes)
-        newOldTransf[len(newVertexes)] = idx
-        newVertexes.append(vertices[idx])
-    newFaces = getUsedFaces(faces, oldNewTransf)
+        old_new_transf[idx] = len(new_vertexes)
+        new_old_transf[len(new_vertexes)] = idx
+        new_vertexes.append(vertices[idx])
+    new_faces = get_used_faces(faces, old_new_transf)
 
-    return [newVertexes, newFaces, indices, oldNewTransf, newOldTransf]
+    return [new_vertexes, new_faces, indices, old_new_transf, new_old_transf]
 
-def transformVertices(vertices, idxTransf):
-    newVertices = []
+def transform_vertices(vertices, idx_transf):
+    new_vertices = []
     for idx in vertices:
-        newVertices.append(idxTransf[idx])
-    return newVertices
+        new_vertices.append(idx_transf[idx])
+    return new_vertices
 
-def getUsedFaces(faces, idxTransf):
-    newFaces = []
+def get_used_faces(faces, idx_transf):
+    new_faces = []
     for face in faces:
-        newFace = getUsedFace(face, idxTransf)
-        newFaces.append(tuple(newFace))
-    return newFaces
+        new_face = get_used_face(face, idx_transf)
+        new_faces.append(tuple(new_face))
+    return new_faces
 
-def getUserVertices(faces):
+def get_user_vertices(faces):
     indices = set()
     for face in faces:
         for idx in face:
@@ -367,17 +367,17 @@ def getUserVertices(faces):
     return list(indices)
 
 
-def getUsedFace(face, idxTransf):
-    newFace = []
+def get_used_face(face, idx_transf):
+    new_face = []
     for idx in face:
-        newFace.append(idxTransf[idx])
-    return newFace
+        new_face.append(idx_transf[idx])
+    return new_face
 
 
-def getPolygonsBySelectedVertices(obj):
+def get_polygons_by_selected_vertices(obj):
     data = obj.data
     # data = bpy.context.object.data
-    selectedPolygons = []
+    selected_polygons = []
     for f in data.polygons:
         s = True
         for v in f.vertices:
@@ -385,69 +385,41 @@ def getPolygonsBySelectedVertices(obj):
                 s = False
                 break
         if s:
-            selectedPolygons.append(f)
-    return selectedPolygons
+            selected_polygons.append(f)
+    return selected_polygons
 
-def getSelectedVertices(obj):
+def get_selected_vertices(obj):
     data = obj.data
     # data = bpy.context.object.data
-    selectedVertices = []
+    selected_vertices = []
     for v in data.vertices:
         if v.select:
-            selectedVertices.append(v)
+            selected_vertices.append(v)
 
-    return selectedVertices
+    return selected_vertices
 
 
-def getAllChildren(obj):
-    allChildren = []
-    currentObjs = [obj]
+def get_all_children(obj):
+    all_children = []
+    current_objs = [obj]
     while(1):
-        nextChildren = []
-        if len(currentObjs) > 0:
-            for obj in currentObjs:
-                nextChildren.extend(obj.children)
-            currentObjs = nextChildren
-            allChildren.extend(currentObjs)
+        next_children = []
+        if len(current_objs) > 0:
+            for obj in current_objs:
+                next_children.extend(obj.children)
+            current_objs = next_children
+            all_children.extend(current_objs)
         else:
             break
-    return allChildren
+    return all_children
 
-def getMytoolBlockNameByClass(zclass, multipleClass = True):
-    bname = ''
-    btype, bnum = zclass.__name__.split('_')
-    if btype == 'b':
-        if multipleClass:
-            bname = f'block{bnum}'
-        else:
-            bname = f'sBlock{bnum}'
-    elif btype == 'pfb':
-        bname = f'perFaceBlock{bnum}'
-    elif btype == 'pvb':
-        bname = f'perVertBlock{bnum}'
+# class MyToolBlockHandler():
 
-    return [bname, bnum]
-
-
-def getMytoolBlockName(btype, bnum, multipleClass = False):
-    bname = ''
-    if btype == 'b':
-        if multipleClass:
-            bname = f'block{bnum}'
-        else:
-            bname = f'sBlock{bnum}'
-    elif btype == 'pfb':
-        bname = f'perFaceBlock{bnum}'
-    elif btype == 'pvb':
-        bname = f'perVertBlock{bnum}'
-
-    return bname
-
-def getPythagorLength(p1, p2):
+def get_pythagor_length(p1, p2):
     return (sum(map(lambda xx,yy : (xx-yy)**2,p1,p2)))**0.5
 
 # https://b3d.interplanety.org/en/how-to-calculate-the-bounding-sphere-for-selected-objects/
-def getMultObjBoundingSphere(objnTransfs, mode='BBOX'):
+def get_mult_obj_bounding_sphere(objn_transfs, mode='BBOX'):
     # return the bounding sphere center and radius for objects (in global coordinates)
     # if not isinstance(objects, list):
     #     objects = [objects]
@@ -458,9 +430,9 @@ def getMultObjBoundingSphere(objnTransfs, mode='BBOX'):
     #         points_co_global.extend([obj.matrix_world @ vertex.co for vertex in obj.data.vertices])
     if mode == 'BBOX':
         # BBOX - by object bounding boxes - less precis, quick
-        for objnTransf in objnTransfs:
-            obj = bpy.data.objects[objnTransf['obj']]
-            transf = bpy.data.objects[objnTransf['transf']]
+        for objn_transf in objn_transfs:
+            obj = bpy.data.objects[objn_transf['obj']]
+            transf = bpy.data.objects[objn_transf['transf']]
             points_co_global.extend([transf.matrix_world @ Vector(bbox) for bbox in obj.bound_box])
 
     def get_center(l):
@@ -472,16 +444,16 @@ def getMultObjBoundingSphere(objnTransfs, mode='BBOX'):
     return [b_sphere_center, b_sphere_radius.length]
 
 # https://blender.stackexchange.com/questions/62040/get-center-of-geometry-of-an-object
-def getSingleCoundingSphere(obj, local = False):
+def get_single_bounding_sphere(obj, local = False):
     center = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
     p1 = obj.bound_box[0]
     if not local:
         center = obj.matrix_world @ center
         p1 = obj.matrix_world @ Vector(obj.bound_box[0])
-    rad = getPythagorLength(center, p1)
+    rad = get_pythagor_length(center, p1)
     return [center, rad]
 
-def getCenterCoord(vertices):
+def get_center_coord(vertices):
     if len(vertices) == 0:
         return (0.0, 0.0, 0.0)
     x = [p[0] for p in vertices]
@@ -491,7 +463,7 @@ def getCenterCoord(vertices):
 
     return centroid
 
-def getLevelGroup(obj):
+def get_level_group(obj):
     parent = obj.parent
     if parent is None:
         return 0
@@ -499,69 +471,69 @@ def getLevelGroup(obj):
         return int(parent.name[6]) #GROUP_n
     return 0
 
-def referenceablesCallback(self, context):
+def referenceables_callback(self, context):
 
     mytool = context.scene.my_tool
-    rootObj = getRootObj(context.object)
+    root_obj = get_root_obj(context.object)
 
-    referenceables = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) != 24]
+    referenceables = [cn for cn in root_obj.children if cn.get(BLOCK_TYPE) != 24]
 
-    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(referenceables)]
+    enum_properties = [(cn.name, cn.name, "") for i, cn in enumerate(referenceables)]
 
-    return enumProperties
+    return enum_properties
 
-def spacesCallback(self, context):
-
-    mytool = context.scene.my_tool
-    rootObj = getRootObj(context.object)
-
-    spaces = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 24 and getRootObj(cn) == rootObj]
-
-    enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(spaces)]
-
-    return enumProperties
-
-def resMaterialsCallback(self, context):
+def spaces_callback(self, context):
 
     mytool = context.scene.my_tool
-    rootObj = getRootObj(context.object)
-    moduleName = rootObj.name[:-4]
+    root_obj = get_root_obj(context.object)
 
-    resModules = mytool.resModules
-    curModule = getColPropertyByName(resModules, moduleName)
+    spaces = [cn for cn in bpy.data.objects if cn.get(BLOCK_TYPE) == 24 and get_root_obj(cn) == root_obj]
 
-    enumProperties = [(str(i), cn.value, "") for i, cn in enumerate(curModule.materials)]
+    enum_properties = [(cn.name, cn.name, "") for i, cn in enumerate(spaces)]
 
-    return enumProperties
+    return enum_properties
 
-def roomsCallback(bname, pname):
+def res_materials_callback(self, context):
+
+    mytool = context.scene.my_tool
+    root_obj = get_root_obj(context.object)
+    module_name = root_obj.name[:-4]
+
+    res_modules = mytool.res_modules
+    cur_module = get_col_property_by_name(res_modules, module_name)
+
+    enum_properties = [(str(i), cn.value, "") for i, cn in enumerate(cur_module.materials)]
+
+    return enum_properties
+
+def rooms_callback(bname, pname):
     def callback_func(self, context):
 
-        enumProperties = []
+        enum_properties = []
 
         mytool = context.scene.my_tool
-        resModule = context.object.path_resolve(f'["{pname}"]')
+        res_module = context.object.path_resolve(f'["{pname}"]')
 
-        rootObj = bpy.data.objects.get(f'{resModule}.b3d')
-        if rootObj:
-            rooms = [cn for cn in rootObj.children if cn.get(BLOCK_TYPE) == 19]
+        root_obj = bpy.data.objects.get(f'{res_module}.b3d')
+        if root_obj:
+            rooms = [cn for cn in root_obj.children if cn.get(BLOCK_TYPE) == 19]
 
-            enumProperties = [(cn.name, cn.name, "") for i, cn in enumerate(rooms)]
+            enum_properties = [(cn.name, cn.name, "") for i, cn in enumerate(rooms)]
 
-        return enumProperties
+        return enum_properties
     return callback_func
 
 
-def modulesCallback(self, context):
+def modules_callback(self, context):
 
-    modules = [cn for cn in bpy.data.objects if isRootObj(cn)]
-    enumProperties = [(cn.name[:-4], cn.name[:-4], "") for i, cn in enumerate(modules)]
-    return enumProperties
+    modules = [cn for cn in bpy.data.objects if is_root_obj(cn)]
+    enum_properties = [(cn.name[:-4], cn.name[:-4], "") for i, cn in enumerate(modules)]
+    return enum_properties
 
 
-def resModulesCallback(self, context):
+def res_modules_callback(self, context):
 
     mytool = bpy.context.scene.my_tool
-    modules = [cn for cn in mytool.resModules if cn.value != "-1"]
-    enumProperties = [(cn.value, cn.value, "") for i, cn in enumerate(modules)]
-    return enumProperties
+    modules = [cn for cn in mytool.res_modules if cn.value != "-1"]
+    enum_properties = [(cn.value, cn.value, "") for i, cn in enumerate(modules)]
+    return enum_properties

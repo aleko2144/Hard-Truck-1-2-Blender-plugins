@@ -5,9 +5,9 @@ import bpy
 
 from .common import (
     rgb_to_srgb,
-    unmaskBits,
-    unmaskTemplate,
-    writeSize
+    unmask_bits,
+    unmask_template,
+    write_size
 )
 from ..common import (
     imghelp_logger
@@ -16,39 +16,39 @@ from ..common import (
 #Setup module logger
 log = imghelp_logger
 
-def parsePLM(resModule, filepath):
+def parse_plm(res_module, filepath):
     # colors = []
-    with open(filepath, "rb") as plmFile:
-        magic = plmFile.read(4).decode("UTF-8")
-        palSize = struct.unpack("<I", plmFile.read(4))[0]
-        cat1 = plmFile.read(4).decode("UTF-8")
-        cat1Size = struct.unpack("<I", plmFile.read(4))[0]
-        for i in range(cat1Size // 3):
-            R = struct.unpack("<B",plmFile.read(1))[0]
-            G = struct.unpack("<B",plmFile.read(1))[0]
-            B = struct.unpack("<B",plmFile.read(1))[0]
+    with open(filepath, "rb") as plm_file:
+        magic = plm_file.read(4).decode("UTF-8")
+        pal_size = struct.unpack("<I", plm_file.read(4))[0]
+        cat1 = plm_file.read(4).decode("UTF-8")
+        cat1_size = struct.unpack("<I", plm_file.read(4))[0]
+        for i in range(cat1_size // 3):
+            r = struct.unpack("<b",plm_file.read(1))[0]
+            g = struct.unpack("<b",plm_file.read(1))[0]
+            b = struct.unpack("<b",plm_file.read(1))[0]
 
-            rgb_color = rgb_to_srgb(R, G, B)
-            pal_color = resModule.palette_colors.add()
+            rgb_color = rgb_to_srgb(r, g, b)
+            pal_color = res_module.palette_colors.add()
             pal_color.value = rgb_color
 
 
-def paletteToColors(palette, indexes, trc):
+def palette_to_colors(palette, indexes, trc):
     colors = []
     for index in indexes:
-        R = palette[index*3]
-        G = palette[index*3+1]
-        B = palette[index*3+2]
-        if (0 | (R << 16) | (G << 8) | B) != (0 | (trc[0] << 16) | (trc[1] << 8) | trc[2]):
-            A = 255
+        r = palette[index*3]
+        g = palette[index*3+1]
+        b = palette[index*3+2]
+        if (0 | (r << 16) | (g << 8) | b) != (0 | (trc[0] << 16) | (trc[1] << 8) | trc[2]):
+            a = 255
         else:
-            A = 0
-        colors.extend([B, G, R, A])
+            a = 0
+        colors.extend([b, g, r, a])
     return colors
 
 
 
-def compressRle(file, width, height, bytes_per_pixel):
+def compress_rle(file, width, height, bytes_per_pixel):
     pc = 0
     compressed_data = bytearray(width * height * bytes_per_pixel)
     colors = file.read(width * height * 4)
@@ -58,20 +58,20 @@ def compressRle(file, width, height, bytes_per_pixel):
             black_cnt += 1
 
 
-def decompressRle(file, width, height, bytes_per_pixel):
+def decompress_rle(file, width, height, bytes_per_pixel):
     try:
         # log.debug("BPP: {}".format(bytes_per_pixel))
         pixel_count = 0
         decompressed_data = bytearray(width * height * bytes_per_pixel)
         while pixel_count < width * height:
-            curBit = struct.unpack("<B", file.read(1))[0]
-            if(curBit > 127): #black pixels
-                pixel_count += (curBit-128)
-                # log.debug("black pixels {} {}".format(curBit-128, file.tell()))
+            curbit = struct.unpack("<b", file.read(1))[0]
+            if(curbit > 127): #black pixels
+                pixel_count += (curbit-128)
+                # log.debug("black pixels {} {}".format(curbit-128, file.tell()))
             else: #raw data
-                decompressed_data[pixel_count * bytes_per_pixel:(pixel_count + curBit) * bytes_per_pixel] = file.read(curBit*bytes_per_pixel)
-                pixel_count += curBit
-                # log.debug("Raw data {} {}".format(curBit, file.tell()))
+                decompressed_data[pixel_count * bytes_per_pixel:(pixel_count + curbit) * bytes_per_pixel] = file.read(curbit*bytes_per_pixel)
+                pixel_count += curbit
+                # log.debug("Raw data {} {}".format(curbit, file.tell()))
 
         return decompressed_data
     except:
@@ -79,7 +79,7 @@ def decompressRle(file, width, height, bytes_per_pixel):
         raise
 
 
-def writeTGA8888(filepath, header, colorsBefore, bitMask, transpColor = (0,0,0), bytesPerPixel = 2):
+def write_tga8888(filepath, header, colors_before, bit_mask, transp_color = (0,0,0), bytes_per_pixel = 2):
 
     header[0] = 0
     header[5] = 32 #ColorMapEntrySize
@@ -87,72 +87,72 @@ def writeTGA8888(filepath, header, colorsBefore, bitMask, transpColor = (0,0,0),
 
     width = header[8]
     height = header[9]
-    colorsSize = height*width
+    colors_size = height*width
 
-    colorsAfter = []
+    colors_after = []
 
-    typeSize = (None,'<B','<H',None,'<I')[bytesPerPixel]
+    type_size = (None,'<b','<H',None,'<I')[bytes_per_pixel]
 
-    Rmsk = bitMask[0]
-    Gmsk = bitMask[1]
-    Bmsk = bitMask[2]
-    Amsk = bitMask[3]
-    if Rmsk == 0 and Gmsk == 0 and Bmsk == 0 and Amsk == 0: #default 565
-        Rmsk = 63488
-        Gmsk = 2016
-        Bmsk = 31
+    r_msk = bit_mask[0]
+    g_msk = bit_mask[1]
+    b_msk = bit_mask[2]
+    a_msk = bit_mask[3]
+    if r_msk == 0 and g_msk == 0 and b_msk == 0 and a_msk == 0: #default 565
+        r_msk = 63488
+        g_msk = 2016
+        b_msk = 31
 
-    Runmask = unmaskBits(Rmsk)
-    Gunmask = unmaskBits(Gmsk)
-    Bunmask = unmaskBits(Bmsk)
-    Aunmask = unmaskBits(Amsk)
+    r_unmask = unmask_bits(r_msk)
+    g_unmask = unmask_bits(g_msk)
+    b_unmask = unmask_bits(b_msk)
+    a_unmask = unmask_bits(a_msk)
 
-    for i in range(0, len(colorsBefore), bytesPerPixel):
-        color = struct.unpack(typeSize, colorsBefore[i:i+bytesPerPixel])[0]
+    for i in range(0, len(colors_before), bytes_per_pixel):
+        color = struct.unpack(type_size, colors_before[i:i+bytes_per_pixel])[0]
 
-        R = ((color & Rmsk) >> Runmask[2])
-        G = ((color & Gmsk) >> Gunmask[2])
-        B = ((color & Bmsk) >> Bunmask[2])
+        r = ((color & r_msk) >> r_unmask[2])
+        g = ((color & g_msk) >> g_unmask[2])
+        b = ((color & b_msk) >> b_unmask[2])
 
-        if Amsk == 0:
-            if R == transpColor[0] >> (8 - Runmask[1]) \
-            and G == transpColor[1] >> (8 - Gunmask[1]) \
-            and B == transpColor[2] >> (8 - Bunmask[1]):
-                A = 0
+        if a_msk == 0:
+            if r == transp_color[0] >> (8 - r_unmask[1]) \
+            and g == transp_color[1] >> (8 - g_unmask[1]) \
+            and b == transp_color[2] >> (8 - b_unmask[1]):
+                a = 0
             else:
-                A = 255
+                a = 255
         else:
-            A = ((color & Amsk) >> Aunmask[2])
-            if A > 0:
-                A = int("1" * 8, 2)
+            a = ((color & a_msk) >> a_unmask[2])
+            if a > 0:
+                a = int("1" * 8, 2)
 
-        R = R << (8-Runmask[1])
-        G = G << (8-Gunmask[1])
-        B = B << (8-Bunmask[1])
+        r = r << (8-r_unmask[1])
+        g = g << (8-g_unmask[1])
+        b = b << (8-b_unmask[1])
 
-        colorsAfter.extend([B, G, R, A])
-    with open(filepath, "wb") as tgaFile:
-        headerPack = struct.pack("<3b2hb4h2b", *header)
-        colorsPack = struct.pack("<"+str(colorsSize*4)+"B", *colorsAfter)
-        tgaFile.write(headerPack)
-        tgaFile.write(colorsPack)
+        colors_after.extend([b, g, r, a])
+    with open(filepath, "wb") as tga_file:
+        header_pack = struct.pack("<3b2hb4h2b", *header)
+        colors_pack = struct.pack("<"+str(colors_size*4)+"b", *colors_after)
+        tga_file.write(header_pack)
+        tga_file.write(colors_pack)
 
 
-def readLVMP(file, bytesPerPixel):
+def read_lvmp(file, bytes_per_pixel):
     mipmaps = []
     mipmap = {}
-    mipmapCount = struct.unpack("<i", file.read(4))[0]
+    mipmap_count = struct.unpack("<i", file.read(4))[0]
     width = struct.unpack("<i", file.read(4))[0] #width
     height = struct.unpack("<i", file.read(4))[0] #height
-    mipmapSize = width * height
-    l_bytesPerPixel = struct.unpack("<i", file.read(4))[0] # in HT2 is 2
-    for i in range(mipmapCount):
+    mipmap_size = width * height
+    l_bytes_per_pixel = struct.unpack("<i", file.read(4))[0] # in HT2 is 2
+    for i in range(mipmap_count):
         mipmap['width'] = width
         mipmap['height'] = height
-        mipmap['colors'] = file.read(mipmapSize*bytesPerPixel)
+        mipmap['colors'] = file.read(mipmap_size*bytes_per_pixel)
         width = width >> 1
         height = height >> 1
-        mipmapSize = width * height
+        mipmap_size = width * height
         mipmaps.append(mipmap)
         mipmap = {}
 
@@ -160,72 +160,72 @@ def readLVMP(file, bytesPerPixel):
     return mipmaps
 
 
-def getTXRParams(filepath):
+def get_txr_params(filepath):
 
     result = {}
     result['has_mipmap'] = False
     with open(filepath, "rb") as file:
         header = list(struct.unpack("<3b2hb4h2b", file.read(18)))
         identifier = file.read(4)
-        sectionSize = struct.unpack("<i", file.read(4))[0]
-        footerSize = struct.unpack("<i", file.read(4))[0]
+        section_size = struct.unpack("<i", file.read(4))[0]
+        footer_size = struct.unpack("<i", file.read(4))[0]
 
         width = header[8]
         height = header[9]
-        colorsSize = height*width
-        file.seek(colorsSize*2, 1)
+        colors_size = height*width
+        file.seek(colors_size*2, 1)
         identifier = file.read(4)
-        sectionSize = struct.unpack("<i", file.read(4))[0]
+        section_size = struct.unpack("<i", file.read(4))[0]
         if identifier == b"LVMP": #skip mipmap section
             result['has_mipmap'] = True
-            file.seek(sectionSize+2, 1) #skip 2 bytes
+            file.seek(section_size+2, 1) #skip 2 bytes
             identifier = file.read(4)
-            sectionSize = struct.unpack("<i", file.read(4))[0]
+            section_size = struct.unpack("<i", file.read(4))[0]
         pfrm = list(struct.unpack("<4i", file.read(16)))
         result['format'] = pfrm
 
     return result
 
 
-def TRUEIMAGE_TXRtoTGA32(filepath, transpColor, bytesPerPixel):
+def trueimage_txr_to_tga32(filepath, transp_color, bytes_per_pixel):
 
     outpath = os.path.splitext(filepath)[0] + ".tga"
-    with open(filepath, "rb") as txrFile:
-        header = list(struct.unpack("<3b2hb4h2b", txrFile.read(18)))
-        sectionIdentifier = txrFile.read(4) # LOFF
-        sectionSize = struct.unpack("<i", txrFile.read(4))[0]
-        footerSize = struct.unpack("<i", txrFile.read(4))[0]
+    with open(filepath, "rb") as txr_file:
+        header = list(struct.unpack("<3b2hb4h2b", txr_file.read(18)))
+        section_identifier = txr_file.read(4) # LOFF
+        section_size = struct.unpack("<i", txr_file.read(4))[0]
+        footer_size = struct.unpack("<i", txr_file.read(4))[0]
 
         header[5] = 32 #ColorMapEntrySize
         header[10] = 32 #PixelDepth
         # header[11] = 0 #PixelDepth
         width = header[8]
         height = header[9]
-        colorsSize = height*width
-        colorsBefore = txrFile.read(colorsSize*bytesPerPixel)
+        colors_size = height*width
+        colors_before = txr_file.read(colors_size*bytes_per_pixel)
 
-        footerIdentifier = txrFile.read(4)
-        footerSize = struct.unpack("<i", txrFile.read(4))[0]
+        footer_identifier = txr_file.read(4)
+        footer_size = struct.unpack("<i", txr_file.read(4))[0]
         mipmaps = []
-        if footerIdentifier == b"LVMP": #skip mipmap section
-            mipmaps = readLVMP(txrFile, bytesPerPixel)
-            footerIdentifier = txrFile.read(4)
-            footerSize = struct.unpack("<i", txrFile.read(4))[0]
+        if footer_identifier == b"LVMP": #skip mipmap section
+            mipmaps = read_lvmp(txr_file, bytes_per_pixel)
+            footer_identifier = txr_file.read(4)
+            footer_size = struct.unpack("<i", txr_file.read(4))[0]
 
-        pfrm = list(struct.unpack("<4i", txrFile.read(16)))
-        txrFile.read(footerSize-16)
+        pfrm = list(struct.unpack("<4i", txr_file.read(16)))
+        txr_file.read(footer_size-16)
 
-        mipmapHeader = header
+        mipmap_header = header
         for mipmap in mipmaps:
-            mipmapHeader[8] = mipmap['width']
-            mipmapHeader[9] = mipmap['height']
+            mipmap_header[8] = mipmap['width']
+            mipmap_header[9] = mipmap['height']
             filepath_no_ext = os.path.splitext(filepath)[0]
-            mipmapPath = f'{filepath_no_ext}_{mipmap["width"]}_{mipmap["height"]}.tga'
-            writeTGA8888(mipmapPath, mipmapHeader, mipmap['colors'], pfrm, transpColor, bytesPerPixel)
+            mipmap_path = f'{filepath_no_ext}_{mipmap["width"]}_{mipmap["height"]}.tga'
+            write_tga8888(mipmap_path, mipmap_header, mipmap['colors'], pfrm, transp_color, bytes_per_pixel)
 
         header[8] = width
         header[9] = height
-        writeTGA8888(outpath, header, colorsBefore, pfrm, transpColor, bytesPerPixel)
+        write_tga8888(outpath, header, colors_before, pfrm, transp_color, bytes_per_pixel)
 
     result = {}
     result['format'] = pfrm
@@ -234,13 +234,13 @@ def TRUEIMAGE_TXRtoTGA32(filepath, transpColor, bytesPerPixel):
     return result
 
 
-def COLORMAP_TXRtoTGA32(filepath, transpColor):
+def colormap_txr_to_tga32(filepath, transp_color):
 
     outpath = os.path.splitext(filepath)[0] + ".tga"
-    with open(filepath, "rb") as txrFile:
-        colorsAfter = []
-        header = list(struct.unpack("<3b2hb4h2b", txrFile.read(18)))
-        colorMapLength = header[4]
+    with open(filepath, "rb") as txr_file:
+        colors_after = []
+        header = list(struct.unpack("<3b2hb4h2b", txr_file.read(18)))
+        color_map_length = header[4]
         width = header[8]
         height = header[9]
         header[1] = 0 #ColorMapType
@@ -248,18 +248,18 @@ def COLORMAP_TXRtoTGA32(filepath, transpColor):
         header[4] = 0 #ColorMapLength
         header[5] = 32 #ColorMapEntrySize
         header[10] = 32 #PixelDepth
-        paletteSize = colorMapLength*3
-        palette = struct.unpack("<"+str(paletteSize)+"B", txrFile.read(paletteSize))
-        colorsSize = height*width
-        colorsBefore = list(struct.unpack("<"+str(colorsSize)+"B", txrFile.read(colorsSize)))
+        palette_size = color_map_length*3
+        palette = struct.unpack("<"+str(palette_size)+"b", txr_file.read(palette_size))
+        colors_size = height*width
+        colors_before = list(struct.unpack("<"+str(colors_size)+"b", txr_file.read(colors_size)))
 
-        colorsAfter = paletteToColors(palette, colorsBefore, transpColor)
+        colors_after = palette_to_colors(palette, colors_before, transp_color)
 
-        with open(outpath, "wb") as tgaFile:
-            headerPack = struct.pack("<3b2hb4h2b", *header)
-            colorsPack = struct.pack("<"+str(colorsSize*4)+"B", *colorsAfter)
-            tgaFile.write(headerPack)
-            tgaFile.write(colorsPack)
+        with open(outpath, "wb") as tga_file:
+            header_pack = struct.pack("<3b2hb4h2b", *header)
+            colors_pack = struct.pack("<"+str(colors_size*4)+"b", *colors_after)
+            tga_file.write(header_pack)
+            tga_file.write(colors_pack)
 
         result = {}
         result['format'] = [4,4,4,4] #probably
@@ -267,22 +267,22 @@ def COLORMAP_TXRtoTGA32(filepath, transpColor):
 
     return result
 
-def generatePalette(colors, width, height, size = 256):
+def generate_palette(colors, width, height, size = 256):
     num_pixels = width * height
     pixel_counts = {}
 
     # Loop through the image data, counting the occurrence of each pixel value
     indexes = [0] * num_pixels
 
-    arrInd = 0
+    arr_ind = 0
 
     for i in range(0, num_pixels):
         pixel_value = struct.unpack("<I", bytes([colors[i][0], colors[i][1], colors[i][2], 0]))[0]
 
         if pixel_value not in pixel_counts:
-            pixel_counts[pixel_value] = arrInd
-            indexes.append(arrInd)
-            arrInd += 1
+            pixel_counts[pixel_value] = arr_ind
+            indexes.append(arr_ind)
+            arr_ind += 1
         else:
             indexes.append(pixel_counts[pixel_value])
 
@@ -299,7 +299,7 @@ def generatePalette(colors, width, height, size = 256):
     return [palette, indexes]
 
 
-def generateMipmaps(barray, width, height, tempFrom):
+def generate_mipmaps(barray, width, height, temp_from):
     # Load the original image into a 2D array of pixels
     original_image = [[0 for y in range(height)] for x in range(width)]
 
@@ -353,163 +353,163 @@ def generateMipmaps(barray, width, height, tempFrom):
     return mipmaps
 
 
-def convertTXRtoTGA32(filepath, transpColor):
+def convert_txr_to_tga32(filepath, transp_color):
     outpath = os.path.splitext(filepath)[0] + ".tga"
     log.info(f"Converting {outpath}")
-    imageType = ""
-    with open(filepath, "rb") as txrFile:
-        txrFile.seek(2, 0)
-        imageType = struct.unpack("<B", txrFile.read(1))[0]
-    if imageType == 2:
-        return TRUEIMAGE_TXRtoTGA32(filepath, transpColor, 2)
-    if imageType == 1:
-        return COLORMAP_TXRtoTGA32(filepath, transpColor)
+    image_type = ""
+    with open(filepath, "rb") as txr_file:
+        txr_file.seek(2, 0)
+        image_type = struct.unpack("<b", txr_file.read(1))[0]
+    if image_type == 2:
+        return trueimage_txr_to_tga32(filepath, transp_color, 2)
+    if image_type == 1:
+        return colormap_txr_to_tga32(filepath, transp_color)
     else:
         log.error("Unsupported Tga format")
     return None
 
 
-def convertTGA32toTXR(filepath, bytesPerPixel, imageType, imageFormat, genMipmap, transpColor=(0,0,0)):
+def convert_tga32_to_txr(filepath, bytes_per_pixel, image_type, image_format, gen_mipmap, transp_color=(0,0,0)):
     outpath = os.path.splitext(filepath)[0] + ".txr"
     log.info(f"Converting {outpath}")
 
-    if imageType == 'TRUECOLOR':
-        TRUECOLOR_TGA32toTXR(filepath, 2, 2, imageFormat, genMipmap, transpColor)
+    if image_type == 'TRUECOLOR':
+        truecolor_tga_32_to_txr(filepath, 2, 2, image_format, gen_mipmap, transp_color)
         pass
-    elif imageType == 'COLORMAP':
+    elif image_type == 'COLORMAP':
         pass
 
 
-def colorsByterrayConvert(barray, tempFrom, tempTo, formFrom = 'ARGB', formTo = 'ARGB', transpColor = (0,0,0), replaceTransp = False):
+def colors_byterray_convert(barray, temp_from, temp_to, form_from = 'ARGB', form_to = 'ARGB', transp_color = (0,0,0), replace_transp = False):
 
-    fofrAind, fofrRInd, fofrGInd, fofrBInd = (0, 0, 0, 0)
+    fofr_a_ind, fofr_r_ind, fofr_g_ind, fofr_b_ind = (0, 0, 0, 0)
 
-    for i in range(len(formFrom)):
-        if formFrom[i] == 'A':
-            ffAind = i
-        elif formFrom[i] == 'G':
-            ffGind = i
-        elif formFrom[i] == 'B':
-            ffBind = i
-        elif formFrom[i] == 'R':
-            ffRind = i
+    for i in range(len(form_from)):
+        if form_from[i] == 'a':
+            ff_a_ind = i
+        elif form_from[i] == 'g':
+            ff_g_ind = i
+        elif form_from[i] == 'b':
+            ff_b_ind = i
+        elif form_from[i] == 'r':
+            ff_r_ind = i
 
-    for i in range(len(formTo)):
-        if formTo[i] == 'A':
-            ftAind = i
-        elif formTo[i] == 'R':
-            ftRind = i
-        elif formTo[i] == 'G':
-            ftGind = i
-        elif formTo[i] == 'B':
-            ftBind = i
+    for i in range(len(form_to)):
+        if form_to[i] == 'a':
+            ft_a_ind = i
+        elif form_to[i] == 'r':
+            ft_r_ind = i
+        elif form_to[i] == 'g':
+            ft_g_ind = i
+        elif form_to[i] == 'b':
+            ft_b_ind = i
 
-    tfA = int(tempFrom[ffAind])
-    tfR = int(tempFrom[ffRind])
-    tfG = int(tempFrom[ffGind])
-    tfB = int(tempFrom[ffBind])
-    tfMask = getARGBBitMask(tempFrom)
-    tfAMask = tfMask[ffAind]
-    tfRMask = tfMask[ffRind]
-    tfGMask = tfMask[ffGind]
-    tfBMask = tfMask[ffBind]
-    tfUnmask = unmaskTemplate(tempFrom)
-    tfAUnmask = tfUnmask[ffAind]
-    tfRUnmask = tfUnmask[ffRind]
-    tfGUnmask = tfUnmask[ffGind]
-    tfBUnmask = tfUnmask[ffBind]
-    ttUnmask = unmaskTemplate(tempTo)
-    ttAUnmask = ttUnmask[ftAind]
-    ttRUnmask = ttUnmask[ftRind]
-    ttGUnmask = ttUnmask[ftGind]
-    ttBUnmask = ttUnmask[ftBind]
+    tf_a = int(temp_from[ff_a_ind])
+    tf_r = int(temp_from[ff_r_ind])
+    tf_g = int(temp_from[ff_g_ind])
+    tf_b = int(temp_from[ff_b_ind])
+    tf_mask = get_argb_bit_mask(temp_from)
+    tf_a_mask = tf_mask[ff_a_ind]
+    tf_r_mask = tf_mask[ff_r_ind]
+    tf_g_mask = tf_mask[ff_g_ind]
+    tf_b_mask = tf_mask[ff_b_ind]
+    tf_unmask = unmask_template(temp_from)
+    tf_a_unmask = tf_unmask[ff_a_ind]
+    tf_r_unmask = tf_unmask[ff_r_ind]
+    tf_g_unmask = tf_unmask[ff_g_ind]
+    tf_b_unmask = tf_unmask[ff_b_ind]
+    tt_unmask = unmask_template(temp_to)
+    tt_a_unmask = tt_unmask[ft_a_ind]
+    tt_r_unmask = tt_unmask[ft_r_ind]
+    tt_g_unmask = tt_unmask[ft_g_ind]
+    tt_b_unmask = tt_unmask[ft_b_ind]
 
-    ttA = int(tempTo[ftAind])
-    ttR = int(tempTo[ftRind])
-    ttG = int(tempTo[ftGind])
-    ttB = int(tempTo[ftBind])
-    tfBytesPerPixel = (tfR + tfG + tfB + tfA) >> 3
-    pixelCnt = len(barray) // tfBytesPerPixel
-    ttBytesPerPixel = (ttR + ttG + ttB + ttA) >> 3
+    tt_a = int(temp_to[ft_a_ind])
+    tt_r = int(temp_to[ft_r_ind])
+    tt_g = int(temp_to[ft_g_ind])
+    tt_b = int(temp_to[ft_b_ind])
+    tf_bytes_per_pixel = (tf_r + tf_g + tf_b + tf_a) >> 3
+    pixel_cnt = len(barray) // tf_bytes_per_pixel
+    tt_bytes_per_pixel = (tt_r + tt_g + tt_b + tt_a) >> 3
 
-    tfTypeSize = (None,'<B','<H',None,'<I')[tfBytesPerPixel]
-    ttTypeSize = (None,'<B','<H',None,'<I')[ttBytesPerPixel]
-    convertedBArray = bytearray(pixelCnt * ttBytesPerPixel)
-    for i in range(0, pixelCnt):
-        color = struct.unpack(tfTypeSize, barray[i*tfBytesPerPixel:(i+1)*tfBytesPerPixel])[0]
+    tf_type_size = (None,'<b','<H',None,'<I')[tf_bytes_per_pixel]
+    tt_type_size = (None,'<b','<H',None,'<I')[tt_bytes_per_pixel]
+    converted_byte_array = bytearray(pixel_cnt * tt_bytes_per_pixel)
+    for i in range(0, pixel_cnt):
+        color = struct.unpack(tf_type_size, barray[i*tf_bytes_per_pixel:(i+1)*tf_bytes_per_pixel])[0]
 
-        if tfA == 0:
-            A = 255 >> (8-ttA) << ttAUnmask[2]
+        if tf_a == 0:
+            a = 255 >> (8-tt_a) << tt_a_unmask[2]
         else:
-            A = (color & tfAMask)
-            # A
-            if tfA > ttA:
-                A = A >> (tfA-ttA)
-            elif tfA < ttA:
-                A = A << (ttA-tfA)
+            a = (color & tf_a_mask)
+            # a
+            if tf_a > tt_a:
+                a = a >> (tf_a-tt_a)
+            elif tf_a < tt_a:
+                a = a << (tt_a-tf_a)
 
-            A = A >> tfAUnmask[2] << ttAUnmask[2]
+            a = a >> tf_a_unmask[2] << tt_a_unmask[2]
 
 
-        tmpA = (color & tfAMask)
-        if replaceTransp and (tmpA >> tfAUnmask[2]) == 0:
+        tmp_a = (color & tf_a_mask)
+        if replace_transp and (tmp_a >> tf_a_unmask[2]) == 0:
 
-            A = 0
-            R = transpColor[0] >> (8 - ttR) << ttRUnmask[2]
-            G = transpColor[1] >> (8 - ttG) << ttGUnmask[2]
-            B = transpColor[2] >> (8 - ttB) << ttBUnmask[2]
+            a = 0
+            r = transp_color[0] >> (8 - tt_r) << tt_r_unmask[2]
+            g = transp_color[1] >> (8 - tt_g) << tt_g_unmask[2]
+            b = transp_color[2] >> (8 - tt_b) << tt_b_unmask[2]
 
         else:
 
-            R = (color & tfRMask)
-            G = (color & tfGMask)
-            B = (color & tfBMask)
-            # R
-            if tfR > ttR:
-                R = R >> (tfR-ttR)
-            elif tfR < ttR:
-                R = R << (ttR-tfR)
-            # G
-            if tfG > ttG:
-                G = G >> (tfG-ttG)
-            elif tfR < ttR:
-                G = G << (ttG-tfG)
-            # B
-            if tfB > ttB:
-                B = B >> (tfB-ttB)
-            elif tfR < ttB:
-                B = B << (ttB-tfB)
+            r = (color & tf_r_mask)
+            g = (color & tf_g_mask)
+            b = (color & tf_b_mask)
+            # r
+            if tf_r > tt_r:
+                r = r >> (tf_r-tt_r)
+            elif tf_r < tt_r:
+                r = r << (tt_r-tf_r)
+            # g
+            if tf_g > tt_g:
+                g = g >> (tf_g-tt_g)
+            elif tf_r < tt_r:
+                g = g << (tt_g-tf_g)
+            # b
+            if tf_b > tt_b:
+                b = b >> (tf_b-tt_b)
+            elif tf_r < tt_b:
+                b = b << (tt_b-tf_b)
 
-            R = R >> tfRUnmask[2] << ttRUnmask[2]
-            G = G >> tfGUnmask[2] << ttGUnmask[2]
-            B = B >> tfBUnmask[2] << ttBUnmask[2]
+            r = r >> tf_r_unmask[2] << tt_r_unmask[2]
+            g = g >> tf_g_unmask[2] << tt_g_unmask[2]
+            b = b >> tf_b_unmask[2] << tt_b_unmask[2]
 
-        convColor = struct.pack(ttTypeSize, A|R|G|B)
-        convertedBArray[i*ttBytesPerPixel:(i+1)*ttBytesPerPixel] = convColor
+        conv_color = struct.pack(tt_type_size, a|r|g|b)
+        converted_byte_array[i*tt_bytes_per_pixel:(i+1)*tt_bytes_per_pixel] = conv_color
 
-    return convertedBArray
+    return converted_byte_array
 
 
-def getARGBBitMask(imageFormat):
+def get_argb_bit_mask(image_format):
     offset = 0
-    bitMasks = []
+    bit_masks = []
     for i in range(3, -1, -1):
-        curInt = int(imageFormat[i])
-        if curInt == 0:
-            formatInt = 0
+        cur_int = int(image_format[i])
+        if cur_int == 0:
+            format_int = 0
         else:
-            formatInt = 1
-            for j in range(curInt-1):
-                formatInt = formatInt << 1
-                formatInt += 1
-        formatInt = formatInt << offset
-        bitMasks.append(formatInt)
-        offset += curInt
+            format_int = 1
+            for j in range(cur_int-1):
+                format_int = format_int << 1
+                format_int += 1
+        format_int = format_int << offset
+        bit_masks.append(format_int)
+        offset += cur_int
 
-    return bitMasks[::-1] #reverse
+    return bit_masks[::-1] #reverse
 
-def flipTgaVert(barray, width, height):
-    colorsFlipped = bytearray()
+def flip_tga_vert(barray, width, height):
+    colors_flipped = bytearray()
     for y in range(height - 1, -1, -1):
         for x in range(width):
             # Get the pixel at (x, y)
@@ -517,130 +517,130 @@ def flipTgaVert(barray, width, height):
             pixel = barray[pixel_index : pixel_index + 4]
 
             # Add the pixel to the flipped image
-            colorsFlipped.extend(pixel)
-    return colorsFlipped
+            colors_flipped.extend(pixel)
+    return colors_flipped
 
 
-def TRUECOLOR_TGA32toTXR(filepath, bytesPerPixel, imageType, imageFormat, genMipmap, transpColor):
+def truecolor_tga_32_to_txr(filepath, bytes_per_pixel, image_type, image_format, gen_mipmap, transp_color):
 
-    # genMipmap = False #Temporary
+    # gen_mipmap = False #Temporary
     outpath = os.path.splitext(filepath)[0] + ".txr"
 
-    bitMasks = getARGBBitMask(imageFormat)
+    bit_masks = get_argb_bit_mask(image_format)
 
-    Amsk = bitMasks[0]
-    Rmsk = bitMasks[1]
-    Gmsk = bitMasks[2]
-    Bmsk = bitMasks[3]
+    a_msk = bit_masks[0]
+    r_msk = bit_masks[1]
+    g_msk = bit_masks[2]
+    b_msk = bit_masks[3]
 
-    if genMipmap:
-        imageFormat = '1555'
+    if gen_mipmap:
+        image_format = '1555'
 
-    with open(filepath, "rb") as tgaFile:
-        colorsAfter = []
-        header = list(struct.unpack("<3b2hb4h2b", tgaFile.read(18)))
+    with open(filepath, "rb") as tga_file:
+        colors_after = []
+        header = list(struct.unpack("<3b2hb4h2b", tga_file.read(18)))
         header[0] = 12 #LOFF declaration
         header[5] = 16 #ColorMapEntrySize
         header[10] = 16 #PixelDepth
         header[11] = 32 #Image Descriptor
         width = header[8]
         height = header[9]
-        colorsSize = height*width
-        colorsBefore = struct.unpack("<"+str(colorsSize*4)+"B", tgaFile.read(colorsSize*4))
+        colors_size = height*width
+        colors_before = struct.unpack("<"+str(colors_size*4)+"b", tga_file.read(colors_size*4))
 
-        colorsBefore = flipTgaVert(bytearray(colorsBefore), width, height)
+        colors_before = flip_tga_vert(bytearray(colors_before), width, height)
 
-        colorsAfter = colorsByterrayConvert(bytearray(colorsBefore), '8888', imageFormat, 'ARGB', 'ARGB', transpColor, True)
-        if genMipmap:
-            mipmaps = generateMipmaps(bytearray(colorsBefore), width, height, '0565')
+        colors_after = colors_byterray_convert(bytearray(colors_before), '8888', image_format, 'ARGB', 'ARGB', transp_color, True)
+        if gen_mipmap:
+            mipmaps = generate_mipmaps(bytearray(colors_before), width, height, '0565')
 
-        footer = tgaFile.read()
-    with open(outpath, "wb") as txrFile:
-        headerPack = struct.pack("<3b2hb4h2b", *header)
-        colorsPack = struct.pack("<"+str(colorsSize*bytesPerPixel)+"B", *colorsAfter)
+        footer = tga_file.read()
+    with open(outpath, "wb") as txr_file:
+        header_pack = struct.pack("<3b2hb4h2b", *header)
+        colors_pack = struct.pack("<"+str(colors_size*bytes_per_pixel)+"b", *colors_after)
 
-        LOFF_ms = txrFile.tell()
-        txrFile.write(headerPack)
-        txrFile.write('LOFF'.encode('cp1251'))
-        txrFile.write(struct.pack("<i",4))
-        LOFF_write_ms = txrFile.tell()
-        txrFile.write(struct.pack("<i",0)) #LOFF reserved
-        txrFile.write(colorsPack)
-        writeSize(txrFile, LOFF_ms, LOFF_write_ms)
-        if genMipmap and len(mipmaps) > 1:
-            txrFile.write('LVMP'.encode('cp1251'))
-            LVMP_ms = txrFile.tell()
-            txrFile.write(struct.pack("<i",0)) #LVMP reserved
-            txrFile.write(struct.pack("<i", len(mipmaps)-1))
-            txrFile.write(struct.pack("<i", len(mipmaps[1][0])))
-            txrFile.write(struct.pack("<i", len(mipmaps[1])))
-            txrFile.write(struct.pack("<i", 2))
+        loff_ms = txr_file.tell()
+        txr_file.write(header_pack)
+        txr_file.write('LOFF'.encode('cp1251'))
+        txr_file.write(struct.pack("<i",4))
+        loff_write_ms = txr_file.tell()
+        txr_file.write(struct.pack("<i",0)) #LOFF reserved
+        txr_file.write(colors_pack)
+        write_size(txr_file, loff_ms, loff_write_ms)
+        if gen_mipmap and len(mipmaps) > 1:
+            txr_file.write('LVMP'.encode('cp1251'))
+            lvmp_ms = txr_file.tell()
+            txr_file.write(struct.pack("<i",0)) #LVMP reserved
+            txr_file.write(struct.pack("<i", len(mipmaps)-1))
+            txr_file.write(struct.pack("<i", len(mipmaps[1][0])))
+            txr_file.write(struct.pack("<i", len(mipmaps[1])))
+            txr_file.write(struct.pack("<i", 2))
 
             for m in range(1, len(mipmaps)):
                 mipmap = mipmaps[m]
                 m_width = len(mipmap)
                 m_height = len(mipmap[0])
-                mipmapBytearray = bytearray(m_height * m_width * 4)
+                mipmap_bytearray = bytearray(m_height * m_width * 4)
                 for x in range(m_width):
                     for y in range(m_height): #BGRA
-                        mipmapBytearray[(x*m_width+y)*4:(x*m_width+y+1)*4] = struct.pack('>I', \
+                        mipmap_bytearray[(x*m_width+y)*4:(x*m_width+y+1)*4] = struct.pack('>I', \
                             ((mipmap[x][y][0]) << 8) | \
                             ((mipmap[x][y][1]) << 16) | \
                             ((mipmap[x][y][2]) << 24) | \
                             ((mipmap[x][y][3]) << 0)  \
                         )
 
-                mipmapHeader = header
-                mipmapHeader[8] = m_width
-                mipmapHeader[9] = m_height
+                mipmap_header = header
+                mipmap_header[8] = m_width
+                mipmap_header[9] = m_height
                 filepath_no_ext = os.path.splitext(filepath)[0]
                 #todo: check
-                mipmapPath = f"{filepath_no_ext}_{m_width}-{m_height}.tga"
-                writeTGA8888(mipmapPath, mipmapHeader, mipmapBytearray, [\
+                mipmap_path = f"{filepath_no_ext}_{m_width}-{m_height}.tga"
+                write_tga8888(mipmap_path, mipmap_header, mipmap_bytearray, [\
                     0b00000000111111110000000000000000,\
                     0b00000000000000001111111100000000,\
                     0b00000000000000000000000011111111,\
                     0b11111111000000000000000000000000\
-                ], transpColor, 4)
+                ], transp_color, 4)
 
-                convertedMipmap = colorsByterrayConvert(mipmapBytearray, '8888', '1555', 'ARGB', 'ARGB', transpColor)
+                converted_mipmap = colors_byterray_convert(mipmap_bytearray, '8888', '1555', 'ARGB', 'ARGB', transp_color)
 
-                txrFile.write(convertedMipmap)
-            writeSize(txrFile, LVMP_ms)
-            txrFile.write(struct.pack("<H", 0))
+                txr_file.write(converted_mipmap)
+            write_size(txr_file, lvmp_ms)
+            txr_file.write(struct.pack("<H", 0))
 
-        # txrFile.write(footer)
-        txrFile.write('PFRM'.encode('cp1251'))
-        txrFile.write(struct.pack('<i', 16))
-        txrFile.write(struct.pack('<i', Rmsk))
-        txrFile.write(struct.pack('<i', Gmsk))
-        txrFile.write(struct.pack('<i', Bmsk))
-        txrFile.write(struct.pack('<i', Amsk))
-        txrFile.write('ENDR'.encode('cp1251'))
+        # txr_file.write(footer)
+        txr_file.write('PFRM'.encode('cp1251'))
+        txr_file.write(struct.pack('<i', 16))
+        txr_file.write(struct.pack('<i', r_msk))
+        txr_file.write(struct.pack('<i', g_msk))
+        txr_file.write(struct.pack('<i', b_msk))
+        txr_file.write(struct.pack('<i', a_msk))
+        txr_file.write('ENDR'.encode('cp1251'))
 
 
     return
 
 
-def MSKtoTGA32(filepath):
+def msk_to_tga32(filepath):
     outpath = os.path.splitext(filepath)[0] + ".tga"
     log.info(f"Converting {outpath}")
     indexes = []
-    colorsAfter = []
-    with open(filepath, "rb") as mskFile:
-        magic = mskFile.read(4).decode('cp1251')
-        width = struct.unpack("<H", mskFile.read(2))[0]
-        height = struct.unpack("<H", mskFile.read(2))[0]
-        paletteSize = 256
-        palette = list(struct.unpack("<"+str(paletteSize*3)+"B", mskFile.read(paletteSize*3)))
-        colorsSize = width*height
+    colors_after = []
+    with open(filepath, "rb") as msk_file:
+        magic = msk_file.read(4).decode('cp1251')
+        width = struct.unpack("<H", msk_file.read(2))[0]
+        height = struct.unpack("<H", msk_file.read(2))[0]
+        palette_size = 256
+        palette = list(struct.unpack("<"+str(palette_size*3)+"b", msk_file.read(palette_size*3)))
+        colors_size = width*height
 
         if magic == 'MS16':
-            bytesPerPixel = 2
+            bytes_per_pixel = 2
         else: #MSKR, MSK8, MASK
-            bytesPerPixel = 1
+            bytes_per_pixel = 1
 
-        colors = decompressRle(mskFile, width, height, bytesPerPixel)
+        colors = decompress_rle(msk_file, width, height, bytes_per_pixel)
 
         header = [None]*12
         header[0] = 0 #IDLength
@@ -659,17 +659,17 @@ def MSKtoTGA32(filepath):
         pfrm = [5,6,5,0]
 
         while True:
-            footerIdentifier = mskFile.read(4).decode('cp1251')
-            if footerIdentifier == 'PFRM':
-                footerSize = struct.unpack("<i", mskFile.read(4))[0]
-                pfrm = list(struct.unpack("<4i", mskFile.read(16)))
+            footer_identifier = msk_file.read(4).decode('cp1251')
+            if footer_identifier == 'PFRM':
+                footer_size = struct.unpack("<i", msk_file.read(4))[0]
+                pfrm = list(struct.unpack("<4i", msk_file.read(16)))
                 continue
 
-            elif footerIdentifier == 'ENDR':
-                mskFile.read(4) # alwas int 0
+            elif footer_identifier == 'ENDR':
+                msk_file.read(4) # alwas int 0
                 continue
 
-            mskFile.seek(-4, 1)
+            msk_file.seek(-4, 1)
             break
 
-        writeTGA8888(outpath, header, colors, pfrm, (0,0,0), bytesPerPixel)
+        write_tga8888(outpath, header, colors, pfrm, (0,0,0), bytes_per_pixel)
