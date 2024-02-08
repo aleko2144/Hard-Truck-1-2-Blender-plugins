@@ -401,6 +401,92 @@ class ResBlock(bpy.types.PropertyGroup):
 # Custom operators
 # FieldType.SPHERE_EDIT
 
+class BlkParam():
+    block_type = ''
+    name = 'Unknown'
+    description = 'Unknown parameter'
+    default_value = ''
+    subtype = ''
+    group = ''
+    callback = ''
+    items = None
+
+    @classmethod
+    def get_prop(cls):
+        return cls.__name__
+
+    @classmethod
+    def get_block_type(cls):
+        return cls.block_type
+
+    @classmethod
+    def get_name(cls):
+        return cls.name
+
+    @classmethod
+    def get_description(cls):
+        return cls.description
+
+    @classmethod
+    def get_subtype(cls):
+        return cls.subtype
+
+    @classmethod
+    def get_default(cls):
+        return cls.default_value
+
+    @classmethod
+    def get_callback(cls):
+        return cls.callback
+
+    @classmethod
+    def get_items(cls):
+        return cls.items
+
+    @classmethod
+    def get_group(cls):
+        return cls.group
+
+class StringParam(BlkParam):
+    block_type = FieldType.STRING
+    default_value = ''
+
+class IntParam(BlkParam):
+    block_type = FieldType.INT
+    default_value = 0
+
+class FloatParam(BlkParam):
+    block_type = FieldType.FLOAT
+    default_value = 0.0
+
+class RadParam(BlkParam):
+    block_type = FieldType.RAD
+    default_value = 0.0
+
+class CoordParam(BlkParam):
+    block_type = FieldType.COORD
+    default_value = (0.0, 0.0, 0.0)
+
+class EnumParam(BlkParam):
+    block_type = FieldType.ENUM
+    subtype = FieldType.INT
+    items = []
+
+class EnumDynParam(BlkParam):
+    block_type = FieldType.ENUM_DYN
+    subtype = FieldType.INT,
+    callback = FieldType.SPACE_NAME
+
+class VFormatParam(BlkParam):
+    block_type = FieldType.V_FORMAT
+
+class SphereEditParam(BlkParam):
+    block_type = FieldType.SPHERE_EDIT
+
+class ListParam(BlkParam):
+    block_type = FieldType.LIST
+
+
 
 class Pvb008():
     pass
@@ -443,10 +529,9 @@ class Pvb035():
 
 
 class Pfb008():
-    Format_Flags = {
-        'prop': 'format_flags',
-        'type': FieldType.V_FORMAT,
-    }
+    class Format_Flags(VFormatParam):
+        name = ''
+
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
     # Unk_Float1 = {
@@ -466,10 +551,9 @@ class Pfb008():
 
 
 class Pfb028():
-    Format_Flags = {
-        'prop': 'format_flags',
-        'type': FieldType.V_FORMAT,
-    }
+    class Format_Flags(VFormatParam):
+        name = ''
+
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
     # Unk_Float1 = {
@@ -489,10 +573,9 @@ class Pfb028():
 
 
 class Pfb035():
-    Format_Flags = {
-        'prop': 'format_flags',
-        'type': FieldType.V_FORMAT,
-    }
+    class Format_Flags(VFormatParam):
+        name = ''
+
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
     # Unk_Float1 = {
@@ -511,1050 +594,537 @@ class Pfb035():
     # }
 
 
+
+
+
 class Blk001():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Unk. name 1',
-        'description': '',
-        'default': ''
-    }
-    Name2 = {
-        'prop': 'name2',
-        'type': FieldType.STRING,
-        'name': 'Unk. name 2',
-        'description': '',
-        'default': ''
-    }
+    class Name1(StringParam):
+        name = 'Unk. name 1'
+
+    class Name2(StringParam):
+        name = 'Unk. name 2'
 
 
 class Blk002():
-    Unk_XYZ = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'unk_R',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. name 2'
+
+    class Unk_R(CoordParam):
+        name = 'Unk. rad'
 
 
 class Blk004():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.SPACE_NAME,
-        'name': 'Place',
-        'description': ''
-    }
-    Name2 = {
-        'prop': 'name2',
-        'type': FieldType.STRING,
-        'name': 'Name 2',
-        'description': '',
-        'default': ''
-    }
+    class Name1(EnumDynParam):
+        name = 'Place'
+        subtype = FieldType.STRING
+        callback = FieldType.SPACE_NAME
+
+    class Name2(StringParam):
+        name = 'Name 2'
 
 
 class Blk005():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Block name',
-        'description': '',
-        'default': ''
-    }
+    class Name1(StringParam):
+        name = 'Block name'
 
 
 class Blk006():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Name 1',
-        'description': '',
-        'default': ''
-    }
-    Name2 = {
-        'prop': 'name2',
-        'type': FieldType.STRING,
-        'name': 'Name 2',
-        'description': '',
-        'default': ''
-    }
+    class Name1(StringParam):
+        name = 'Name 1'
+
+    class Name2(StringParam):
+        name = 'Name 2'
 
 
 class Blk007():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Group name',
-        'description': '',
-        'default': ''
-    }
+    class Name1(StringParam):
+        name = 'Group name'
 
 
 class Blk009():
-    Unk_XYZ = {
-        'prop': 'b3d_b9_center',
-        'group': 'b9_group',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'b3d_b9_rad',
-        'group': 'b9_group',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
-    Set_B9 = {
-        'prop': 'b3d_b9',
-        'group': 'b9_group',
-        'type': FieldType.SPHERE_EDIT
-    }
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. coord'
+        group = 'b9_group'
+
+    class Unk_R(RadParam):
+        name = 'Unk. rad'
+        group = 'b9_group'
+
+    class Set_B9(SphereEditParam):
+        name = ''
+        group = 'b9_group'
 
 
 class Blk010():
-    LOD_XYZ = {
-        'prop': 'b3d_LOD_center',
-        'group': 'LOD_group',
-        'type': FieldType.COORD,
-        'name': 'LOD coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    LOD_R = {
-        'prop': 'b3d_LOD_rad',
-        'group': 'LOD_group',
-        'type': FieldType.RAD,
-        'name': 'LOD rad',
-        'description': '',
-        'default': 0.0
-    }
-    Set_LOD = {
-        'prop': 'b3d_LOD',
-        'group': 'LOD_group',
-        'type': FieldType.SPHERE_EDIT
-    }
+    class LOD_XYZ(CoordParam):
+        name = 'LOD coord'
+        description = 'LOD center'
+        group = 'LOD_group'
+
+    class LOD_R(RadParam):
+        name = 'LOD rad'
+        description = 'LOD radius'
+        group = 'LOD_group'
+
+    class Set_LOD(SphereEditParam):
+        name = ''
+        description = ''
+        group = 'LOD_group'
 
 
 class Blk011():
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R1 = {
-        'prop': 'unk_R1',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_R2 = {
-        'prop': 'unk_R1',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord'
+
+    class Unk_R1(RadParam):
+        name = 'Unk. rad'
+
+    class Unk_R2(RadParam):
+        name = 'Unk. rad'
 
 
 class Blk012():
-    Unk_XYZ = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'unk_R',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord'
+
+    class Unk_R(RadParam):
+        name = 'Unk. rad'
+
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk013():
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk014():
-    Unk_XYZ = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'unk_R',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. coord'
+
+    class Unk_R(RadParam):
+        name = 'Unk. rad'
+
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk015():
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk016():
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 2',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_Float1 = {
-        'prop': 'float1',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float2 = {
-        'prop': 'float2',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 3',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 4',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord 1'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord 2'
+
+    class Unk_Float1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Float2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_Int1(IntParam):
+        name = 'Unk. 3'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 4'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk017():
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 2',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_Float1 = {
-        'prop': 'float1',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float2 = {
-        'prop': 'float2',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 3',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 4',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord 1'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord 2'
+
+    class Unk_Float1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Float2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_Int1(IntParam):
+        name = 'Unk. 3'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 4'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk018():
-    Space_Name = {
-        'prop': 'space_name',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.SPACE_NAME,
-        'name': 'Place name (24)',
-        'description': ''
-    }
-    Add_Name = {
-        'prop': 'add_name',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.REFERENCEABLE,
-        'name': 'Transfer block name',
-        'description': ''
-    }
+    class Space_Name(EnumDynParam):
+        name = 'Place name (24)'
+        description = 'Name of location block(24)'
+        subtype = FieldType.STRING
+        callback = FieldType.SPACE_NAME
+
+    class Add_Name(EnumDynParam):
+        name = 'Transfer block name'
+        description = 'Name of block to be relocated'
+        subtype = FieldType.STRING
+        callback = FieldType.REFERENCEABLE
 
 
 class Blk020():
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk021():
-    GroupCnt = {
-        'prop': 'group_cnt',
-        'type': FieldType.INT,
-        'name': 'Group count',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
+    class GroupCnt(IntParam):
+        name = 'Group count'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
 
 
 class Blk022():
-    Unk_XYZ = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'unk_R',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. coord'
+
+    class Unk_R(RadParam):
+        name = 'Unk. rad'
 
 
 class Blk023():
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Surface = {
-        'prop': 'CType',
-        'type': FieldType.ENUM,
-        'subtype': FieldType.INT,
-        'name': 'Surface type',
-        'description': '',
-        'default': 0,
-        'items': collisionTypeList
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Surface(EnumParam):
+        name = 'Surface type'
+        subtype = FieldType.INT
+        items = collisionTypeList
+        description = 'Value from surface classificator'
+        default_value = 0
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 
 class Blk024():
-    Flag = {
-        'prop': 'flag',
-        'type': FieldType.ENUM,
-        'subtype': FieldType.INT,
-        'name': 'Show flag',
-        'description': '',
-        'default': 0,
-        'items': b24FlagList
-    }
+    class Flag(EnumParam):
+        name = 'Show flag'
+        subtype = FieldType.INT
+        items = b24FlagList
+        description = 'Value from block24 classificator'
+        default_value = 0
 
 
 class Blk025():
-    XYZ = {
-        'prop': 'XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Name = {
-        'prop': 'name',
-        'type': FieldType.STRING,
-        'name': 'Name 1',
-        'description': '',
-        'default': ''
-    }
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 2',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_Float1 = {
-        'prop': 'float1',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float2 = {
-        'prop': 'float2',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float3 = {
-        'prop': 'float3',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 3',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float4 = {
-        'prop': 'float4',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 4',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float5 = {
-        'prop': 'float5',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 5',
-        'description': '',
-        'default': 0.0
-    }
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. coord'
+
+    class Name(StringParam):
+        name = 'Unk. name 1'
+
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord 1'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord 2'
+
+    class Unk_Float1(FloatParam):
+        name = 'Unk. 1'
+
+    class Unk_Float2(FloatParam):
+        name = 'Unk. 2'
+
+    class Unk_Float3(FloatParam):
+        name = 'Unk. 3'
+
+    class Unk_Float4(FloatParam):
+        name = 'Unk. 4'
+
+    class Unk_Float5(FloatParam):
+        name = 'Unk. 5'
 
 
 class Blk026():
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 2',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ3 = {
-        'prop': 'unk_XYZ3',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 3',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord 1'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord 2'
+
+    class Unk_XYZ3(CoordParam):
+        name = 'Unk. coord 3'
 
 
 class Blk027():
-    Flag = {
-        'prop': 'flag',
-        'type': FieldType.INT,
-        'name': 'Flag',
-        'description': '',
-        'default': 0
-    }
-    Unk_XYZ = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Material = {
-        'prop': 'material',
-        'type': FieldType.INT,
-        'name': 'Material',
-        'description': '',
-        'default': 0
-    }
+    class Flag(IntParam):
+        name = 'Flag'
+
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. coord'
+
+    class Material(IntParam):
+        name = 'Material'
 
 
 class Blk028():
-    Sprite_Center = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Sprite center coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
+    class Sprite_Center(CoordParam):
+        name = 'Sprite center coord'
+        description = 'Sprite center coordinates'
      #todo: check
 
 
 class Blk029():
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_XYZ = {
-        'prop': 'unk_XYZ',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'unk_R',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_XYZ(CoordParam):
+        name = 'Unk. coord'
+
+    class Unk_R(RadParam):
+        name = 'Unk. rad'
 
 
 class Blk030():
-    ResModule1 = {
-        'prop': '1_roomName_res',
-        'group': 'resModule1',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.RES_MODULE,
-        'name': '1. module',
-        'description': '',
-        'default': ''
-    }
-    RoomName1 = {
-        'prop': '1_roomName',
-        'group': 'resModule1',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.ROOM,
-        'name': '1. room',
-        'description': '',
-        'default': ''
-    }
-    ResModule2 = {
-        'prop': '2_roomName_res',
-        'group': 'resModule2',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.RES_MODULE,
-        'name': '2. module',
-        'description': '',
-        'default': ''
-    }
-    RoomName2 = {
-        'prop': '2_roomName',
-        'group': 'resModule2',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.STRING,
-        'callback': FieldType.ROOM,
-        'name': '2. room',
-        'description': '',
-        'default': ''
-    }
+    class ResModule1(EnumDynParam):
+        name = '1. module'
+        subtype = FieldType.STRING
+        callback = FieldType.RES_MODULE
+        default_value = ''
+        group = 'resModule1'
+
+    class RoomName1(EnumDynParam):
+        name = '1. room'
+        subtype = FieldType.STRING
+        callback = FieldType.ROOM
+        default_value = ''
+        group = 'resModule1'
+
+    class ResModule2(EnumDynParam):
+        name = '2. module'
+        subtype = FieldType.STRING
+        callback = FieldType.RES_MODULE
+        default_value = ''
+        group = 'resModule2'
+
+    class RoomName2(EnumDynParam):
+        name = '2. room'
+        subtype = FieldType.STRING
+        callback = FieldType.ROOM
+        default_value = ''
+        group = 'resModule2'
 
 
 class Blk031():
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_R = {
-        'prop': 'unk_R',
-        'type': FieldType.RAD,
-        'name': 'Unk. rad',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord 1'
+
+    class Unk_R(CoordParam):
+        name = 'Unk. rad'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord 2'
+
     #todo: check
 
 
 class Blk033():
-    Use_Lights = {
-        'prop': 'useLight',
-        'type': FieldType.INT,
-        'name': 'Use lights',
-        'description': '',
-        'default': 0
-    }
-    Light_Type = {
-        'prop': 'lType',
-        'type': FieldType.INT,
-        'name': 'Light type',
-        'description': '',
-        'default': 0
-    }
-    Flag = {
-        'prop': 'flag',
-        'type': FieldType.INT,
-        'name': 'Flag',
-        'description': '',
-        'default': 0
-    }
-    Unk_XYZ1 = {
-        'prop': 'unk_XYZ1',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 1',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_XYZ2 = {
-        'prop': 'unk_XYZ2',
-        'type': FieldType.COORD,
-        'name': 'Unk. coord 2',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
-    Unk_Float1 = {
-        'prop': 'float1',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float2 = {
-        'prop': 'float2',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0.0
-    }
-    Light_R = {
-        'prop': 'light_radius',
-        'type': FieldType.FLOAT,
-        'name': 'Light rad',
-        'description': '',
-        'default': 0.0
-    }
-    Intens = {
-        'prop': 'intensity',
-        'type': FieldType.FLOAT,
-        'name': 'Light intensity',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float3 = {
-        'prop': 'float3',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 3',
-        'description': '',
-        'default': 0.0
-    }
-    Unk_Float4 = {
-        'prop': 'float4',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 4',
-        'description': '',
-        'default': 0.0
-    }
-    RGB = {
-        'prop': 'rgb',
-        'type': FieldType.COORD,
-        'name': 'RGB',
-        'description': '',
-        'default': (0.0, 0.0, 0.0)
-    }
+    class Use_Lights(IntParam):
+        name = 'Use lights'
+
+    class Light_Type(IntParam):
+        name = 'Light type'
+
+    class Flag(IntParam):
+        name = 'Flag'
+
+    class Unk_XYZ1(CoordParam):
+        name = 'Unk. coord 1'
+
+    class Unk_XYZ2(CoordParam):
+        name = 'Unk. coord 2'
+
+    class Unk_Float1(FloatParam):
+        name = 'Unk. 1'
+
+    class Unk_Float2(FloatParam):
+        name = 'Unk. 2'
+
+    class Light_R(FloatParam):
+        name = 'Light rad'
+
+    class Intens(FloatParam):
+        name = 'Light intensity'
+
+    class Unk_Float3(FloatParam):
+        name = 'Unk. 3'
+
+    class Unk_Float4(FloatParam):
+        name = 'Unk. 4'
+
+    class RGB(CoordParam):
+        name = 'RGB'
 
 
 class Blk034():
-    UnkInt = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
+    class UnkInt(IntParam):
+        name = 'Unk. 1'
 
 
 class Blk035():
-    MType = {
-        'prop': 'm_type',
-        'type': FieldType.INT,
-        'name': 'Type',
-        'description': '',
-        'default': 0
-    }
-    TexNum = {
-        'prop': 'texnum',
-        'type': FieldType.ENUM_DYN,
-        'subtype': FieldType.INT,
-        'callback': FieldType.MATERIAL_IND,
-        'name': 'Texture',
-        'description': '',
-    }
+    class MType(IntParam):
+        name = 'Unk. 1'
+
+    class TexNum(EnumDynParam):
+        name = 'Texture'
+        subtype = FieldType.INT
+        callback = FieldType.MATERIAL_IND
 
 
 class Blk036():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Name 1',
-        'description': '',
-        'default': ''
-    }
-    Name2 = {
-        'prop': 'name2',
-        'type': FieldType.STRING,
-        'name': 'Name 2',
-        'description': '',
-        'default': ''
-    }
-    VType = {
-        'prop': 'vType',
-        'type': FieldType.ENUM,
-        'subtype': FieldType.INT,
-        'name': 'Vertex type',
-        'description': '',
-        'default': 2,
-        'items': vTypeList
-    }
+    class Name1(StringParam):
+        name = 'Name 1'
+
+    class Name2(StringParam):
+        name = 'Name 2'
+
+    class VType(EnumParam):
+        name = 'Vertex type'
+        subtype = FieldType.INT
+        items = vTypeList
+        default_value = 2
 
 
 class Blk037():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Name 1',
-        'description': '',
-        'default': ''
-    }
-    VType = {
-        'prop': 'vType',
-        'type': FieldType.ENUM,
-        'subtype': FieldType.INT,
-        'name': 'Vertex type',
-        'description': '',
-        'default': 2,
-        'items': vTypeList
-    }
+    class Name1(StringParam):
+        name = 'Name 1'
+
+    class VType(EnumParam):
+        name = 'Vertex type'
+        subtype = FieldType.INT
+        items = vTypeList
+        default_value = 2
 
 
 class Blk039():
-    Color_R = {
-        'prop': 'color_r',
-        'type': FieldType.INT,
-        'name': 'Color rad',
-        'description': '',
-        'default': 0
-    }
-    Unk_Float1 = {
-        'prop': 'float1',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0.0
-    }
-    Fog_Start = {
-        'prop': 'fog_start',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 3',
-        'description': '',
-        'default': 0.0
-    }
-    Fog_End = {
-        'prop': 'fog_end',
-        'type': FieldType.FLOAT,
-        'name': 'Unk. 4',
-        'description': '',
-        'default': 0.0
-    }
-    Color_Id = {
-        'prop': 'color_id',
-        'type': FieldType.INT,
-        'name': 'Color ID',
-        'description': '',
-        'default': 0
-    }
+    class Color_R(IntParam):
+        name = 'Color rad'
+
+    class Unk_Float1(FloatParam):
+        name = 'Unk. 1'
+
+    class Fog_Start(FloatParam):
+        name = 'Fog Start'
+
+    class Fog_End(FloatParam):
+        name = 'Fog End'
+
+    class Color_Id(IntParam):
+        name = 'Color Id'
 
 
 class Blk040():
-    Name1 = {
-        'prop': 'name1',
-        'type': FieldType.STRING,
-        'name': 'Name 1',
-        'description': '',
-        'default': ''
-    }
-    Name2 = {
-        'prop': 'name2',
-        'type': FieldType.ENUM,
-        'subtype': FieldType.STRING,
-        'name': 'Generator type',
-        'description': '',
-        'default': '$$TreeGenerator',
-        'items': generatorTypeList
-    }
-    Unk_Int1 = {
-        'prop': 'int1',
-        'type': FieldType.INT,
-        'name': 'Unk. 1',
-        'description': '',
-        'default': 0
-    }
-    Unk_Int2 = {
-        'prop': 'int2',
-        'type': FieldType.INT,
-        'name': 'Unk. 2',
-        'description': '',
-        'default': 0
-    }
-    Unk_List = {
-        'prop': 'list1',
-        'type': FieldType.LIST,
-        'name': 'Unk. params',
-        'description': '',
-    }
+    class Name1(StringParam):
+        name = 'Name 1'
+
+    class Name2(EnumParam):
+        name = 'Generator type'
+        subtype = FieldType.STRING
+        items = generatorTypeList
+        default_value = '$$TreeGenerator'
+    # class Name2(EnumParam):
+    #     name = 'Generator type',
+    #     subtype = FieldType.INT,
+    #     items = generatorTypeList,
+    #     default_value = '0'
+
+    class Unk_Int1(IntParam):
+        name = 'Unk. 1'
+
+    class Unk_Int2(IntParam):
+        name = 'Unk. 2'
+
+    class Unk_List(ListParam):
+        name = 'Unk. params'
 
 # Blk050 - segment
 # Blk051 - unoriented node
 # Blk052 - oriented node
 
 class Blk050():
-    Attr1 = {
-        'prop': 'attr1',
-        'type': FieldType.INT,
-        'name': 'Attr. 1',
-        'description': '',
-        'default': 0
-    }
-    Attr2 = {
-        'prop': 'attr2',
-        'type': FieldType.FLOAT,
-        'name': 'Attr. 2',
-        'description': '',
-        'default': 0
-    }
-    Attr3 = {
-        'prop': 'attr3',
-        'type': FieldType.INT,
-        'name': 'Attr. 3',
-        'description': '',
-        'default': 0
-    }
-    Rten = {
-        'prop': 'rten',
-        'type': FieldType.STRING,
-        'name': 'Unk. name',
-        'description': '',
-        'default': ''
-    }
-    Width1 = {
-        'prop': 'wdth1',
-        'type': FieldType.FLOAT,
-        'name': 'Width 1',
-        'description': '',
-        'default': 0
-    }
-    Width2 = {
-        'prop': 'wdth2',
-        'type': FieldType.FLOAT,
-        'name': 'Width 2',
-        'description': '',
-        'default': 0
-    }
+
+    class Attr1(IntParam):
+        name = 'Attr. 1'
+
+    class Attr2(IntParam):
+        name = 'Attr. 2'
+
+    class Attr3(IntParam):
+        name = 'Attr. 3'
+
+    class Rten(StringParam):
+        name = 'Unk. name'
+
+    class Width1(FloatParam):
+        name = 'Width 1'
+
+    class Width2(FloatParam):
+        name = 'Width 2'
 
 
 class Blk051():
-    Flag = {
-        'prop': 'flag',
-        'type': FieldType.INT,
-        'name': 'Flag',
-        'description': '',
-        'default': 0
-    }
-
+    class Flag(IntParam):
+        name = 'Flag'
 
 class Blk052():
-    Flag = {
-        'prop': 'flag',
-        'type': FieldType.INT,
-        'name': 'Flag',
-        'description': '',
-        'default': 0
-    }
+    class Flag(IntParam):
+        name = 'Flag'
 
 block_classes = [
     None, Blk001, Blk002, None, Blk004, Blk005, Blk006, Blk007, None, Blk009,

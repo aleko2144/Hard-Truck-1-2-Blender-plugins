@@ -293,7 +293,7 @@ class SingleAddOperator(bpy.types.Operator):
                 if block_type in [9,10,21]:
                     group_cnt = 2
                 elif block_type == 21:
-                    group_cnt = b3d_obj[prop(Blk021.GroupCnt)]
+                    group_cnt = b3d_obj[Blk021.GroupCnt.get_prop()]
 
                 for i in range(group_cnt):
                     group = bpy.data.objects.new(f"GROUP_{i}", None)

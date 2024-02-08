@@ -150,16 +150,17 @@ class BlockClassHandler():
 
     @staticmethod
     def create_type_class(bclass, multiple_edit = True):
-        attrs = [obj for obj in bclass.__dict__.keys() if not obj.startswith('__')]
+        attrs_cls = [obj for obj in bclass.__dict__.keys() if not obj.startswith('__')]
 
         bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(bclass, multiple_edit)
 
         attributes = {
             '__annotations__' : {}
         }
-        for attr in attrs:
-            obj = bclass.__dict__[attr]
-            pname = obj['prop']
+        for attr_class_name in attrs_cls:
+            attr_class = bclass.__dict__[attr_class_name]
+
+            pname = attr_class.get_prop()
             prop = None
 
             if multiple_edit: # lock switches only for multiple edit
@@ -169,76 +170,76 @@ class BlockClassHandler():
                     default = True
                 )
 
-            if obj['type'] == FieldType.STRING \
-            or obj['type'] == FieldType.COORD \
-            or obj['type'] == FieldType.RAD \
-            or obj['type'] == FieldType.FLOAT \
-            or obj['type'] == FieldType.INT \
-            or obj['type'] == FieldType.LIST:
+            if attr_class.get_block_type() == FieldType.STRING \
+            or attr_class.get_block_type() == FieldType.COORD \
+            or attr_class.get_block_type() == FieldType.RAD \
+            or attr_class.get_block_type() == FieldType.FLOAT \
+            or attr_class.get_block_type() == FieldType.INT \
+            or attr_class.get_block_type() == FieldType.LIST:
 
                 if multiple_edit: # lock switches only for multiple edit
                     attributes['__annotations__']["show_"+pname] = lock_prop
 
-                if obj['type'] == FieldType.STRING and multiple_edit:
+                if attr_class.get_block_type() == FieldType.STRING and multiple_edit:
                     prop = StringProperty(
-                        name = obj['name'],
-                        description = obj['description'],
-                        default = obj['default'],
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
+                        default = attr_class.get_default(),
                         maxlen = 32
                     )
 
-                elif obj['type'] == FieldType.COORD and multiple_edit:
+                elif attr_class.get_block_type() == FieldType.COORD and multiple_edit:
                     prop = FloatVectorProperty(
-                        name = obj['name'],
-                        description = obj['description'],
-                        default = obj['default']
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
+                        default = attr_class.get_default()
                     )
 
-                elif (obj['type'] == FieldType.RAD or obj['type'] == FieldType.FLOAT) and multiple_edit:
+                elif (attr_class.get_block_type() == FieldType.RAD or attr_class.get_block_type() == FieldType.FLOAT) and multiple_edit:
                     prop = FloatProperty(
-                        name = obj['name'],
-                        description = obj['description'],
-                        default = obj['default']
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
+                        default = attr_class.get_default()
                     )
 
-                elif obj['type'] == FieldType.INT and multiple_edit:
+                elif attr_class.get_block_type() == FieldType.INT and multiple_edit:
                     prop = IntProperty(
-                        name = obj['name'],
-                        description = obj['description'],
-                        default = obj['default']
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
+                        default = attr_class.get_default()
                     )
 
-                elif obj['type'] == FieldType.LIST:
+                elif attr_class.get_block_type() == FieldType.LIST:
                     prop = CollectionProperty(
-                        name = obj['name'],
-                        description = obj['description'],
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
                         type = FloatBlock
                     )
 
                 attributes['__annotations__'][pname] = prop
 
-            elif obj['type'] == FieldType.ENUM \
-            or obj['type'] == FieldType.ENUM_DYN:
+            elif attr_class.get_block_type() == FieldType.ENUM \
+            or attr_class.get_block_type() == FieldType.ENUM_DYN:
 
 
                 if multiple_edit: # lock switches only for multiple edit
                     attributes['__annotations__']["show_"+pname] = lock_prop
 
                 enum_callback = None
-                subtype = obj.get('subtype')
+                subtype = attr_class.get_subtype()
 
-                if obj.get('callback') == FieldType.SPACE_NAME:
+                if attr_class.get_callback() == FieldType.SPACE_NAME:
                     enum_callback = spaces_callback
-                elif obj.get('callback') == FieldType.REFERENCEABLE:
+                elif attr_class.get_callback() == FieldType.REFERENCEABLE:
                     enum_callback = referenceables_callback
-                elif obj.get('callback') == FieldType.MATERIAL_IND:
+                elif attr_class.get_callback() == FieldType.MATERIAL_IND:
                     enum_callback = res_materials_callback
-                elif obj.get('callback') == FieldType.ROOM:
+                elif attr_class.get_callback() == FieldType.ROOM:
                     enum_callback = rooms_callback(bname, f'{pname}_res')
-                elif obj.get('callback') == FieldType.RES_MODULE:
+                elif attr_class.get_callback() == FieldType.RES_MODULE:
                     enum_callback = modules_callback
 
-                if obj['type'] == FieldType.ENUM:
+                if attr_class.get_block_type() == FieldType.ENUM:
                     prop = None
                     prop_enum = None
                     prop_switch = None
@@ -249,27 +250,36 @@ class BlockClassHandler():
                         default = False
                     )
 
+
+                    log.error(attr_class)
+
+                    log.error(attr_class.get_name())
+                    log.error(attr_class.get_items())
+                    log.error(attr_class.get_default())
+
                     prop_enum = EnumProperty(
-                        name = obj['name'],
-                        description = obj['description'],
-                        items = obj['items'],
-                        default = obj['default'],
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
+                        items = attr_class.get_items(),
+                        default = attr_class.get_default(),
                         update = set_cust_obj_value(subtype, bname, pname)
                     )
+
+
 
                     if multiple_edit:
                         if subtype == FieldType.STRING:
                             prop = StringProperty(
-                                name = obj['name'],
-                                description = obj['description'],
-                                default = obj['default'],
+                                name = attr_class.get_name(),
+                                description = attr_class.get_description(),
+                                default = attr_class.get_default(),
                                 maxlen = 32
                             )
                         elif subtype == FieldType.INT:
                             prop = IntProperty(
-                                name = obj['name'],
-                                description = obj['description'],
-                                default = obj['default']
+                                name = attr_class.get_name(),
+                                description = attr_class.get_description(),
+                                default = attr_class.get_default()
                             )
 
                     attributes['__annotations__'][f'{pname}_switch'] = prop_switch
@@ -278,7 +288,7 @@ class BlockClassHandler():
                     if multiple_edit:
                         attributes['__annotations__'][f'{pname}'] = prop
 
-                elif obj['type'] == FieldType.ENUM_DYN:
+                elif attr_class.get_block_type() == FieldType.ENUM_DYN:
                     # prop = None
                     prop_enum = None
                     prop_switch = None
@@ -290,8 +300,8 @@ class BlockClassHandler():
                     )
 
                     prop_enum = EnumProperty(
-                        name = obj['name'],
-                        description = obj['description'],
+                        name = attr_class.get_name(),
+                        description = attr_class.get_description(),
                         items = enum_callback,
                         update = set_cust_obj_value(subtype, bname, pname)
                     )
@@ -300,14 +310,14 @@ class BlockClassHandler():
                     if multiple_edit:
                         if subtype == FieldType.STRING:
                             prop = StringProperty(
-                                name = obj['name'],
-                                description = obj['description'],
+                                name = attr_class.get_name(),
+                                description = attr_class.get_description(),
                                 maxlen = 32
                             )
                         elif subtype == FieldType.INT:
                             prop = IntProperty(
-                                name = obj['name'],
-                                description = obj['description']
+                                name = attr_class.get_name(),
+                                description = attr_class.get_description()
                             )
 
                     attributes['__annotations__'][f'{pname}_switch'] = prop_switch
@@ -316,7 +326,7 @@ class BlockClassHandler():
                     if multiple_edit:
                         attributes['__annotations__'][f'{pname}'] = prop
 
-            elif obj['type'] == FieldType.V_FORMAT: # currently only available in vertex edit
+            elif attr_class.get_block_type() == FieldType.V_FORMAT: # currently only available in vertex edit
 
                 attributes['__annotations__'][f"show_{pname}"] = lock_prop
 
