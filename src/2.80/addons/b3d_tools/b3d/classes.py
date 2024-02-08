@@ -250,13 +250,6 @@ class BlockClassHandler():
                         default = False
                     )
 
-
-                    log.error(attr_class)
-
-                    log.error(attr_class.get_name())
-                    log.error(attr_class.get_items())
-                    log.error(attr_class.get_default())
-
                     prop_enum = EnumProperty(
                         name = attr_class.get_name(),
                         description = attr_class.get_description(),
@@ -264,8 +257,6 @@ class BlockClassHandler():
                         default = attr_class.get_default(),
                         update = set_cust_obj_value(subtype, bname, pname)
                     )
-
-
 
                     if multiple_edit:
                         if subtype == FieldType.STRING:

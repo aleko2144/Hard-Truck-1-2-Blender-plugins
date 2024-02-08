@@ -144,17 +144,14 @@ class ImportRES(Operator, ImportHelper):
         tt1 = time.mktime(datetime.datetime.now().timetuple())
         if (common_res_module is None or self.to_reload_common_res) and os.path.exists(common_res_path):
             import_b3d.import_common_dot_res(self, context, common_res_path)
-            t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
+        else:
+            self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
-            tt2 = time.mktime(datetime.datetime.now().timetuple())
+        if self.to_import_textures:
+            t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
 
             t0.start()
             t0.join()
-
-            tt2 = time.mktime(datetime.datetime.now().timetuple()) - tt2
-
-        else:
-            self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
         tt1 = time.mktime(datetime.datetime.now().timetuple()) - tt1
         log.info(f'All RES imported in {tt1} seconds')

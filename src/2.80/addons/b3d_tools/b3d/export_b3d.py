@@ -389,9 +389,9 @@ def write_palettefiles(res_module, file):
         file.seek(4,1)
         for color in res_module.palette_colors:
             rgbcol = srgb_to_rgb(*color.value[:3])
-            file.write(struct.pack("<b", rgbcol[0]))
-            file.write(struct.pack("<b", rgbcol[1]))
-            file.write(struct.pack("<b", rgbcol[2]))
+            file.write(struct.pack("<B", rgbcol[0]))
+            file.write(struct.pack("<B", rgbcol[1]))
+            file.write(struct.pack("<B", rgbcol[2]))
 
         write_size(file, pal_name_ms)
         write_size(file, palt_ms)

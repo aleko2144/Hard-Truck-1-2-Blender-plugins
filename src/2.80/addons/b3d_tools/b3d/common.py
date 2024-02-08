@@ -244,7 +244,7 @@ def get_active_palette_module(res_module):
     if res_module:
         if len(res_module.palette_colors) > 0:
             return res_module
-        log.debug(mytool)
+
         common_res_module = get_col_property_by_name(mytool.res_modules, 'COMMON')
         if len(common_res_module.palette_colors) > 0:
             return common_res_module

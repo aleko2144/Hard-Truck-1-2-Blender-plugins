@@ -24,9 +24,9 @@ def parse_plm(res_module, filepath):
         cat1 = plm_file.read(4).decode("UTF-8")
         cat1_size = struct.unpack("<I", plm_file.read(4))[0]
         for i in range(cat1_size // 3):
-            r = struct.unpack("<b",plm_file.read(1))[0]
-            g = struct.unpack("<b",plm_file.read(1))[0]
-            b = struct.unpack("<b",plm_file.read(1))[0]
+            r = struct.unpack("<B",plm_file.read(1))[0]
+            g = struct.unpack("<B",plm_file.read(1))[0]
+            b = struct.unpack("<B",plm_file.read(1))[0]
 
             rgb_color = rgb_to_srgb(r, g, b)
             pal_color = res_module.palette_colors.add()
@@ -64,7 +64,7 @@ def decompress_rle(file, width, height, bytes_per_pixel):
         pixel_count = 0
         decompressed_data = bytearray(width * height * bytes_per_pixel)
         while pixel_count < width * height:
-            curbit = struct.unpack("<b", file.read(1))[0]
+            curbit = struct.unpack("<B", file.read(1))[0]
             if(curbit > 127): #black pixels
                 pixel_count += (curbit-128)
                 # log.debug("black pixels {} {}".format(curbit-128, file.tell()))
@@ -91,7 +91,7 @@ def write_tga8888(filepath, header, colors_before, bit_mask, transp_color = (0,0
 
     colors_after = []
 
-    type_size = (None,'<b','<H',None,'<I')[bytes_per_pixel]
+    type_size = (None,'<B','<H',None,'<I')[bytes_per_pixel]
 
     r_msk = bit_mask[0]
     g_msk = bit_mask[1]
@@ -133,7 +133,7 @@ def write_tga8888(filepath, header, colors_before, bit_mask, transp_color = (0,0
         colors_after.extend([b, g, r, a])
     with open(filepath, "wb") as tga_file:
         header_pack = struct.pack("<3b2hb4h2b", *header)
-        colors_pack = struct.pack("<"+str(colors_size*4)+"b", *colors_after)
+        colors_pack = struct.pack("<"+str(colors_size*4)+"B", *colors_after)
         tga_file.write(header_pack)
         tga_file.write(colors_pack)
 
@@ -249,15 +249,15 @@ def colormap_txr_to_tga32(filepath, transp_color):
         header[5] = 32 #ColorMapEntrySize
         header[10] = 32 #PixelDepth
         palette_size = color_map_length*3
-        palette = struct.unpack("<"+str(palette_size)+"b", txr_file.read(palette_size))
+        palette = struct.unpack("<"+str(palette_size)+"B", txr_file.read(palette_size))
         colors_size = height*width
-        colors_before = list(struct.unpack("<"+str(colors_size)+"b", txr_file.read(colors_size)))
+        colors_before = list(struct.unpack("<"+str(colors_size)+"B", txr_file.read(colors_size)))
 
         colors_after = palette_to_colors(palette, colors_before, transp_color)
 
         with open(outpath, "wb") as tga_file:
             header_pack = struct.pack("<3b2hb4h2b", *header)
-            colors_pack = struct.pack("<"+str(colors_size*4)+"b", *colors_after)
+            colors_pack = struct.pack("<"+str(colors_size*4)+"B", *colors_after)
             tga_file.write(header_pack)
             tga_file.write(colors_pack)
 
@@ -359,7 +359,8 @@ def convert_txr_to_tga32(filepath, transp_color):
     image_type = ""
     with open(filepath, "rb") as txr_file:
         txr_file.seek(2, 0)
-        image_type = struct.unpack("<b", txr_file.read(1))[0]
+        image_type = struct.unpack("<B", txr_file.read(1))[0]
+        log.debug(f"Image type: {image_type}")
     if image_type == 2:
         return trueimage_txr_to_tga32(filepath, transp_color, 2)
     if image_type == 1:
@@ -385,23 +386,23 @@ def colors_byterray_convert(barray, temp_from, temp_to, form_from = 'ARGB', form
     fofr_a_ind, fofr_r_ind, fofr_g_ind, fofr_b_ind = (0, 0, 0, 0)
 
     for i in range(len(form_from)):
-        if form_from[i] == 'a':
+        if form_from[i] == 'A':
             ff_a_ind = i
-        elif form_from[i] == 'g':
+        elif form_from[i] == 'G':
             ff_g_ind = i
-        elif form_from[i] == 'b':
+        elif form_from[i] == 'B':
             ff_b_ind = i
-        elif form_from[i] == 'r':
+        elif form_from[i] == 'R':
             ff_r_ind = i
 
     for i in range(len(form_to)):
-        if form_to[i] == 'a':
+        if form_to[i] == 'A':
             ft_a_ind = i
-        elif form_to[i] == 'r':
+        elif form_to[i] == 'R':
             ft_r_ind = i
-        elif form_to[i] == 'g':
+        elif form_to[i] == 'G':
             ft_g_ind = i
-        elif form_to[i] == 'b':
+        elif form_to[i] == 'B':
             ft_b_ind = i
 
     tf_a = int(temp_from[ff_a_ind])
@@ -432,8 +433,8 @@ def colors_byterray_convert(barray, temp_from, temp_to, form_from = 'ARGB', form
     pixel_cnt = len(barray) // tf_bytes_per_pixel
     tt_bytes_per_pixel = (tt_r + tt_g + tt_b + tt_a) >> 3
 
-    tf_type_size = (None,'<b','<H',None,'<I')[tf_bytes_per_pixel]
-    tt_type_size = (None,'<b','<H',None,'<I')[tt_bytes_per_pixel]
+    tf_type_size = (None,'<B','<H',None,'<I')[tf_bytes_per_pixel]
+    tt_type_size = (None,'<B','<H',None,'<I')[tt_bytes_per_pixel]
     converted_byte_array = bytearray(pixel_cnt * tt_bytes_per_pixel)
     for i in range(0, pixel_cnt):
         color = struct.unpack(tf_type_size, barray[i*tf_bytes_per_pixel:(i+1)*tf_bytes_per_pixel])[0]
@@ -546,7 +547,7 @@ def truecolor_tga_32_to_txr(filepath, bytes_per_pixel, image_type, image_format,
         width = header[8]
         height = header[9]
         colors_size = height*width
-        colors_before = struct.unpack("<"+str(colors_size*4)+"b", tga_file.read(colors_size*4))
+        colors_before = struct.unpack("<"+str(colors_size*4)+"B", tga_file.read(colors_size*4))
 
         colors_before = flip_tga_vert(bytearray(colors_before), width, height)
 
@@ -557,7 +558,7 @@ def truecolor_tga_32_to_txr(filepath, bytes_per_pixel, image_type, image_format,
         footer = tga_file.read()
     with open(outpath, "wb") as txr_file:
         header_pack = struct.pack("<3b2hb4h2b", *header)
-        colors_pack = struct.pack("<"+str(colors_size*bytes_per_pixel)+"b", *colors_after)
+        colors_pack = struct.pack("<"+str(colors_size*bytes_per_pixel)+"B", *colors_after)
 
         loff_ms = txr_file.tell()
         txr_file.write(header_pack)
@@ -632,7 +633,7 @@ def msk_to_tga32(filepath):
         width = struct.unpack("<H", msk_file.read(2))[0]
         height = struct.unpack("<H", msk_file.read(2))[0]
         palette_size = 256
-        palette = list(struct.unpack("<"+str(palette_size*3)+"b", msk_file.read(palette_size*3)))
+        palette = list(struct.unpack("<"+str(palette_size*3)+"B", msk_file.read(palette_size*3)))
         colors_size = width*height
 
         if magic == 'MS16':

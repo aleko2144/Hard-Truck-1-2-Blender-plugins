@@ -17,7 +17,6 @@ from .scripts import (
     show_conditionals,
     hide_conditionals,
     show_hide_obj_by_type,
-    prop,
     draw_common,
     draw_all_fields_by_type,
     get_all_objs_by_type,

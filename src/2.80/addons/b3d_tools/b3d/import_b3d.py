@@ -284,7 +284,7 @@ def import_raw(file, context, op, filepath):
 
     for i in range(width):
         for j in range(width):
-            vertexes.append((i*10,j*10,struct.unpack('<b',file.read(1))[0]))
+            vertexes.append((i*10,j*10,struct.unpack('<B',file.read(1))[0]))
             file.read(1)
 
     for i in range(width-1):
