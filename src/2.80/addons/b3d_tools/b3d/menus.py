@@ -27,7 +27,7 @@ from .class_descr import (
     BoolBlock
 )
 from . import (
-    import_b3d, export_b3d
+    import_b3d, export_b3d, import_res
 )
 from .common import (
     res_modules_callback,
@@ -137,7 +137,7 @@ class ImportRES(Operator, ImportHelper):
 
         tt1 = time.mktime(datetime.datetime.now().timetuple())
         if (common_res_module is None or self.to_reload_common_res) and os.path.exists(common_res_path):
-            import_b3d.import_common_dot_res(self, context, common_res_path)
+            import_res.import_common_dot_res(self, context, common_res_path)
         else:
             self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
@@ -145,7 +145,7 @@ class ImportRES(Operator, ImportHelper):
             if is_before_2_80:
                 bpy.context.scene.render.engine = 'CYCLES' #Blender render doesnt render in Material and Texture View
 
-            t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
+            t0 = Thread(target=import_res.import_multiple_res, args=(self, self.files, context))
 
             t0.start()
             t0.join()
@@ -346,7 +346,7 @@ class ImportB3D(Operator, ImportHelper):
         common_res_module = get_col_property_by_name(res_modules, 'COMMON')
 
         if (common_res_module is None or self.to_reload_common_res) and self.to_import_textures and os.path.exists(common_res_path):
-            import_b3d.import_common_dot_res(self, context, common_res_path)
+            import_res.import_common_dot_res(self, context, common_res_path)
         else:
             self.report({'ERROR'}, "Common.res path is wrong or is not set. There might be problems with imported textures! Please, set path to Common.res in addon preferences.")
 
@@ -356,7 +356,7 @@ class ImportB3D(Operator, ImportHelper):
             if is_before_2_80:
                 bpy.context.scene.render.engine = 'CYCLES' #Blender render doesnt render in Material and Texture View
 
-            t0 = Thread(target=import_b3d.import_multiple_res, args=(self, self.files, context))
+            t0 = Thread(target=import_res.import_multiple_res, args=(self, self.files, context))
 
             tt = time.mktime(datetime.datetime.now().timetuple())
 
