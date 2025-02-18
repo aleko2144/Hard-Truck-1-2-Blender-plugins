@@ -18,6 +18,14 @@ from .class_descr import (
     Blk050,Blk051,Blk052
 )
 
+from ..compatibility import (
+    get_context_collection_objects,
+    get_or_create_collection,
+    is_before_2_80,
+    set_empty_type,
+    set_empty_size
+)
+
 #Setup module logger
 log = importway_logger
 
@@ -47,7 +55,7 @@ def openclose(file, path):
 
 def get_numbered_name(name):
     global global_ind
-    name = f"{global_ind:04d}|{name}"
+    name = "{:04d}|{}".format(global_ind, name)
     global_ind += 1
     return name
 
@@ -93,7 +101,7 @@ def import_way(file, context, filepath):
                 else:
                     reading_header = False
 
-                    root_name = f'{module_name}.b3d'
+                    root_name = '{}.b3d'.format(module_name)
 
                     root_object = bpy.data.objects.get(root_name)
                     if root_object is None:
@@ -101,7 +109,7 @@ def import_way(file, context, filepath):
                         root_object[BLOCK_TYPE] = 111 # 111
                         root_object.name = root_name
                         root_object.location=(0,0,0)
-                        context.collection.objects.link(root_object)
+                        get_context_collection_objects(context).link(root_object)
 
                     file.seek(-4, 1)
 
@@ -126,7 +134,7 @@ def import_way(file, context, filepath):
                     cur_obj.location=(0,0,0)
                     cur_obj[BLOCK_TYPE] = 19
                     cur_obj.parent = root_object
-                    context.collection.objects.link(cur_obj)
+                    get_context_collection_objects(context).link(cur_obj)
 
                 curRoom = bpy.data.objects[cur_obj.name]
 
@@ -160,7 +168,7 @@ def import_way(file, context, filepath):
                         wdth1 = struct.unpack("<d",file.read(8))[0]
                         wdth2 = struct.unpack("<d",file.read(8))[0]
 
-                        log.debug(f"WDTH: {str(wdth1)} {str(wdth2)}")
+                        log.debug("WDTH: {} {}".format(str(wdth1), str(wdth2)))
 
                         rseg_size_cur -= (subtype_size+8) #subtype+subtype_size
 
@@ -212,7 +220,7 @@ def import_way(file, context, filepath):
                     cur_obj[Blk050.Width2.get_prop()] = wdth2
                     cur_obj[Blk050.Rten.get_prop()] = unk_name
                     cur_obj.parent = curRoom
-                    context.collection.objects.link(cur_obj)
+                    get_context_collection_objects(context).link(cur_obj)
 
             elif block_type == "RNOD": #RNOD
                 log.debug("Reading type RNOD")
@@ -263,18 +271,18 @@ def import_way(file, context, filepath):
                 if object_matrix is not None:
                     cur_obj[BLOCK_TYPE] = 52
                     cur_obj[Blk052.Flag.get_prop()] = flag
-                    cur_obj.empty_display_type = 'ARROWS'
+                    set_empty_type(cur_obj, 'ARROWS')
                     for i in range(3):
                         for j in range(3):
                             cur_obj.matrix_world[i][j] = object_matrix[j][i]
                 else:
                     cur_obj[BLOCK_TYPE] = 51
                     cur_obj[Blk051.Flag.get_prop()] = flag
-                    cur_obj.empty_display_type = 'PLAIN_AXES'
-                cur_obj.empty_display_size = 5
+                    set_empty_type(cur_obj, 'PLAIN_AXES')
+                set_empty_size(cur_obj, 5)
                 cur_obj.location = cur_pos
                 cur_obj.parent = curRoom
-                context.collection.objects.link(cur_obj)
+                get_context_collection_objects(context).link(cur_obj)
             else:
-                log.error(f"Unknown type: {block_type} on position {str(file.tell())}")
+                log.error("Unknown type: {} on position {}".format(block_type, str(file.tell())))
 

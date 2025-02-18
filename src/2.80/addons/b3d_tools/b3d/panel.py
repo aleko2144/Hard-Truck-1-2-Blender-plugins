@@ -1,7 +1,11 @@
 import bpy
 
+from ..compatibility import(
+    get_ui_region,
+    get_active_object
+)
+
 from ..common import (
-    getRegion,
     panel_logger
 )
 
@@ -10,6 +14,11 @@ from .. import consts
 from .common import (
     is_root_obj
 )
+from .ui_utils import (
+    draw_common,
+    draw_all_fields_by_type,
+)
+
 from .scripts import (
     apply_remove_transforms,
     hide_lod,
@@ -17,8 +26,6 @@ from .scripts import (
     show_conditionals,
     hide_conditionals,
     show_hide_obj_by_type,
-    draw_common,
-    draw_all_fields_by_type,
     get_all_objs_by_type,
     set_all_objs_by_type,
     get_per_face_by_type,
@@ -61,6 +68,17 @@ from bpy.props import (StringProperty,
                         CollectionProperty
                         )
 
+from ..compatibility import (
+    make_annotations,
+    layout_split,
+    get_context_collection_objects,
+    get_or_create_collection,
+    is_before_2_80,
+    is_before_2_93,
+    set_empty_type,
+    set_empty_size
+)
+
 #Setup module logger
 log = panel_logger
 
@@ -79,46 +97,47 @@ def res_module_callback(scene, context):
 
     return enum_properties
 
+@make_annotations
 class PanelSettings(bpy.types.PropertyGroup):
 
-    res_modules: CollectionProperty(type=ResBlock)
+    res_modules = CollectionProperty(type=ResBlock)
 
-    is_importing: bpy.props.BoolProperty(
+    is_importing = bpy.props.BoolProperty(
         name ='isRESImporting',
         default = False
     )
 
-    selected_res_module: EnumProperty(
+    selected_res_module = EnumProperty(
         name="RES module",
         description="Selected RES module",
         items=res_module_callback
     )
 
-    condition_group : bpy.props.IntProperty(
+    condition_group = bpy.props.IntProperty(
         name='Event number',
         description='Event number(object group), that should be shown/hidden. If -1, then all events are chosen. If event number is too big, closest suitable number is chosen.',
         default=-1,
         min=-1
     )
 
-    block_name_string : bpy.props.StringProperty(
+    block_name_string = bpy.props.StringProperty(
         name="Block name",
         default="",
         maxlen=30,
     )
 
-    add_block_type_enum : bpy.props.EnumProperty(
+    add_block_type_enum = bpy.props.EnumProperty(
         name="Block type",
         items= consts.blockTypeList
         )
 
-    radius : bpy.props.FloatProperty(
+    radius = bpy.props.FloatProperty(
         name = "Block rad",
         description = "Block rendering distance",
         default = 1.0,
         )
 
-    cast_type_enum : bpy.props.EnumProperty(
+    cast_type_enum = bpy.props.EnumProperty(
         name="Cast type",
         items=[
             ('mesh', "Mesh", "Cast selected meshes to vertices(6,7,36,37) polygons blocks(8,35)"),
@@ -128,7 +147,7 @@ class PanelSettings(bpy.types.PropertyGroup):
         ]
     )
 
-    vertex_block_enum : bpy.props.EnumProperty(
+    vertex_block_enum = bpy.props.EnumProperty(
         name="Vertex block type",
         default = '37',
         items=[
@@ -139,7 +158,7 @@ class PanelSettings(bpy.types.PropertyGroup):
         ]
     )
 
-    poly_block_enum : bpy.props.EnumProperty(
+    poly_block_enum = bpy.props.EnumProperty(
         name="Poly block type",
         default = '8',
         items=[
@@ -149,7 +168,7 @@ class PanelSettings(bpy.types.PropertyGroup):
     )
 
 
-    add_blocks_enum : bpy.props.EnumProperty(
+    add_blocks_enum = bpy.props.EnumProperty(
         name="Assembly type",
         items=[
                 ('LOD_9', "Trigger(9)", "Trigger(9)"),
@@ -172,21 +191,21 @@ class PanelSettings(bpy.types.PropertyGroup):
                ]
         )
 
-    lod_level_int : bpy.props.IntProperty(
+    lod_level_int = bpy.props.IntProperty(
         name='LOD level',
         description='LOD level',
         default=0,
         min=0
     )
 
-    add_room_name_index_string : bpy.props.StringProperty(
+    add_room_name_index_string = bpy.props.StringProperty(
         name="Room name",
         description="",
         default="aa_000",
         maxlen=30,
         )
 
-    mirror_type_enum : bpy.props.EnumProperty(
+    mirror_type_enum = bpy.props.EnumProperty(
         name="Block type",
         items=[ ('x', "x", ""),
                 ('y', "y", ""),
@@ -194,12 +213,12 @@ class PanelSettings(bpy.types.PropertyGroup):
                ]
         )
 
-    parent_str : bpy.props.StringProperty(
+    parent_str = bpy.props.StringProperty(
         name ='Selected parent',
         description = 'New object will be parented to this object'
     )
 
-    cast_copy : bpy.props.BoolProperty(
+    cast_copy = bpy.props.BoolProperty(
         name ='Create copy',
         description = 'Will be created copy of selected object and casted to B3D format',
         default = True
@@ -284,7 +303,7 @@ class SingleAddOperator(bpy.types.Operator):
                 b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
                 set_all_objs_by_type(context, b3d_obj, zclass)
-            context.collection.objects.link(b3d_obj)
+            get_context_collection_objects(context).link(b3d_obj)
 
             if block_type in [9,10,22,21]: #objects with subgroups
 
@@ -295,11 +314,11 @@ class SingleAddOperator(bpy.types.Operator):
                     group_cnt = b3d_obj[Blk021.GroupCnt.get_prop()]
 
                 for i in range(group_cnt):
-                    group = bpy.data.objects.new(f"GROUP_{i}", None)
+                    group = bpy.data.objects.new("GROUP_{}".format(i), None)
                     group.location=(0.0,0.0,0.0)
                     group[consts.BLOCK_TYPE] = 444
                     group.parent = b3d_obj
-                    context.collection.objects.link(group)
+                    get_context_collection_objects(context).link(group)
 
         elif block_type in [24, 40, 51, 52]: # empties which location is important
 
@@ -312,14 +331,14 @@ class SingleAddOperator(bpy.types.Operator):
                 set_all_objs_by_type(context, b3d_obj, zclass)
 
             if block_type in [24, 52]:
-                b3d_obj.empty_display_type = 'ARROWS'
+                set_empty_type(b3d_obj, 'ARROWS')
             elif block_type == 40:
-                b3d_obj.empty_display_type = 'SPHERE'
-                b3d_obj.empty_display_size = 5
+                set_empty_type(b3d_obj, 'SPHERE')
+                set_empty_size(b3d_obj, 5)
             elif block_type == 51:
-                b3d_obj.empty_display_type = 'PLAIN_AXES'
+                set_empty_type(b3d_obj, 'PLAIN_AXES')
 
-            context.collection.objects.link(b3d_obj)
+            get_context_collection_objects(context).link(b3d_obj)
 
         elif block_type in [28, 30]:
 
@@ -354,7 +373,7 @@ class SingleAddOperator(bpy.types.Operator):
                 b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
                 set_all_objs_by_type(context, b3d_obj, zclass)
-            context.collection.objects.link(b3d_obj)
+            get_context_collection_objects(context).link(b3d_obj)
 
         return {'FINISHED'}
 
@@ -390,13 +409,13 @@ class TemplateAddOperator(bpy.types.Operator):
 
         if block_type == "room":
             type19("room_" + mytool.add_room_name_index_string)
-            room = bpy.context.selected_objects[0]
+            room = get_active_object()
 
             type05(("road_" + mytool.add_room_name_index_string), mytool.radius, ("hit_road_" + mytool.add_room_name_index_string))
-            road = bpy.context.selected_objects[0]
+            road = get_active_object()
 
             type05(("obj_" + mytool.add_room_name_index_string), mytool.radius, ("hit_obj_" + mytool.add_room_name_index_string))
-            obj = bpy.context.selected_objects[0]
+            obj = get_active_object()
 
             hit_road = type05(("hit_road_" + mytool.add_room_name_index_string), 0, "")
             hit_obj = type05(("hit_obj_" + mytool.add_room_name_index_string), 0, "")
@@ -443,7 +462,7 @@ class CastAddOperator(bpy.types.Operator):
             vert_obj[consts.BLOCK_TYPE] = vert_type
             vert_obj.parent = parent_obj
             set_all_objs_by_type(context, vert_obj, vertclass)
-            context.collection.objects.link(vert_obj)
+            get_context_collection_objects(context).link(vert_obj)
 
             # creating poly blocks
             for poly_obj in context.selected_objects:
@@ -463,9 +482,9 @@ class CastAddOperator(bpy.types.Operator):
                         elif poly_type == 35:
                             create_custom_attribute(new_obj.data, formats, Pfb035, Pfb035.Format_Flags)
 
-                        context.collection.objects.link(new_obj)
+                        get_context_collection_objects(context).link(new_obj)
 
-                        log.info(f"Created new B3D object: {new_obj.name}.")
+                        log.info("Created new B3D object: {}.".format(new_obj.name))
                     else:
                         poly_obj[consts.BLOCK_TYPE] = poly_type
                         poly_obj.parent = vert_obj
@@ -477,10 +496,10 @@ class CastAddOperator(bpy.types.Operator):
                         elif poly_type == 35:
                             create_custom_attribute(poly_obj.data, formats, Pfb035, Pfb035.Format_Flags)
 
-                        log.info(f"Cast existing B3D object: {poly_obj.name}.")
+                        log.info("Cast existing B3D object: {}.".format(poly_obj.name))
 
                 else:
-                    log.info(f"Selected object {poly_obj.name} is not Mesh. Changes not applied.")
+                    log.info("Selected object {} is not Mesh. Changes not applied.".format(poly_obj.name))
 
         elif cast_type == 'colis3D':
 
@@ -493,15 +512,15 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj[consts.BLOCK_TYPE] = 23
                         new_obj.parent = parent_obj
                         set_all_objs_by_type(context, new_obj, Blk023)
-                        context.collection.objects.link(new_obj)
-                        log.info(f"Created new B3D 3d collision: {new_obj.name}.")
+                        get_context_collection_objects(context).link(new_obj)
+                        log.info("Created new B3D 3d collision: {}.".format(new_obj.name))
                     else:
                         poly_obj[consts.BLOCK_TYPE] = 23
                         poly_obj.parent = parent_obj
                         set_all_objs_by_type(context, poly_obj, Blk023)
-                        log.info(f"Cast existing object to B3D 3d collision: {poly_obj.name}.")
+                        log.info("Cast existing object to B3D 3d collision: {}.".format(poly_obj.name))
                 else:
-                    log.info(f"Selected object {poly_obj.name} is not Mesh. Changes not applied.")
+                    log.info("Selected object {} is not Mesh. Changes not applied.".format(poly_obj.name))
 
         elif cast_type == 'colis2D':
 
@@ -516,18 +535,18 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj.data.extrude = 10
                         new_obj.parent = parent_obj
                         set_all_objs_by_type(context, new_obj, Blk020)
-                        context.collection.objects.link(new_obj)
-                        log.info(f"Created new B3D 2d colision: {new_obj.name}.")
+                        get_context_collection_objects(context).link(new_obj)
+                        log.info("Created new B3D 2d colision: {}.".format(new_obj.name))
                     else:
                         poly_obj[consts.BLOCK_TYPE] = 20
                         poly_obj.data.bevel_depth = 0
                         poly_obj.data.extrude = 10
                         poly_obj.parent = parent_obj
                         set_all_objs_by_type(context, poly_obj, Blk020)
-                        log.info(f"Cast exiting object to B3D 2d colision: {poly_obj.name}.")
+                        log.info("Cast exiting object to B3D 2d colision: {}.".format(poly_obj.name))
 
                 else:
-                    log.info(f"Selected object {poly_obj.name} is not Curve. Changes not applied.")
+                    log.info("Selected object {} is not Curve. Changes not applied.".format(poly_obj.name))
 
         elif cast_type == 'way':
 
@@ -542,18 +561,18 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj.data.bevel_mode = 'ROUND'
                         new_obj.parent = parent_obj
                         set_all_objs_by_type(context, new_obj, Blk050)
-                        context.collection.objects.link(new_obj)
-                        log.info(f"Created new WAY Path: {new_obj.name}.")
+                        get_context_collection_objects(context).link(new_obj)
+                        log.info("Created new WAY Path: {}.".format(new_obj.name))
                     else:
                         poly_obj[consts.BLOCK_TYPE] = 50
                         poly_obj.data.bevel_depth = 0.3
                         poly_obj.data.bevel_mode = 'ROUND'
                         poly_obj.parent = parent_obj
                         set_all_objs_by_type(context, poly_obj, Blk050)
-                        log.info(f"Cast existing object to WAY Path: {poly_obj.name}.")
+                        log.info("Cast existing object to WAY Path: {}.".format(poly_obj.name))
 
                 else:
-                    log.info(f"Selected object {poly_obj.name} is not Curve. Changes not applied.")
+                    log.info("Selected object {} is not Curve. Changes not applied.".format(poly_obj.name))
 
 
         return {'FINISHED'}
@@ -563,7 +582,7 @@ class GetVertexValuesOperator(bpy.types.Operator):
     bl_label = "Get block values"
 
     def execute(self, context):
-        b3d_obj = bpy.context.selected_objects[0]
+        b3d_obj = get_active_object()
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
@@ -578,7 +597,7 @@ class GetFaceValuesOperator(bpy.types.Operator):
     bl_label = "Get block values"
 
     def execute(self, context):
-        b3d_obj = bpy.context.selected_objects[0]
+        b3d_obj = get_active_object()
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
@@ -608,11 +627,12 @@ class GetValuesOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+@make_annotations
 class GetPropValueOperator(bpy.types.Operator):
     bl_idname = "wm.get_prop_value_operator"
     bl_label = "Get param value"
 
-    pname: StringProperty()
+    pname = StringProperty()
 
     def execute(self, context):
         scene = context.scene
@@ -704,11 +724,12 @@ class SetValuesOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+@make_annotations
 class SetPropValueOperator(bpy.types.Operator):
     bl_idname = "wm.set_prop_value_operator"
     bl_label = "Save param value"
 
-    pname: StringProperty()
+    pname = StringProperty()
 
     def execute(self, context):
         scene = context.scene
@@ -732,7 +753,7 @@ class DelValuesOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        #b3d_obj = bpy.context.selected_objects[0]
+        #b3d_obj = get_active_object()
 
         for i in range(len(bpy.context.selected_objects)):
 
@@ -934,7 +955,7 @@ class ShowLODOperator(bpy.types.Operator):
 
         for obj in objs:
             show_lod(obj)
-        self.report({'INFO'}, f"{len(objs)} LOD objects(block 10) are shown")
+        self.report({'INFO'}, "{} LOD objects(block 10) are shown".format(len(objs)))
 
         return {'FINISHED'}
 
@@ -954,17 +975,18 @@ class HideLODOperator(bpy.types.Operator):
 
         for obj in objs:
             hide_lod(obj)
-        self.report({'INFO'}, f"{len(objs)} LOD objects(block 10) are hidden")
+        self.report({'INFO'}, "{} LOD objects(block 10) are hidden".format(len(objs)))
 
         return {'FINISHED'}
 
+@make_annotations
 class ShowConditionalsOperator(bpy.types.Operator):
     bl_idname = "wm.show_conditional_operator"
     bl_label = "Show events"
     bl_description = "Show event from selected event block(21). " + \
                     "If there is no active event block, show event of all scene event objects(21)"
 
-    group : bpy.props.IntProperty()
+    group  = bpy.props.IntProperty()
 
     def execute(self, context):
         scene = context.scene
@@ -976,18 +998,19 @@ class ShowConditionalsOperator(bpy.types.Operator):
 
         for obj in objs:
             show_conditionals(obj, self.group)
-        self.report({'INFO'}, f"{len(objs)} Conditional objects(block 21) are shown")
+        self.report({'INFO'}, "{} Conditional objects(block 21) are shown".format(len(objs)))
 
 
         return {'FINISHED'}
 
+@make_annotations
 class HideConditionalsOperator(bpy.types.Operator):
     bl_idname = "wm.hide_conditional_operator"
     bl_label = "Hide events"
     bl_description = "Hide event from selected event block(21). " + \
                     "If there is no active event block, hide event of all scene event objects(21)"
 
-    group : bpy.props.IntProperty()
+    group  = bpy.props.IntProperty()
 
     def execute(self, context):
         scene = context.scene
@@ -999,16 +1022,17 @@ class HideConditionalsOperator(bpy.types.Operator):
 
         for obj in objs:
             hide_conditionals(obj, self.group)
-        self.report({'INFO'}, f"{len(objs)} Conditional objects(block 21) are hidden")
+        self.report({'INFO'}, "{} Conditional objects(block 21) are hidden".format(len(objs)))
 
         return {'FINISHED'}
 
+@make_annotations
 class ShowHideSphereOperator(bpy.types.Operator):
     bl_idname = "wm.show_hide_sphere_operator"
     bl_label = "Show/Hide sphere"
     bl_description = "Shows/Hides sphere"
 
-    pname: bpy.props.StringProperty()
+    pname = bpy.props.StringProperty()
 
     def execute(self, context):
         scene = context.scene
@@ -1030,7 +1054,7 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_add_panel"
     bl_label = "Block add"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1054,7 +1078,7 @@ class OBJECT_PT_b3d_single_add_panel(bpy.types.Panel):
     bl_label = "Single block"
     bl_parent_id = "OBJECT_PT_b3d_add_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1088,7 +1112,7 @@ class OBJECT_PT_b3d_template_add_panel(bpy.types.Panel):
     bl_label = "Block template"
     bl_parent_id = "OBJECT_PT_b3d_add_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1136,7 +1160,7 @@ class OBJECT_PT_b3d_cast_add_panel(bpy.types.Panel):
     bl_label = "Cast to B3D object"
     bl_parent_id = "OBJECT_PT_b3d_add_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1148,7 +1172,7 @@ class OBJECT_PT_b3d_cast_add_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        split = layout.split(factor=0.75)
+        split = layout_split(layout, 0.75)
         c = split.column()
         c.prop(mytool, 'parent_str')
         c = split.column()
@@ -1169,7 +1193,7 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
     bl_label = "Multiple polygons edit"
     bl_parent_id = "OBJECT_PT_b3d_edit_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1212,7 +1236,7 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
     bl_label = "Multiple vertexes edit"
     bl_parent_id = "OBJECT_PT_b3d_edit_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1255,7 +1279,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_edit_panel"
     bl_label = "Block edit"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1276,7 +1300,7 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
     bl_label = "Multiple block edit"
     bl_parent_id = "OBJECT_PT_b3d_edit_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1299,18 +1323,18 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 
             if consts.BLOCK_TYPE in b3d_obj:
                 block_type = b3d_obj[consts.BLOCK_TYPE]
-            else:
-                block_type = None
+            # else:
+            #     block_type = None
 
-            len_str = str(len(b3d_obj.children))
+                len_str = str(len(b3d_obj.children))
 
-            zclass = BlockClassHandler.get_class_def_by_type(block_type)
+                zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
-            layout.operator("wm.get_block_values_operator")
-            layout.operator("wm.set_block_values_operator")
+                layout.operator("wm.get_block_values_operator")
+                layout.operator("wm.set_block_values_operator")
 
-            if zclass is not None:
-                draw_all_fields_by_type(self, context, zclass)
+                if zclass is not None:
+                    draw_all_fields_by_type(self, context, zclass)
 
             # else:
             #     self.layout.label(text="Выбранный объект не имеет типа.")
@@ -1325,7 +1349,7 @@ class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
     bl_label = "Single block edit"
     bl_parent_id = "OBJECT_PT_b3d_edit_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1347,15 +1371,15 @@ class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
 
             if consts.BLOCK_TYPE in b3d_obj:
                 block_type = b3d_obj[consts.BLOCK_TYPE]
-            else:
-                block_type = None
+            # else:
+            #     block_type = None
 
-            len_str = str(len(b3d_obj.children))
+                len_str = str(len(b3d_obj.children))
 
-            zclass = BlockClassHandler.get_class_def_by_type(block_type)
+                zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
-            if zclass is not None:
-                draw_all_fields_by_type(self, context, zclass, False)
+                if zclass is not None:
+                    draw_all_fields_by_type(self, context, zclass, False)
 
             # else:
             #     self.layout.label(text="Выбранный объект не имеет типа.")
@@ -1371,7 +1395,7 @@ class OBJECT_PT_b3d_func_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_func_panel"
     bl_label = "Additional options"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 
@@ -1409,7 +1433,7 @@ class OBJECT_PT_b3d_res_module_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_res_module_panel"
     bl_label = "RES resources"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
 
     @classmethod
@@ -1429,7 +1453,7 @@ class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
     bl_label = "Palette"
     bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
 
     @classmethod
@@ -1462,7 +1486,7 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
     bl_label = "MSK-files"
     bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
 
     @classmethod
@@ -1507,7 +1531,7 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
     bl_label = "Textures"
     bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
 
     @classmethod
@@ -1558,7 +1582,7 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
     bl_label = "Materials"
     bl_parent_id = "OBJECT_PT_b3d_res_module_panel"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
 
     @classmethod
@@ -1705,7 +1729,7 @@ class OBJECT_PT_b3d_misc_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_misc_panel"
     bl_label = "About add-on"
     bl_space_type = "VIEW_3D"
-    bl_region_type = getRegion()
+    bl_region_type = get_ui_region()
     bl_category = "b3d Tools"
     #bl_context = "objectmode"
 

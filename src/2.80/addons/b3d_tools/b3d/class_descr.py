@@ -29,6 +29,10 @@ from .common import (
     update_color_preview
 )
 
+from ..compatibility import (
+    make_annotations
+)
+
 # Dynamic block exmaple
 # block_5 = type("block_5", (bpy.types.PropertyGroup,), {
 #     '__annotations__': {
@@ -70,14 +74,15 @@ class FieldType(enum.Enum):
 
     SPHERE_EDIT = 41
 
-
+@make_annotations
 class BoolBlock(bpy.types.PropertyGroup):
-    name: StringProperty()
-    state : BoolProperty()
+    name = StringProperty()
+    state = BoolProperty()
 
 
+@make_annotations
 class FloatBlock(bpy.types.PropertyGroup):
-    value: FloatProperty()
+    value = FloatProperty()
 
 
 def update_palette_index(self, context):
@@ -170,8 +175,9 @@ def set_col_ind(self, context):
     self.col = ind
 
 
+@make_annotations
 class PaletteColorBlock(bpy.types.PropertyGroup):
-    value: FloatVectorProperty(
+    value = FloatVectorProperty(
         name = 'Palette color',
         subtype = 'COLOR',
         default = (1, 1, 1, 1),
@@ -182,29 +188,31 @@ class PaletteColorBlock(bpy.types.PropertyGroup):
     )
 
 
+@make_annotations
 class MaskfileBlock(bpy.types.PropertyGroup):
-    subpath: StringProperty(default = "")
-    msk_name: StringProperty(default = "")
-    id_msk: PointerProperty(
+    subpath = StringProperty(default = "")
+    msk_name = StringProperty(default = "")
+    id_msk = PointerProperty(
         name='Image',
         type=bpy.types.Image
     )
 
-    is_noload: BoolProperty(default=False)
-    is_someint: BoolProperty(default=False)
-    someint: IntProperty(default=0)
+    is_noload = BoolProperty(default=False)
+    is_someint = BoolProperty(default=False)
+    someint = IntProperty(default=0)
 
 
+@make_annotations
 class TextureBlock(bpy.types.PropertyGroup):
-    subpath: StringProperty(default = "")
-    tex_name: StringProperty(default = "")
-    id_tex: PointerProperty(
+    subpath = StringProperty(default = "")
+    tex_name = StringProperty(default = "")
+    id_tex = PointerProperty(
         name='Image',
         type=bpy.types.Image
     )
 
-    has_mipmap: BoolProperty(default=False)
-    img_format: EnumProperty(
+    has_mipmap = BoolProperty(default=False)
+    img_format = EnumProperty(
         name="Image color map",
         default = '0565',
         items=[
@@ -212,7 +220,7 @@ class TextureBlock(bpy.types.PropertyGroup):
             ('4444', "ARGB(4444)", "Color with transparency(A)")
         ])
 
-    img_type: EnumProperty(
+    img_type = EnumProperty(
         name="Image type",
         default='TRUECOLOR',
         items=[
@@ -221,131 +229,133 @@ class TextureBlock(bpy.types.PropertyGroup):
         ]
     )
 
-    is_memfix: BoolProperty(default=False)
-    is_noload: BoolProperty(default=False)
-    is_bumpcoord: BoolProperty(default=False)
-    is_someint: BoolProperty(default=False)
-    someint: IntProperty()
+    is_memfix = BoolProperty(default=False)
+    is_noload = BoolProperty(default=False)
+    is_bumpcoord = BoolProperty(default=False)
+    is_someint = BoolProperty(default=False)
+    someint = IntProperty()
 
 
+@make_annotations
 class MaterialBlock(bpy.types.PropertyGroup):
-    mat_name: StringProperty(default = "")
-    id_mat: PointerProperty(
+    mat_name = StringProperty(default = "")
+    id_mat = PointerProperty(
         name='Material',
         type=bpy.types.Material
     )
 
-    is_reflect: BoolProperty(default=False)
-    reflect: FloatProperty(default=0.0)
+    is_reflect = BoolProperty(default=False)
+    reflect = FloatProperty(default=0.0)
 
-    is_specular: BoolProperty(default=False)
-    specular: FloatProperty(default=0.0)
+    is_specular = BoolProperty(default=False)
+    specular = FloatProperty(default=0.0)
 
-    is_transp: BoolProperty(default=False)
-    transp: FloatProperty(default=0.0)
+    is_transp = BoolProperty(default=False)
+    transp = FloatProperty(default=0.0)
 
-    is_rot: BoolProperty(default=False)
-    rot: FloatProperty(default=0.0)
+    is_rot = BoolProperty(default=False)
+    rot = FloatProperty(default=0.0)
 
-    is_col: BoolProperty(default=False)
-    col_switch: BoolProperty(
+    is_col = BoolProperty(default=False)
+    col_switch = BoolProperty(
         name = 'Use dropdown',
         description = 'Dropdown selection',
         default = True
     )
-    id_col: PointerProperty(
+    id_col = PointerProperty(
         name='Colors',
         type=bpy.types.Image,
         poll=callback_only_colors,
         update=set_col_ind
     )
-    col: IntProperty(default=0)
+    col = IntProperty(default=0)
 
-    is_tex: BoolProperty(default=False)
-    tex_type: EnumProperty(
+    is_tex = BoolProperty(default=False)
+    tex_type = EnumProperty(
         name="Texture type",
         items=[
             ('tex', "Tex", "Tex"),
             ('ttx', "Ttx", "Ttx"),
             ('itx', "Itx", "Itx"),
         ])
-    tex_switch: BoolProperty(
+    tex_switch = BoolProperty(
         name = 'Use dropdown',
         description = 'Dropdown selection',
         default = True
     )
-    id_tex: PointerProperty(
+    id_tex = PointerProperty(
         name='Texture',
         type=bpy.types.Image,
         poll=callback_only_textures,
         update=set_tex_ind
     )
-    tex: IntProperty(default=0)
+    tex = IntProperty(default=0)
 
-    is_att: BoolProperty(default=False)
-    att_switch: BoolProperty(
+    is_att = BoolProperty(default=False)
+    att_switch = BoolProperty(
         name = 'Use dropdown',
         description = 'Dropdown selection',
         default = True
     )
-    id_att: PointerProperty(
+    id_att = PointerProperty(
         name='Material',
         type=bpy.types.Material,
         poll=callback_only_materials,
         update=set_mat_ind
     )
-    att: IntProperty(default=0)
+    att = IntProperty(default=0)
 
-    is_msk: BoolProperty(default=False)
-    msk_switch: BoolProperty(
+    is_msk = BoolProperty(default=False)
+    msk_switch = BoolProperty(
         name = 'Use dropdown',
         description = 'Dropdown selection',
         default = True
     )
-    id_msk: PointerProperty(
+    id_msk = PointerProperty(
         name='Maskfile',
         type=bpy.types.Image,
         poll=callback_only_maskfiles,
         update=set_msk_ind
     )
-    msk: IntProperty(default=0)
+    msk = IntProperty(default=0)
 
-    is_power: BoolProperty(default=False)
-    power: IntProperty(default=0)
+    is_power = BoolProperty(default=False)
+    power = IntProperty(default=0)
 
-    is_coord: BoolProperty(default=False)
-    coord: IntProperty(default=0)
+    is_coord = BoolProperty(default=False)
+    coord = IntProperty(default=0)
 
-    is_envId: BoolProperty(default=False)
-    envId: IntProperty(default=0)
+    is_envId = BoolProperty(default=False)
+    envId = IntProperty(default=0)
 
-    is_env: BoolProperty(default=False)
-    env: FloatVectorProperty(default=(0.0, 0.0), size=2)
+    is_env = BoolProperty(default=False)
+    env = FloatVectorProperty(default=(0.0, 0.0), size=2)
 
-    is_RotPoint: BoolProperty(default=False)
-    RotPoint: FloatVectorProperty(default=(0.0, 0.0), size=2)
+    is_RotPoint = BoolProperty(default=False)
+    RotPoint = FloatVectorProperty(default=(0.0, 0.0), size=2)
 
-    is_move: BoolProperty(default=False)
-    move: FloatVectorProperty(default=(0.0, 0.0), size=2)
+    is_move = BoolProperty(default=False)
+    move = FloatVectorProperty(default=(0.0, 0.0), size=2)
 
-    is_noz: BoolProperty(default=False)
-    is_nof: BoolProperty(default=False)
-    is_notile: BoolProperty(default=False)
-    is_notileu: BoolProperty(default=False)
-    is_notilev: BoolProperty(default=False)
-    is_alphamirr: BoolProperty(default=False)
-    is_bumpcoord: BoolProperty(default=False)
-    is_usecol: BoolProperty(default=False)
-    is_wave: BoolProperty(default=False)
+    is_noz = BoolProperty(default=False)
+    is_nof = BoolProperty(default=False)
+    is_notile = BoolProperty(default=False)
+    is_notileu = BoolProperty(default=False)
+    is_notilev = BoolProperty(default=False)
+    is_alphamirr = BoolProperty(default=False)
+    is_bumpcoord = BoolProperty(default=False)
+    is_usecol = BoolProperty(default=False)
+    is_wave = BoolProperty(default=False)
 
+@make_annotations
 class ResBlock(bpy.types.PropertyGroup):
-    value: StringProperty()
-    palette_subpath: StringProperty()
-    palette_name: StringProperty()
-    palette_colors: CollectionProperty(type=PaletteColorBlock)
-    textures: CollectionProperty(type=TextureBlock)
-    materials: CollectionProperty(type=MaterialBlock)
-    maskfiles: CollectionProperty(type=MaskfileBlock)
+    value = StringProperty()
+    palette_subpath = StringProperty()
+    palette_name = StringProperty()
+    palette_colors = CollectionProperty(type=PaletteColorBlock)
+    textures = CollectionProperty(type=TextureBlock)
+    materials = CollectionProperty(type=MaterialBlock)
+    maskfiles = CollectionProperty(type=MaskfileBlock)
 
 # class_descr configuration:
 
@@ -640,7 +650,6 @@ class Blk007():
     class Name1(StringParam):
         name = 'Group name'
 
-
 class Blk009():
     class Unk_XYZ(CoordParam):
         name = 'Unk. coord'
@@ -835,10 +844,10 @@ class Blk023():
 
     class Surface(EnumParam):
         name = 'Surface type'
-        subtype = FieldType.INT
+        subtype = FieldType.STRING
         items = collisionTypeList
         description = 'Value from surface classificator'
-        default_value = 0
+        default_value = '0'
 
     class Unk_List(ListParam):
         name = 'Unk. params'
@@ -847,10 +856,10 @@ class Blk023():
 class Blk024():
     class Flag(EnumParam):
         name = 'Show flag'
-        subtype = FieldType.INT
+        subtype = FieldType.STRING
         items = b24FlagList
         description = 'Value from block24 classificator'
-        default_value = 0
+        default_value = '0'
 
 
 class Blk025():
@@ -1036,9 +1045,9 @@ class Blk036():
 
     class VType(EnumParam):
         name = 'Vertex type'
-        subtype = FieldType.INT
+        subtype = FieldType.STRING
         items = vTypeList
-        default_value = 2
+        default_value = '2'
 
 
 class Blk037():
@@ -1047,9 +1056,9 @@ class Blk037():
 
     class VType(EnumParam):
         name = 'Vertex type'
-        subtype = FieldType.INT
+        subtype = FieldType.STRING
         items = vTypeList
-        default_value = 2
+        default_value = '2'
 
 
 class Blk039():

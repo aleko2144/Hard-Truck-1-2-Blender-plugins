@@ -95,11 +95,11 @@ def export_way(context, op, export_dir):
 
     for obj_name in exported_modules:
 
-        filepath = os.path.join(export_dir, f"{obj_name}.way")
+        filepath = os.path.join(export_dir, "{}.way".format(obj_name))
 
         file = open(filepath, 'wb')
 
-        root_obj = bpy.data.objects[f"{obj_name}.b3d"]
+        root_obj = bpy.data.objects["{}.b3d".format(obj_name)]
 
         #Header
         write_type(file, "WTWR")

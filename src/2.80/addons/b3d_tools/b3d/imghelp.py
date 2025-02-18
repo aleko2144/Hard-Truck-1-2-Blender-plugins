@@ -220,7 +220,7 @@ def trueimage_txr_to_tga32(filepath, transp_color, bytes_per_pixel):
             mipmap_header[8] = mipmap['width']
             mipmap_header[9] = mipmap['height']
             filepath_no_ext = os.path.splitext(filepath)[0]
-            mipmap_path = f'{filepath_no_ext}_{mipmap["width"]}_{mipmap["height"]}.tga'
+            mipmap_path = '{}_{}_{}.tga'.format(filepath_no_ext, mipmap["width"], mipmap["height"])
             write_tga8888(mipmap_path, mipmap_header, mipmap['colors'], pfrm, transp_color, bytes_per_pixel)
 
         header[8] = width
@@ -288,7 +288,7 @@ def generate_palette(colors, width, height, size = 256):
 
 
     if len(pixel_counts) > size:
-        log.error(f"Image doesn't fit {size} color palette.")
+        log.error("Image doesn't fit {} color palette.".format(size))
         return None
 
     palette = [0]*size
@@ -355,12 +355,12 @@ def generate_mipmaps(barray, width, height, temp_from):
 
 def convert_txr_to_tga32(filepath, transp_color):
     outpath = os.path.splitext(filepath)[0] + ".tga"
-    log.info(f"Converting {outpath}")
+    log.info("Converting {}".format(outpath))
     image_type = ""
     with open(filepath, "rb") as txr_file:
         txr_file.seek(2, 0)
         image_type = struct.unpack("<B", txr_file.read(1))[0]
-        log.debug(f"Image type: {image_type}")
+        log.debug("Image type: {}".format(image_type))
     if image_type == 2:
         return trueimage_txr_to_tga32(filepath, transp_color, 2)
     if image_type == 1:
@@ -372,7 +372,7 @@ def convert_txr_to_tga32(filepath, transp_color):
 
 def convert_tga32_to_txr(filepath, bytes_per_pixel, image_type, image_format, gen_mipmap, transp_color=(0,0,0)):
     outpath = os.path.splitext(filepath)[0] + ".txr"
-    log.info(f"Converting {outpath}")
+    log.info("Converting {}".format(outpath))
 
     if image_type == 'TRUECOLOR':
         truecolor_tga_32_to_txr(filepath, 2, 2, image_format, gen_mipmap, transp_color)
@@ -596,7 +596,7 @@ def truecolor_tga_32_to_txr(filepath, bytes_per_pixel, image_type, image_format,
                 mipmap_header[9] = m_height
                 filepath_no_ext = os.path.splitext(filepath)[0]
                 #todo: check
-                mipmap_path = f"{filepath_no_ext}_{m_width}-{m_height}.tga"
+                mipmap_path = "{}_{}-{}.tga".format(filepath_no_ext, m_width, m_height)
                 write_tga8888(mipmap_path, mipmap_header, mipmap_bytearray, [\
                     0b00000000111111110000000000000000,\
                     0b00000000000000001111111100000000,\
@@ -625,7 +625,7 @@ def truecolor_tga_32_to_txr(filepath, bytes_per_pixel, image_type, image_format,
 
 def msk_to_tga32(filepath):
     outpath = os.path.splitext(filepath)[0] + ".tga"
-    log.info(f"Converting {outpath}")
+    log.info("Converting {}".format(outpath))
     indexes = []
     colors_after = []
     with open(filepath, "rb") as msk_file:

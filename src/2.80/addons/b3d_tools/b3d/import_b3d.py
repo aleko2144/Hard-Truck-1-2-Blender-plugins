@@ -4,6 +4,14 @@ import sys
 import time
 import datetime
 from pathlib import Path
+import bpy
+import os.path
+import os
+
+from math import sqrt
+from math import atan2
+
+import re
 
 from .class_descr import (
     Blk001,
@@ -88,14 +96,19 @@ from ..common import (
     importb3d_logger
 )
 
-import bpy
-import os.path
-import os
+from ..compatibility import (
+    get_context_collection_objects,
+    get_or_create_collection,
+    is_before_2_80,
+    is_before_2_93,
+    set_empty_type,
+    set_empty_size,
+    get_uv_layers,
+    get_user_preferences,
+    get_active_object,
+    set_active_object
+)
 
-from math import sqrt
-from math import atan2
-
-import re
 
 #Setup module logger
 log = importb3d_logger
@@ -105,12 +118,12 @@ def thread_import_b3d(self, files, context):
     for b3dfile in files:
         filepath = os.path.join(self.directory, b3dfile.name)
 
-        log.info(f'Importing file {filepath}')
+        log.info('Importing file {}'.format(filepath))
         t = time.mktime(datetime.datetime.now().timetuple())
         with open(filepath, 'rb') as file:
             import_b3d(file, context, self, filepath)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
-        log.info(f'Finished importing in {t} seconds')
+        log.info('Finished importing in {} seconds'.format(t))
 
 def import_common_dot_res(self, context, common_res_path):
     scene = context.scene
@@ -118,7 +131,7 @@ def import_common_dot_res(self, context, common_res_path):
 
     mytool.is_importing = True
 
-    log.info(f'Importing file {common_res_path}')
+    log.info('Importing file {}'.format(common_res_path))
     t = time.mktime(datetime.datetime.now().timetuple())
     with open(common_res_path, 'rb') as file:
         import_res(file, context, self, common_res_path)
@@ -132,8 +145,8 @@ def import_multiple_res(self, files, context):
 
     scene = context.scene
     mytool = scene.my_tool
-
-    common_res_path = bpy.context.preferences.addons['b3d_tools'].preferences.COMMON_RES_Path
+    user_prefs = get_user_preferences()
+    common_res_path = user_prefs.addons['b3d_tools'].preferences.COMMON_RES_Path
 
     mytool.is_importing = True
 
@@ -142,12 +155,12 @@ def import_multiple_res(self, files, context):
 
         if filepath != common_res_path: #COMMON.RES imported before
 
-            log.info(f'Importing file {filepath}')
+            log.info('Importing file {}'.format(filepath))
             t = time.mktime(datetime.datetime.now().timetuple())
             with open(filepath, 'rb') as file:
                 import_res(file, context, self, filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
-            log.info(f'Finished importing in {t} seconds')
+            log.info('Finished importing in {} seconds'.format(t))
 
     mytool.is_importing = False
 
@@ -325,10 +338,10 @@ def import_raw(file, context, op, filepath):
 
 
     b3d_obj1 = bpy.data.objects.new(basename1, b3d_mesh1)
-    context.collection.objects.link(b3d_obj1)
+    get_context_collection_objects(context).link(b3d_obj1)
 
     b3d_obj2 = bpy.data.objects.new(basename2, b3d_mesh2)
-    context.collection.objects.link(b3d_obj2)
+    get_context_collection_objects(context).link(b3d_obj2)
 
 
 def create_materials(res_module):
@@ -346,32 +359,38 @@ def create_material(res_module, mat):
     palette_module = get_active_palette_module(res_module)
     palette = palette_module.palette_colors
 
-
     new_mat = bpy.data.materials.get(mat.mat_name)
     if new_mat is None:
         new_mat = bpy.data.materials.new(name=mat.mat_name)
     new_mat.use_nodes = True
-    bsdf = new_mat.node_tree.nodes["Principled BSDF"]
+        
+    bsdf = new_mat.node_tree.nodes.get("Principled BSDF")
+    if bsdf is None:
+        bsdf = new_mat.node_tree.nodes.new("ShaderNodeBsdfPrincipled")
+
+    mat_output = new_mat.node_tree.nodes.get("Material Output")
+    if mat_output is None:
+        mat_output = new_mat.node_tree.nodes.new("ShaderNodeOutputMaterial")
+
+    new_mat.node_tree.links.new(bsdf.outputs['BSDF'], mat_output.inputs['Surface'])        
 
     for link in bsdf.inputs['Base Color'].links:
         new_mat.node_tree.nodes.remove(link.from_node)
 
-    for link in bsdf.inputs['Alpha'].links:
-        new_mat.node_tree.nodes.remove(link.from_node)
+    # for link in bsdf.inputs['Alpha'].links:
+    #     new_mat.node_tree.nodes.remove(link.from_node)
 
     if (mat.is_tex and int(mat.tex) > 0):
         path = texture_list[mat.tex-1].tex_name
         tex_image = new_mat.node_tree.nodes.new("ShaderNodeTexImage")
         tex_image.image = bpy.data.images.get(path)
         new_mat.node_tree.links.new(bsdf.inputs['Base Color'], tex_image.outputs['Color'])
-        new_mat.node_tree.links.new(bsdf.inputs['Alpha'], tex_image.outputs['Alpha'])
+        # new_mat.node_tree.links.new(bsdf.inputs['Alpha'], tex_image.outputs['Alpha'])
 
     elif mat.is_col and int(mat.col) > 0:
         tex_color = new_mat.node_tree.nodes.new("ShaderNodeRGB")
         tex_color.outputs['Color'].default_value = palette[mat.col-1].value
         new_mat.node_tree.links.new(bsdf.inputs['Base Color'], tex_color.outputs['Color'])
-
-
 
 
 def load_texturefiles(basedir, res_module, image_format, convert_txr):
@@ -387,16 +406,16 @@ def load_texturefiles(basedir, res_module, image_format, convert_txr):
 
         no_ext_path = os.path.splitext(os.path.join(basedir, "TEXTUREFILES", texture.subpath, texture.tex_name))[0]
         result = None
-        img_path = f"{no_ext_path}.txr"
+        img_path = "{}.txr".format(no_ext_path)
         if convert_txr:
             result = convert_txr_to_tga32(img_path, transp_color)
         else:
             result = get_txr_params(img_path)
         filename_no_ext = os.path.basename(no_ext_path)
-        img_name = f"{filename_no_ext}.{image_format}"
-        log.debug(f'Importing image {img_name}')
+        img_name = "{}.{}".format(filename_no_ext, image_format)
+        log.debug('Importing image {}'.format(img_name))
 
-        img_path = f"{no_ext_path}.{image_format}"
+        img_path = "{}.{}".format(no_ext_path, image_format)
         texture.tex_name = img_name
         img = bpy.data.images.get(img_name)
         if img is None:
@@ -423,10 +442,10 @@ def load_maskfiles(basedir, res_module, image_format, convert_txr):
     for maskfile in res_module.maskfiles:
         no_ext_path = os.path.splitext(os.path.join(basedir, "MASKFILES", maskfile.subpath, maskfile.msk_name))[0]
         if convert_txr:
-            msk_to_tga32(f"{no_ext_path}.msk")
+            msk_to_tga32("{}.msk".format(no_ext_path))
         filename_no_ext = os.path.basename(no_ext_path)
-        img_name = f"{filename_no_ext}.{image_format}"
-        img_path = f"{no_ext_path}.{image_format}"
+        img_name = "{}.{}".format(filename_no_ext, image_format)
+        img_path = "{}.{}".format(no_ext_path, image_format)
         maskfile.msk_name = img_name
         img = bpy.data.images.get(img_name)
         if img is None:
@@ -485,7 +504,7 @@ def import_resources(filepath, res_modules, to_unpack_res = True, image_format =
         res_module = res_modules[res_index]
     if res_module:
         #delete RES module
-        log.info(f"Removing res_module {str(res_index)}" )
+        log.info("Removing res_module {}".format(res_index))
         res_modules.remove(res_index)
 
     res_module = res_modules.add()
@@ -514,6 +533,31 @@ def import_res(file, context, self, filepath):
     create_materials(res_module)
     load_materials(res_module)
 
+def set_uv_values(uvObj, b3dMesh, uv):
+    if is_before_2_80():
+        # uvObj = b3dMesh.uv_textures.new()
+        # imgMesh = math[texnum].texture_slots[0].texture.image.size[0]
+        # uvObj.name = 'default'
+        uvLoop = b3dMesh.uv_layers[0]
+        uvs_mesh = []
+
+        #print('uvs:	',str(uvs))
+        for i, texpoly in enumerate(uvObj.data):
+            # texpoly.image = Imgs[texnum]
+            poly = b3dMesh.polygons[i]
+            for j,k in enumerate(poly.loop_indices):
+                uvs_mesh = [uv[i][j][0],1 - uv[i][j][1]]
+                uvLoop.data[k].uv = uvs_mesh
+    else:
+        
+        # custom_uv = get_uv_layers(b3d_mesh).new()
+        # custom_uv.name = "UVMap"
+        uvs_mesh = []
+
+        for i, texpoly in enumerate(b3dMesh.polygons):
+            for j,loop in enumerate(texpoly.loop_indices):
+                uvs_mesh = [uv[i][j][0],1 - uv[i][j][1]]
+                uvObj.data[loop].uv = uvs_mesh
 
 def import_b3d(file, context, self, filepath):
     if file.read(3) == b'b3d':
@@ -583,7 +627,7 @@ def import_b3d(file, context, self, filepath):
     if b3d_obj is None:
         b3d_obj = bpy.data.objects.new(b3d_name, None)
         b3d_obj[BLOCK_TYPE] = 111
-        context.collection.objects.link(b3d_obj) # root object
+        get_context_collection_objects(context).link(b3d_obj) # root object
 
     obj_string = [b3d_obj.name]
 
@@ -627,16 +671,16 @@ def import_b3d(file, context, self, filepath):
                         b3d_obj[BLOCK_TYPE] = 444
 
                         b3d_obj.parent = parent_obj
-                        context.collection.objects.link(b3d_obj)
+                        get_context_collection_objects(context).link(b3d_obj)
                         # obj_string.append(b3d_obj.name)
 
-                group_obj_name = f'GROUP_{level_groups[lvl]}'
+                group_obj_name = 'GROUP_{}'.format(level_groups[lvl])
 
                 b3d_obj = bpy.data.objects.new(group_obj_name, None)
                 b3d_obj[BLOCK_TYPE] = 444
 
                 b3d_obj.parent = context.scene.objects.get(obj_string[-1])
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
 
                 obj_string.append(b3d_obj.name)
 
@@ -659,7 +703,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[BLOCK_TYPE] = 444
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
 
                 obj_string.append(b3d_obj.name)
 
@@ -691,7 +735,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[BLOCK_TYPE] = block_type
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -708,7 +752,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk001.Name2.get_prop()] = name2
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -729,7 +773,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk002.Unk_R.get_prop()] = unknown_sphere[3]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -747,7 +791,7 @@ def import_b3d(file, context, self, filepath):
                 # b3d_obj[Blk003.r.get_prop()] = bounding_sphere[3]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -769,7 +813,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk004.Name2.get_prop()] = name2
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -789,7 +833,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk005.Name1.get_prop()] = name
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -822,7 +866,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk006.Name2.get_prop()] = name2
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -859,7 +903,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk007.Name1.get_prop()] = group_name
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -900,7 +944,7 @@ def import_b3d(file, context, self, filepath):
 
                     unk_float = struct.unpack("<f",file.read(4))[0]
                     unk_int = struct.unpack("<i",file.read(4))[0]
-                    texnum = str(struct.unpack("<i",file.read(4))[0])
+                    texnum = struct.unpack("<i",file.read(4))[0]
 
                     vertex_count = struct.unpack("<i",file.read(4))[0]
 
@@ -1008,7 +1052,7 @@ def import_b3d(file, context, self, filepath):
                 # for simplicity
                 # for u, uvMap in enumerate(vertex_block_uvs):
 
-                #     custom_uv = b3d_mesh.uv_layers.new()
+                #     custom_uv = get_uv_layers(b3d_mesh).new()
                 #     custom_uv.name = "UVmapVert{}".format(u)
                 #     uvs_mesh = []
 
@@ -1019,15 +1063,11 @@ def import_b3d(file, context, self, filepath):
 
                 for u, uv_over in enumerate(overriden_uvs):
 
-                    custom_uv = b3d_mesh.uv_layers.new()
+                    custom_uv = get_uv_layers(b3d_mesh).new()
                     custom_uv.name = "UVMap"
-                    uvs_mesh = []
-
-                    for i, texpoly in enumerate(b3d_mesh.polygons):
-                        for j,loop in enumerate(texpoly.loop_indices):
-                            uvs_mesh = [uv_over[i][j][0],1 - uv_over[i][j][1]]
-                            custom_uv.data[loop].uv = uvs_mesh
-
+                    
+                    set_uv_values(custom_uv, b3d_mesh, uv_over)
+                    
                 create_custom_attribute(b3d_mesh, formats, Pfb008, Pfb008.Format_Flags)
 
                 # those are usually consts in all objects
@@ -1046,7 +1086,7 @@ def import_b3d(file, context, self, filepath):
                 # b3d_obj[Blk008.XYZ.get_prop()] = bounding_sphere[0:3]
                 # b3d_obj[Blk008.r.get_prop()] = bounding_sphere[3]
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1091,7 +1131,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk009.Unk_R.get_prop()] = unknown_sphere[3]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1112,7 +1152,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk010.LOD_R.get_prop()] = unknown_sphere[3]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1138,7 +1178,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk011.Unk_R2.get_prop()] = unknown_r2
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1167,7 +1207,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk012.Unk_List.get_prop()] = l_params
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1193,7 +1233,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk013.Unk_List.get_prop()] = l_params
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1225,7 +1265,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk014.Unk_List.get_prop()] = l_params
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1251,7 +1291,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk015.Unk_List.get_prop()] = l_params
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1288,7 +1328,7 @@ def import_b3d(file, context, self, filepath):
 
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1324,7 +1364,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk017.Unk_List.get_prop()] = l_params
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1347,7 +1387,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk018.Space_Name.get_prop()] = space_name
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1356,7 +1396,7 @@ def import_b3d(file, context, self, filepath):
 
                 child_cnt = struct.unpack("i",file.read(4))[0]
 
-                current_room_name = f"{res_basename}:{obj_name}"
+                current_room_name = "{}:{}".format(res_basename, obj_name)
 
                 if not used_blocks[str(block_type)]:
                     continue
@@ -1367,7 +1407,7 @@ def import_b3d(file, context, self, filepath):
                     b3d_obj[BLOCK_TYPE] = block_type
 
                     b3d_obj.parent = parent_obj
-                    context.collection.objects.link(b3d_obj)
+                    get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1427,7 +1467,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk020.Unk_List.get_prop()] = unknowns
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1448,7 +1488,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk021.GroupCnt.get_prop()] = group_cnt
                 b3d_obj[Blk021.Unk_Int2.get_prop()] = unknown2
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1495,7 +1535,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk023.Unk_List.get_prop()] = unknowns
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1551,10 +1591,10 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj.rotation_euler[1] = y_d
                 b3d_obj.rotation_euler[2] = z_d
                 b3d_obj.location = sp_pos
-                b3d_obj.empty_display_type = 'ARROWS'
+                set_empty_type(b3d_obj, 'ARROWS')
                 b3d_obj[Blk024.Flag.get_prop()] = flag
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1583,7 +1623,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk025.Unk_Float5.get_prop()] = unknown2[4]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1609,7 +1649,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk026.Unk_XYZ3.get_prop()] = unknown_sphere3
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1633,7 +1673,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk027.Material.get_prop()] = material_id
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1755,7 +1795,7 @@ def import_b3d(file, context, self, filepath):
                 # for simplicity
                 # for u, uvMap in enumerate(vertex_block_uvs):
                 #     if len(uvMap):
-                #         custom_uv = b3d_mesh.uv_layers.new()
+                #         custom_uv = get_uv_layers(b3d_mesh).new()
                 #         custom_uv.name = "UVmapVert{}".format(u)
                 #         uvs_mesh = []
 
@@ -1766,15 +1806,11 @@ def import_b3d(file, context, self, filepath):
 
                 for u, uv_over in enumerate(overriden_uvs):
                     if len(uv_over):
-                        custom_uv = b3d_mesh.uv_layers.new()
+                        custom_uv = get_uv_layers(b3d_mesh).new()
                         custom_uv.name = "UVMap"
-                        uvs_mesh = []
-
-                        for i, texpoly in enumerate(b3d_mesh.polygons):
-                            for j,loop in enumerate(texpoly.loop_indices):
-                                uvs_mesh = [uv_over[i][j][0],1 - uv_over[i][j][1]]
-                                custom_uv.data[loop].uv = uvs_mesh
-
+                        
+                        set_uv_values(custom_uv, b3d_mesh, uv_over)
+                       
                 if self.to_import_textures:
                     #For assign_material_by_vertices just-in-case
                     # bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -1810,7 +1846,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj.location = bounding_sphere[0:3]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj) #добавляем в сцену обьект
+                get_context_collection_objects(context).link(b3d_obj) #добавляем в сцену обьект
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1823,7 +1859,7 @@ def import_b3d(file, context, self, filepath):
                 unknown_sphere = struct.unpack("<4f",file.read(16))
 
                 if num0 > 0:
-                    f = struct.unpack("<"+str(num0)+"f",file.read(4*num0))
+                    f = struct.unpack("<{}f".format(num0),file.read(4*num0))
 
                 child_cnt = struct.unpack("<i",file.read(4))[0]
 
@@ -1840,7 +1876,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk029.Unk_R.get_prop()] = unknown_sphere[3]
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1866,7 +1902,7 @@ def import_b3d(file, context, self, filepath):
                     module_name = res_basename
                     room_name = splitted[0]
 
-                full_room_name = f"{module_name}:{room_name}"
+                full_room_name = "{}:{}".format(module_name, room_name)
 
                 sorted_rooms = sorted([current_room_name, full_room_name])
 
@@ -1922,7 +1958,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk031.Unk_XYZ2.get_prop()] = unknown
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -1968,7 +2004,7 @@ def import_b3d(file, context, self, filepath):
 
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -2010,7 +2046,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk034.UnkInt.get_prop()] = unknown1
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -2052,7 +2088,7 @@ def import_b3d(file, context, self, filepath):
 
                     unk_float = struct.unpack("<f",file.read(4))[0]
                     unk_int = struct.unpack("<i",file.read(4))[0]
-                    texnum = str(struct.unpack("<i",file.read(4))[0])
+                    texnum = struct.unpack("<i",file.read(4))[0]
 
                     vertex_count = struct.unpack("<i",file.read(4))[0]
 
@@ -2147,7 +2183,7 @@ def import_b3d(file, context, self, filepath):
                 # for simplicity
                 # for u, uvMap in enumerate(vertex_block_uvs):
 
-                #     custom_uv = b3d_mesh.uv_layers.new()
+                #     custom_uv = get_uv_layers(b3d_mesh).new()
                 #     custom_uv.name = "UVmapVert{}".format(u)
                 #     uvs_mesh = []
 
@@ -2158,16 +2194,11 @@ def import_b3d(file, context, self, filepath):
 
                 for u, uv_over in enumerate(overriden_uvs):
 
-                    custom_uv = b3d_mesh.uv_layers.new()
+                    custom_uv = get_uv_layers(b3d_mesh).new()
                     custom_uv.name = "UVMap"
-                    uvs_mesh = []
-
-                    for i, texpoly in enumerate(b3d_mesh.polygons):
-                        for j,loop in enumerate(texpoly.loop_indices):
-                            uvs_mesh = [uv_over[i][j][0],1 - uv_over[i][j][1]]
-                            custom_uv.data[loop].uv = uvs_mesh
-
-
+                    
+                    set_uv_values(custom_uv, b3d_mesh, uv_over)
+                    
                 # b3d_mesh.attributes["my_normal"].data.foreach_set("vector", normals_set)
 
                 create_custom_attribute(b3d_mesh, formats, Pfb035, Pfb035.Format_Flags)
@@ -2202,7 +2233,7 @@ def import_b3d(file, context, self, filepath):
                 real_name = b3d_obj.name
                 # for face in b3d_mesh.polygons:
                 #     face.use_smooth = True
-                context.collection.objects.link(b3d_obj) #добавляем в сцену обьект
+                get_context_collection_objects(context).link(b3d_obj) #добавляем в сцену обьект
                 obj_string[-1] = b3d_obj.name
 
             elif (block_type == 36):
@@ -2258,7 +2289,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk036.VType.get_prop()] = format_raw
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -2322,7 +2353,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk037.VType.get_prop()] = format_raw
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -2350,7 +2381,7 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk039.Color_Id.get_prop()] = color_id
 
                 b3d_obj.parent = parent_obj
-                context.collection.objects.link(b3d_obj)
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
 
@@ -2383,9 +2414,10 @@ def import_b3d(file, context, self, filepath):
                 b3d_obj[Blk040.Unk_List.get_prop()] = l_params
 
                 b3d_obj.location = bounding_sphere[:3]
-                b3d_obj.empty_display_type = 'SPHERE'
-                b3d_obj.empty_display_size = bounding_sphere[3]
-                context.collection.objects.link(b3d_obj)
+                
+                set_empty_type(b3d_obj, 'SPHERE')
+                set_empty_size(b3d_obj, bounding_sphere[3])
+                get_context_collection_objects(context).link(b3d_obj)
                 real_name = b3d_obj.name
 
                 b3d_obj.parent = parent_obj
@@ -2396,19 +2428,19 @@ def import_b3d(file, context, self, filepath):
 
             t2 = time.perf_counter()
 
-            log.debug(f"Time: {(t2-t1):.6f} | Block #{block_type}: {real_name}")
+            log.debug("Time: {:.6f} | Block #{}: {}".format(t2-t1, block_type, real_name))
 
     #create room borders(30)
-    transf_collection = bpy.data.collections.get(BORDER_COLLECTION)
-    if transf_collection is None:
-        transf_collection = bpy.data.collections.new(BORDER_COLLECTION)
-        bpy.context.scene.collection.children.link(transf_collection)
+    transf_collection = get_or_create_collection(BORDER_COLLECTION)
+    if not is_before_2_80():
+        if transf_collection.name not in bpy.context.scene.collection.children:
+            bpy.context.scene.collection.children.link(transf_collection)
 
     for key in borders.keys():
 
         border = borders[key]
 
-        b3d_mesh = (bpy.data.meshes.new(f"{key}_mesh"))
+        b3d_mesh = (bpy.data.meshes.new("{}_mesh".format(key)))
         #0-x
         #1-y
         #2-z
@@ -2462,7 +2494,7 @@ def import_b3d(file, context, self, filepath):
 
 
 def assign_material_by_vertices(obj, vert_indexes, mat_index):
-    bpy.context.view_layer.objects.active = obj
+    set_active_object(obj)
     # bpy.ops is slow https://blender.stackexchange.com/questions/2848/why-avoid-bpy-ops#comment11187_2848
     # bpy.ops.object.mode_set(mode = 'EDIT')
     # bpy.ops.mesh.select_mode(type= 'VERT')
@@ -2480,14 +2512,14 @@ def assign_material_by_vertices(obj, vert_indexes, mat_index):
 
     for idx in vert_indexes:
         obj.data.vertices[idx].select = True
-    selected_polygons = get_polygons_by_selected_vertices(bpy.context.view_layer.objects.active)
+    selected_polygons = get_polygons_by_selected_vertices(get_active_object())
     for poly in selected_polygons:
         poly.material_index = mat_index
 
 def get_res_folder(filepath):
     basename = os.path.basename(filepath)
     basepath = os.path.dirname(filepath)
-    return os.path.join(basepath, f"{basename[:-4]}_unpack")
+    return os.path.join(basepath, "{}_unpack".format(basename[:-4]))
 
 def save_material(res_module, material_str):
     name_split = material_str.split(" ")
@@ -2567,7 +2599,7 @@ def save_texture_params(texture, params):
 
 
 def unpack_res(res_module, filepath, save_on_disk = True):
-    log.info(f"Unpacking {filepath}:")
+    log.info("Unpacking {}:".format(filepath))
 
     resdir = get_res_folder(filepath)
     curfolder = resdir
@@ -2581,7 +2613,7 @@ def unpack_res(res_module, filepath, save_on_disk = True):
         if section["cnt"] > 0:
             curfolder = os.path.join(resdir, section_name)
             if section_name in ["COLORS", "MATERIALS", "SOUNDS"]: # save only .txt
-                binfile_path = os.path.join(curfolder, f"{section_name}.txt")
+                binfile_path = os.path.join(curfolder, "{}.txt".format(section_name))
                 if save_on_disk:
                     binfile_base = os.path.dirname(binfile_path)
                     binfile_base = Path(binfile_base)
@@ -2602,13 +2634,13 @@ def unpack_res(res_module, filepath, save_on_disk = True):
                     subpath = ""
                     if len(path_split) > 1:
                         subpath = "\\".join(path_split[:-1])
-                    binfile_path = os.path.join(curfolder, f"{fullname}")
+                    binfile_path = os.path.join(curfolder, "{}".format(fullname))
                     if save_on_disk:
                         binfile_base = os.path.dirname(binfile_path)
                         binfile_base = Path(binfile_base)
                         binfile_base.mkdir(exist_ok=True, parents=True)
                         with open(binfile_path, "wb") as binfile:
-                            log.info(f"Saving file {binfile.name}")
+                            log.info("Saving file {}".format(binfile.name))
                             binfile.write(data['bytes'])
 
                     if section_name == "TEXTUREFILES":

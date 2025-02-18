@@ -86,6 +86,10 @@ from .imghelp import (
     convert_tga32_to_txr
 )
 
+from ..compatibility import (
+    get_uv_layers
+)
+
 #Setup module logger
 log = exportb3d_logger
 
@@ -103,7 +107,7 @@ def export_pro(file, textures_path):
 
     #file.write('\n')
 
-    file.write(f'MATERIALS {str(len(bpy.data.materials))}\n')
+    file.write('MATERIALS {}\n'.format(str(len(bpy.data.materials))))
 
     materials = []
     num_tex = 0
@@ -113,9 +117,9 @@ def export_pro(file, textures_path):
 
     for i in range(len(materials)):
         num_tex = i
-        file.write(f'{materials[i]} tex {str(num_tex + 1)}\n')
+        file.write('{} tex {}\n'.format(materials[i], str(num_tex + 1)))
 
-    file.write(f'TEXTUREFILES {str(len(bpy.data.materials))}\n')
+    file.write('TEXTUREFILES {}\n'.format(str(len(bpy.data.materials))))
 
     imgs = []
     for img in bpy.data.images:
@@ -123,9 +127,9 @@ def export_pro(file, textures_path):
 
     for material in bpy.data.materials:
         try:
-            file.write(f"{textures_path}{material.texture_slots[0].texture.image.name[:-3]}txr\n")
+            file.write("{}{}txr\n".format(textures_path, material.texture_slots[0].texture.image.name[:-3]))
         except:
-            file.write(f"{textures_path}error.txr\n")
+            file.write("{}error.txr\n".format(textures_path))
 
     file.write('\n')
 
@@ -243,9 +247,9 @@ def fill_bounding_sphere_lists():
     #     log.debug(m)
 
     for empty_name in meshes_in_empty.keys():
-        meshes_in_empty[empty_name].sort(key= lambda x: f'{str(x["obj"])}{str(x["transf"])}')
+        meshes_in_empty[empty_name].sort(key= lambda x: '{}{}'.format(str(x["obj"]), str(x["transf"])))
 
-        key = "||".join([f'{str(cn["obj"])}{str(cn["transf"])}' for cn in meshes_in_empty[empty_name]])
+        key = "||".join(['{}{}'.format(str(cn["obj"]), str(cn["transf"])) for cn in meshes_in_empty[empty_name]])
         empty_to_mesh_keys[empty_name] = key
         if not key in unique_arrays:
             unique_arrays[key] = meshes_in_empty[empty_name]
@@ -272,8 +276,8 @@ def create_border_list():
         room1_name = bb[Blk030.RoomName1.get_prop()]
         room2_name = bb[Blk030.RoomName2.get_prop()]
 
-        border1 = f'{module1_name}:{room1_name}'
-        border2 = f'{module2_name}:{room2_name}'
+        border1 = '{}:{}'.format(module1_name, room1_name)
+        border2 = '{}:{}'.format(module2_name, room2_name)
 
         if not border1 in borders:
             borders[border1] = []
@@ -373,12 +377,12 @@ def write_palettefiles(res_module, file):
     if len(res_module.palette_colors) > 0:
         size = 1
 
-    cstring(f"PALETTEFILES {size}", file)
+    cstring("PALETTEFILES {}".format(size), file)
     if size > 0:
         palette_name = res_module.palette_name
         if palette_name is None or len(palette_name) == 0:
-            palette_name = f"{res_module.value}.plm"
-        cstring(f"{palette_name}", file)
+            palette_name = "{}.plm".format(res_module.value)
+        cstring("{}".format(palette_name), file)
         pal_name_ms = file.tell()
         file.seek(4,1)
         file.write("PALT".encode("cp1251"))
@@ -416,11 +420,11 @@ def write_maskfiles(res_module, file):
 def write_texturefiles(res_module, file, filepath, save_images = True):
     size = len(res_module.textures)
 
-    cstring(f"TEXTUREFILES {size}", file)
+    cstring("TEXTUREFILES {}".format(size), file)
     if size > 0:
         export_folder = os.path.dirname(filepath)
         basename = os.path.basename(filepath)[:-4]
-        export_folder = os.path.join(export_folder, f'{basename}_export')
+        export_folder = os.path.join(export_folder, '{}_export'.format(basename))
         export_folder_path = Path(export_folder)
         export_folder_path.mkdir(exist_ok=True, parents=True)
 
@@ -436,22 +440,22 @@ def write_texturefiles(res_module, file, filepath, save_images = True):
 
             basepath_no_ext = os.path.splitext(texture.tex_name)[0]
 
-            image_name = f"{basepath_no_ext}.tga"
-            txr_name = f"{basepath_no_ext}.txr"
+            image_name = "{}.tga".format(basepath_no_ext)
+            txr_name = "{}.txr".format(basepath_no_ext)
             image_path = os.path.join(export_folder, image_name)
             texture_subpath = texture.subpath.rstrip("\\")
-            texture_name = f'{texture_subpath}{chr(92)}{txr_name}'
+            texture_name = '{}{}{}'.format(texture_subpath, chr(92), txr_name)
 
             tex_params = []
             if texture.is_someint:
-                tex_params.append(f"{texture.someint}")
+                tex_params.append("{}".format(texture.someint))
 
             for param in ["noload", "bumpcoord", "memfix"]:
-                if getattr(texture, f'is_{param}'):
-                    tex_params.append(f"{param}")
+                if getattr(texture, 'is_{}'.format(param)):
+                    tex_params.append("{}".format(param))
 
             if len(tex_params) > 0:
-                tex_str = f'{texture_name} {"  ".join(tex_params)}'
+                tex_str = '{} {}'.format(texture_name, "  ".join(tex_params))
             else:
                 tex_str = texture_name
             cstring(tex_str, file)
@@ -474,7 +478,7 @@ def write_texturefiles(res_module, file, filepath, save_images = True):
 
 def write_materials(res_module, file):
     size = len(res_module.materials)
-    cstring(f"MATERIALS {size}", file)
+    cstring("MATERIALS {}".format(size), file)
     if size > 0:
         for material in res_module.materials:
             if material.id_mat is not None:
@@ -482,34 +486,34 @@ def write_materials(res_module, file):
                 mat_str = mat_name
                 mat_params = []
                 if material.is_tex:
-                    mat_params.append(f"{material.tex_type} {material.tex}")
+                    mat_params.append("{} {}".format(material.tex_type, material.tex))
 
                 for param in ["col", "att", "msk", "power", "coord"]:
-                    if getattr(material, f'is_{param}'):
+                    if getattr(material, 'is_{}'.format(param)):
                         int_param = getattr(material, param)
-                        mat_params.append(f"{param} {int_param}")
+                        mat_params.append("{} {}".format(param, int_param))
 
                 for param in ["reflect", "specular", "transp", "rot"]:
-                    if getattr(material, f'is_{param}'):
+                    if getattr(material, 'is_{}'.format(param)):
                         float_param = float(getattr(material, param))
-                        mat_params.append(f"{param} {float_param:.2f}")
+                        mat_params.append("{} {:.2f}".format(param, float_param))
 
                 for param in ["noz", "nof", "notile", "notileu", "notilev", \
                                 "alphamirr", "bumpcoord", "usecol", "wave"]:
-                    if getattr(material, f'is_{param}'):
-                        mat_params.append(f"{param}")
+                    if getattr(material, 'is_{}'.format(param)):
+                        mat_params.append("{}".format(param))
 
                 for param in ["RotPoint", "move", "env"]:
-                    if getattr(material, f'is_{param}'):
+                    if getattr(material, 'is_{}'.format(param)):
                         param1, param2 = getattr(material, param)
-                        mat_params.append(f"{param} {param1:.2f} {param2:.2f}")
+                        mat_params.append("{} {:.2f} {:.2f}".format(param, param1, param2))
 
                 if material.is_envId:
-                    mat_params.append(f"env{material.envId}")
+                    mat_params.append("env{}".format(material.envId))
 
                 mat_params_str = "  ".join(mat_params)
 
-                mat_str = f"{mat_name} {mat_params_str}"
+                mat_str = "{} {}".format(mat_name, mat_params_str)
                 cstring(mat_str, file)
 
 def write_colors(res_module, file):
@@ -535,14 +539,14 @@ def export_res(context, op, export_dir):
         res_module = get_col_property_by_name(mytool.res_modules, module_name)
         if res_module is not None:
 
-            filepath = os.path.join(export_dir, f"{res_module.value}.res")
+            filepath = os.path.join(export_dir, "{}.res".format(res_module.value))
 
             if op.to_merge:
 
                 # allSections = ["PALETTEFILES", "SOUNDFILES", "SOUNDS", "BACKFILES", "MASKFILES", "COLORS", "TEXTUREFILES", "MATERIALS"]
 
                 if not os.path.exists(filepath):
-                    log.error(f"Not found file to merge into: {filepath}")
+                    log.error("Not found file to merge into: {}".format(filepath))
                     continue
 
                 sections = read_res_sections(filepath)
@@ -562,7 +566,7 @@ def export_res(context, op, export_dir):
                             elif section['name'] == 'MATERIALS':
                                 write_materials(res_module, file)
                         else:
-                            cstring(f'{section["name"]} {section["cnt"]}', file)
+                            cstring('{} {}'.format(section["name"], section["cnt"]), file)
                             if section['name'] in ["COLORS", "MATERIALS", "SOUNDS"]:
                                 for data in section['data']:
                                     cstring(data['row'], file)
@@ -616,7 +620,7 @@ def export_b3d(context, op, export_dir):
 
     for obj_name in exported_objects:
 
-        obj = bpy.data.objects[f"{obj_name}.b3d"]
+        obj = bpy.data.objects["{}.b3d".format(obj_name)]
         cur_root = get_root_obj(obj)
 
         all_objs = []
@@ -753,7 +757,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
     if obj_type is not None:
 
-        log.debug(f"{block.get(BLOCK_TYPE)}_{cur_level}_{0}_{block.name}")
+        log.debug("{}_{}_{}_{}".format(block.get(BLOCK_TYPE), cur_level, 0, block.name))
 
         bl_children = list(block.children)
 
@@ -941,7 +945,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     l_uvs = {}
                     for li in poly.loop_indices:
                         vi = mesh.loops[li].vertex_index
-                        l_uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
+                        l_uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
 
                     for i, vert in enumerate(poly.vertices):
                         file.write(struct.pack("<i", offset + vert))
@@ -1089,7 +1093,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
             elif obj_type == 19:
 
-                current_room_name = f'{current_res}:{obj_name}'
+                current_room_name = '{}:{}'.format(current_res, obj_name)
                 border_blocks = borders[current_room_name]
                 bl_children.extend(border_blocks)
 
@@ -1251,7 +1255,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     l_uvs = {}
                     for li in poly.loop_indices:
                         vi = mesh.loops[li].vertex_index
-                        l_uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
+                        l_uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
 
                     verts = poly.vertices
 
@@ -1294,8 +1298,8 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 room1_name = block[Blk030.RoomName1.get_prop()]
                 room2_name = block[Blk030.RoomName2.get_prop()]
 
-                roomname1 = f'{module1_name}:{room1_name}'
-                roomname2 = f'{module2_name}:{room2_name}'
+                roomname1 = '{}:{}'.format(module1_name, room1_name)
+                roomname2 = '{}:{}'.format(module2_name, room2_name)
                 to_import_second_side = False
                 if current_room_name == roomname1:
                     to_import_second_side = True
@@ -1342,7 +1346,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 file.write(struct.pack("<f", block[Blk033.Intens.get_prop()]))
                 file.write(struct.pack("<f", block[Blk033.Unk_Float3.get_prop()]))
                 file.write(struct.pack("<f", block[Blk033.Unk_Float4.get_prop()]))
-                file.write(struct.pack("<3f", *block[Blk033.RGB]))
+                file.write(struct.pack("<3f", *block[Blk033.RGB.get_prop()]))
 
                 file.write(struct.pack("<i", len(block.children)))
 
@@ -1412,7 +1416,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     l_uvs = {}
                     for li in poly.loop_indices:
                         vi = mesh.loops[li].vertex_index
-                        l_uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
+                        l_uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
 
                     for i, vert in enumerate(poly.vertices):
                         file.write(struct.pack("<i", offset + vert))
@@ -1444,7 +1448,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                         "props": some_props
                     }
 
-                    # if obj.data.uv_layers.get('UVmapVert1'):
+                    # if get_uv_layers(obj.data).get('UVmapVert1'):
                     #     isSecondUvs = True
 
 
@@ -1507,7 +1511,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                         "offset": offset,
                         "props": some_props
                     }
-                    # if obj.data.uv_layers.get('UVmapVert1'):
+                    # if get_uv_layers(obj.data).get('UVmapVert1'):
                     #     isSecondUvs = True
 
                     offset += len(some_props[0])
@@ -1613,7 +1617,7 @@ def get_mesh_props(obj):
     for poly in polygons:
         for li in poly.loop_indices:
             vi = mesh.loops[li].vertex_index
-            uvs[vi] = mesh.uv_layers['UVMap'].data[li].uv
+            uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
 
     normals = [cn.normal for cn in mesh.vertices]
 

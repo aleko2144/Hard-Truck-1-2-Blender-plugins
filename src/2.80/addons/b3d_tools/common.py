@@ -5,11 +5,10 @@ import sys
 
 
 # https://blenderartists.org/t/solved-adding-a-tab-in-blender-2-8/1133119/3
-def getRegion():
-    if bpy.app.version < (2,80,0):
-        return "TOOLS"
-    else:
-        return "UI"
+
+from .compatibility import (
+    get_user_preferences
+)
 
 def recalc_to_local_coord(center, vertexes):
     new_vertexes = []
@@ -42,11 +41,13 @@ panel_logger = createLogger("b3d_tools.panel")
 menus_logger = createLogger("b3d_tools.menus")
 scripts_logger = createLogger("b3d_tools.scripts")
 classes_logger = createLogger("b3d_tools.classes")
+custom_ui_list_logger = createLogger("b3d_tools.ui_list")
 
-loggers = [common_logger, exportb3d_logger, exportway_logger, imghelp_logger, importb3d_logger, importway_logger, panel_logger, menus_logger, scripts_logger, classes_logger]
+loggers = [common_logger, exportb3d_logger, exportway_logger, imghelp_logger, importb3d_logger, importway_logger, panel_logger, menus_logger, scripts_logger, classes_logger, custom_ui_list_logger]
 
 def updateLoggers(self, context):
-    log_level = int(bpy.context.preferences.addons['b3d_tools'].preferences.logger_level)
+    user_prefs = get_user_preferences()
+    log_level = int(user_prefs.addons['b3d_tools'].preferences.logger_level)
     for logger in loggers:
         logger.setLevel(log_level)
 

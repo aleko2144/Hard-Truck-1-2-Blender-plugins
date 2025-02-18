@@ -36,7 +36,7 @@ else:
     )
 
 def register():
-    print("registering addon")
+    print("registering addons")
     custom_ui_list.register()
     class_descr.register()
     classes.register()
@@ -45,7 +45,7 @@ def register():
 
 
 def unregister():
-    print("unregistering addon")
+    print("unregistering addons")
     panel.unregister()
     menus.unregister()
     classes.unregister()

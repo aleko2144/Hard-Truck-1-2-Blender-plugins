@@ -20,6 +20,10 @@ from ..common import (
     classes_logger
 )
 
+from ..compatibility import (
+    is_before_2_80
+)
+
 log = classes_logger
 
 from .class_descr import (
@@ -84,8 +88,8 @@ from .common import (
 def set_cust_obj_value(subtype, bname, pname):
     def callback_func(self, context):
 
-        mytool = context.scene.my_tool
-        result = getattr(getattr(mytool, bname), f'{pname}_enum')
+        blocktool = context.scene.block_tool
+        result = getattr(getattr(blocktool, bname), '{}_enum'.format(pname))
         if subtype == FieldType.INT:
             result = int(result)
         elif subtype == FieldType.FLOAT:
@@ -95,7 +99,7 @@ def set_cust_obj_value(subtype, bname, pname):
 
         setattr(
             bpy.context.object,
-            f'["{pname}"]',
+            '["{}"]'.format(pname),
             result
         )
 
@@ -146,7 +150,8 @@ class BlockClassHandler():
     def get_class_def_by_type(block_num):
         if block_num > 100:
             return None
-        return BlockClassHandler.block_classes[block_num]
+        zclass = BlockClassHandler.block_classes[block_num]
+        return zclass
 
     @staticmethod
     def create_type_class(bclass, multiple_edit = True):
@@ -161,6 +166,9 @@ class BlockClassHandler():
             attr_class = bclass.__dict__[attr_class_name]
 
             pname = attr_class.get_prop()
+            log.debug(bname)
+            log.debug(bnum)
+            log.debug(pname)
             prop = None
 
             if multiple_edit: # lock switches only for multiple edit
@@ -178,7 +186,7 @@ class BlockClassHandler():
             or attr_class.get_block_type() == FieldType.LIST:
 
                 if multiple_edit: # lock switches only for multiple edit
-                    attributes['__annotations__']["show_"+pname] = lock_prop
+                    attributes['__annotations__']["show_{}".format(pname)] = lock_prop
 
                 if attr_class.get_block_type() == FieldType.STRING and multiple_edit:
                     prop = StringProperty(
@@ -223,7 +231,7 @@ class BlockClassHandler():
 
 
                 if multiple_edit: # lock switches only for multiple edit
-                    attributes['__annotations__']["show_"+pname] = lock_prop
+                    attributes['__annotations__']["show_{}".format(pname)] = lock_prop
 
                 enum_callback = None
                 subtype = attr_class.get_subtype()
@@ -235,7 +243,7 @@ class BlockClassHandler():
                 elif attr_class.get_callback() == FieldType.MATERIAL_IND:
                     enum_callback = res_materials_callback
                 elif attr_class.get_callback() == FieldType.ROOM:
-                    enum_callback = rooms_callback(bname, f'{pname}_res')
+                    enum_callback = rooms_callback(bname, 'ResModule{}'.format(pname[-1:])) # room name number: 1 or 2
                 elif attr_class.get_callback() == FieldType.RES_MODULE:
                     enum_callback = modules_callback
 
@@ -273,11 +281,11 @@ class BlockClassHandler():
                                 default = attr_class.get_default()
                             )
 
-                    attributes['__annotations__'][f'{pname}_switch'] = prop_switch
-                    attributes['__annotations__'][f'{pname}_enum'] = prop_enum
+                    attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
+                    attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
 
                     if multiple_edit:
-                        attributes['__annotations__'][f'{pname}'] = prop
+                        attributes['__annotations__']['{}'.format(pname)] = prop
 
                 elif attr_class.get_block_type() == FieldType.ENUM_DYN:
                     # prop = None
@@ -311,48 +319,51 @@ class BlockClassHandler():
                                 description = attr_class.get_description()
                             )
 
-                    attributes['__annotations__'][f'{pname}_switch'] = prop_switch
-                    attributes['__annotations__'][f'{pname}_enum'] = prop_enum
+                    attributes['__annotations__']['{}_switch'.format(pname)] = prop_switch
+                    attributes['__annotations__']['{}_enum'.format(pname)] = prop_enum
 
                     if multiple_edit:
-                        attributes['__annotations__'][f'{pname}'] = prop
+                        attributes['__annotations__']['{}'.format(pname)] = prop
 
             elif attr_class.get_block_type() == FieldType.V_FORMAT: # currently only available in vertex edit
 
-                attributes['__annotations__'][f"show_{pname}"] = lock_prop
+                attributes['__annotations__']["show_{}".format(pname)] = lock_prop
 
                 prop1 = BoolProperty(
                     name = 'Triangulation offset',
                     description = 'Order in which vertexes are read depends on that',
                     default = True
                 )
-                attributes['__annotations__'][f'{pname}_triang_offset'] = prop1
+                attributes['__annotations__']['{}_triang_offset'.format(pname)] = prop1
 
                 prop2 = BoolProperty(
                     name = 'Use UV',
                     description = 'If active, writes UV during export.',
                     default = True
                 )
-                attributes['__annotations__'][f'{pname}_use_uvs'] = prop2
+                attributes['__annotations__']['{}_use_uvs'.format(pname)] = prop2
 
                 prop3 = BoolProperty(
                     name = 'Use normals',
                     description = 'If active, writes normal during export.',
                     default = True
                 )
-                attributes['__annotations__'][f'{pname}_use_normals'] = prop3
+                attributes['__annotations__']['{}_use_normals'.format(pname)] = prop3
 
                 prop4 = BoolProperty(
                     name = 'Normal switch',
                     description = 'If active, use <float> for en(dis)abling normals. If not active use <float vector> for common normals. Is ignored if "Use normals" is inactive',
                     default = True
                 )
-                attributes['__annotations__'][f'{pname}_normal_flag'] = prop4
+                attributes['__annotations__']['{}_normal_flag'.format(pname)] = prop4
+
+        if is_before_2_80():
+            attributes = attributes['__annotations__']
 
         if multiple_edit:
-            newclass = type(f"{bclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
+            newclass = type("{}_gen".format(bclass.__name__), (bpy.types.PropertyGroup,), attributes)
         else:
-            newclass = type(f"s_{bclass.__name__}_gen", (bpy.types.PropertyGroup,), attributes)
+            newclass = type("s_{}_gen".format(bclass.__name__), (bpy.types.PropertyGroup,), attributes)
         return newclass
 
     @staticmethod
@@ -371,11 +382,11 @@ class BlockClassHandler():
             btype = BlockClassHandler.BLOCK
 
             gen_class = BlockClassHandler.create_type_class(bclass)
-            attributes['__annotations__'][f'{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            attributes['__annotations__']['{}_{}'.format(btype, bnum)] = PointerProperty(type=gen_class)
             BlockClassHandler.block_classes_gen.append(gen_class)
 
             gen_class = BlockClassHandler.create_type_class(bclass, False)
-            attributes['__annotations__'][f's_{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            attributes['__annotations__']['s_{}_{}'.format(btype, bnum)] = PointerProperty(type=gen_class)
             BlockClassHandler.block_classes_gen.append(gen_class)
 
         for bclass in [bc for bc in BlockClassHandler.per_face_block_classes if bc is not None]:
@@ -383,7 +394,7 @@ class BlockClassHandler():
             btype = BlockClassHandler.PER_FACE_BLOCK
 
             gen_class = BlockClassHandler.create_type_class(bclass)
-            attributes['__annotations__'][f'{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            attributes['__annotations__']['{}_{}'.format(btype, bnum)] = PointerProperty(type=gen_class)
             BlockClassHandler.per_face_block_classes_gen.append(gen_class)
 
         for bclass in [bc for bc in BlockClassHandler.per_vertex_block_classes if bc is not None]:
@@ -391,9 +402,11 @@ class BlockClassHandler():
             btype = BlockClassHandler.PER_VERTEX_BLOCK
 
             gen_class = BlockClassHandler.create_type_class(bclass)
-            attributes['__annotations__'][f'{btype}_{bnum}'] = PointerProperty(type=gen_class)
+            attributes['__annotations__']['{}_{}'.format(btype, bnum)] = PointerProperty(type=gen_class)
             BlockClassHandler.per_vertex_block_classes_gen.append(gen_class)
 
+        if is_before_2_80():
+            attributes = attributes['__annotations__']
 
         return type("BlockSettings", (bpy.types.PropertyGroup,), attributes)
 
@@ -404,13 +417,13 @@ class BlockClassHandler():
         bnum = BlockClassHandler.get_block_num_from_bclass(bclass)
         if btype == 'Blk':
             if multiple_class:
-                bname = f'{BlockClassHandler.BLOCK}_{bnum}'
+                bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
             else:
-                bname = f's_{BlockClassHandler.BLOCK}_{bnum}'
+                bname = 's_{}_{}'.format(BlockClassHandler.BLOCK, bnum)
         elif btype == 'Pfb':
-            bname = f'{BlockClassHandler.PER_FACE_BLOCK}_{bnum}'
+            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
         elif btype == 'Pvb':
-            bname = f'{BlockClassHandler.PER_VERTEX_BLOCK}_{bnum}'
+            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
 
         return [bname, bnum]
 
@@ -419,19 +432,17 @@ class BlockClassHandler():
         bname = ''
         if btype == 'Blk':
             if multiple_class:
-                bname = f'{BlockClassHandler.BLOCK}_{bnum}'
+                bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
             else:
-                bname = f's_{BlockClassHandler.BLOCK}_{bnum}'
+                bname = 's_{}_{}'.format(BlockClassHandler.BLOCK, bnum)
         elif btype == 'Pfb':
-            bname = f'{BlockClassHandler.PER_FACE_BLOCK}_{bnum}'
+            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
         elif btype == 'Pvb':
-            bname = f'{BlockClassHandler.PER_VERTEX_BLOCK}_{bnum}'
+            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
 
         return bname
 
 BlockSettings = BlockClassHandler.create_block_properties()
-
-_classes = [BlockSettings]
 
 def register():
     for cls in BlockClassHandler.block_classes_gen:
@@ -440,14 +451,12 @@ def register():
         bpy.utils.register_class(cls)
     for cls in BlockClassHandler.per_vertex_block_classes_gen:
         bpy.utils.register_class(cls)
-    for cls in _classes:
-        bpy.utils.register_class(cls)
+    bpy.utils.register_class(BlockSettings)
     bpy.types.Scene.block_tool = bpy.props.PointerProperty(type=BlockSettings)
 
 def unregister():
     del bpy.types.Scene.block_tool
-    for cls in _classes[::-1]:
-        bpy.utils.unregister_class(cls)
+    bpy.utils.unregister_class(BlockSettings)
     for cls in BlockClassHandler.per_vertex_block_classes_gen[::-1]: #reversed
         bpy.utils.unregister_class(cls)
     for cls in BlockClassHandler.per_face_block_classes_gen[::-1]: #reversed

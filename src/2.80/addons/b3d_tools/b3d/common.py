@@ -10,6 +10,10 @@ from ..consts import (
     EMPTY_NAME
 )
 
+from ..compatibility import (
+    is_before_2_80
+)
+
 #Setup module logger
 log = common_logger
 
@@ -48,7 +52,7 @@ def get_root_obj(obj):
     return result
 
 def is_empty_name(name):
-    re_is_empty = re.compile(fr'.*{EMPTY_NAME}.*')
+    re_is_empty = re.compile(r'.*{}.*'.format(EMPTY_NAME))
     return re_is_empty.search(name)
 
 def is_mesh_block(obj):
@@ -126,8 +130,8 @@ def read_res_sections(filepath):
                 sections[k]["cnt"] = cnt
                 sections[k]["data"] = []
 
-                log.info(f"Reading category {cat_id}")
-                log.info(f"Element count in category is {cnt}.")
+                log.info("Reading category {}".format(cat_id))
+                log.info("Element count in category is {}.".format(cnt))
                 if cnt > 0:
                     log.info("Start processing...")
                     res_data = []
@@ -218,7 +222,7 @@ def get_material_index_in_res(mat_name, res_module_name):
     return cur_material_ind
 
 def get_color_img_name(module_name, index):
-    return f"col_{module_name}_{index:03d}"
+    return "col_{}_{:03d}".format(module_name, index)
 
 # https://blenderartists.org/t/index-lookup-in-a-collection/512818/2
 def get_col_property_index(prop):
@@ -259,8 +263,9 @@ def update_color_preview(res_module, ind):
     bpy_image.pixels[1] = res_module.palette_colors[ind].value[1]
     bpy_image.pixels[2] = res_module.palette_colors[ind].value[2]
     bpy_image.pixels[3] = res_module.palette_colors[ind].value[3]
-    bpy_image.preview_ensure()
-    bpy_image.preview.reload()
+    if not is_before_2_80:
+        bpy_image.preview_ensure()
+        bpy_image.preview.reload()
 
 
 def get_mat_texture_ref_dict(res_module):
@@ -502,7 +507,7 @@ def res_materials_callback(self, context):
     res_modules = mytool.res_modules
     cur_module = get_col_property_by_name(res_modules, module_name)
 
-    enum_properties = [(str(i), cn.value, "") for i, cn in enumerate(cur_module.materials)]
+    enum_properties = [(str(i), cn.mat_name, "") for i, cn in enumerate(cur_module.materials)]
 
     return enum_properties
 
@@ -512,9 +517,9 @@ def rooms_callback(bname, pname):
         enum_properties = []
 
         mytool = context.scene.my_tool
-        res_module = context.object.path_resolve(f'["{pname}"]')
+        res_module = context.object.path_resolve('["{}"]'.format(pname))
 
-        root_obj = bpy.data.objects.get(f'{res_module}.b3d')
+        root_obj = bpy.data.objects.get('{}.b3d'.format(res_module))
         if root_obj:
             rooms = [cn for cn in root_obj.children if cn.get(BLOCK_TYPE) == 19]
 

@@ -264,16 +264,16 @@ def menu_func_export(self, context):
 
 def tch_register():
     bpy.utils.register_class(ImportTch)
-    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    # bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.utils.register_class(ExportTch)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    # bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def tch_unregister():
     bpy.utils.unregister_class(ImportTch)
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    # bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.utils.unregister_class(ExportTch)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    # bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
 
 if __name__ == "__main__":
