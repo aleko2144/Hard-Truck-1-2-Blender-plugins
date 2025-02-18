@@ -1,7 +1,7 @@
 # Blender-VWI
 Плагины для форматов файлов игрового движка Virtual World Inventor.
-##### Текущие планы
-* Доработка экспорта b3d + .res.
+
+ [Текущие планы](https://github.com/users/LabVaKars/projects/1)
 
 ## Поддерживаемые игры
 | Название игры | Название игры (международное) | Год выхода |
@@ -15,17 +15,15 @@
 | .b3d | Модели, логика, различные объекты   | Да   | Да  |
 | .b3d + .res  | Модели, логика, различные объекты + текстуры   | Да   | Да  |
 | .way  | Пути транспорта для ИИ   | Да   | Да  |
-| .tch/.tech  | Параметры транспорта и динамических объектов   |      | Да  |
 
 ## Файлы в проекте
 
-#### Папка **src/2.79**
+#### Папка **src**
 
-Плагины для версии 2.79.
+Плагин. Тестировалось на версиях:
+2.8+ - основная версия;
+2.79 - функциональность может отличаться.
 
-#### Папка **src/2.80**
-
-Плагины для версии 2.80+.
 #### Папка **scenes**
 
 Готовые сцены для экспорта в игру: **ht2-way.blend** - пути транспорта, **ht2-vehicle-export.blend** - транспорт, **ht2-env-module.blend** - карта
@@ -38,14 +36,14 @@ b3dsplit - извлечение из b3d-файла прочих моделей 
 
 ## Как установить плагины
 1. Распаковать архив.
-2. Поместить содержимое в папку Blender/2.79/scripts/addons/.
-3. Открыть настройки в Blender (нажать LCtrl + Alt + U ), перейти во вкладку Addons.
-4. Найти аддоны (b3d) и активировать их (галка на названии).
+2. Поместить содержимое папки src/addons в папку Blender/{version}/scripts/addons/.
+2.1. При обновлении плагина удалить прошлую версию b3d_tools из папки Blender/{version}/scripts/addons/
+3. Открыть настройки в Blender (нажать LCtrl + Alt + U или Edit -> Preferences), перейти во вкладку Addons.
+4. Найти аддон (b3d_tools) и активировать его (галка на названии).
 
 ## Авторы
 Юрий Гладышенко и Андрей Прожога.
 Обновление: LabVaKars
-
 
 ## Ссылки
 [Сообщество VK](https://vk.com/rnr_mods)
@@ -56,8 +54,7 @@ b3dsplit - извлечение из b3d-файла прочих моделей 
 
 Hard Truck classic games (VWI engine) import/export plugins for Blender.
 
-#### Roadmap
-* .b3d + .res export support
+ [Roadmap](https://github.com/users/LabVaKars/projects/1)
 
 ## Supported games
 | Title | Title (ENG) | Release year |
@@ -72,4 +69,3 @@ Hard Truck classic games (VWI engine) import/export plugins for Blender.
 | .b3d  | Models, game logic, various objects   | Yes   | Yes  |
 | .b3d + .res  | Models, game logic, various objects + textures   | Yes   | Yes  |
 | .way  | AI paths   | Yes  | Yes  |
-| .tch/.tech  | Transport parameters |      | Yes |
