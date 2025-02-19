@@ -1474,11 +1474,25 @@ class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
             box.prop(cur_res_module, "palette_subpath", text="Subpath")
             box.prop(cur_res_module, "palette_name", text="Path")
 
-            rows = 2
-            row = box.row()
-            row.template_list("CUSTOM_UL_colors", "palette_list", cur_res_module, "palette_colors", scene, "palette_index", type='GRID', columns = 2, rows=rows)
+            row_indexes = bpy.context.scene.palette_row_indexes
+            col_indexes = bpy.context.scene.palette_col_indexes
 
-            draw_list_controls(row, "custom.list_action_color", "res_modules", res_ind, "palette_colors", "palette_index")
+            rows = 32
+            cols = 8
+            row1 = layout_split(box.row(), 0.15)
+            # row.template_list("CUSTOM_UL_colors", "palette_list", cur_res_module, "palette_colors", scene, "palette_index", type='GRID', columns = 2, rows=rows)
+            col1 = row1.column()
+            col2 = row1.column()
+            col2.template_list("CUSTOM_UL_colors_grid", "indexes_col", col_indexes, "prop_list", scene, "palette_row_index", type='GRID', columns = cols, rows=1)
+
+            row2 = layout_split(box.row(), 0.15)
+            col1 = row2.column()
+            col1.template_list("CUSTOM_UL_colors_grid", "indexes_row", row_indexes, "prop_list", scene, "palette_col_index", type='GRID', columns = 1, rows=rows)
+            col2 = row2.column()
+            col2.template_list("CUSTOM_UL_colors", "palette_list", cur_res_module, "palette_colors", scene, "palette_index", type='GRID', columns = cols, rows=rows)
+            
+
+            # draw_list_controls(row, "custom.list_action_color", "res_modules", res_ind, "palette_colors", "palette_index")
 
 
 class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):

@@ -51,7 +51,8 @@ from .common import (
 )
 
 from ..compatibility import (
-    make_annotations
+    make_annotations,
+    layout_split
 )
 
 from ..common import (
@@ -243,9 +244,19 @@ class CUSTOM_OT_actions(Operator):
 class CUSTOM_UL_colors(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout.split(factor=0.5)
-        split.label(text= "Index: {}".format(index+1))
-        split.prop(item, "value", text="")
+        # split = layout_split(layout, 0.5)
+        # split.label(text= "Index: {}".format(index+1))
+        layout.prop(item, "value", text="")
+
+    def invoke(self, context, event):
+        pass
+
+class CUSTOM_UL_colors_grid(UIList):
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        # split = layout_split(layout, 0.5)
+        # split.label(text= "Index: {}".format(index+1))
+        layout.label(text="{}".format(item.value))
 
     def invoke(self, context, event):
         pass
@@ -254,7 +265,7 @@ class CUSTOM_UL_colors(UIList):
 class CUSTOM_UL_materials(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout.split(factor=0.3)
+        split = layout_split(layout, 0.3)
         split.label(text= "Index: {}".format(index+1))
         split.template_ID(item, 'id_mat')
 
@@ -264,7 +275,7 @@ class CUSTOM_UL_materials(UIList):
 class CUSTOM_UL_textures(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout.split(factor=0.3)
+        split = layout_split(layout, 0.3)
         split.label(text= "Index: {}".format(index+1))
         split.template_ID(item, 'id_tex')
 
@@ -274,7 +285,7 @@ class CUSTOM_UL_textures(UIList):
 class CUSTOM_UL_maskfiles(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout.split(factor=0.3)
+        split = layout_split(layout, 0.3)
         split.label(text= "Index: {}".format(index+1))
         split.template_ID(item, 'id_msk')
 
@@ -284,7 +295,7 @@ class CUSTOM_UL_maskfiles(UIList):
 class CUSTOM_UL_items(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout.split(factor=0.3)
+        split = layout_split(layout, 0.3)
         split.label(text= "Index: {}".format(index+1))
         split.prop(item, "value", text="", emboss=False, translate=False)
 
@@ -359,6 +370,15 @@ class CUSTOM_PG_objectCollection(PropertyGroup):
         name="Object",
         type=bpy.types.Object)
 
+@make_annotations
+class PropIndex(PropertyGroup):
+    value = IntProperty()
+
+@make_annotations
+class PropIndexList(PropertyGroup):
+    prop_list = CollectionProperty(type=PropIndex)
+
+
 
 # -------------------------------------------------------------------
 #   Register & Unregister
@@ -369,12 +389,15 @@ _classes = [
     CUSTOM_OT_actions_arrbname,
     CUSTOM_OT_actions_color,
     CUSTOM_UL_colors,
+    CUSTOM_UL_colors_grid,
     CUSTOM_UL_textures,
     CUSTOM_UL_maskfiles,
     CUSTOM_UL_materials,
     CUSTOM_UL_items,
     CUSTOM_PT_objectList,
     CUSTOM_PG_objectCollection,
+    PropIndex,
+    PropIndexList
 ]
 
 def register():
@@ -389,6 +412,13 @@ def register():
     bpy.types.Scene.textures_index = IntProperty()
     bpy.types.Scene.materials_index = IntProperty()
     bpy.types.Scene.maskfiles_index = IntProperty()
+    bpy.types.Scene.palette_row_indexes = PointerProperty(type=PropIndexList)
+    bpy.types.Scene.palette_row_index = IntProperty()
+    bpy.types.Scene.palette_col_indexes = PointerProperty(type=PropIndexList)
+    bpy.types.Scene.palette_col_index = IntProperty()
+    
+
+
 
 
 def unregister():
@@ -399,6 +429,9 @@ def unregister():
     attrs = [
         "custom", "custom_index", "palette_index", 
         "textures_index", "materials_index", "maskfiles_index"
+        "palette_row_indexes", "palette_row_index",
+        "palette_col_indexes","palette_col_index"
+
     ]
 
     for attr in attrs:

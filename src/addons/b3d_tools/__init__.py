@@ -23,7 +23,6 @@ if "bpy" in locals():
     import importlib
     importlib.reload(common)
     importlib.reload(consts)
-    importlib.reload(tch)
     importlib.reload(b3d)
 else:
     import bpy

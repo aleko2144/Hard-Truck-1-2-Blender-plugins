@@ -81,6 +81,21 @@ def import_res(file, context, self, filepath):
     scene = context.scene
     mytool = scene.my_tool
 
+    #Initialize palette index list
+    row_indexes = bpy.context.scene.palette_row_indexes.prop_list
+    col_indexes = bpy.context.scene.palette_col_indexes.prop_list
+
+    if len(col_indexes) == 0:
+        for i in range(8):
+            col_indexes.add()
+            col_indexes[i].value = i+1
+        
+    if len(row_indexes) == 0:
+        for i in range(32):
+            row_indexes.add()
+            row_indexes[i].value = i*8
+
+
     res_modules = getattr(mytool, "res_modules")
     res_basename = os.path.basename(filepath)[:-4] #cut extension
 
