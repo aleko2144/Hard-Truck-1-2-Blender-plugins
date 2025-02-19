@@ -33,6 +33,7 @@ def createLogger(module_name):
 
 common_logger = createLogger("b3d_tools.common")
 exportb3d_logger = createLogger("b3d_tools.export_b3d")
+exportres_logger = createLogger("b3d_tools.export_res")
 exportway_logger = createLogger("b3d_tools.export_way")
 imghelp_logger = createLogger("b3d_tools.imghelp")
 importb3d_logger = createLogger("b3d_tools.import_b3d")

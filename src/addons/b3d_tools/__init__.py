@@ -30,7 +30,6 @@ else:
     from . import (
         common,
         consts,
-        tch,
         b3d
     )
 

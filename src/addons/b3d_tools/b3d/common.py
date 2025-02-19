@@ -112,6 +112,11 @@ def read_cstring(file):
         log.warning("Error in read_cstring. Nothing to read")
         return ""
 
+def write_cstring(txt, file):
+    if txt[-1] != "\00":
+        txt += "\00"
+    file.write(txt.encode("cp1251"))
+
 
 def read_res_sections(filepath):
     sections = []
