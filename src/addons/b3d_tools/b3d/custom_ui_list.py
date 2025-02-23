@@ -318,8 +318,8 @@ class CUSTOM_PT_objectList(Panel):
         row.template_list("CUSTOM_UL_items", "float_list", scn, "custom", scn, "custom_index", rows=rows)
 
         col = row.column(align=True)
-        col.operator("custom.list_action", icon='ADD', text="").action = 'ADD'
-        col.operator("custom.list_action", icon='REMOVE', text="").action = 'REMOVE'
+        col.operator("custom.list_action", icon='PLUS', text="").action = 'ADD'
+        col.operator("custom.list_action", icon='CANCEL', text="").action = 'REMOVE'
         col.separator()
         col.operator("custom.list_action", icon='TRIA_UP', text="").action = 'UP'
         col.operator("custom.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
@@ -328,14 +328,14 @@ class CUSTOM_PT_objectList(Panel):
 def draw_list_controls(layout, list_type, bname, bindex, pname, custom_index):
     col = layout.column(align=True)
 
-    props = col.operator(list_type, icon='ADD', text="")
+    props = col.operator(list_type, icon='PLUS', text="")
     props.action = 'ADD'
     props.bname = bname
     props.bindex = bindex
     props.pname = pname
     props.customindex = custom_index
 
-    props = col.operator(list_type, icon='REMOVE', text="")
+    props = col.operator(list_type, icon='CANCEL', text="")
     props.action = 'REMOVE'
     props.bname = bname
     props.bindex = bindex

@@ -110,27 +110,29 @@ def write_tga8888(filepath, header, colors_before, bit_mask, transp_color = (0,0
     for i in range(0, len(colors_before), bytes_per_pixel):
         color = struct.unpack(type_size, colors_before[i:i+bytes_per_pixel])[0]
 
-        r = ((color & r_msk) >> r_unmask[2])
-        g = ((color & g_msk) >> g_unmask[2])
-        b = ((color & b_msk) >> b_unmask[2])
+        r = ((color & r_msk) >> r_unmask.rzeros)
+        g = ((color & g_msk) >> g_unmask.rzeros)
+        b = ((color & b_msk) >> b_unmask.rzeros)
 
+        a = 255
         if a_msk == 0:
-            if r == transp_color[0] >> (8 - r_unmask[1]) \
-            and g == transp_color[1] >> (8 - g_unmask[1]) \
-            and b == transp_color[2] >> (8 - b_unmask[1]):
+            if r == transp_color[0] >> (8 - r_unmask.ones) \
+            and g == transp_color[1] >> (8 - g_unmask.ones) \
+            and b == transp_color[2] >> (8 - b_unmask.ones):
                 a = 0
             else:
                 a = 255
         else:
-            a = ((color & a_msk) >> a_unmask[2])
+            a = ((color & a_msk) >> a_unmask.rzeros)
             if a > 0:
                 a = int("1" * 8, 2)
 
-        r = r << (8-r_unmask[1])
-        g = g << (8-g_unmask[1])
-        b = b << (8-b_unmask[1])
+        r = r << (8-r_unmask.ones)
+        g = g << (8-g_unmask.ones)
+        b = b << (8-b_unmask.ones)
 
         colors_after.extend([b, g, r, a])
+        # colors_after.extend([a, r, g, b])
     with open(filepath, "wb") as tga_file:
         header_pack = struct.pack("<3b2hb4h2b", *header)
         colors_pack = struct.pack("<"+str(colors_size*4)+"B", *colors_after)

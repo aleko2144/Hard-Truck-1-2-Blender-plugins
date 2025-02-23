@@ -164,12 +164,12 @@ def draw_fields_by_type(l_self, context, zclass, multiple_edit = True):
                     row.template_list("CUSTOM_UL_items", "", blk, pname, scn, "custom_index", rows=rows)
 
                     col = row.column(align=True)
-                    props = col.operator("custom.list_action", icon='ADD', text="")
+                    props = col.operator("custom.list_action", icon='PLUS', text="")
                     props.action = 'ADD'
                     props.bname = bname
                     props.pname = pname
                     props.customindex = "custom_index"
-                    props = col.operator("custom.list_action", icon='REMOVE', text="")
+                    props = col.operator("custom.list_action", icon='CANCEL', text="")
                     props.action = 'REMOVE'
                     props.bname = bname
                     props.pname = pname

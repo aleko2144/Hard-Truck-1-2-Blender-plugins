@@ -247,10 +247,10 @@ def load_texturefiles(basedir, res_module, image_format, convert_txr):
 
         img_format = result['format']
         if img_format is not None:
-            r = unmask_bits(img_format[0])[1]
-            g = unmask_bits(img_format[1])[1]
-            b = unmask_bits(img_format[2])[1]
-            a = unmask_bits(img_format[3])[1]
+            r = unmask_bits(img_format[0]).ones
+            g = unmask_bits(img_format[1]).ones
+            b = unmask_bits(img_format[2]).ones
+            a = unmask_bits(img_format[3]).ones
 
             format_str = str(a) + str(r) + str(g) + str(b)
             if format_str not in ['4444', '0565']:

@@ -83,20 +83,24 @@ def unmask_template(templ):
         offset += cur_int
     return unmasks
 
+class BitMask:
+    def __init__(self):
+        self.lzeros = 0
+        self.ones = 0
+        self.rzeros = 0
+
 def unmask_bits(num, bytes_cnt=2):
     bits = [int(digit) for digit in bin(num)[2:]]
-    lzeros = 0
-    rzeros = 0
-    ones = 0
+    bitmask = BitMask()
     if num == 0:
-        return [0, 0, 0]
+        return bitmask
     for bit in bits:
         if bit:
-            ones+=1
+            bitmask.ones+=1
         else:
-            rzeros+=1
-        lzeros = bytes_cnt*8 - len(bits)
-    return [lzeros, ones, rzeros]
+            bitmask.rzeros+=1
+        bitmask.lzeros = bytes_cnt*8 - len(bits)
+    return bitmask
 
 
 def read_cstring(file):
