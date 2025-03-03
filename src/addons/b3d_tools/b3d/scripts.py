@@ -38,7 +38,9 @@ from ..compatibility import (
     is_before_2_80,
     is_before_2_93,
     set_empty_type,
-    set_empty_size
+    set_empty_size,
+    get_object_hidden,
+    set_object_hidden
 )
 
 log = scripts_logger
@@ -134,7 +136,7 @@ def apply_transform(root):
 
             dest_obj = bpy.data.objects.get(obj_name)
 
-            if not block.hide_get():
+            if not get_object_hidden(block):
 
                 if space_name == EMPTY_NAME:
                     space_name = prev_space
@@ -167,7 +169,7 @@ def apply_transform(root):
 
             continue
 
-        if is_mesh_block(block) and not block.hide_get():
+        if is_mesh_block(block) and not get_object_hidden(block):
             # block.hide_set(True)
             # log.debug(block.name)
             # log.debug(prev_space)
@@ -219,31 +221,31 @@ def remove_transforms():
 
 def show_hide_obj_by_type(self, block_type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==block_type]
-    hidden_obj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==block_type and cn.hide_get()]
+    hidden_obj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==block_type and get_object_hidden(cn)]
     if len(objs) == len(hidden_obj):
         for obj in objs:
-            obj.hide_set(False)
+            set_object_hidden(obj, False)
         self.report({'INFO'}, "{} (block {}) objects are shown".format(len(objs), block_type))
     else:
         for obj in objs:
-            obj.hide_set(True)
+            set_object_hidden(obj, True)
         self.report({'INFO'}, "{} (block {}) objects are hidden".format(len(objs), block_type))
 
 def show_hide_obj_tree_by_type(block_type):
     objs = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==block_type]
-    hidden_obj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==block_type and cn.hide_get()]
+    hidden_obj = [cn for cn in bpy.data.objects if cn.get("block_type") is not None and cn["block_type"]==block_type and get_object_hidden(cn)]
     if len(objs) == len(hidden_obj):
         for obj in objs:
             children = get_all_children(obj)
             for child in children:
-                child.hide_set(False)
-            obj.hide_set(False)
+                set_object_hidden(child, False)
+            set_object_hidden(obj, False)
     else:
         for obj in objs:
             children = get_all_children(obj)
             for child in children:
-                child.hide_set(True)
-            obj.hide_set(True)
+                set_object_hidden(child, True)
+            set_object_hidden(obj, True)
 
 def get_hierarchy_roots(root):
     global_root = root
@@ -259,7 +261,7 @@ def get_hierarchy_roots(root):
 
         #in refs
         temp = cn
-        while temp.parent is not global_root:
+        while temp.parent != global_root:
             temp = temp.parent
         ref_set.add(temp.name)
 
@@ -317,7 +319,7 @@ def process_lod(root, state, explevel = 0, curlevel = -1):
             if ref_obj is not None:
                 stack.append([ref_obj, clevel, is_active])
                 if is_active:
-                    block.hide_set(state)
+                    set_object_hidden(block, state)
 
         if block[BLOCK_TYPE] == 10:
             clevel += 1
@@ -329,7 +331,7 @@ def process_lod(root, state, explevel = 0, curlevel = -1):
             bl_children = block.children
 
         if is_active and is_mesh_block(block):
-            block.hide_set(state)
+            set_object_hidden(block, state)
 
         for direct_child in bl_children:
 
@@ -390,7 +392,7 @@ def process_cond(root, group, state):
             if ref_obj is not None:
                 stack.append([ref_obj, clevel+1, glevel, group_max, is_active])
                 if is_active:
-                    block.hide_set(state)
+                    set_object_hidden(block, state)
 
         if block[BLOCK_TYPE] == 21:
             glevel += 1
@@ -407,7 +409,7 @@ def process_cond(root, group, state):
             bl_children = block.children
 
         if is_active and is_mesh_block(block):
-            block.hide_set(state)
+            set_object_hidden(block, state)
 
         for direct_child in bl_children:
             log.debug("Processing {}".format(direct_child.name))
@@ -657,13 +659,13 @@ def set_objs_by_type(context, b3d_obj, zclass):
 
                 elif attr_class.get_block_type() == FieldType.ENUM:
 
-                    if attr_class['subtype'] == FieldType.INT:
+                    if attr_class.get_subtype() == FieldType.INT:
                         b3d_obj[attr_class.get_prop()] = int(getattr(blk, attr_class.get_prop()))
 
-                    elif attr_class['subtype'] == FieldType.STRING:
+                    elif attr_class.get_subtype() == FieldType.STRING:
                         b3d_obj[attr_class.get_prop()] = str(getattr(blk, attr_class.get_prop()))
 
-                    elif attr_class['subtype'] == FieldType.FLOAT:
+                    elif attr_class.get_subtype() == FieldType.FLOAT:
                         b3d_obj[attr_class.get_prop()] = float(getattr(blk, attr_class.get_prop()))
 
                 elif attr_class.get_block_type() == FieldType.ENUM_DYN:

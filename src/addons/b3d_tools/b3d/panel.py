@@ -76,7 +76,8 @@ from ..compatibility import (
     is_before_2_80,
     is_before_2_93,
     set_empty_type,
-    set_empty_size
+    set_empty_size,
+    get_cursor_location
 )
 
 #Setup module logger
@@ -271,7 +272,7 @@ class SingleAddOperator(bpy.types.Operator):
 
         block_type = int(mytool.add_block_type_enum)
 
-        cursor_pos = bpy.context.scene.cursor.location
+        cursor_pos = get_cursor_location()
 
         parent_obj = bpy.context.object
 
@@ -387,7 +388,7 @@ class TemplateAddOperator(bpy.types.Operator):
 
         block_type = mytool.add_blocks_enum
 
-        cursor_pos = bpy.context.scene.cursor_location
+        cursor_pos = get_cursor_location()
 
         def type05(name, radius, add_name):
             object_name = name
@@ -442,7 +443,7 @@ class CastAddOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        cursor_pos = bpy.context.scene.cursor.location
+        cursor_pos = get_cursor_location()
 
         cast_type = mytool.cast_type_enum
         parent_obj = bpy.data.objects.get(mytool.parent_str)
@@ -1490,9 +1491,6 @@ class OBJECT_PT_b3d_palette_panel(bpy.types.Panel):
             col1.template_list("CUSTOM_UL_colors_grid", "indexes_row", row_indexes, "prop_list", scene, "palette_col_index", type='GRID', columns = 1, rows=rows)
             col2 = row2.column()
             col2.template_list("CUSTOM_UL_colors", "palette_list", cur_res_module, "palette_colors", scene, "palette_index", type='GRID', columns = cols, rows=rows)
-            
-
-            # draw_list_controls(row, "custom.list_action_color", "res_modules", res_ind, "palette_colors", "palette_index")
 
 
 class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
@@ -1533,7 +1531,7 @@ class OBJECT_PT_b3d_maskfiles_panel(bpy.types.Panel):
 
                 box.prop(cur_maskfile, "is_noload", text="Noload")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_maskfile, "is_someint", text="?Someint?")
                 col = split.column()
                 col.prop(cur_maskfile, "someint")
@@ -1584,7 +1582,7 @@ class OBJECT_PT_b3d_textures_panel(bpy.types.Panel):
                 box.prop(cur_texture, "is_noload", text="Noload")
                 box.prop(cur_texture, "is_bumpcoord", text="Bympcoord")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_texture, "is_someint", text="?Someint?")
                 col = split.column()
                 col.prop(cur_texture, "someint")
@@ -1627,31 +1625,31 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
             if (len(cur_res_module.materials)):
                 cur_material = cur_res_module.materials[texture_index]
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_reflect", text="Reflect")
                 col = split.column()
                 col.enabled = cur_material.is_reflect
                 col.prop(cur_material, "reflect")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_specular", text="Specular")
                 col = split.column()
                 col.enabled = cur_material.is_specular
                 col.prop(cur_material, "specular")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_transp", text="Transparency")
                 col = split.column()
                 col.enabled = cur_material.is_transp
                 col.prop(cur_material, "transp")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_rot", text="Rotation")
                 col = split.column()
                 col.enabled = cur_material.is_rot
                 col.prop(cur_material, "rot")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_col", text="Color")
                 col = split.column()
                 col.enabled = cur_material.is_col
@@ -1661,7 +1659,7 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
                 else:
                     col.prop(cur_material, "col", text="Col num")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_tex", text="Texture TEX")
                 col = split.column()
                 col.enabled = cur_material.is_tex
@@ -1672,7 +1670,7 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
                 else:
                     col.prop(cur_material, "tex", text="Tex num")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_att", text="Att")
                 col = split.column()
                 col.enabled = cur_material.is_att
@@ -1682,7 +1680,7 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
                 else:
                     col.prop(cur_material, "att", text="Att num")
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_msk", text="Maskfile")
                 col = split.column()
                 col.enabled = cur_material.is_msk
@@ -1693,37 +1691,37 @@ class OBJECT_PT_b3d_materials_panel(bpy.types.Panel):
                     col.prop(cur_material, "msk", text="Msk num")
 
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_power", text="Power")
                 col = split.column()
                 col.prop(cur_material, "power")
                 col.enabled = cur_material.is_power
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_coord", text="Coord")
                 col = split.column()
                 col.prop(cur_material, "coord")
                 col.enabled = cur_material.is_coord
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_envId", text="Env")
                 col = split.column()
                 col.prop(cur_material, "envId")
                 col.enabled = cur_material.is_envId
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_env", text="Env")
                 col = split.column()
                 col.prop(cur_material, "env")
                 col.enabled = cur_material.is_env
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_RotPoint", text="Rotation Center")
                 col = split.column()
                 col.prop(cur_material, "RotPoint")
                 col.enabled = cur_material.is_RotPoint
 
-                split = box.split(factor=0.3)
+                split = layout_split(box, 0.3)
                 split.prop(cur_material, "is_move", text="Movement")
                 col = split.column()
                 col.prop(cur_material, "move")

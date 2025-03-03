@@ -21,12 +21,14 @@
 if "bpy" in locals():
     print("Reimporting modules!!!")
     import importlib
+    importlib.reload(compatibility)
     importlib.reload(common)
     importlib.reload(consts)
     importlib.reload(b3d)
 else:
     import bpy
     from . import (
+        compatibility,
         common,
         consts,
         b3d

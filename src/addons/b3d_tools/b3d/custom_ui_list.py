@@ -64,67 +64,16 @@ log = classes_logger
 #   Operators
 # -------------------------------------------------------------------
 
-def action_invoke_color(self, context, event, arr_bname = False):
-    scn = context.scene
-    idx = getattr(scn, self.customindex)
-    blocktool = scn.block_tool
-
-    res_module = get_current_res_module()
-
-    if arr_bname:
-        param = getattr(getattr(blocktool, self.bname)[self.bindex], self.pname)
-    else:
-        param = getattr(getattr(blocktool, self.bname), self.pname)
-
-    try:
-        item = param[idx]
-    except IndexError:
-        pass
-    else:
-        if self.action == 'DOWN' and idx < len(param) - 1:
-            param.move(idx, idx+1)
-            setattr(scn, self.customindex, idx+1)
-            update_color_preview(res_module, idx)
-            update_color_preview(res_module, idx+1)
-            info = 'Item "{}" moved to position {}'.format(item.name, idx+1)
-            self.report({'INFO'}, info)
-
-        elif self.action == 'UP' and idx >= 1:
-            param.move(idx, idx-1)
-            setattr(scn, self.customindex, idx-1)
-            update_color_preview(res_module, idx)
-            update_color_preview(res_module, idx-1)
-            info = 'Item "{}" moved to position {}'.format(item.name, idx+1)
-            self.report({'INFO'}, info)
-
-        elif self.action == 'REMOVE':
-            info = 'Item "{}" removed from list'.format(param[idx].name)
-            setattr(scn, self.customindex, idx-1)
-            param.remove(idx)
-            for i in range(idx-1, len(param)-1):
-                update_color_preview(res_module, i)
-            self.report({'INFO'}, info)
-
-    if self.action == 'ADD':
-        if context.object:
-            item = param.add()
-            update_color_preview(res_module, len(param)-1)
-            for i in range(len(param)-1, idx+1, -1):
-                param.move(i, i-1)
-            setattr(scn, self.customindex, idx)
-            self.report({'INFO'}, "Item added to list on position {}".format(idx))
-    return {"FINISHED"}
-
-
 def action_invoke(self, context, event, arr_bname = False):
     scn = context.scene
     idx = getattr(scn, self.customindex)
-    blocktool = scn.block_tool
 
     if arr_bname:
-        param = getattr(getattr(blocktool, self.bname)[self.bindex], self.pname)
+        tool = scn.my_tool
+        param = getattr(getattr(tool, self.bname)[self.bindex], self.pname)
     else:
-        param = getattr(getattr(blocktool, self.bname), self.pname)
+        tool = scn.block_tool
+        param = getattr(getattr(tool, self.bname), self.pname)
 
     try:
         item = param[idx]
@@ -145,7 +94,10 @@ def action_invoke(self, context, event, arr_bname = False):
 
         elif self.action == 'REMOVE':
             info = 'Item "{}" removed from list'.format(param[idx].name)
-            setattr(scn, self.customindex, idx-1)
+            if idx == 0:
+                setattr(scn, self.customindex, 0)
+            else:
+                setattr(scn, self.customindex, idx-1)
             param.remove(idx)
             self.report({'INFO'}, info)
 
@@ -157,32 +109,6 @@ def action_invoke(self, context, event, arr_bname = False):
             setattr(scn, self.customindex, idx)
             self.report({'INFO'}, "Item added to list on position {}".format(idx))
     return {"FINISHED"}
-
-@make_annotations
-class CUSTOM_OT_actions_color(Operator):
-    """Move items up and down, add and remove"""
-    bl_idname = "custom.list_action_color"
-    bl_label = "List Actions"
-    bl_description = "Move items up and down, add and remove"
-    bl_options = {'REGISTER'}
-
-    action = bpy.props.EnumProperty(
-        items=(
-            ('UP', "Up", ""),
-            ('DOWN', "Down", ""),
-            ('REMOVE', "Remove", ""),
-            ('ADD', "Add", "")))
-
-    bname = bpy.props.StringProperty()
-
-    bindex = bpy.props.IntProperty(default=-1)
-
-    pname = bpy.props.StringProperty()
-
-    customindex = bpy.props.StringProperty()
-
-    def invoke(self, context, event):
-        return action_invoke_color(self, context, event, True)
 
 
 @make_annotations
@@ -244,8 +170,6 @@ class CUSTOM_OT_actions(Operator):
 class CUSTOM_UL_colors(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # split = layout_split(layout, 0.5)
-        # split.label(text= "Index: {}".format(index+1))
         layout.prop(item, "value", text="")
 
     def invoke(self, context, event):
@@ -254,8 +178,6 @@ class CUSTOM_UL_colors(UIList):
 class CUSTOM_UL_colors_grid(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # split = layout_split(layout, 0.5)
-        # split.label(text= "Index: {}".format(index+1))
         layout.label(text="{}".format(item.value))
 
     def invoke(self, context, event):
@@ -265,8 +187,8 @@ class CUSTOM_UL_colors_grid(UIList):
 class CUSTOM_UL_materials(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout_split(layout, 0.3)
-        split.label(text= "Index: {}".format(index+1))
+        split = layout_split(layout, 0.15)
+        split.label(text= "{}".format(index+1))
         split.template_ID(item, 'id_mat')
 
     def invoke(self, context, event):
@@ -275,8 +197,8 @@ class CUSTOM_UL_materials(UIList):
 class CUSTOM_UL_textures(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout_split(layout, 0.3)
-        split.label(text= "Index: {}".format(index+1))
+        split = layout_split(layout, 0.15)
+        split.label(text= "{}".format(index+1))
         split.template_ID(item, 'id_tex')
 
     def invoke(self, context, event):
@@ -285,8 +207,8 @@ class CUSTOM_UL_textures(UIList):
 class CUSTOM_UL_maskfiles(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout_split(layout, 0.3)
-        split.label(text= "Index: {}".format(index+1))
+        split = layout_split(layout, 0.15)
+        split.label(text= "{}".format(index+1))
         split.template_ID(item, 'id_msk')
 
     def invoke(self, context, event):
@@ -295,34 +217,12 @@ class CUSTOM_UL_maskfiles(UIList):
 class CUSTOM_UL_items(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        split = layout_split(layout, 0.3)
-        split.label(text= "Index: {}".format(index+1))
+        split = layout_split(layout, 0.15)
+        split.label(text= "{}".format(index+1))
         split.prop(item, "value", text="", emboss=False, translate=False)
 
     def invoke(self, context, event):
         pass
-
-class CUSTOM_PT_objectList(Panel):
-    """Adds a custom panel to the TEXT_EDITOR"""
-    bl_idname = 'TEXT_PT_my_panel'
-    bl_space_type = "TEXT_EDITOR"
-    bl_region_type = "UI"
-    bl_label = "Custom Object List Demo"
-
-    def draw(self, context):
-        layout = self.layout
-        scn = bpy.context.scene
-
-        rows = 2
-        row = layout.row()
-        row.template_list("CUSTOM_UL_items", "float_list", scn, "custom", scn, "custom_index", rows=rows)
-
-        col = row.column(align=True)
-        col.operator("custom.list_action", icon='PLUS', text="").action = 'ADD'
-        col.operator("custom.list_action", icon='CANCEL', text="").action = 'REMOVE'
-        col.separator()
-        col.operator("custom.list_action", icon='TRIA_UP', text="").action = 'UP'
-        col.operator("custom.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
 
 def draw_list_controls(layout, list_type, bname, bindex, pname, custom_index):
@@ -364,13 +264,6 @@ def draw_list_controls(layout, list_type, bname, bindex, pname, custom_index):
 # -------------------------------------------------------------------
 
 @make_annotations
-class CUSTOM_PG_objectCollection(PropertyGroup):
-    #name: StringProperty() -> Instantiated by default
-    obj = PointerProperty(
-        name="Object",
-        type=bpy.types.Object)
-
-@make_annotations
 class PropIndex(PropertyGroup):
     value = IntProperty()
 
@@ -387,15 +280,12 @@ class PropIndexList(PropertyGroup):
 _classes = [
     CUSTOM_OT_actions,
     CUSTOM_OT_actions_arrbname,
-    CUSTOM_OT_actions_color,
     CUSTOM_UL_colors,
     CUSTOM_UL_colors_grid,
     CUSTOM_UL_textures,
     CUSTOM_UL_maskfiles,
     CUSTOM_UL_materials,
     CUSTOM_UL_items,
-    CUSTOM_PT_objectList,
-    CUSTOM_PG_objectCollection,
     PropIndex,
     PropIndexList
 ]
@@ -406,7 +296,6 @@ def register():
             bpy.utils.register_class(cls)
 
     # Custom scene properties
-    bpy.types.Scene.custom = CollectionProperty(type=CUSTOM_PG_objectCollection)
     bpy.types.Scene.custom_index = IntProperty()
     bpy.types.Scene.palette_index = IntProperty()
     bpy.types.Scene.textures_index = IntProperty()
@@ -427,7 +316,7 @@ def unregister():
             bpy.utils.unregister_class(cls)
 
     attrs = [
-        "custom", "custom_index", "palette_index", 
+        "custom_index", "palette_index", 
         "textures_index", "materials_index", "maskfiles_index"
         "palette_row_indexes", "palette_row_index",
         "palette_col_indexes","palette_col_index"

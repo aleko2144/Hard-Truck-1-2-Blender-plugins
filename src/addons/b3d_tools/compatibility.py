@@ -48,6 +48,19 @@ def get_user_preferences(context=None):
     else:
         return None
     
+def get_object_hidden(block):
+    if is_before_2_80():
+        return block.hide
+    else:
+        return block.hide_get()
+
+
+def set_object_hidden(block, state):
+    if is_before_2_80():
+        block.hide = state
+    else:
+        block.hide_set(state)
+
 def get_or_create_collection(name):
     if is_before_2_80():
         return bpy.context.scene
@@ -93,6 +106,13 @@ def set_active_object(obj):
         bpy.context.scene.objects.active = obj
     else:
         bpy.context.view_layer.objects.active = obj
+
+def get_cursor_location():
+    if is_before_2_80():
+        return bpy.context.scene.cursor_location
+    else:
+        return bpy.context.scene.cursor.location
+
 
 def get_ui_region():
     if is_before_2_80():
