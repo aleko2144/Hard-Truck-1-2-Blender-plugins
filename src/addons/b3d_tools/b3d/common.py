@@ -11,7 +11,8 @@ from ..consts import (
 )
 
 from ..compatibility import (
-    is_before_2_80
+    is_before_2_80,
+    matrix_multiply
 )
 
 #Setup module logger
@@ -447,7 +448,7 @@ def get_mult_obj_bounding_sphere(objn_transfs, mode='BBOX'):
         for objn_transf in objn_transfs:
             obj = bpy.data.objects[objn_transf['obj']]
             transf = bpy.data.objects[objn_transf['transf']]
-            points_co_global.extend([transf.matrix_world @ Vector(bbox) for bbox in obj.bound_box])
+            points_co_global.extend([matrix_multiply(transf.matrix_world, Vector(bbox)) for bbox in obj.bound_box])
 
     def get_center(l):
         return (max(l) + min(l)) / 2 if l else 0.0
@@ -462,8 +463,8 @@ def get_single_bounding_sphere(obj, local = False):
     center = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
     p1 = obj.bound_box[0]
     if not local:
-        center = obj.matrix_world @ center
-        p1 = obj.matrix_world @ Vector(obj.bound_box[0])
+        center = matrix_multiply(obj.matrix_world, center)
+        p1 = matrix_multiply(obj.matrix_world, Vector(obj.bound_box[0]))
     rad = get_pythagor_length(center, p1)
     return [center, rad]
 

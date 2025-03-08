@@ -18,6 +18,10 @@ from .class_descr import (
     Blk050, Blk051, Blk052
 )
 
+from ..compatibility import (
+    matrix_multiply
+)
+
 #Setup module logger
 log = exportway_logger
 
@@ -69,7 +73,7 @@ def write_vdat(file, block):
     file.write(struct.pack("<i", 4+len(points)*24))
     file.write(struct.pack("<i", len(points)))
     for point in points:
-        file.write(struct.pack("<ddd", *(block.matrix_world @ point.co.xyz)))
+        file.write(struct.pack("<ddd", *(matrix_multiply(block.matrix_world, point.co.xyz))))
 
 
 def write_ortn(file, block):

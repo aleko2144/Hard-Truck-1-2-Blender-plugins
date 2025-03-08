@@ -79,7 +79,9 @@ from .common import (
 
 
 from ..compatibility import (
-    get_uv_layers
+    get_uv_layers,
+    matrix_multiply,
+    get_empty_size
 )
 
 #Setup module logger
@@ -652,6 +654,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 file.write(struct.pack("<i", len(polygons))) #Polygon count
 
                 format_flags_attrs = obj.data.attributes.get(Pfb008.Format_Flags.get_prop())
+                # format_flags_attrs = None #temporary
                 if format_flags_attrs is not None:
                     format_flags_attrs = format_flags_attrs.data
 
@@ -690,7 +693,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     l_uvs = {}
                     for li in poly.loop_indices:
                         vi = mesh.loops[li].vertex_index
-                        l_uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
+                        l_uvs[vi] = mesh.uv_layers[0].data[li].uv
 
                     for i, vert in enumerate(poly.vertices):
                         file.write(struct.pack("<i", offset + vert))
@@ -866,7 +869,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 # Points list
                 for point in point_list:
-                    file.write(struct.pack("<3f", *(block.matrix_world @ Vector(point[:3]))))
+                    file.write(struct.pack("<3f", *(matrix_multiply(block.matrix_world, Vector(point[:3])))))
                     # file.write(struct.pack("<f", point.x))
                     # file.write(struct.pack("<f", point.y))
                     # file.write(struct.pack("<f", point.z))
@@ -905,7 +908,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     file.write(struct.pack("<i", len(poly.vertices)))
                     l_vertexes = poly.vertices
                     for vert in poly.vertices:
-                        file.write(struct.pack("<3f", *(block.matrix_world @ Vector(mesh.vertices[vert].co))))
+                        file.write(struct.pack("<3f", *(matrix_multiply(block.matrix_world, Vector(mesh.vertices[vert].co)))))
 
                 # file.write(struct.pack("<i", 0)) #Verts Count
 
@@ -976,13 +979,14 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 # sprite_center = block[Blk028.Sprite_Center.get_prop()]
                 sprite_center = 0.125 * sum((Vector(b) for b in block.bound_box), Vector())
-                sprite_center = block.matrix_world @ sprite_center
+                sprite_center = matrix_multiply(block.matrix_world, sprite_center)
 
                 write_mesh_sphere(file, block)
                 file.write(struct.pack("<3f", *block.location)) #sprite center
 
 
                 format_flags_attrs = obj.data.attributes[Pfb028.Format_Flags.get_prop()].data
+                # format_flags_attrs = None #temporary
                 some_props = get_mesh_props(obj)
 
                 mesh = block.data
@@ -1000,11 +1004,14 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     l_uvs = {}
                     for li in poly.loop_indices:
                         vi = mesh.loops[li].vertex_index
-                        l_uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
+                        l_uvs[vi] = mesh.uv_layers[0].data[li].uv
 
                     verts = poly.vertices
 
-                    format_raw = format_flags_attrs[poly.index].value
+                    if format_flags_attrs is None:
+                        format_raw = 2 #default
+                    else:
+                        format_raw = format_flags_attrs[poly.index].value
 
                     file.write(struct.pack("<i", format_raw)) # format with UVs TODO: not consts
                     file.write(struct.pack("<f", 1.0)) # TODO: not consts
@@ -1056,7 +1063,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 else:
                     write_name(get_room_name(current_res, roomname1), file)
 
-                vertexes = [block.matrix_world @ cn.co for cn in block.data.vertices]
+                vertexes = [matrix_multiply(block.matrix_world, cn.co) for cn in block.data.vertices]
 
                 if to_import_second_side:
                     p1 = vertexes[0]
@@ -1128,6 +1135,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 file.write(struct.pack("<i", len(polygons))) #Polygon count
 
                 format_flags_attrs = obj.data.attributes[Pfb035.Format_Flags.get_prop()].data
+                # format_flags_attrs = None #temporary
 
                 mesh = block.data
 
@@ -1137,7 +1145,10 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     use_normals = False
                     normal_switch = False
                     l_material_ind = get_material_index_in_res(obj.data.materials[poly.material_index].name, current_res)
-                    format_raw = format_flags_attrs[poly.index].value
+                    if format_flags_attrs is None:
+                        format_raw = 2 #default
+                    else:
+                        format_raw = format_flags_attrs[poly.index].value
                     # format_raw = 0
                     file.write(struct.pack("<i", format_raw))
                     file.write(struct.pack("<f", 1.0)) # TODO: not consts
@@ -1161,7 +1172,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     l_uvs = {}
                     for li in poly.loop_indices:
                         vi = mesh.loops[li].vertex_index
-                        l_uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
+                        l_uvs[vi] = mesh.uv_layers[0].data[li].uv
 
                     for i, vert in enumerate(poly.vertices):
                         file.write(struct.pack("<i", offset + vert))
@@ -1315,7 +1326,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
             elif obj_type == 40:
 
-                write_bound_sphere(file, block.location, block.empty_display_size)
+                write_bound_sphere(file, block.location, get_empty_size(block))
                 write_name(block[Blk040.Name1.get_prop()], file)
                 write_name(block[Blk040.Name2.get_prop()], file)
                 file.write(struct.pack("<i", block[Blk040.Unk_Int1.get_prop()]))
@@ -1354,7 +1365,7 @@ def get_mesh_props(obj):
 
     mat = obj.matrix_world
 
-    vertexes = [(mat @ cn.co) for cn in mesh.vertices]
+    vertexes = [(matrix_multiply(mat, cn.co)) for cn in mesh.vertices]
 
     local_verts = [cn.co for cn in mesh.vertices]
 
@@ -1362,7 +1373,7 @@ def get_mesh_props(obj):
     for poly in polygons:
         for li in poly.loop_indices:
             vi = mesh.loops[li].vertex_index
-            uvs[vi] = get_uv_layers(mesh)['UVMap'].data[li].uv
+            uvs[vi] = mesh.uv_layers[0].data[li].uv     #UVMap
 
     normals = [cn.normal for cn in mesh.vertices]
 

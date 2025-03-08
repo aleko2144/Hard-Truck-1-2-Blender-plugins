@@ -302,9 +302,9 @@ def set_uv_values(uvObj, b3dMesh, uv):
         for i, texpoly in enumerate(uvObj.data):
             # texpoly.image = Imgs[texnum]
             poly = b3dMesh.polygons[i]
-            for j,k in enumerate(poly.loop_indices):
+            for j,loop in enumerate(poly.loop_indices):
                 uvs_mesh = [uv[i][j][0],1 - uv[i][j][1]]
-                uvLoop.data[k].uv = uvs_mesh
+                uvLoop.data[loop].uv = uvs_mesh
     else:
         
         # custom_uv = get_uv_layers(b3d_mesh).new()

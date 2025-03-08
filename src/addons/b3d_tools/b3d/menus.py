@@ -27,7 +27,7 @@ from .class_descr import (
     BoolBlock
 )
 from . import (
-    import_b3d, export_b3d, import_res
+    import_b3d, export_b3d, import_res, export_res
 )
 from .common import (
     res_modules_callback,
@@ -216,7 +216,7 @@ class ExportRES(Operator, ExportHelper):
 
         log.info('Importing to folder {}'.format(self.directory))
         t = time.mktime(datetime.datetime.now().timetuple())
-        export_b3d.export_res(context, self, self.directory)
+        export_res.export_res(context, self, self.directory)
         t = time.mktime(datetime.datetime.now().timetuple()) - t
         log.info('Finished importing in {} seconds'.format(t))
 
@@ -499,7 +499,7 @@ class ExportB3D(Operator, ExportHelper):
         log.info('Exporting to folder {}'.format(self.filepath))
         if self.to_export_res:
             t = time.mktime(datetime.datetime.now().timetuple())
-            export_b3d.export_res(context, self, self.filepath)
+            export_res.export_res(context, self, self.filepath)
             t = time.mktime(datetime.datetime.now().timetuple()) - t
             log.info('Finished exporting RES in {} seconds'.format(t))
 

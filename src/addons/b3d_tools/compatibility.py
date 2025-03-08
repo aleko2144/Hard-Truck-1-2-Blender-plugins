@@ -89,11 +89,23 @@ def set_empty_type(empty, etype):
     else:
         empty.empty_display_type = etype
 
+def get_empty_type(empty, etype):
+    if is_before_2_80():
+        return empty.empty_draw_type
+    else:
+        return empty.empty_display_type
+
 def set_empty_size(empty, esize):
     if is_before_2_80():
         empty.empty_draw_size = esize
     else:
         empty.empty_display_size = esize
+
+def get_empty_size(empty):
+    if is_before_2_80():
+        return empty.empty_draw_size
+    else:
+        return empty.empty_display_size
 
 def get_active_object():
     if is_before_2_80():
@@ -113,6 +125,11 @@ def get_cursor_location():
     else:
         return bpy.context.scene.cursor.location
 
+def matrix_multiply(a, b):
+    if is_before_2_80():
+        return a * b
+    else:
+        return a @ b
 
 def get_ui_region():
     if is_before_2_80():
