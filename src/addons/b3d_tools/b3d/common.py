@@ -486,6 +486,72 @@ def get_level_group(obj):
         return int(parent.name[6]) #GROUP_n
     return 0
 
+class RGBPacker:
+    
+    @staticmethod
+    def pack_byte_to_float(_byte):
+        return _byte / 255
+
+    @staticmethod
+    def pack_int_to_4floats(_int):
+        result = [0.0, 0.0, 0.0, 0.0]
+        result[0] = RGBPacker.pack_byte_to_float((_int >> 24) & 255)
+        result[1] = RGBPacker.pack_byte_to_float((_int >> 16) & 255)
+        result[2] = RGBPacker.pack_byte_to_float((_int >> 8) & 255)
+        result[3] = RGBPacker.pack_byte_to_float((_int) & 255)
+        return result
+
+    @staticmethod
+    def unpack_float_to_byte(_float):
+        return round(_float * 255)
+
+    @staticmethod
+    def unpack_4floats_to_int(_float_arr):
+        result = 0
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[0]) << 24)
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[1]) << 16)
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[2]) << 8)
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[3]))
+        return result
+
+
+class FloatPacker:
+    templ_f = 0b111111000000000000000000000000 #mantissa mask, predefined 6 bits to decrease conversion error
+    mask_f = 0b111111011111111000000000000000 # float mask for mantissa 6 bits and first 8 exponent bits
+    b_shift = 15 #bit shifting to correct exponent
+
+    @staticmethod
+    def pack_byte_to_float(_byte):
+        return itof((FloatPacker.templ_f | (_byte << FloatPacker.b_shift)) & FloatPacker.mask_f)
+            
+    @staticmethod
+    def pack_int_to_4floats(_int):
+        result = [0.0, 0.0, 0.0, 0.0]
+        result[0] = FloatPacker.pack_byte_to_float((_int >> 24) & 255)
+        result[1] = FloatPacker.pack_byte_to_float((_int >> 16) & 255)
+        result[2] = FloatPacker.pack_byte_to_float((_int >> 8) & 255)
+        result[3] = FloatPacker.pack_byte_to_float((_int) & 255)
+        return result
+    
+    @staticmethod
+    def unpack_float_to_byte(_float):
+        return ftoi(_float) >> FloatPacker.b_shift & 255
+
+    @staticmethod
+    def unpack_4floats_to_int(_float_arr):
+        result = 0
+        result = result | (FloatPacker.unpack_float_to_byte(_float_arr[0]) << 24)
+        result = result | (FloatPacker.unpack_float_to_byte(_float_arr[1]) << 16)
+        result = result | (FloatPacker.unpack_float_to_byte(_float_arr[2]) << 8)
+        result = result | (FloatPacker.unpack_float_to_byte(_float_arr[3]))
+        return result
+
+def ftoi(_float):
+    return struct.unpack('<i', struct.pack('<f', _float))[0]
+
+def itof(_int):
+    return struct.unpack('<f', struct.pack('<i', _int))[0]
+
 def referenceables_callback(self, context):
 
     mytool = context.scene.my_tool

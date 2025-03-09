@@ -1,5 +1,6 @@
 import bpy
 import re
+import struct
 
 from .class_descr import (
     Blk018,
@@ -15,7 +16,9 @@ from .common import (
     is_mesh_block,
     get_root_obj,
     get_all_children,
-    get_level_group
+    get_level_group,
+    itof,
+    RGBPacker
 )
 from .class_descr import (
     FieldType
@@ -306,6 +309,9 @@ def get_hierarchy_roots(root):
     return res
 
 
+# ------------------------------------------------------------------------
+#   LOD scripts (10)
+# ------------------------------------------------------------------------
 def process_lod(root, state, explevel = 0, curlevel = -1):
 
     stack = [[root, curlevel, False]]
@@ -352,7 +358,6 @@ def process_lod(root, state, explevel = 0, curlevel = -1):
             else:
                 stack.append([direct_child, clevel, is_active])
 
-
 def show_lod(root):
     if root.parent is None:
         hroots = get_hierarchy_roots(root)
@@ -374,6 +379,9 @@ def hide_lod(root):
         process_lod(root, True, 0, -1)
 
 
+# ------------------------------------------------------------------------
+#    Conditional scripts (21)
+# ------------------------------------------------------------------------
 def process_cond(root, group, state):
 
     curlevel = 0
@@ -440,7 +448,6 @@ def show_conditionals(root, group):
     else:
         process_cond(root, group, False)
 
-
 def hide_conditionals(root, group):
 
     if root.parent is None:
@@ -452,6 +459,11 @@ def hide_conditionals(root, group):
     else:
         process_cond(root, group, True)
 
+
+
+# ------------------------------------------------------------------------
+#    drivers
+# ------------------------------------------------------------------------
 def create_center_driver(src_obj, bname, pname):
     d = None
     for i in range(3):
@@ -828,14 +840,17 @@ def set_per_face_by_type(context, b3d_obj, zclass):
     bpy.ops.object.mode_set(mode = 'EDIT')
 
 def create_custom_attribute(mesh, values, zclass, zobj):
-    if is_before_2_93():
-        return
+
     ctype = BlockClassHandler.get_block_type_from_bclass(zclass)
     domain = ''
     if ctype == 'Pvb':
         domain = 'POINT'
     elif ctype == 'Pfb':
         domain = 'FACE'
+
+    if is_before_2_93() and ctype == 'Pfb':
+        create_per_face_vc_attributes(mesh, values, zclass, zobj)
+        return
 
     if zobj.get_block_type() == FieldType.FLOAT:
         ztype = 'FLOAT'
@@ -865,3 +880,22 @@ def create_custom_attribute(mesh, values, zclass, zobj):
         for i in range(len(attr)):
             setattr(attr[i], "value", values[i])
 
+
+
+def create_per_face_vc_attributes(mesh, values, zclass, zobj):
+    
+    ctype = BlockClassHandler.get_block_type_from_bclass(zclass)
+
+    if ctype == 'Pfb':
+
+        if zobj.get_block_type() in [FieldType.INT, FieldType.V_FORMAT]:
+            colors = mesh.vertex_colors.new(name=zobj.get_prop())
+            for poly_idx, poly in enumerate(mesh.polygons):
+                val_arr = RGBPacker.pack_int_to_4floats(values[poly_idx])  # increased ieee-754 mantissa
+                for loop in poly.loop_indices:
+                    colors.data[loop].color[0] = val_arr[1]
+                    colors.data[loop].color[1] = val_arr[2]
+                    colors.data[loop].color[2] = val_arr[3]
+                after_packing = colors.data[poly.loop_indices[0]].color
+                packed = [after_packing[0], after_packing[0], after_packing[1], after_packing[2]]
+                unpacked = RGBPacker.unpack_4floats_to_int(packed)

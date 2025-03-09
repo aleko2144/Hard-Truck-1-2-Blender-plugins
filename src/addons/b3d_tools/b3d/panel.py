@@ -1201,12 +1201,13 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
     @classmethod
     def poll(self,context):
         b3d_obj = bpy.context.object
-        if consts.BLOCK_TYPE in b3d_obj:
-            block_type = b3d_obj[consts.BLOCK_TYPE]
-        else:
-            block_type = None
+        if b3d_obj is not None: 
+            if consts.BLOCK_TYPE in b3d_obj:
+                block_type = b3d_obj[consts.BLOCK_TYPE]
+            else:
+                block_type = None
 
-        return (context.object is not None) and block_type in [8, 28, 35]
+            return (context.object is not None) and block_type in [8, 28, 35]
 
     def draw(self, context):
         layout = self.layout

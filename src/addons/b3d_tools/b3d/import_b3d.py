@@ -731,20 +731,20 @@ def import_b3d(file, context, self, filepath):
                     vertex_count = struct.unpack("<i",file.read(4))[0]
 
                     for j in range(vertex_count):
-                        face = struct.unpack("<i",file.read(4))[0]
-                        faces.append(face)
+                        face_idx = struct.unpack("<i",file.read(4))[0]
+                        faces.append(face_idx)
                         if poly_format & 0b10:
                             # uv override
                             for k in range(uv_count):
-                                poly_block_uvs[k][face] = struct.unpack("<2f",file.read(8))
+                                poly_block_uvs[k][face_idx] = struct.unpack("<2f",file.read(8))
                         else:
-                            poly_block_uvs[0][face] = vertex_block_uvs[0][face]
+                            poly_block_uvs[0][face_idx] = vertex_block_uvs[0][face_idx]
                         # if used with no-normals vertex blocks(6,7) use this normals
                         if poly_format & 0b100000 and poly_format & 0b10000:
                             if poly_format & 0b1:
-                                l_normals[face] = struct.unpack("<3f",file.read(12))
+                                l_normals[face_idx] = struct.unpack("<3f",file.read(12))
                             else:
-                                l_normals_off[face] = struct.unpack("<f",file.read(4))
+                                l_normals_off[face_idx] = struct.unpack("<f",file.read(4))
 
                     #Save materials for faces
                     if texnum in texnums:
@@ -1875,19 +1875,19 @@ def import_b3d(file, context, self, filepath):
                     vertex_count = struct.unpack("<i",file.read(4))[0]
 
                     for j in range(vertex_count):
-                        face = struct.unpack("<i",file.read(4))[0]
-                        faces.append(face)
+                        face_idx = struct.unpack("<i",file.read(4))[0]
+                        faces.append(face_idx)
                         if poly_format & 0b10:
                             # uv override
                             for k in range(uv_count):
-                                poly_block_uvs[k][face] = struct.unpack("<2f",file.read(8))
+                                poly_block_uvs[k][face_idx] = struct.unpack("<2f",file.read(8))
                         else:
-                            poly_block_uvs[0][face] = vertex_block_uvs[0][face]
+                            poly_block_uvs[0][face_idx] = vertex_block_uvs[0][face_idx]
                         if poly_format & 0b100000 and poly_format & 0b10000:
                             if poly_format & 0b1:
-                                l_normals[face] = struct.unpack("<3f",file.read(12))
+                                l_normals[face_idx] = struct.unpack("<3f",file.read(12))
                             else:
-                                l_normals_off[face] = struct.unpack("<f",file.read(4))
+                                l_normals_off[face_idx] = struct.unpack("<f",file.read(4))
 
 
                     faces_all.append(faces)

@@ -412,14 +412,14 @@ class ResBlock(bpy.types.PropertyGroup):
 # FieldType.SPHERE_EDIT
 
 class BlkParam():
-    block_type = ''
-    name = 'Unknown'
-    description = 'Unknown parameter'
-    default_value = ''
-    subtype = ''
-    group = ''
-    callback = ''
-    items = None
+    block_type = ''                     #Block
+    name = 'Unknown'                    #Parameter name in UI
+    description = 'Unknown parameter'   #Parameter description in UI
+    default_value = ''                  #Default value for simple types(int, float)
+    subtype = ''                        #Type for Enumerator values
+    group = ''                          #Used for grouping values in UI
+    callback = ''                       #Callback for dynamic enumerators
+    items = None                        #Statis enumerator values
 
     @classmethod
     def get_prop(cls):
@@ -488,7 +488,7 @@ class EnumDynParam(BlkParam):
     callback = FieldType.SPACE_NAME
 
 class VFormatParam(BlkParam):
-    block_type = FieldType.V_FORMAT
+    block_type = FieldType.V_FORMAT #Integer
 
 class SphereEditParam(BlkParam):
     block_type = FieldType.SPHERE_EDIT

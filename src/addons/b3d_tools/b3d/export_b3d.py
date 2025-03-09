@@ -74,14 +74,17 @@ from .common import (
     get_all_children,
     get_mult_obj_bounding_sphere,
     get_single_bounding_sphere,
-    write_size
+    write_size,
+    ftoi,
+    RGBPacker
 )
 
 
 from ..compatibility import (
     get_uv_layers,
     matrix_multiply,
-    get_empty_size
+    get_empty_size,
+    is_before_2_93
 )
 
 #Setup module logger
@@ -591,6 +594,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 offset = 0
                 all_children = [cn for cn in get_all_children(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
+                all_children.sort(key = lambda block:block.name)
                 for ch in all_children:
                     obj = bpy.data.objects[ch.name]
                     some_props = get_mesh_props(obj)
@@ -602,8 +606,8 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 file.write(struct.pack("<i", offset)) #Vertex count
 
-                for mesh in pass_to_mesh.values():
-                    verts, uvs, normals, faces, local_verts = mesh['props']
+                for key in sorted(pass_to_mesh.keys()):
+                    verts, uvs, normals, faces, local_verts = pass_to_mesh[key]['props']
                     for i, v in enumerate(verts):
                         file.write(struct.pack("<3f", *v))
                         file.write(struct.pack("<f", uvs[i][0]))
@@ -620,10 +624,11 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 offset = 0
                 all_children = [cn for cn in get_all_children(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
+                all_children.sort(key = lambda block:block.name)
                 for ch in all_children:
-                    obj = bpy.data.objects[ch.name]
-                    some_props = get_mesh_props(obj)
-                    pass_to_mesh[obj.name] = {
+                    # obj = bpy.data.objects[ch.name]
+                    some_props = get_mesh_props(ch)
+                    pass_to_mesh[ch.name] = {
                         "offset": offset,
                         "props": some_props
                     }
@@ -631,8 +636,8 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 file.write(struct.pack("<i", offset)) #Vertex count
 
-                for mesh in pass_to_mesh.values():
-                    verts, uvs, normals, faces, local_verts = mesh['props']
+                for key in sorted(pass_to_mesh.keys()):
+                    verts, uvs, normals, faces, local_verts = pass_to_mesh[key]['props']
                     for i, v in enumerate(verts):
                         file.write(struct.pack("<3f", *v))
                         file.write(struct.pack("<f", uvs[i][0]))
@@ -646,19 +651,27 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 l_pass_to_mesh = extra['pass_to_mesh'][block.name]
 
-                offset = l_pass_to_mesh['offset']
+                l_offset = l_pass_to_mesh['offset']
                 verts, uvs, normals, polygons, local_verts = l_pass_to_mesh['props']
 
                 write_mesh_sphere(file, block)
                 # file.write(struct.pack("<i", 0)) # PolygonCount
                 file.write(struct.pack("<i", len(polygons))) #Polygon count
-
-                format_flags_attrs = obj.data.attributes.get(Pfb008.Format_Flags.get_prop())
-                # format_flags_attrs = None #temporary
-                if format_flags_attrs is not None:
-                    format_flags_attrs = format_flags_attrs.data
-
+                
                 mesh = block.data
+                
+                if is_before_2_93():
+                    format_flags_attrs = []
+                    colors = mesh.vertex_colors.get(Pfb008.Format_Flags.get_prop()).data
+                    for poly in polygons:
+                        val = RGBPacker.unpack_4floats_to_int([0.0, *(colors[poly.loop_indices[0]].color)])
+                        format_flags_attrs.append(val)
+                else:
+                    format_flags_attrs = obj.data.attributes.get(Pfb008.Format_Flags.get_prop())
+                    format_flags_attrs = format_flags_attrs.data
+                # format_flags_attrs = None #temporary
+                # if format_flags_attrs is not None:
+
 
                 for poly in polygons:
                     poly_format = 0
@@ -669,7 +682,10 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     if format_flags_attrs is None:
                         format_raw = 2 # default
                     else:
-                        format_raw = format_flags_attrs[poly.index].value
+                        if is_before_2_93():
+                            format_raw = format_flags_attrs[poly.index]
+                        else:
+                            format_raw = format_flags_attrs[poly.index].value
                     # format_raw = 0 #temporary
                     file.write(struct.pack("<i", format_raw))
                     file.write(struct.pack("<f", 1.0)) # TODO: not consts
@@ -696,7 +712,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                         l_uvs[vi] = mesh.uv_layers[0].data[li].uv
 
                     for i, vert in enumerate(poly.vertices):
-                        file.write(struct.pack("<i", offset + vert))
+                        file.write(struct.pack("<i", l_offset + vert))
                         for k in range(uv_count):
                             file.write(struct.pack("<f", l_uvs[vert][0]))
                             file.write(struct.pack("<f", 1 - l_uvs[vert][1]))
@@ -984,12 +1000,19 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 write_mesh_sphere(file, block)
                 file.write(struct.pack("<3f", *block.location)) #sprite center
 
+                mesh = block.data
 
-                format_flags_attrs = obj.data.attributes[Pfb028.Format_Flags.get_prop()].data
+                if is_before_2_93():
+                    format_flags_attrs = []
+                    colors = mesh.vertex_colors.get(Pfb008.Format_Flags.get_prop()).data
+                    for poly in polygons:
+                        val = RGBPacker.unpack_4floats_to_int([0.0, *(colors[poly.loop_indices[0]].color)])
+                        format_flags_attrs.append(val)
+                else:
+                    format_flags_attrs = obj.data.attributes.get(Pfb008.Format_Flags.get_prop())
+                    format_flags_attrs = format_flags_attrs.data
                 # format_flags_attrs = None #temporary
                 some_props = get_mesh_props(obj)
-
-                mesh = block.data
 
                 l_verts = some_props[4]
                 # l_uvs = some_props[1]
@@ -1009,9 +1032,12 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     verts = poly.vertices
 
                     if format_flags_attrs is None:
-                        format_raw = 2 #default
+                        format_raw = 2 # default
                     else:
-                        format_raw = format_flags_attrs[poly.index].value
+                        if is_before_2_93():
+                            format_raw = format_flags_attrs[poly.index]
+                        else:
+                            format_raw = format_flags_attrs[poly.index].value
 
                     file.write(struct.pack("<i", format_raw)) # format with UVs TODO: not consts
                     file.write(struct.pack("<f", 1.0)) # TODO: not consts
@@ -1123,8 +1149,8 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                                 #probably UVMapVert1 on road objects = tp import them too
 
                 l_pass_to_mesh = extra['pass_to_mesh'][block.name]
-
-                offset = l_pass_to_mesh['offset']
+                
+                l_offset = l_pass_to_mesh['offset']
                 verts, uvs, normals, polygons, local_verts = l_pass_to_mesh['props']
 
                 write_mesh_sphere(file, block)
@@ -1134,10 +1160,18 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 # file.write(struct.pack("<i", 0)) #Polygon count
                 file.write(struct.pack("<i", len(polygons))) #Polygon count
 
-                format_flags_attrs = obj.data.attributes[Pfb035.Format_Flags.get_prop()].data
-                # format_flags_attrs = None #temporary
-
                 mesh = block.data
+
+                if is_before_2_93():
+                    format_flags_attrs = []
+                    colors = mesh.vertex_colors.get(Pfb008.Format_Flags.get_prop()).data
+                    for poly in polygons:
+                        val = RGBPacker.unpack_4floats_to_int([0.0, *(colors[poly.loop_indices[0]].color)])
+                        format_flags_attrs.append(val)
+                else:
+                    format_flags_attrs = obj.data.attributes.get(Pfb008.Format_Flags.get_prop())
+                    format_flags_attrs = format_flags_attrs.data
+                # format_flags_attrs = None #temporary
 
                 for poly in polygons:
                     poly_format = 0
@@ -1146,9 +1180,12 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                     normal_switch = False
                     l_material_ind = get_material_index_in_res(obj.data.materials[poly.material_index].name, current_res)
                     if format_flags_attrs is None:
-                        format_raw = 2 #default
+                        format_raw = 2 # default
                     else:
-                        format_raw = format_flags_attrs[poly.index].value
+                        if is_before_2_93():
+                            format_raw = format_flags_attrs[poly.index]
+                        else:
+                            format_raw = format_flags_attrs[poly.index].value
                     # format_raw = 0
                     file.write(struct.pack("<i", format_raw))
                     file.write(struct.pack("<f", 1.0)) # TODO: not consts
@@ -1175,7 +1212,7 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                         l_uvs[vi] = mesh.uv_layers[0].data[li].uv
 
                     for i, vert in enumerate(poly.vertices):
-                        file.write(struct.pack("<i", offset + vert))
+                        file.write(struct.pack("<i", l_offset + vert))
                         for k in range(uv_count):
                             file.write(struct.pack("<f", l_uvs[vert][0]))
                             file.write(struct.pack("<f", 1 - l_uvs[vert][1]))
@@ -1196,10 +1233,11 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 offset = 0
                 all_children = [cn for cn in get_all_children(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
+                all_children.sort(key = lambda block:block.name)
                 for ch in all_children:
-                    obj = bpy.data.objects[ch.name]
-                    some_props = get_mesh_props(obj)
-                    pass_to_mesh[obj.name] = {
+                    # obj = bpy.data.objects[ch.name]
+                    some_props = get_mesh_props(ch)
+                    pass_to_mesh[ch.name] = {
                         "offset": offset,
                         "props": some_props
                     }
@@ -1228,8 +1266,8 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 file.write(struct.pack("<i", format_raw))
                 file.write(struct.pack("<i", offset)) #Vertex count
 
-                for mesh in pass_to_mesh.values():
-                    verts, uvs, normals, faces, local_verts = mesh['props']
+                for key in sorted(pass_to_mesh.keys()):
+                    verts, uvs, normals, faces, local_verts = pass_to_mesh[key]['props']
                     for i, v in enumerate(verts):
                         file.write(struct.pack("<3f", *v))
                         file.write(struct.pack("<f", uvs[i][0]))
@@ -1260,10 +1298,11 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
 
                 offset = 0
                 all_children = [cn for cn in get_all_children(block) if cn.get(BLOCK_TYPE) and cn.get(BLOCK_TYPE) in [35, 8, 28]]
+                all_children.sort(key = lambda block:block.name)
                 for ch in all_children:
-                    obj = bpy.data.objects[ch.name]
-                    some_props = get_mesh_props(obj)
-                    pass_to_mesh[obj.name] = {
+                    # obj = bpy.data.objects[ch.name]
+                    some_props = get_mesh_props(ch)
+                    pass_to_mesh[ch.name] = {
                         "offset": offset,
                         "props": some_props
                     }
@@ -1290,8 +1329,8 @@ def export_block(obj, is_last, cur_level, max_groups, cur_groups, extra, file):
                 file.write(struct.pack("<i", offset)) #Vertex count
 
 
-                for mesh in pass_to_mesh.values():
-                    verts, uvs, normals, faces, local_verts = mesh['props']
+                for key in sorted(pass_to_mesh.keys()):
+                    verts, uvs, normals, faces, local_verts = pass_to_mesh[key]['props']
                     for i, v in enumerate(verts):
                         file.write(struct.pack("<3f", *v))
                         file.write(struct.pack("<f", uvs[i][0]))
