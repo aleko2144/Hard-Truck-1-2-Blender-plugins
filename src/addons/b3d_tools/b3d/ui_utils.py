@@ -54,10 +54,7 @@ def draw_common(l_self, obj):
     box.label(text="Block group: " + str(level_group))
 
 
-def draw_all_fields_by_type(l_self, context, zclass, multiple_edit = True):
-    draw_fields_by_type(l_self, context, zclass, multiple_edit)
-
-def draw_fields_by_type(l_self, context, zclass, multiple_edit = True):
+def draw_fields_by_type(l_self, zclass, multiple_edit = True):
 
     attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
     boxes = {}
@@ -67,18 +64,11 @@ def draw_fields_by_type(l_self, context, zclass, multiple_edit = True):
         bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass, multiple_edit)
 
         ftype = attr_class.get_block_type()
-        # print('====')
-        # print(bname)
-        # print('===')
-        # print(bnum)
-        # print('====')
-        # print(ftype)
-        # print('====')
         subtype = attr_class.get_subtype()
         cur_group_name = attr_class.get_group()
         prop_text = attr_class.get_name()
         pname = attr_class.get_prop()
-        blocktool = context.scene.block_tool
+        blocktool = bpy.context.scene.block_tool
         cur_layout = l_self.layout
 
         if cur_group_name is not None or len(cur_group_name) > 0:
@@ -128,7 +118,7 @@ def draw_fields_by_type(l_self, context, zclass, multiple_edit = True):
                         if attr is not None:
                             col.prop(attr, pname)
                     else:
-                        col.prop(context.object, '["{}"]'.format(pname), text=prop_text)
+                        col.prop(bpy.context.object, '["{}"]'.format(pname), text=prop_text)
 
                 elif ftype in [FieldType.ENUM_DYN, FieldType.ENUM]:
                     
@@ -147,7 +137,7 @@ def draw_fields_by_type(l_self, context, zclass, multiple_edit = True):
                                 if hasattr(blk, pname):
                                     col.prop(blk, pname)
                             else:
-                                col.prop(context.object, '["{}"]'.format(pname), text=prop_text)
+                                col.prop(bpy.context.object, '["{}"]'.format(pname), text=prop_text)
 
                 elif ftype == FieldType.LIST:
 

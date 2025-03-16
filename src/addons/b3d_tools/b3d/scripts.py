@@ -534,14 +534,16 @@ def show_hide_sphere(context, root, pname):
         # rad driver
         create_rad_driver(b3d_obj, bname, rad_name)
 
+# ------------------------------------------------------------------------
+# Per Object Properties
+# ------------------------------------------------------------------------
 
-
-def get_obj_by_prop(context, b3d_obj, zclass, pname):
+def get_obj_by_prop(b3d_obj, zclass, pname):
 
     attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass, True)
 
-    blocktool = context.scene.block_tool
+    blocktool = bpy.context.scene.block_tool
     for attr_class_name in attrs_cls:
         attr_class = zclass.__dict__[attr_class_name]
 
@@ -557,14 +559,31 @@ def get_obj_by_prop(context, b3d_obj, zclass, pname):
                     item.index = i
                     item.value = obj
 
-def get_all_objs_by_type(context, b3d_obj, zclass):
-    get_objs_by_type(context, b3d_obj, zclass)
+def set_obj_by_prop(b3d_obj, zclass, pname):
 
-def get_objs_by_type(context, b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass, True)
+
+    blocktool = bpy.context.scene.block_tool
+    for attr_class_name in attrs_cls:
+        attr_class = zclass.__dict__[attr_class_name]
+
+        if attr_class.get_prop() == pname:
+
+            if attr_class.get_block_type() == FieldType.LIST:
+                collect = getattr(getattr(blocktool, bname), attr_class.get_prop())
+
+                arr = []
+                for item in list(collect):
+                    arr.append(item.value)
+
+                b3d_obj[attr_class.get_prop()] = arr
+
+def get_objs_by_type(b3d_obj, zclass):
     attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
-    blocktool = context.scene.block_tool
+    blocktool = bpy.context.scene.block_tool
     for attr_class_name in attrs_cls:
         attr_class = zclass.__dict__[attr_class_name]
 
@@ -590,13 +609,19 @@ def get_objs_by_type(context, b3d_obj, zclass):
                 elif attr_class.get_block_type() == FieldType.STRING:
                     blk[attr_class.get_prop()] = str(b3d_obj[attr_class.get_prop()])
 
-                elif attr_class.get_block_type() == FieldType.ENUM \
-                or attr_class.get_block_type() == FieldType.ENUM_DYN:
-                    setattr(
-                        blk,
-                        attr_class.get_prop(),
-                        str(b3d_obj[attr_class.get_prop()])
-                    )
+                elif attr_class.get_block_type() in [FieldType.ENUM, FieldType.ENUM_DYN]:
+                    if attr_class.get_subtype() == FieldType.INT:
+                        setattr(
+                            blk,
+                            attr_class.get_prop(),
+                            int(b3d_obj[attr_class.get_prop()])
+                        )
+                    else: #FieldType.STRING
+                        setattr(
+                            blk,
+                            attr_class.get_prop(),
+                            str(b3d_obj[attr_class.get_prop()])
+                        )
 
                 elif attr_class.get_block_type() == FieldType.LIST:
 
@@ -615,36 +640,11 @@ def get_objs_by_type(context, b3d_obj, zclass):
                         b3d_obj[attr_class.get_prop()]
                     )
 
-def set_obj_by_prop(context, b3d_obj, zclass, pname):
-
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass, True)
-
-    blocktool = context.scene.block_tool
-    for attr_class_name in attrs_cls:
-        attr_class = zclass.__dict__[attr_class_name]
-
-        if attr_class.get_Prop() == pname:
-
-            if attr_class.get_block_type() == FieldType.LIST:
-                collect = getattr(getattr(blocktool, bname), attr_class.get_prop())
-
-                arr = []
-                for item in list(collect):
-                    arr.append(item.value)
-
-                b3d_obj[attr_class.get_prop()] = arr
-
-def set_all_objs_by_type(context, b3d_obj, zclass):
-    set_objs_by_type(context, b3d_obj, zclass)
-
-# def setObjsDefaultByType(context, b3d_obj, zclass):
-
-def set_objs_by_type(context, b3d_obj, zclass):
+def set_objs_by_type(b3d_obj, zclass):
     attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
-    blocktool = context.scene.block_tool
+    blocktool = bpy.context.scene.block_tool
     for attr_class_name in attrs_cls:
         attr_class = zclass.__dict__[attr_class_name]
         if attr_class.get_block_type() != FieldType.SPHERE_EDIT:
@@ -669,7 +669,7 @@ def set_objs_by_type(context, b3d_obj, zclass):
                 # or attr_class.get_block_type() == FieldType.REFERENCEABLE:
                 #     b3d_obj[attr_class.get_prop()] = str(getattr(getattr(mytool, bname), attr_class.get_prop()))
 
-                elif attr_class.get_block_type() == FieldType.ENUM:
+                elif attr_class.get_block_type() in [FieldType.ENUM, FieldType.ENUM_DYN]:
 
                     if attr_class.get_subtype() == FieldType.INT:
                         b3d_obj[attr_class.get_prop()] = int(getattr(blk, attr_class.get_prop()))
@@ -679,9 +679,6 @@ def set_objs_by_type(context, b3d_obj, zclass):
 
                     elif attr_class.get_subtype() == FieldType.FLOAT:
                         b3d_obj[attr_class.get_prop()] = float(getattr(blk, attr_class.get_prop()))
-
-                elif attr_class.get_block_type() == FieldType.ENUM_DYN:
-                    b3d_obj[attr_class.get_prop()] = str(getattr(blk, attr_class.get_prop()))
 
                 elif attr_class.get_block_type() == FieldType.COORD:
                     xyz = getattr(blk, attr_class.get_prop())
@@ -699,25 +696,162 @@ def set_objs_by_type(context, b3d_obj, zclass):
                 else:
                     b3d_obj[attr_class.get_prop()] = getattr(blk, attr_class.get_prop())
 
-def get_from_attributes(context, attr_class, attrs, bname, index):
+# ------------------------------------------------------------------------
+# Per Face Properties
+# ------------------------------------------------------------------------
 
-    blocktool = context.scene.block_tool
+def get_per_face_by_type(b3d_obj, zclass):
+    if is_before_2_93():
+        get_per_face_vc(b3d_obj, zclass)
+    else:
+        get_per_face_attr(b3d_obj, zclass)
 
+def get_per_face_attr(b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    mesh = b3d_obj.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    polygons = get_polygons_by_selected_vertices(b3d_obj)
+    indexes = [cn.index for cn in polygons]
+
+    if len(indexes) > 0:
+        index = indexes[0]
+        for attr_class_name in attrs_cls:
+            attr_class = zclass.__dict__[attr_class_name]
+            attrs = mesh.attributes[attr_class.get_prop()].data
+            get_from_attributes(attr_class, bname, attrs[index])
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def get_per_face_vc(b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    mesh = b3d_obj.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    polygons = get_polygons_by_selected_vertices(b3d_obj)
+    indexes = [cn.index for cn in polygons]
+
+    poly = polygons[0]
+    for attr_class_name in attrs_cls:
+        attr_class = zclass.__dict__[attr_class_name]
+        vcolors = mesh.vertex_colors[attr_class.get_prop()]
+        get_from_vertex_colors(attr_class, bname, vcolors.data[0].color) #taking only first one
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def set_per_face_by_type(b3d_obj, zclass):
+    if is_before_2_93():
+        set_per_face_vc(b3d_obj, zclass)
+    else:
+        set_per_face_attr(b3d_obj, zclass)
+
+def set_per_face_attr(b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    mesh = b3d_obj.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    polygons = get_polygons_by_selected_vertices(b3d_obj)
+    indexes = [cn.index for cn in polygons]
+
+    for index in indexes:
+        for attr_class_name in attrs_cls:
+            attr_class = zclass.__dict__[attr_class_name]
+            attrs = mesh.attributes[attr_class.get_prop()].data
+            set_from_attributes(attr_class, bname, attrs[index])
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def set_per_face_vc(b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    mesh = b3d_obj.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    polygons = get_polygons_by_selected_vertices(b3d_obj)
+
+    for attr_class_name in attrs_cls:
+        vcolors = mesh.vertex_colors[attr_class.get_prop()]
+        attr_class = zclass.__dict__[attr_class_name]
+        for poly in polygons:
+            set_from_vertex_colors(attr_class, bname, vcolors, poly)
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+# ------------------------------------------------------------------------
+# Per Vertex Properties
+# ------------------------------------------------------------------------
+
+def get_per_vertex_by_type(b3d_obj, zclass):
+    get_per_vertex_attr(b3d_obj, zclass)
+
+def get_per_vertex_attr(b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    mesh = b3d_obj.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    vertices = get_selected_vertices(b3d_obj)
+    indexes = [cn.index for cn in vertices]
+
+    if len(indexes) > 0:
+        index = indexes[0]
+        for attr_class_name in attrs_cls:
+            attr_class = zclass.__dict__[attr_class_name]
+            attrs = mesh.attributes[attr_class.get_prop()].data
+            get_from_attributes(attr_class, bname, attrs[index])
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+def set_per_vertex_by_type(b3d_obj, zclass):
+    set_per_vertex_attr(b3d_obj, zclass)
+
+def set_per_vertex_attr(b3d_obj, zclass):
+    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    mesh = b3d_obj.data
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    vertices = get_selected_vertices(b3d_obj)
+    indexes = [cn.index for cn in vertices]
+
+    for index in indexes:
+        for attr_class_name in attrs_cls:
+            attr_class = zclass.__dict__[attr_class_name]
+            attrs = mesh.attributes[attr_class.get_prop()].data
+            set_from_attributes(attr_class, bname, attrs[index])
+
+    bpy.ops.object.mode_set(mode = 'EDIT')
+
+# ------------------------------------------------------------------------
+# Common attribute functions (per face, per vertex)
+# ------------------------------------------------------------------------
+
+def get_from_attributes(attr_class, bname, attr_object):
+    
+    blocktool = bpy.context.scene.block_tool
     blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
-
     if hasattr(blk, "show_"+attr_class.get_prop()):
 
         if attr_class.get_block_type() == FieldType.FLOAT:
-            blk[attr_class.get_prop()] = float(getattr(attrs[index], "value"))
+            blk[attr_class.get_prop()] = float(getattr(attr_object, "value"))
 
         elif attr_class.get_block_type() == FieldType.COORD:
-            blk[attr_class.get_prop()] = getattr(attrs[index], "vector")
+            blk[attr_class.get_prop()] = getattr(attr_object, "vector")
 
         elif attr_class.get_block_type() == FieldType.INT:
-            blk[attr_class.get_prop()] = int(getattr(attrs[index], "value"))
+            blk[attr_class.get_prop()] = int(getattr(attr_object, "value"))
 
         elif attr_class.get_block_type() == FieldType.V_FORMAT:
-            v_format = getattr(attrs[index], "value") ^ 1
+            v_format = getattr(attr_object, "value") ^ 1
             triang_offset = v_format & 0b10000000
             use_uv = v_format & 0b10
             use_normals = v_format & 0b10000 and v_format & 0b100000
@@ -728,22 +862,20 @@ def get_from_attributes(context, attr_class, attrs, bname, index):
             blk['{}_use_normals'.format(attr_class.get_prop())] = use_normals
             blk['{}_normal_flag'.format(attr_class.get_prop())] = normal_flag
 
-def set_from_attributes(context, attr_class, attrs, bname, index):
-
-    blocktool = context.scene.block_tool
-
+def set_from_attributes(attr_class, bname, attr_object):
+    blocktool = bpy.context.scene.block_tool
     blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
 
     if getattr(blk, "show_"+attr_class.get_prop()):
 
         if attr_class.get_block_type() == FieldType.FLOAT:
-            attrs[index].value = blk[attr_class.get_prop()]
+            attr_object.value = blk[attr_class.get_prop()]
 
         elif attr_class.get_block_type() == FieldType.INT:
-            attrs[index].value = blk[attr_class.get_prop()]
+            attr_object.value = blk[attr_class.get_prop()]
 
         elif attr_class.get_block_type() == FieldType.COORD:
-            attrs[index].vector = blk[attr_class.get_prop()]
+            attr_object.vector = blk[attr_class.get_prop()]
 
         elif attr_class.get_block_type() == FieldType.V_FORMAT:
             value = 0
@@ -763,81 +895,87 @@ def set_from_attributes(context, attr_class, attrs, bname, index):
 
             value = value ^ 1
 
-            attrs[index].value = value
+            attr_object.value = value
 
-def get_per_face_by_type(context, b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+# ------------------------------------------------------------------------
+# Common vertex color functions (per face)
+# ------------------------------------------------------------------------
 
-    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+def get_from_vertex_colors(attr_class, bname, vcolor):
+    
+    blocktool = bpy.context.scene.block_tool
+    blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
+    if hasattr(blk, "show_"+attr_class.get_prop()):
 
-    mesh = b3d_obj.data
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    polygons = get_polygons_by_selected_vertices(b3d_obj)
-    indexes = [cn.index for cn in polygons]
+        if attr_class.get_block_type() == FieldType.INT:
+            blk[attr_class.get_prop()] = RGBPacker.unpack_3floats_to_int(vcolor)
 
-    if len(indexes) > 0:
-        index = indexes[0]
-        for attr_class_name in attrs_cls:
-            attr_class = zclass.__dict__[attr_class_name]
-            attrs = mesh.attributes[attr_class.get_prop()].data
-            get_from_attributes(context, attr_class, attrs, bname, index)
+        elif attr_class.get_block_type() == FieldType.V_FORMAT:
+            v_format = RGBPacker.unpack_3floats_to_int(vcolor) ^ 1
+            triang_offset = v_format & 0b10000000
+            use_uv = v_format & 0b10
+            use_normals = v_format & 0b10000 and v_format & 0b100000
+            normal_flag = v_format & 1
 
-    bpy.ops.object.mode_set(mode = 'EDIT')
+            blk['{}_triang_offset'.format(attr_class.get_prop())] = triang_offset
+            blk['{}_use_uvs'.format(attr_class.get_prop())] = use_uv
+            blk['{}_use_normals'.format(attr_class.get_prop())] = use_normals
+            blk['{}_normal_flag'.format(attr_class.get_prop())] = normal_flag
 
-def get_per_vertex_by_type(context, b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
 
-    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+def set_from_vertex_colors(attr_class, bname, vcolors, poly_object):
+    
+    blocktool = bpy.context.scene.block_tool
+    blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
 
-    mesh = b3d_obj.data
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    vertices = get_selected_vertices(b3d_obj)
-    indexes = [cn.index for cn in vertices]
+    if getattr(blk, "show_"+attr_class.get_prop()):
+        
+        if attr_class.get_block_type() == FieldType.INT:
+            val_arr = RGBPacker.pack_int_to_3floats(blk[attr_class.get_prop()])
+            for loop in poly_object.loop_indices:
+                vcolors.data[loop].color[0] = val_arr[0]
+                vcolors.data[loop].color[1] = val_arr[1]
+                vcolors.data[loop].color[2] = val_arr[2]
 
-    if len(indexes) > 0:
-        index = indexes[0]
-        for attr_class_name in attrs_cls:
-            attr_class = zclass.__dict__[attr_class_name]
-            attrs = mesh.attributes[attr_class.get_prop()].data
-            get_from_attributes(context, attr_class, attrs, bname, index)
+        elif attr_class.get_block_type() == FieldType.V_FORMAT:
 
-    bpy.ops.object.mode_set(mode = 'EDIT')
+            value = 0
+            triang_offset = blk['{}_triang_offset'.format(attr_class.get_prop())]
+            use_uv = blk['{}_use_uvs'.format(attr_class.get_prop())]
+            use_normals = blk['{}_use_normals'.format(attr_class.get_prop())]
+            normal_flag = blk['{}_normal_flag'.format(attr_class.get_prop())]
 
-def set_per_vertex_by_type(context, b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+            if triang_offset:
+                value = value ^ 0b10000000
+            if use_uv:
+                value = value ^ 0b10
+            if use_normals:
+                value = value ^ 0b110000
+            if normal_flag:
+                value = value ^ 0b1
 
-    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+            value = value ^ 1
 
-    mesh = b3d_obj.data
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    vertices = get_selected_vertices(b3d_obj)
-    indexes = [cn.index for cn in vertices]
+            val_arr = RGBPacker.pack_int_to_3floats(value)
+            for loop in poly_object.loop_indices:
+                vcolors.data[loop].color[0] = val_arr[0]
+                vcolors.data[loop].color[1] = val_arr[1]
+                vcolors.data[loop].color[2] = val_arr[2]
 
-    for index in indexes:
-        for attr_class_name in attrs_cls:
-            attr_class = zclass.__dict__[attr_class_name]
-            attrs = mesh.attributes[attr_class.get_prop()].data
-            set_from_attributes(context, attr_class, attrs, bname, index)
+# ------------------------------------------------------------------------
+# Other
+# ------------------------------------------------------------------------
 
-    bpy.ops.object.mode_set(mode = 'EDIT')
-
-def set_per_face_by_type(context, b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
-
-    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
-
-    mesh = b3d_obj.data
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    polygons = get_polygons_by_selected_vertices(b3d_obj)
-    indexes = [cn.index for cn in polygons]
-
-    for index in indexes:
-        for attr_class_name in attrs_cls:
-            attr_class = zclass.__dict__[attr_class_name]
-            attrs = mesh.attributes[attr_class.get_prop()].data
-            set_from_attributes(context, attr_class, attrs, bname, index)
-
-    bpy.ops.object.mode_set(mode = 'EDIT')
+def create_per_face_vc(mesh, values, zclass, zobj):
+    
+    if zobj.get_block_type() in [FieldType.INT, FieldType.V_FORMAT]:
+        vcolors = mesh.vertex_colors.new(name=zobj.get_prop())
+        for poly_idx, poly in enumerate(mesh.polygons):
+            val_arr = RGBPacker.pack_int_to_3floats(values[poly_idx]) 
+            for loop in poly.loop_indices:
+                vcolors.data[loop].color[0] = val_arr[0]
+                vcolors.data[loop].color[1] = val_arr[1]
+                vcolors.data[loop].color[2] = val_arr[2]
 
 def create_custom_attribute(mesh, values, zclass, zobj):
 
@@ -849,53 +987,26 @@ def create_custom_attribute(mesh, values, zclass, zobj):
         domain = 'FACE'
 
     if is_before_2_93() and ctype == 'Pfb':
-        create_per_face_vc_attributes(mesh, values, zclass, zobj)
+        create_per_face_vc(mesh, values, zclass, zobj)
         return
+
+    attr_type = "value"
+    ztype = 'INT'
 
     if zobj.get_block_type() == FieldType.FLOAT:
         ztype = 'FLOAT'
-        mesh.attributes.new(name=zobj.get_prop(), type=ztype, domain=domain)
-        attr = mesh.attributes[zobj.get_prop()].data
-        for i in range(len(attr)):
-            setattr(attr[i], "value", values[i])
-
+        
     elif zobj.get_block_type() == FieldType.COORD:
         ztype = 'FLOAT_VECTOR'
-        mesh.attributes.new(name=zobj.get_prop(), type=ztype, domain=domain)
-        attr = mesh.attributes[zobj.get_prop()].data
-        for i in range(len(attr)):
-            setattr(attr[i], "vector", values[i])
+        attr_type = "vector"
 
     elif zobj.get_block_type() == FieldType.INT:
         ztype = 'INT'
-        mesh.attributes.new(name=zobj.get_prop(), type=ztype, domain=domain)
-        attr = mesh.attributes[zobj.get_prop()].data
-        for i in range(len(attr)):
-            setattr(attr[i], "value", values[i])
 
     elif zobj.get_block_type() == FieldType.V_FORMAT:
         ztype = 'INT'
-        mesh.attributes.new(name=zobj.get_prop(), type=ztype, domain=domain)
-        attr = mesh.attributes[zobj.get_prop()].data
-        for i in range(len(attr)):
-            setattr(attr[i], "value", values[i])
 
-
-
-def create_per_face_vc_attributes(mesh, values, zclass, zobj):
-    
-    ctype = BlockClassHandler.get_block_type_from_bclass(zclass)
-
-    if ctype == 'Pfb':
-
-        if zobj.get_block_type() in [FieldType.INT, FieldType.V_FORMAT]:
-            colors = mesh.vertex_colors.new(name=zobj.get_prop())
-            for poly_idx, poly in enumerate(mesh.polygons):
-                val_arr = RGBPacker.pack_int_to_4floats(values[poly_idx])  # increased ieee-754 mantissa
-                for loop in poly.loop_indices:
-                    colors.data[loop].color[0] = val_arr[1]
-                    colors.data[loop].color[1] = val_arr[2]
-                    colors.data[loop].color[2] = val_arr[3]
-                after_packing = colors.data[poly.loop_indices[0]].color
-                packed = [after_packing[0], after_packing[0], after_packing[1], after_packing[2]]
-                unpacked = RGBPacker.unpack_4floats_to_int(packed)
+    mesh.attributes.new(name=zobj.get_prop(), type=ztype, domain=domain)
+    attr = mesh.attributes[zobj.get_prop()].data
+    for i in range(len(attr)):
+        setattr(attr[i], "value", values[i])

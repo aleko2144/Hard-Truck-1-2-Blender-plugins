@@ -457,6 +457,19 @@ class BlkParam():
     def get_group(cls):
         return cls.group
 
+    @classmethod
+    def is_pob(cls): #per object block
+        return cls.__name__[0:3] == 'Blk'
+
+    @classmethod
+    def is_pfb(cls): #per face block
+        return cls.__name__[0:3] == 'Pfb'
+
+    @classmethod
+    def is_pvb(cls): #per vertex block
+        return cls.__name__[0:3] == 'Pvb'
+        
+
 class StringParam(BlkParam):
     block_type = FieldType.STRING
     default_value = ''
@@ -541,6 +554,7 @@ class Pvb035():
 class Pfb008():
     class Format_Flags(VFormatParam):
         name = ''
+        default_value = 144
 
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
@@ -563,6 +577,7 @@ class Pfb008():
 class Pfb028():
     class Format_Flags(VFormatParam):
         name = ''
+        default_value = 144
 
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
@@ -585,6 +600,7 @@ class Pfb028():
 class Pfb035():
     class Format_Flags(VFormatParam):
         name = ''
+        default_value = 144
 
     # disabled for now. Reason: 1) hard to edit 2) more or less static values
     # todo: analyze more
@@ -1134,15 +1150,6 @@ class Blk051():
 class Blk052():
     class Flag(IntParam):
         name = 'Flag'
-
-block_classes = [
-    None, Blk001, Blk002, None, Blk004, Blk005, Blk006, Blk007, None, Blk009,
-    Blk010, Blk011, Blk012, Blk013, Blk014, Blk015, Blk016, Blk017, Blk018, None,
-    Blk020, Blk021, Blk022, Blk023, Blk024, Blk025, Blk026, Blk027, Blk028, Blk029,
-    Blk030, Blk031, None, Blk033, Blk034, Blk035, Blk036, Blk037, None, Blk039,
-    Blk040, None, None, None, None, None, None, None, None, None,
-    Blk050, Blk051, Blk052, None, None, None, None, None, None, None,
-]
 
 _classes = [
     BoolBlock,

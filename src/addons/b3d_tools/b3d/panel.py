@@ -16,7 +16,7 @@ from .common import (
 )
 from .ui_utils import (
     draw_common,
-    draw_all_fields_by_type,
+    draw_fields_by_type,
 )
 
 from .scripts import (
@@ -26,8 +26,8 @@ from .scripts import (
     show_conditionals,
     hide_conditionals,
     show_hide_obj_by_type,
-    get_all_objs_by_type,
-    set_all_objs_by_type,
+    get_objs_by_type,
+    set_objs_by_type,
     get_per_face_by_type,
     set_per_face_by_type,
     get_per_vertex_by_type,
@@ -303,7 +303,7 @@ class SingleAddOperator(bpy.types.Operator):
             if parent_obj is not None and block_type != 111:
                 b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
-                set_all_objs_by_type(context, b3d_obj, zclass)
+                set_objs_by_type(b3d_obj, zclass)
             get_context_collection_objects(context).link(b3d_obj)
 
             if block_type in [9,10,22,21]: #objects with subgroups
@@ -329,7 +329,7 @@ class SingleAddOperator(bpy.types.Operator):
             if parent_obj is not None and block_type != 111:
                 b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
-                set_all_objs_by_type(context, b3d_obj, zclass)
+                set_objs_by_type(b3d_obj, zclass)
 
             if block_type in [24, 52]:
                 set_empty_type(b3d_obj, 'ARROWS')
@@ -373,7 +373,7 @@ class SingleAddOperator(bpy.types.Operator):
             if parent_obj is not None and block_type != 111:
                 b3d_obj.parent = parent_obj
             if block_type not in [111, 444, 0, 3, 8, 19]: # blocks without custom parameters
-                set_all_objs_by_type(context, b3d_obj, zclass)
+                set_objs_by_type(b3d_obj, zclass)
             get_context_collection_objects(context).link(b3d_obj)
 
         return {'FINISHED'}
@@ -462,7 +462,7 @@ class CastAddOperator(bpy.types.Operator):
             vert_obj.location=(0.0,0.0,0.0)
             vert_obj[consts.BLOCK_TYPE] = vert_type
             vert_obj.parent = parent_obj
-            set_all_objs_by_type(context, vert_obj, vertclass)
+            set_objs_by_type(vert_obj, vertclass)
             get_context_collection_objects(context).link(vert_obj)
 
             # creating poly blocks
@@ -475,7 +475,7 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj[consts.BLOCK_TYPE] = poly_type
                         new_obj.parent = vert_obj
                         if poly_type != 8:
-                            set_all_objs_by_type(context, new_obj, polyclass)
+                            set_objs_by_type(new_obj, polyclass)
 
                         formats = [2]*len(new_obj.data.polygons)
                         if poly_type == 8:
@@ -490,7 +490,7 @@ class CastAddOperator(bpy.types.Operator):
                         poly_obj[consts.BLOCK_TYPE] = poly_type
                         poly_obj.parent = vert_obj
                         if poly_type != 8:
-                            set_all_objs_by_type(context, poly_obj, polyclass)
+                            set_objs_by_type(poly_obj, polyclass)
                         formats = [2]*len(poly_obj.data.polygons)
                         if poly_type == 8:
                             create_custom_attribute(poly_obj.data, formats, Pfb008, Pfb008.Format_Flags)
@@ -512,13 +512,13 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj.data = poly_obj.data.copy()
                         new_obj[consts.BLOCK_TYPE] = 23
                         new_obj.parent = parent_obj
-                        set_all_objs_by_type(context, new_obj, Blk023)
+                        set_objs_by_type(new_obj, Blk023)
                         get_context_collection_objects(context).link(new_obj)
                         log.info("Created new B3D 3d collision: {}.".format(new_obj.name))
                     else:
                         poly_obj[consts.BLOCK_TYPE] = 23
                         poly_obj.parent = parent_obj
-                        set_all_objs_by_type(context, poly_obj, Blk023)
+                        set_objs_by_type(poly_obj, Blk023)
                         log.info("Cast existing object to B3D 3d collision: {}.".format(poly_obj.name))
                 else:
                     log.info("Selected object {} is not Mesh. Changes not applied.".format(poly_obj.name))
@@ -535,7 +535,7 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj.data.bevel_depth = 0
                         new_obj.data.extrude = 10
                         new_obj.parent = parent_obj
-                        set_all_objs_by_type(context, new_obj, Blk020)
+                        set_objs_by_type(new_obj, Blk020)
                         get_context_collection_objects(context).link(new_obj)
                         log.info("Created new B3D 2d colision: {}.".format(new_obj.name))
                     else:
@@ -543,7 +543,7 @@ class CastAddOperator(bpy.types.Operator):
                         poly_obj.data.bevel_depth = 0
                         poly_obj.data.extrude = 10
                         poly_obj.parent = parent_obj
-                        set_all_objs_by_type(context, poly_obj, Blk020)
+                        set_objs_by_type(poly_obj, Blk020)
                         log.info("Cast exiting object to B3D 2d colision: {}.".format(poly_obj.name))
 
                 else:
@@ -561,7 +561,7 @@ class CastAddOperator(bpy.types.Operator):
                         new_obj.data.bevel_depth = 0.3
                         new_obj.data.bevel_mode = 'ROUND'
                         new_obj.parent = parent_obj
-                        set_all_objs_by_type(context, new_obj, Blk050)
+                        set_objs_by_type(new_obj, Blk050)
                         get_context_collection_objects(context).link(new_obj)
                         log.info("Created new WAY Path: {}.".format(new_obj.name))
                     else:
@@ -569,7 +569,7 @@ class CastAddOperator(bpy.types.Operator):
                         poly_obj.data.bevel_depth = 0.3
                         poly_obj.data.bevel_mode = 'ROUND'
                         poly_obj.parent = parent_obj
-                        set_all_objs_by_type(context, poly_obj, Blk050)
+                        set_objs_by_type(poly_obj, Blk050)
                         log.info("Cast existing object to WAY Path: {}.".format(poly_obj.name))
 
                 else:
@@ -587,9 +587,9 @@ class GetVertexValuesOperator(bpy.types.Operator):
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
-            get_per_vertex_by_type(context, b3d_obj, Pvb008)
+            get_per_vertex_by_type(b3d_obj, Pvb008)
         elif block_type == 35:
-            get_per_vertex_by_type(context, b3d_obj, Pvb035)
+            get_per_vertex_by_type(b3d_obj, Pvb035)
 
         return {'FINISHED'}
 
@@ -602,11 +602,11 @@ class GetFaceValuesOperator(bpy.types.Operator):
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
-            get_per_face_by_type(context, b3d_obj, Pfb008)
+            get_per_face_by_type(b3d_obj, Pfb008)
         elif block_type == 28:
-            get_per_face_by_type(context, b3d_obj, Pfb028)
+            get_per_face_by_type(b3d_obj, Pfb028)
         elif block_type == 35:
-            get_per_face_by_type(context, b3d_obj, Pfb035)
+            get_per_face_by_type(b3d_obj, Pfb035)
 
         return {'FINISHED'}
 
@@ -624,7 +624,7 @@ class GetValuesOperator(bpy.types.Operator):
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            get_all_objs_by_type(context, b3d_obj, zclass)
+            get_objs_by_type(b3d_obj, zclass)
 
         return {'FINISHED'}
 
@@ -645,7 +645,7 @@ class GetPropValueOperator(bpy.types.Operator):
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            get_obj_by_prop(context, b3d_obj, zclass, self.pname)
+            get_obj_by_prop(b3d_obj, zclass, self.pname)
 
         return {'FINISHED'}
 
@@ -663,11 +663,11 @@ class SetFaceValuesOperator(bpy.types.Operator):
             block_type = b3d_obj[consts.BLOCK_TYPE]
 
             if block_type == 8:
-                set_per_face_by_type(context, b3d_obj, Pfb008)
+                set_per_face_by_type(b3d_obj, Pfb008)
             elif block_type == 28:
-                set_per_face_by_type(context, b3d_obj, Pfb028)
+                set_per_face_by_type(b3d_obj, Pfb028)
             elif block_type == 35:
-                set_per_face_by_type(context, b3d_obj, Pfb035)
+                set_per_face_by_type(b3d_obj, Pfb035)
 
         return {'FINISHED'}
 
@@ -685,9 +685,9 @@ class SetVertexValuesOperator(bpy.types.Operator):
             block_type = b3d_obj[consts.BLOCK_TYPE]
 
             if block_type == 8:
-                set_per_vertex_by_type(context, b3d_obj, Pvb008)
+                set_per_vertex_by_type(b3d_obj, Pvb008)
             elif block_type == 35:
-                set_per_vertex_by_type(context, b3d_obj, Pvb035)
+                set_per_vertex_by_type(b3d_obj, Pvb035)
 
         return {'FINISHED'}
 
@@ -721,7 +721,7 @@ class SetValuesOperator(bpy.types.Operator):
             zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
             if zclass is not None:
-                set_all_objs_by_type(context, b3d_obj, zclass)
+                set_objs_by_type(b3d_obj, zclass)
 
         return {'FINISHED'}
 
@@ -742,7 +742,7 @@ class SetPropValueOperator(bpy.types.Operator):
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            set_obj_by_prop(context, b3d_obj, zclass, self.pname)
+            set_obj_by_prop(b3d_obj, zclass, self.pname)
 
         return {'FINISHED'}
 
@@ -1104,7 +1104,7 @@ class OBJECT_PT_b3d_single_add_panel(bpy.types.Panel):
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            draw_all_fields_by_type(self, context, zclass)
+            draw_fields_by_type(self, zclass)
 
         layout.operator("wm.single_add_operator")
 
@@ -1134,21 +1134,21 @@ class OBJECT_PT_b3d_template_add_panel(bpy.types.Panel):
             layout.prop(mytool, "lod_level_int")
 
             zclass = BlockClassHandler.get_class_def_by_type(9)
-            draw_all_fields_by_type(self, context, zclass)
+            draw_fields_by_type(self, zclass)
 
         elif block_type == "LOD_10":
 
             layout.prop(mytool, "lod_level_int")
 
             zclass = BlockClassHandler.get_class_def_by_type(10)
-            draw_all_fields_by_type(self, context, zclass)
+            draw_fields_by_type(self, zclass)
 
         elif block_type == "LOD_21":
 
             layout.prop(mytool, "lod_level_int")
 
             zclass = BlockClassHandler.get_class_def_by_type(21)
-            draw_all_fields_by_type(self, context, zclass)
+            draw_fields_by_type(self, zclass)
 
             # layout.prop(mytool, "add_room_name_index_string")
             # layout.prop(mytool, "radius")
@@ -1223,11 +1223,11 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
                 block_type = None
 
             if block_type == 8:
-                draw_all_fields_by_type(self, context, Pfb008)
+                draw_fields_by_type(self, Pfb008)
             if block_type == 28:
-                draw_all_fields_by_type(self, context, Pfb028)
+                draw_fields_by_type(self, Pfb028)
             if block_type == 35:
-                draw_all_fields_by_type(self, context, Pfb035)
+                draw_fields_by_type(self, Pfb035)
 
             if block_type in [8, 28, 35]:
                 layout.operator("wm.get_face_values_operator")
@@ -1269,9 +1269,9 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
                 block_type = None
 
             if block_type == 8:
-                draw_all_fields_by_type(self, context, Pvb008)
+                draw_fields_by_type(self, Pvb008)
             if block_type == 35:
-                draw_all_fields_by_type(self, context, Pvb035)
+                draw_fields_by_type(self, Pvb035)
 
             if block_type in [8, 28, 35]:
                 layout.operator("wm.get_vertex_values_operator")
@@ -1336,7 +1336,7 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
                 layout.operator("wm.set_block_values_operator")
 
                 if zclass is not None:
-                    draw_all_fields_by_type(self, context, zclass)
+                    draw_fields_by_type(self, zclass)
 
             # else:
             #     self.layout.label(text="Выбранный объект не имеет типа.")
@@ -1381,7 +1381,7 @@ class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
                 zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
                 if zclass is not None:
-                    draw_all_fields_by_type(self, context, zclass, False)
+                    draw_fields_by_type(self, zclass, False)
 
             # else:
             #     self.layout.label(text="Выбранный объект не имеет типа.")

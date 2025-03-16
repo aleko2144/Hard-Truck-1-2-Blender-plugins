@@ -421,9 +421,9 @@ class BlockClassHandler():
             else:
                 bname = 's_{}_{}'.format(BlockClassHandler.BLOCK, bnum)
         elif btype == 'Pfb':
-            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
+            bname = '{}_{}'.format(BlockClassHandler.PER_FACE_BLOCK, bnum)
         elif btype == 'Pvb':
-            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
+            bname = '{}_{}'.format(BlockClassHandler.PER_VERTEX_BLOCK, bnum)
 
         return [bname, bnum]
 
@@ -436,9 +436,9 @@ class BlockClassHandler():
             else:
                 bname = 's_{}_{}'.format(BlockClassHandler.BLOCK, bnum)
         elif btype == 'Pfb':
-            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
+            bname = '{}_{}'.format(BlockClassHandler.PER_FACE_BLOCK, bnum)
         elif btype == 'Pvb':
-            bname = '{}_{}'.format(BlockClassHandler.BLOCK, bnum)
+            bname = '{}_{}'.format(BlockClassHandler.PER_VERTEX_BLOCK, bnum)
 
         return bname
 

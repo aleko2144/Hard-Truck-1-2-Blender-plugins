@@ -493,6 +493,14 @@ class RGBPacker:
         return _byte / 255
 
     @staticmethod
+    def pack_int_to_3floats(_int):
+        result = [0.0, 0.0, 0.0]
+        result[0] = RGBPacker.pack_byte_to_float((_int >> 16) & 255)
+        result[1] = RGBPacker.pack_byte_to_float((_int >> 8) & 255)
+        result[2] = RGBPacker.pack_byte_to_float((_int) & 255)
+        return result
+
+    @staticmethod
     def pack_int_to_4floats(_int):
         result = [0.0, 0.0, 0.0, 0.0]
         result[0] = RGBPacker.pack_byte_to_float((_int >> 24) & 255)
@@ -504,6 +512,15 @@ class RGBPacker:
     @staticmethod
     def unpack_float_to_byte(_float):
         return round(_float * 255)
+
+    @staticmethod
+    def unpack_3floats_to_int(_float_arr):
+        result = 0
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[0]) << 16)
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[1]) << 8)
+        result = result | (RGBPacker.unpack_float_to_byte(_float_arr[2]))
+        return result
+
 
     @staticmethod
     def unpack_4floats_to_int(_float_arr):
