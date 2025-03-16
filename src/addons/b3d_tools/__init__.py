@@ -40,7 +40,7 @@ bl_info = {
     "description": "",
     "author": "Andrey Prozhoga, LabVaKars",
     "version": (2, 3, 3),
-    "blender": (2, 79, 0),
+    "blender": (2, 93, 0),
     "location": "3D View > Tools",
     "warning": "",
     "wiki_url": "",
