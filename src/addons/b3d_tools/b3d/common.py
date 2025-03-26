@@ -52,6 +52,10 @@ def get_root_obj(obj):
         result = result.parent
     return result
 
+def is_inside_module(module, obj):
+    root_obj = bpy.data.objects['{}.b3d'.format(module)]
+    return get_root_obj(obj) == root_obj
+
 def is_empty_name(name):
     re_is_empty = re.compile(r'.*{}.*'.format(EMPTY_NAME))
     return re_is_empty.search(name)
@@ -66,6 +70,20 @@ def is_mesh_block(obj):
 
 def is_ref_block(obj):
     return obj.get("block_type") is not None and obj["block_type"]==18
+
+
+def get_used_materials(module):
+    return list(set(
+        [item.name for sublist in 
+            [
+                cn.data.materials for cn in bpy.data.objects 
+                    if cn.get('block_type') is not None 
+                    and cn.get('block_type') in [8, 28, 35] 
+                    and is_inside_module(module, cn)
+            ] for item in sublist
+        ]
+        # +['tree23', 'tree2', 'tree3', 'tree0', 'tree1', 'tree01']
+        )) 
 
 def unmask_template(templ):
     offset = 0
@@ -405,7 +423,6 @@ def get_polygons_by_selected_vertices(obj):
 
 def get_selected_vertices(obj):
     data = obj.data
-    # data = bpy.context.object.data
     selected_vertices = []
     for v in data.vertices:
         if v.select:
@@ -413,6 +430,11 @@ def get_selected_vertices(obj):
 
     return selected_vertices
 
+def is_valid_block(block):
+    return block is not None and block.get(BLOCK_TYPE) not in [50, 51, 52]
+
+def get_children(obj):
+    return [ch for ch in obj.children if is_valid_block(ch)]
 
 def get_all_children(obj):
     all_children = []
@@ -421,7 +443,7 @@ def get_all_children(obj):
         next_children = []
         if len(current_objs) > 0:
             for obj in current_objs:
-                next_children.extend(obj.children)
+                next_children.extend(get_children(obj))
             current_objs = next_children
             all_children.extend(current_objs)
         else:

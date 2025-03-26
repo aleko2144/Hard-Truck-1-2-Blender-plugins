@@ -45,7 +45,7 @@ from .classes import (
 from .class_descr import (
     Blk020,Blk021,Blk023,
     Pfb008, Pfb028, Pfb035, Pvb008, Pvb035,
-    Blk050,
+    Blk050, Blk051, Blk052,
     ResBlock
 )
 
@@ -144,7 +144,9 @@ class PanelSettings(bpy.types.PropertyGroup):
             ('mesh', "Mesh", "Cast selected meshes to vertices(6,7,36,37) polygons blocks(8,35)"),
             ('colis3D', "3D collision", "Creates copy of selected mesh for 3D collision(23)"),
             ('colis2D', "2D collision", "Cast selected curve to 2D collision(20)"),
-            ('way', "Transport path", "Cast selected curve to transport path(50)"),
+            ('way50', "Transport path segment", "Cast selected curve to transport path segment(50)"),
+            ('way51', "Transport path point", "Cast selected curve to transport path point(51)"),
+            ('way52', "Transport path directed point", "Cast selected curve to transport path directed point(52)"),
         ]
     )
 
@@ -306,10 +308,10 @@ class SingleAddOperator(bpy.types.Operator):
                 set_objs_by_type(b3d_obj, zclass)
             get_context_collection_objects(context).link(b3d_obj)
 
-            if block_type in [9,10,22,21]: #objects with subgroups
+            if block_type in [9,10,21,22]: #objects with subgroups
 
                 group_cnt = 0
-                if block_type in [9,10,21]:
+                if block_type in [9, 10]:
                     group_cnt = 2
                 elif block_type == 21:
                     group_cnt = b3d_obj[Blk021.GroupCnt.get_prop()]
@@ -500,7 +502,7 @@ class CastAddOperator(bpy.types.Operator):
                         log.info("Cast existing B3D object: {}.".format(poly_obj.name))
 
                 else:
-                    log.info("Selected object {} is not Mesh. Changes not applied.".format(poly_obj.name))
+                    log.info("Selected object {} is not 'Mesh'. Changes not applied.".format(poly_obj.name))
 
         elif cast_type == 'colis3D':
 
@@ -521,7 +523,7 @@ class CastAddOperator(bpy.types.Operator):
                         set_objs_by_type(poly_obj, Blk023)
                         log.info("Cast existing object to B3D 3d collision: {}.".format(poly_obj.name))
                 else:
-                    log.info("Selected object {} is not Mesh. Changes not applied.".format(poly_obj.name))
+                    log.info("Selected object {} is not 'Mesh'. Changes not applied.".format(poly_obj.name))
 
         elif cast_type == 'colis2D':
 
@@ -547,33 +549,80 @@ class CastAddOperator(bpy.types.Operator):
                         log.info("Cast exiting object to B3D 2d colision: {}.".format(poly_obj.name))
 
                 else:
-                    log.info("Selected object {} is not Curve. Changes not applied.".format(poly_obj.name))
+                    log.info("Selected object {} is not 'Curve'. Changes not applied.".format(poly_obj.name))
 
-        elif cast_type == 'way':
+        elif cast_type == 'way50':
 
             for poly_obj in context.selected_objects:
+
+                if parent_obj is None or parent_obj == '':
+                    parent_obj = poly_obj.parent
+
+                block_type = int(cast_type[3:])
+                zclass = None
+                if block_type == 50:
+                    zclass = Blk050
+
                 if poly_obj.type == 'CURVE':
 
                     if to_copy:
                         new_obj = poly_obj.copy()
                         new_obj.data = poly_obj.data.copy()
-                        new_obj[consts.BLOCK_TYPE] = 50
+                        new_obj[consts.BLOCK_TYPE] = block_type
                         new_obj.data.bevel_depth = 0.3
                         new_obj.data.bevel_mode = 'ROUND'
                         new_obj.parent = parent_obj
-                        set_objs_by_type(new_obj, Blk050)
+                        set_objs_by_type(new_obj, zclass)
                         get_context_collection_objects(context).link(new_obj)
                         log.info("Created new WAY Path: {}.".format(new_obj.name))
                     else:
-                        poly_obj[consts.BLOCK_TYPE] = 50
+                        poly_obj[consts.BLOCK_TYPE] = block_type
                         poly_obj.data.bevel_depth = 0.3
                         poly_obj.data.bevel_mode = 'ROUND'
                         poly_obj.parent = parent_obj
-                        set_objs_by_type(poly_obj, Blk050)
+                        set_objs_by_type(poly_obj, zclass)
                         log.info("Cast existing object to WAY Path: {}.".format(poly_obj.name))
 
                 else:
-                    log.info("Selected object {} is not Curve. Changes not applied.".format(poly_obj.name))
+                    log.info("Selected object {} is not 'Curve'. Changes not applied.".format(poly_obj.name))
+
+        elif  cast_type in ['way51', 'way52']:
+            
+            for poly_obj in context.selected_objects:
+
+                if parent_obj is None or parent_obj == '':
+                    parent_obj = poly_obj.parent
+
+                block_type = int(cast_type[3:])
+                zclass = None
+                empty_type = 'PLAIN_AXES'
+                
+                if block_type == 51:
+                    zclass = Blk051
+                    empty_type = 'PLAIN_AXES'
+                if block_type == 52:
+                    zclass = Blk052
+                    empty_type = 'ARROWS'
+
+                if poly_obj.type == 'EMPTY':
+
+                    if to_copy:
+                        new_obj = poly_obj.copy()
+                        new_obj[consts.BLOCK_TYPE] = block_type
+                        set_empty_type(new_obj, empty_type)
+                        new_obj.parent = parent_obj
+                        set_objs_by_type(new_obj, zclass)
+                        get_context_collection_objects(context).link(new_obj)
+                        log.info("Created new WAY Path: {}.".format(new_obj.name))
+                    else:
+                        poly_obj[consts.BLOCK_TYPE] = block_type
+                        set_empty_type(poly_obj, empty_type)
+                        poly_obj.parent = parent_obj
+                        set_objs_by_type(poly_obj, zclass)
+                        log.info("Cast existing object to WAY Path: {}.".format(poly_obj.name))
+
+                else:
+                    log.info("Selected object {} is not 'Empty'. Changes not applied.".format(poly_obj.name))
 
 
         return {'FINISHED'}

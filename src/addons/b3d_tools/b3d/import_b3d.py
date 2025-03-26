@@ -75,6 +75,7 @@ from .common import (
     get_used_vertices_and_transform,
     get_polygons_by_selected_vertices,
     get_center_coord,
+    get_material_index_in_res
 )
 
 from ..common import (
@@ -374,12 +375,11 @@ def import_b3d(file, context, self, filepath):
     # Parsing b3d
     material_textures = []
     materials_count = struct.unpack('<i',file.read(4))[0]
-    material_list = []
+    imp_material_list = [None] * materials_count
     # Adding Materials
     for i in range(materials_count):
-
         sn_img = file.read(32).decode("utf-8").rstrip('\0') #читаю имя
-        material_list.append(sn_img)
+        imp_material_list[i] = sn_img
 
     file.seek(4,1) #Skip Begin_Chunks(111)
 
@@ -419,7 +419,7 @@ def import_b3d(file, context, self, filepath):
         if ex == ChunkType.END_CHUNK:
 
             parent_obj = context.scene.objects.get(obj_string[-2])
-            if parent_obj.get(BLOCK_TYPE) in [9, 10, 21]:
+            if parent_obj.get(BLOCK_TYPE) in [2, 9, 10, 21, 29]: #blocks with subtypes
                 del obj_string[-1]
 
             del obj_string[-1]
@@ -477,7 +477,7 @@ def import_b3d(file, context, self, filepath):
 
             parent_obj = context.scene.objects.get(obj_string[-1])
 
-            if parent_obj.get(BLOCK_TYPE) in [9, 10, 21]:
+            if parent_obj.get(BLOCK_TYPE) in [2, 9, 10, 21, 29]: #blocks with subtypes
 
                 group_obj_name = 'GROUP_0'
 
@@ -878,7 +878,9 @@ def import_b3d(file, context, self, filepath):
                     #Set appropriate meaterials
                     if len(texnums.keys()) > 1:
                         for texnum in texnums:
-                            mat = res_module.materials[int(texnum)].id_mat
+                            mat_name = imp_material_list[int(texnum)]
+                            id_in_res = get_material_index_in_res(mat_name, res_basename)
+                            mat = res_module.materials[id_in_res].id_mat
                             # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
                             b3d_mesh.materials.append(mat)
                             last_index = len(b3d_mesh.materials)-1
@@ -890,7 +892,9 @@ def import_b3d(file, context, self, filepath):
                                 # self.lock.release()
                     else:
                         for texnum in texnums:
-                            mat = res_module.materials[int(texnum)].id_mat
+                            mat_name = imp_material_list[int(texnum)]
+                            id_in_res = get_material_index_in_res(mat_name, res_basename)
+                            mat = res_module.materials[id_in_res].id_mat
                             # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
                             b3d_mesh.materials.append(mat)
 
@@ -1593,33 +1597,6 @@ def import_b3d(file, context, self, filepath):
                         
                         set_uv_values(custom_uv, b3d_mesh, uv_over)
                        
-                if self.to_import_textures:
-                    #For assign_material_by_vertices just-in-case
-                    # bpy.ops.object.mode_set(mode = 'OBJECT')
-                    #Set appropriate meaterials
-                    if len(texnums.keys()) > 1:
-                        for texnum in texnums:
-                            mat = res_module.materials[int(texnum)].id_mat
-                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
-                            b3d_mesh.materials.append(mat)
-                            last_index = len(b3d_mesh.materials)-1
-
-                            for vert_arr in texnums[texnum]:
-                                # self.lock.acquire()
-                                assign_material_by_vertices(b3d_obj, vert_arr, last_index)
-                                # self.lock.release()
-                    else:
-                        for texnum in texnums:
-                            mat = res_module.materials[int(texnum)].id_mat
-                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
-                            b3d_mesh.materials.append(mat)
-
-                create_custom_attribute(b3d_mesh, formats, Pfb028, Pfb028.Format_Flags)
-
-                # those are usually consts in all objects
-                # create_custom_attribute(b3d_mesh, unk_floats, Pfb028, Pfb028.Unk_Float1)
-                # create_custom_attribute(b3d_mesh, unk_ints, Pfb028, Pfb028.Unk_Int2)
-
                 b3d_obj = bpy.data.objects.new(obj_name, b3d_mesh)
                 b3d_obj[BLOCK_TYPE] = block_type
                 # b3d_obj[Blk028.XYZ.get_prop()] = bounding_sphere[0:3]
@@ -1631,6 +1608,38 @@ def import_b3d(file, context, self, filepath):
                 get_context_collection_objects(context).link(b3d_obj) #добавляем в сцену обьект
                 real_name = b3d_obj.name
                 obj_string[-1] = b3d_obj.name
+
+                if self.to_import_textures:
+                    #For assign_material_by_vertices just-in-case
+                    # bpy.ops.object.mode_set(mode = 'OBJECT')
+                    #Set appropriate meaterials
+                    if len(texnums.keys()) > 1:
+                        for texnum in texnums:
+                            mat_name = imp_material_list[int(texnum)]
+                            id_in_res = get_material_index_in_res(mat_name, res_basename)
+                            mat = res_module.materials[id_in_res].id_mat
+                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                            b3d_mesh.materials.append(mat)
+                            last_index = len(b3d_mesh.materials)-1
+
+                            for vert_arr in texnums[texnum]:
+                                # self.lock.acquire()
+                                assign_material_by_vertices(b3d_obj, vert_arr, last_index)
+                                # self.lock.release()
+                    else:
+                        for texnum in texnums:
+                            mat_name = imp_material_list[int(texnum)]
+                            id_in_res = get_material_index_in_res(mat_name, res_basename)
+                            mat = res_module.materials[id_in_res].id_mat
+                            # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
+                            b3d_mesh.materials.append(mat)
+
+                create_custom_attribute(b3d_mesh, formats, Pfb028, Pfb028.Format_Flags)
+
+                # those are usually consts in all objects
+                # create_custom_attribute(b3d_mesh, unk_floats, Pfb028, Pfb028.Unk_Float1)
+                # create_custom_attribute(b3d_mesh, unk_ints, Pfb028, Pfb028.Unk_Int2)
+
 
             elif (block_type == 29):
 
@@ -1993,7 +2002,9 @@ def import_b3d(file, context, self, filepath):
                 # create_custom_attribute(b3d_mesh, cur_normals, Pvb035, Pvb035.Custom_Normal)
 
                 if self.to_import_textures:
-                    mat = res_module.materials[int(texnum)].id_mat
+                    mat_name = imp_material_list[int(texnum)]
+                    id_in_res = get_material_index_in_res(mat_name, res_basename)
+                    mat = res_module.materials[id_in_res].id_mat
                     # mat = bpy.data.materials.get(res_module.materials[int(texnum)].mat_name)
                     b3d_mesh.materials.append(mat)
 

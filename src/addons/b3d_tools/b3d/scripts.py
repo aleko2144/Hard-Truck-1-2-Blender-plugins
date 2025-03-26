@@ -647,23 +647,28 @@ def set_objs_by_type(b3d_obj, zclass):
     blocktool = bpy.context.scene.block_tool
     for attr_class_name in attrs_cls:
         attr_class = zclass.__dict__[attr_class_name]
-        if attr_class.get_block_type() != FieldType.SPHERE_EDIT:
-            blk = getattr(blocktool, bname) if getattr(blocktool, bname) else None
-            if blk is not None:
+        pname = attr_class.get_prop()
+        
+        blk = getattr(blocktool, bname) if getattr(blocktool, bname) else None
+        show_attr = getattr(blk, 'show_{}'.format(pname)) if hasattr(blk, 'show_{}'.format(pname)) else None
+        
+        if blk is not None and show_attr:
+            
+            if attr_class.get_block_type() != FieldType.SPHERE_EDIT:
             # if getattr(getattr(mytool, bname), "show_"+attr_class.get_prop()) is not None \
             #     and getattr(getattr(mytool, bname), "show_"+attr_class.get_prop()):
 
                 if attr_class.get_block_type() == FieldType.FLOAT or attr_class.get_block_type() == FieldType.RAD:
-                    b3d_obj[attr_class.get_prop()] = float(getattr(blk, attr_class.get_prop()))
+                    b3d_obj[pname] = float(getattr(blk, pname))
 
                 elif attr_class.get_block_type() == FieldType.INT:
-                    b3d_obj[attr_class.get_prop()] = int(getattr(blk, attr_class.get_prop()))
+                    b3d_obj[pname] = int(getattr(blk, pname))
 
                 # elif attr_class.get_block_type() == FieldType.MATERIAL_IND:
                 #     b3d_obj[attr_class.get_prop()] = int(getattr(getattr(mytool, bname), attr_class.get_prop()))
 
                 elif attr_class.get_block_type() == FieldType.STRING:
-                    b3d_obj[attr_class.get_prop()] = str(getattr(blk, attr_class.get_prop()))
+                    b3d_obj[pname] = str(getattr(blk, pname))
 
                 # elif attr_class.get_block_type() == FieldType.SPACE_NAME \
                 # or attr_class.get_block_type() == FieldType.REFERENCEABLE:
@@ -672,29 +677,29 @@ def set_objs_by_type(b3d_obj, zclass):
                 elif attr_class.get_block_type() in [FieldType.ENUM, FieldType.ENUM_DYN]:
 
                     if attr_class.get_subtype() == FieldType.INT:
-                        b3d_obj[attr_class.get_prop()] = int(getattr(blk, attr_class.get_prop()))
+                        b3d_obj[pname] = int(getattr(blk, pname))
 
                     elif attr_class.get_subtype() == FieldType.STRING:
-                        b3d_obj[attr_class.get_prop()] = str(getattr(blk, attr_class.get_prop()))
+                        b3d_obj[pname] = str(getattr(blk, pname))
 
                     elif attr_class.get_subtype() == FieldType.FLOAT:
-                        b3d_obj[attr_class.get_prop()] = float(getattr(blk, attr_class.get_prop()))
+                        b3d_obj[pname] = float(getattr(blk, pname))
 
                 elif attr_class.get_block_type() == FieldType.COORD:
-                    xyz = getattr(blk, attr_class.get_prop())
-                    b3d_obj[attr_class.get_prop()] = (xyz[0],xyz[1],xyz[2])
+                    xyz = getattr(blk, pname)
+                    b3d_obj[pname] = (xyz[0],xyz[1],xyz[2])
 
                 elif attr_class.get_block_type() == FieldType.LIST:
-                    collect = getattr(blk, attr_class.get_prop())
+                    collect = getattr(blk, pname)
 
                     arr = []
                     for item in list(collect):
                         arr.append(item.value)
 
-                    b3d_obj[attr_class.get_prop()] = arr
+                    b3d_obj[pname] = arr
 
                 else:
-                    b3d_obj[attr_class.get_prop()] = getattr(blk, attr_class.get_prop())
+                    b3d_obj[pname] = getattr(blk, pname)
 
 # ------------------------------------------------------------------------
 # Per Face Properties

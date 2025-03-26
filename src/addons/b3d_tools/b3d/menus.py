@@ -142,7 +142,7 @@ class ImportRES(Operator, ImportHelper):
             self.report({'ERROR'}, "Common.res path is wrong or is not set. Textures weren't imported! Please, set path to Common.res in addon preferences.")
 
         if self.to_import_textures:
-            if is_before_2_80:
+            if is_before_2_80():
                 bpy.context.scene.render.engine = 'CYCLES' #Blender render doesnt render in Material and Texture View
 
             t0 = Thread(target=import_res.import_multiple_res, args=(self, self.files, context))
@@ -353,7 +353,7 @@ class ImportB3D(Operator, ImportHelper):
         # importing other RES modules
         if self.to_import_textures:
 
-            if is_before_2_80:
+            if is_before_2_80():
                 bpy.context.scene.render.engine = 'CYCLES' #Blender render doesnt render in Material and Texture View
 
             t0 = Thread(target=import_res.import_multiple_res, args=(self, self.files, context))

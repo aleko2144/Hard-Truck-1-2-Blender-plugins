@@ -16,7 +16,9 @@ from .common import (
     get_col_property_by_name,
     write_size,
     get_mat_texture_ref_dict,
-    get_active_palette_module
+    get_active_palette_module,
+    is_inside_module,
+    get_used_materials
 )
 
 from .imghelp import (
@@ -99,23 +101,26 @@ def write_palettefiles(res_module, file):
         if palette_name is None or len(palette_name) == 0:
             palette_name = "{}.plm".format(res_module.value)
         write_cstring("{}".format(palette_name), file)
+        pal_name_write_ms = file.tell()
+        file.write(struct.pack("<i", 0)) # reserve
         pal_name_ms = file.tell()
-        file.seek(4,1)
-        file.write("PALT".encode("cp1251"))
-        palt_ms = file.tell()
-        file.seek(4,1)
         file.write("PLM\00".encode("cp1251"))
+        plm_write_ms = file.tell()
+        file.write(struct.pack("<i", 0)) # reserve
         plm_ms = file.tell()
-        file.seek(4,1)
+        file.write("PALT".encode("cp1251"))
+        palt_write_ms = file.tell()
+        file.write(struct.pack("<i", 0)) # reserve
+        palt_ms = file.tell()
         for color in res_module.palette_colors:
             rgbcol = srgb_to_rgb(*color.value[:3])
             file.write(struct.pack("<B", rgbcol[0]))
             file.write(struct.pack("<B", rgbcol[1]))
             file.write(struct.pack("<B", rgbcol[2]))
 
-        write_size(file, pal_name_ms)
-        write_size(file, palt_ms)
-        write_size(file, plm_ms)
+        write_size(file, pal_name_ms, pal_name_write_ms)
+        write_size(file, plm_ms, plm_write_ms)
+        write_size(file, palt_ms, palt_write_ms)
 
 
 def write_soundfiles(res_module, file):
@@ -193,10 +198,17 @@ def write_texturefiles(res_module, file, filepath, save_images = True):
 
 
 def write_materials(res_module, file):
-    size = len(res_module.materials)
+    module_name = res_module.value
+    
+
+    # used_materials = sorted(get_used_materials(module_name))
+    used_materials = [cn.mat_name for cn in res_module.materials]
+
+    size = len(used_materials)
     write_cstring("MATERIALS {}".format(size), file)
     if size > 0:
-        for material in res_module.materials:
+        for material_name in used_materials:
+            material = get_col_property_by_name(res_module.materials, material_name, 'mat_name')
             if material.id_mat is not None:
                 mat_name = material.id_mat.name
                 mat_str = mat_name

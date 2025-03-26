@@ -635,7 +635,7 @@ class Blk002():
     class Unk_XYZ(CoordParam):
         name = 'Unk. name 2'
 
-    class Unk_R(CoordParam):
+    class Unk_R(RadParam):
         name = 'Unk. rad'
 
 
@@ -1127,7 +1127,7 @@ class Blk050():
     class Attr1(IntParam):
         name = 'Attr. 1'
 
-    class Attr2(IntParam):
+    class Attr2(FloatParam):
         name = 'Attr. 2'
 
     class Attr3(IntParam):

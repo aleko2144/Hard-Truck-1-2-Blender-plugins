@@ -43,7 +43,7 @@ def palette_to_colors(palette, indexes, trc):
             a = 255
         else:
             a = 0
-        colors.extend([b, g, r, a])
+        colors.extend([r, g, b, a])
     return colors
 
 
@@ -114,18 +114,19 @@ def write_tga8888(filepath, header, colors_before, bit_mask, transp_color = (0,0
         g = ((color & g_msk) >> g_unmask.rzeros)
         b = ((color & b_msk) >> b_unmask.rzeros)
 
-        a = 255
-        if a_msk == 0:
-            if r == transp_color[0] >> (8 - r_unmask.ones) \
-            and g == transp_color[1] >> (8 - g_unmask.ones) \
-            and b == transp_color[2] >> (8 - b_unmask.ones):
-                a = 0
-            else:
-                a = 255
-        else:
+        # a = 255
+        # if a_msk == 0:
+        if r == transp_color[0] >> (8 - r_unmask.ones) \
+        and g == transp_color[1] >> (8 - g_unmask.ones) \
+        and b == transp_color[2] >> (8 - b_unmask.ones):
+        
+            a = 0
+        elif a_msk > 0:
             a = ((color & a_msk) >> a_unmask.rzeros)
             if a > 0:
                 a = int("1" * 8, 2)
+        else:
+            a = 255
 
         r = r << (8-r_unmask.ones)
         g = g << (8-g_unmask.ones)
@@ -194,9 +195,11 @@ def trueimage_txr_to_tga32(filepath, transp_color, bytes_per_pixel):
     outpath = os.path.splitext(filepath)[0] + ".tga"
     with open(filepath, "rb") as txr_file:
         header = list(struct.unpack("<3b2hb4h2b", txr_file.read(18)))
-        section_identifier = txr_file.read(4) # LOFF
-        section_size = struct.unpack("<i", txr_file.read(4))[0]
-        footer_size = struct.unpack("<i", txr_file.read(4))[0]
+        
+        if header[0] == 12: #LOFF section
+            section_identifier = txr_file.read(4) # LOFF
+            section_size = struct.unpack("<i", txr_file.read(4))[0]
+            footer_size = struct.unpack("<i", txr_file.read(4))[0]
 
         header[5] = 32 #ColorMapEntrySize
         header[10] = 32 #PixelDepth
@@ -242,9 +245,16 @@ def colormap_txr_to_tga32(filepath, transp_color):
     with open(filepath, "rb") as txr_file:
         colors_after = []
         header = list(struct.unpack("<3b2hb4h2b", txr_file.read(18)))
+        
+        if header[0] == 12: #LOFF section
+            section_identifier = txr_file.read(4) # LOFF
+            section_size = struct.unpack("<i", txr_file.read(4))[0]
+            footer_size = struct.unpack("<i", txr_file.read(4))[0]
+
         color_map_length = header[4]
         width = header[8]
         height = header[9]
+        header[0] = 0 #LOFF specification
         header[1] = 0 #ColorMapType
         header[2] = 2 #ImageType
         header[4] = 0 #ColorMapLength
@@ -363,12 +373,12 @@ def convert_txr_to_tga32(filepath, transp_color):
         txr_file.seek(2, 0)
         image_type = struct.unpack("<B", txr_file.read(1))[0]
         log.debug("Image type: {}".format(image_type))
-    if image_type == 2:
+    if image_type == 2: #Truecolor image
         return trueimage_txr_to_tga32(filepath, transp_color, 2)
-    if image_type == 1:
+    if image_type == 1: #Image using palette
         return colormap_txr_to_tga32(filepath, transp_color)
     else:
-        log.error("Unsupported Tga format")
+        log.error("Unsupported Tga image type: {}".format(image_type))
     return None
 
 
@@ -457,7 +467,8 @@ def colors_byterray_convert(barray, temp_from, temp_to, form_from = 'ARGB', form
         tmp_a = (color & tf_a_mask)
         if replace_transp and (tmp_a >> tf_a_unmask[2]) == 0:
 
-            a = 0
+            # a = 0
+            # a = 255 #temp
             r = transp_color[0] >> (8 - tt_r) << tt_r_unmask[2]
             g = transp_color[1] >> (8 - tt_g) << tt_g_unmask[2]
             b = transp_color[2] >> (8 - tt_b) << tt_b_unmask[2]
@@ -483,6 +494,7 @@ def colors_byterray_convert(barray, temp_from, temp_to, form_from = 'ARGB', form
             elif tf_r < tt_b:
                 b = b << (tt_b-tf_b)
 
+            # a = 255 #temp
             r = r >> tf_r_unmask[2] << tt_r_unmask[2]
             g = g >> tf_g_unmask[2] << tt_g_unmask[2]
             b = b >> tf_b_unmask[2] << tt_b_unmask[2]
