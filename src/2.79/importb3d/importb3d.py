@@ -1,4 +1,4 @@
-import struct
+﻿import struct
 import sys
 import timeit
 import threading
@@ -32,9 +32,7 @@ def openclose(file):
 		print ('EOF')
 		return 1
 	else:
-		print(str(file.tell()))
-		print (str(oc))
-		print('brackets error')
+		print('brackets error: pos={} oc={}'.format(file.tell(), oc))
 		#sys.exit()
 		raise Exception()
 
@@ -366,6 +364,9 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 	#
 	b3dObj = 0
 	uv = []
+	add_uv = []
+	num_add_UV = 0
+	test_verts_num = 0
 	b3dObj = bpy.data.objects.new(os.path.basename(op.properties.filepath),None)
 	context.scene.objects.link(b3dObj)
 	
@@ -533,6 +534,7 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				faces = []
 				faces_all = []
 				uvs = []
+				add_uvs = []
 				texnum = 0
 				cnt+=1
 				b3dMesh = (bpy.data.meshes.new(objName))
@@ -547,6 +549,16 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				#b3dObj.location = qu
 				file.read(4)
 				num = struct.unpack("<i",file.read(4))[0]
+				
+				###
+				for i in range(num_add_UV):
+					#инициализация массива дополнительных развёрток
+					add_uvs_instance = []
+					for j in range(num):
+						add_uvs_instance.append((0.0, 0.0, 0.0))
+						add_uvs.append(add_uvs_instance)
+				########
+				
 				for i in range(num):
 					faces = []
 					faces_new = []
@@ -586,6 +598,19 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 							else:
 								faces_new.append([faces[t+2],faces[t+1],faces[t]])
 						uvs.append((uv[faces_new[t][0]],uv[faces_new[t][1]],uv[faces_new[t][2]]))
+						
+						for n in range(num_add_UV):	
+							add_uvs[n][i] = ((add_uv[n][faces_new[t][0]],
+											add_uv[n][faces_new[t][1]],
+											add_uv[n][faces_new[t][2]]))
+											
+							#print("{} {} {} | {} {} {}".format( uv[faces_new[t][0]],
+							#									uv[faces_new[t][1]],
+							#									uv[faces_new[t][2]],
+							#									add_uv[n][faces_new[t][0]],
+							#									add_uv[n][faces_new[t][1]],
+							#									add_uv[n][faces_new[t][2]]))
+							
 					faces_all.extend(faces_new)
 					#print(str(faces_all))
 				#pdb.set_trace()
@@ -597,24 +622,42 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 
 				
 				uvMesh = b3dMesh.uv_textures.new()
-				imgMesh = math[texnum].texture_slots[0].texture.image.size[0]
+				#imgMesh = math[texnum].texture_slots[0].texture.image.size[0]
 				uvMesh.name = 'default'
 				uvLoop = b3dMesh.uv_layers[0]
 				uvsMesh = []
 				
 				#print('uvs:	',str(uvs))
 				for i, texpoly in enumerate(uvMesh.data):
-					texpoly.image = Imgs[texnum]
+					#texpoly.image = Imgs[texnum]
 					poly = b3dMesh.polygons[i]
 					for j,k in enumerate(poly.loop_indices):
 						uvsMesh = [uvs[i][j][0],1 - uvs[i][j][1]]
 						uvLoop.data[k].uv = uvsMesh
 						
-				mat = b3dMesh.materials.append(math[texnum])
+				#mat = b3dMesh.materials.append(math[texnum])
 				
 				context.scene.objects.link(b3dObj)
 				objString.append(context.scene.objects[0].name)
+				
+				#второй и последующие слои UV
+				
+				"""
+				print(add_uvs)
+				print(uvs)
+				
+				for n in range(num_add_UV):
+					uvMesh = b3dMesh.uv_textures.new()
+					uvMesh.name = 'default' + str(n + 1)
+					uvLoop = b3dMesh.uv_layers[n + 1]
+					uvsMesh = []
 
+					for i, texpoly in enumerate(uvMesh.data):
+						poly = b3dMesh.polygons[i]
+						for j,k in enumerate(poly.loop_indices):
+							uvsMesh = [add_uvs[n][i][j][0], 1 - add_uvs[n][i][j][1]]
+							uvLoop.data[k].uv = uvsMesh
+				"""
 				
 			elif (type == 9):
 				cnt+=1
@@ -1263,7 +1306,8 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				file.seek(4,1)
 				b3dObj['light_type'] = struct.unpack("<i",file.read(4))[0]
 				file.seek(4,1)
-				b3dObj.location = struct.unpack("<3f",file.read(12))
+				#b3dObj.location = struct.unpack("<3f",file.read(12))
+				file.seek(12, 1)
 				file.seek(4,1)
 				file.seek(4,1)
 				file.seek(4,1)
@@ -1312,6 +1356,13 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				texNum = struct.unpack("<i",file.read(4))[0]
 				num = struct.unpack("<i",file.read(4))[0]
 				uvs = []
+				add_uvs = []
+				for i in range(num_add_UV):
+					#инициализация массива дополнительных развёрток
+					add_uvs_instance = []
+					for j in range(num):
+						add_uvs_instance.append((0.0, 0.0, 0.0))
+						add_uvs.append(add_uvs_instance)
 				########
 
 				########
@@ -1361,6 +1412,11 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 						#print(str(file.tell()))
 						uvs.append((uv[faces1[0]],uv[faces1[1]],uv[faces1[2]]))
 						
+						for n in range(num_add_UV):	
+							add_uvs[n][i] = ((add_uv[n][faces1[0]],
+											add_uv[n][faces1[1]],
+											add_uv[n][faces1[2]]))
+						
 				elif num0 == 3:
 					#print(str(num))
 					for i in range(num):
@@ -1374,6 +1430,11 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 						#print (str(coords23))
 						#print ('faces	' + str(faces1)+'	'+str(uv))
 						
+						for n in range(num_add_UV):	
+							add_uvs[n][i] = ((add_uv[n][faces1[0]],
+											add_uv[n][faces1[1]],
+											add_uv[n][faces1[2]]))
+						
 				Ev = threading.Event()
 				Tr = threading.Thread(target=b3dMesh.from_pydata, args = (vertexes,[],faces))
 				Tr.start()
@@ -1386,16 +1447,21 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 						#vert.normal = normals[i]
 						
 						
-				uvMesh = b3dMesh.uv_textures.new()
+				#uvMesh = b3dMesh.uv_textures.new()
 				#b3dMesh.use_mirror_topology = True
 				#imgMesh = math[coords23[i][3]].texture_slots[0].texture.image.size[0]
-				uvMesh.name = 'UVmap'
-				uvLoop = b3dMesh.uv_layers[0]
-				uvsMesh = []
+				#uvMesh.name = 'UVmap'
+				#uvLoop = b3dMesh.uv_layers[0]
+				#uvsMesh = []
 				#print('uvs:	'+str(uvs))
 				
 				#uvMain = createTextureLayer("default", b3dMesh, uvs)
 				
+				uvMesh = b3dMesh.uv_textures.new()
+				uvMesh.name = 'UVmap'
+				uvLoop = b3dMesh.uv_layers[0]
+				uvsMesh = []
+				#первый слой UV
 				for i, texpoly in enumerate(uvMesh.data):
 					#print(str(i))
 					poly = b3dMesh.polygons[i]
@@ -1403,7 +1469,6 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					for j,k in enumerate(poly.loop_indices):
 						uvsMesh = [uvs[i][j][0],1 - uvs[i][j][1]]
 						uvLoop.data[k].uv = uvsMesh
-						
 				
 				#b3dMesh.materials.append(math[texNum])#coords23[i][3]])
 				
@@ -1414,14 +1479,33 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 
 
 				context.scene.objects.link(b3dObj) #добавляем в сцену обьект
+				
+				#второй и последующие слои UV
+				#print(add_uvs)
+				
+				for n in range(num_add_UV):
+					uvMesh = b3dMesh.uv_textures.new()
+					uvMesh.name = 'UVmap' + str(n + 1)
+					uvLoop = b3dMesh.uv_layers[n + 1]
+					uvsMesh = []
+
+					for i, texpoly in enumerate(uvMesh.data):
+						poly = b3dMesh.polygons[i]
+						for j,k in enumerate(poly.loop_indices):
+							#add_uv[n][i]
+							uvsMesh = [add_uvs[n][i][j][0], 1 - add_uvs[n][i][j][1]]
+							#uvsMesh = [add_uvs[n][i][j][0], 1 - add_uvs[n][i][j][1]]
+							uvLoop.data[k].uv = uvsMesh
+				
+
 				b3dObj['MType'] = num0
 				b3dObj['texNum'] = texNum
 				b3dObj['FType'] = 0
 				try:
-					b3dObj['SType'] = b3dObj.parent['SType']
+					b3dObj['verts_format'] = b3dObj.parent['verts_format']
 				except:
-					b3dObj['SType'] = 2
-				b3dObj['BType'] = 35
+					b3dObj['verts_format'] = 2
+				b3dObj['faces_container_type'] = 35
 				b3dObj['pos'] = str(file.tell())
 				b3dObj['block_type'] = b3dObj.parent['block_type']
 				for face in b3dMesh.polygons:
@@ -1487,10 +1571,52 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 				vertexes = []
 				normals = []
 				uv = []
+				add_uv = []
+				
+				test_verts_num = 0
+				
 				file.seek(32,1)
-				format = struct.unpack("<i",file.read(4))[0]
+				#format = struct.unpack("<i",file.read(4))[0]
+				
+				##12.04.2022##
+				verts_format = struct.unpack("<i",file.read(4))[0]
+				file.seek(-4, 1)
+				normals_format = struct.unpack_from("<B", file.read(1))[0] #первый байт - флаг "нормали/какой-то float"
+				num_add_UV = struct.unpack_from("<B", file.read(1))[0]     #второй байт - флаг "количество дополнительных UV"
+				file.seek(2, 1)                                            #третий и четвёртый байты вроде бы не используются
+				##############
+				
 				iter = struct.unpack("<i",file.read(4))[0]
-				if format == 0:
+				
+				#присвоение параметров объекту
+				test_verts_num = iter
+				b3dObj['verts_format'] = verts_format
+				b3dObj['normals_format'] = normals_format
+				b3dObj['num_add_UV'] = num_add_UV
+				
+				#### temp ####
+				normals_str = ""
+				uv_str = ""
+					
+				if normals_format == 1 or normals_format == 2:
+					normals_str = "NX NY NZ"
+				elif normals_format == 3:
+					normals_str = "NX"
+
+				for i in range(num_add_UV):
+					uv_str += "UV{} ".format(i+2)
+					#инициализация массива дополнительных развёрток
+					add_uv_instance = []
+					for j in range(iter):
+						add_uv_instance.append((0.0, 0.0))
+						add_uv.append(add_uv_instance)
+				##############
+					
+				print("format={} | XYZ UV {} {}".format(verts_format, normals_str, uv_str))
+				#print(add_uv)
+				
+				
+				if verts_format == 0:
 					objString.append(objString[-1])
 					pass
 				else:
@@ -1498,37 +1624,27 @@ def read(file, context, op, filepath, search_tex_names, textures_format, color_f
 					b3dObj = bpy.data.objects.new(objName, None)
 					b3dObj['block_type'] = 37
 					b3dObj['pos'] = str(file.tell())
-					b3dObj['SType'] = format
+					#b3dObj['SType'] = format
 					b3dObj.parent = context.scene.objects[objString[-1]]
 					#b3dObj.location = qu
 					context.scene.objects.link(b3dObj)
 					objString.append(context.scene.objects[0].name)
 					##b3dObj.hide = True				
-					if format == 2:	#Vertex with normals
-						for i in range(iter):
-							vertexes.append(struct.unpack("<3f",file.read(12)))
-							uv.append(struct.unpack("<2f",file.read(8)))
+					
+					for i in range(iter):
+						#общее для всех вершин
+						vertexes.append(struct.unpack("<3f",file.read(12)))
+						uv.append(struct.unpack("<2f",file.read(8)))
+						###
+						if normals_format == 1 or normals_format == 2:
 							normals.append(struct.unpack("<3f",file.read(12)))
-					elif format ==3:
+						elif normals_format == 3:
+							b3dObj['flt'] = struct.unpack("<f",file.read(4))[0]
 
-						for i in range(iter):
-							vertexes.append(struct.unpack("<3f",file.read(12)))
-							uv.append(struct.unpack("<2f",file.read(8)))
-							file.seek(4,1)
-							
-					elif ((format ==258) or (format ==515)): #258 - стекло
+						for j in range(num_add_UV):
+							add_uv[j][i] = (struct.unpack("<2f",file.read(8)))
+						###
 
-						for i in range(iter):
-							vertexes.append(struct.unpack("<3f",file.read(12)))
-							uv.append(struct.unpack("<2f",file.read(8)))
-							normals.append(struct.unpack("<3f",file.read(12)))
-							file.seek(8,1)
-					elif format ==514:
-						for i in range(iter):
-							vertexes.append(struct.unpack("<3f",file.read(12)))
-							uv.append(struct.unpack("<2f",file.read(8)))
-							normals.append(struct.unpack("<3f",file.read(12)))
-							struct.unpack("<4f",file.read(16))
 					#print(str(objName))
 							
 				file.seek(4,1)#01 00 00 00 subblocks count

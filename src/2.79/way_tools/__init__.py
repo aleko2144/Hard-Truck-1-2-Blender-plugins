@@ -2,7 +2,7 @@ bl_info = {
 	"name": "King of The Road *.way exporter",
 	"description": "",
 	"author": "Andrey Prozhoga",
-	"version": (0, 0, 1),
+	"version": (0, 0, 2),
 	"blender": (2, 79, 0),
 	"location": "3D View > Tools",
 	"warning": "",
@@ -121,7 +121,7 @@ class PanelSettings1(PropertyGroup):
 	flag_int = IntProperty(
 		name = "Флаг",
 		description="",
-		min = 0,
+		min = 0, #0 - fuel node?, 1 - town node (проверено)
 		)
 		
 	name_string = StringProperty(
@@ -133,7 +133,7 @@ class PanelSettings1(PropertyGroup):
 	mnam_string = StringProperty(
 		name="Имя карты",
 		default="aa",
-		maxlen=2,
+		maxlen=20,
 		)
 		
 	rnam_string = StringProperty(
@@ -148,7 +148,14 @@ class PanelSettings1(PropertyGroup):
 		maxlen=20,
 		)
 		
-	wdth_val = FloatProperty(
+	wdth_val1 = FloatProperty(
+		name = "Ширина дороги",
+		description="",
+		default=14,
+		min = 0,
+		)
+	
+	wdth_val2 = FloatProperty(
 		name = "Ширина дороги",
 		description="",
 		default=14,
@@ -333,7 +340,8 @@ class AddOperator11(bpy.types.Operator):
 			object['attr1'] = waytool.attr_1
 			object['attr2'] = waytool.attr_2
 			object['attr3'] = waytool.attr_3
-			object['wdth'] = waytool.wdth_val
+			object['wdth1'] = waytool.wdth_val1
+			object['wdth2'] = waytool.wdth_val2
 			context.scene.objects.link(object)
 			
 		if blockWD_type == "rnod" or blockWD_type == "ortn":
@@ -516,7 +524,8 @@ class OBJECT_PT_blocks_panel(Panel):
 			layout.prop(waytool, "attr_1")
 			layout.prop(waytool, "attr_2")
 			layout.prop(waytool, "attr_3")
-			layout.prop(waytool, "wdth_val")
+			layout.prop(waytool, "wdth_val1")
+			layout.prop(waytool, "wdth_val2")
 			
 		if waytool.addWDBlockType_enum == "rnod" or waytool.addWDBlockType_enum == "ortn":
 			layout.prop(waytool, "nnam_string")
@@ -914,8 +923,8 @@ def forChild(object, root, file):
 			
 			file.write(str.encode('WDTH'))
 			file.write(struct.pack("<i", 16))
-			file.write(struct.pack("<d", object['wdth']))
-			file.write(struct.pack("<d", object['wdth']))
+			file.write(struct.pack("<d", object['wdth1']))
+			file.write(struct.pack("<d", object['wdth2']))
 			
 			for subcurve in object.data.splines:
 				file.write(str.encode('VDAT'))

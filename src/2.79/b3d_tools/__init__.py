@@ -2,7 +2,7 @@ bl_info = {
 	"name": "King of The Road Tools Panel for b3d exporter",
 	"description": "",
 	"author": "Andrey Prozhoga",
-	"version": (1, 0, 0),
+	"version": (1, 1, 0),
 	"blender": (2, 79, 0),
 	"location": "3D View > Tools",
 	"warning": "",
@@ -27,6 +27,7 @@ from bpy.types import (Panel,
 						)
 
 import bmesh
+import struct
 						
 # ------------------------------------------------------------------------
 #	store properties in the active scene
@@ -70,10 +71,11 @@ class PanelSettings(PropertyGroup):
 				('03', "03", "Контейнер"),
 				('04', "04", "Контейнер с возможностью привязки к нему других блоков"),
 				('05', "05", "Контейнер с возможностью привязки к нему другого блока"),
+				('09', "09", "Что-то с триггерами"),
 				('10', "10", "LOD"),
 				('12', "12", "Плоскость коллизии"),
 				('13', "13", "Триггер (загрузчик карты)"),
-				('14', "14", "Блок, связанный с автомобилями"),
+				('14', "14", "Блок событий"),
 				('18', "18", "Связка локатора и 3D-модели, например: FiatWheel0Space и Single0Wheel14"),
 				('19', "19", "Контейнер, в отличие от блока типа 05, не имеет возможности привязки"),
 				('20', "20", "Плоская коллизия"),
@@ -104,11 +106,12 @@ class PanelSettings(PropertyGroup):
 		
 	addBlockType_enum1 = EnumProperty(
 		name="Тип блока",
-		items=[ ('05', "05", "Контейнер с возможностью привязки к нему другого блока"),
+		items=[ ('04', "04", "Контейнер с возможностью привязки к нему других блоков"),
+				('05', "05", "Контейнер с возможностью привязки к нему другого блока"),
 				('07', "07", "Меш (ДБ1)"),
 				('10', "10", "LOD"),
 				('12', "12", "Плоскость коллизии"),
-				('14', "14", "Блок, связанный с автомобилями"),
+				('14', "14", "Блок событий"),
 				('18', "18", "Связка локатора и 3D-модели, например: FiatWheel0Space и Single0Wheel14"),
 				('19', "19", "Контейнер, в отличие от блока типа 05, не имеет возможности привязки"),
 				('20', "20", "Плоская коллизия"),
@@ -162,20 +165,89 @@ class PanelSettings(PropertyGroup):
 		description = "Маскимальная дальность отображения LOD",
 		default = 10.0,
 		)
+	
+	
+	#https://firststeps.ru/mfc/directx/dxhelp/r.php?60
+	#https://netlib.narod.ru/library/book0032/ch05_04.htm
+	#названия из exe-файла
+	LightType_enum = bpy.props.EnumProperty(
+		name="Тип источника света",
+		items=(('1', 'direction', ""),
+			   ('2', 'position', ""),
+			   ('3', 'spot', ""),
+			   ),
+		)
 		
-	Intensity = FloatProperty(
-		name = "Интенсивность освещения",
-		description = "Яркость источника света",
+	LightVar_int = IntProperty(
+		name = "Параметр",
+		description="",
+		default = 1,
+		)
+
+	###только для SpotLight?###
+	LightFalloff = FloatProperty(
+		name = "Спад света между консуами",
+		description = "D3DLIGHT->falloff",
 		default = 1.0,
 		min = 0.0,
 		)
+	
+	LightTheta = FloatProperty(
+		name = "Внутренний конус, рад",
+		description = "D3DLIGHT->theta",
+		default = 0.0,
+		min = 0.0,
+		)
+	
+	LightPhi = FloatProperty(
+		name = "Внешний конус, рад",
+		description = "D3DLIGHT->phi",
+		default = 0.0,
+		min = 0.0,
+		)
+	#####
+	
+	light_dir_x = FloatProperty(
+		name = "direction.x",
+		description = "",
+		default = 0.0,
+		)
+	
+	light_dir_y = FloatProperty(
+		name = "direction.y",
+		description = "",
+		default = 0.0,
+		)
+	
+	light_dir_z = FloatProperty(
+		name = "direction.z",
+		description = "",
+		default = 0.0,
+		)
+	
+	#####
+	
+	LightAttenuation0 = FloatProperty(
+		name = "Attenuation0",
+		description = "",
+		default = 0,
+		min = 0.0,
+		)
 		
-	Intensity1 = FloatProperty(
-		name = "Интенсивность освещения",
-		description = "Яркость источника света",
+	LightAttenuation1 = FloatProperty(
+		name = "Attenuation1",
+		description = "",
+		default = 0.5,
+		min = 0.0,
+		)
+		
+	LightAttenuation2 = FloatProperty(
+		name = "Attenuation2",
+		description = "",
 		default = 1.0,
 		min = 0.0,
 		)
+	#####
 		
 	R = FloatProperty(
 		name = "R",
@@ -199,53 +271,6 @@ class PanelSettings(PropertyGroup):
 		default = 255,
 		min = 0.0,
 		max = 255,
-		)
-		
-	R1 = FloatProperty(
-		name = "R",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-		
-	G1 = FloatProperty(
-		name = "G",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-		
-	B1 = FloatProperty(
-		name = "B",
-		description = "",
-		default = 255,
-		min = 0.0,
-		max = 255,
-		)
-		
-	RadiusLight = FloatProperty(
-		name = "Радиус освещения",
-		description = "",
-		default = 1,
-		min = 0.0,
-		)
-		
-	RadiusLight1 = FloatProperty(
-		name = "Радиус освещения",
-		description = "",
-		default = 1,
-		min = 0.0,
-		)
-		
-	LType_enum = bpy.props.EnumProperty(
-		name="Тип источника света",
-		items=(('0', 'Тип 0', ""),
-			   ('1', 'Тип 1', ""),
-			   ('2', 'Тип 2', ""),
-			   ('3', 'Тип 3', ""),
-			   ),
 		)
 		
 	SType_enum = bpy.props.EnumProperty(
@@ -426,24 +451,23 @@ class PanelSettings(PropertyGroup):
 		)
 		
 	T14_enum = EnumProperty(
-		name="Преднастройки",
-		items=[ ('car', "Для транспорта", ""),
-				('trl', "Для полуприцепа", ""),
-				('trl_cyc', "Для полуприцепа-цистерны", ""),
-				('clk', "Для коллизии", ""),
+		name="Тип события",
+		items=[ ('0', "hit", "в блок CollisionKey"),
+				('18', "sell", "в блок автомобиля"),
+				('25', "Nek_STrailer", "в блок прицепа (событие сцепки)"),
 				]
 		)
 		
-	T28_radius = FloatProperty(
-		name = "Радиус спрайта",
-		description = "Радиус плоскости спрайта",
+	T28_radius_x = FloatProperty(
+		name = "Ширина спрайта (x)",
+		description = "Ширина плоскости спрайта",
 		default = 1.0,
 		min = 0.01,
 		)
 		
-	T28_radius1 = FloatProperty(
-		name = "Радиус спрайта",
-		description = "Радиус плоскости спрайта",
+	T28_radius_y = FloatProperty(
+		name = "Высота спрайта (y)",
+		description = "Высота плоскости спрайта",
 		default = 1.0,
 		min = 0.01,
 		)
@@ -528,8 +552,8 @@ class PanelSettings(PropertyGroup):
 		
 	addBlockMeshType_enum = EnumProperty(
 		name="Тип записи модели",
-		items=[ ('auto', "Автоматический", "Экспортер сам определит, какой блок использовать (8, 35 или оба)"),
-				('manual', "Ручной", "Будет записан блок, который выбран в настройках"),
+		items=[('manual', "Ручной", "Будет записан блок, который выбран в настройках"),
+			   ('auto', "Автоматический", "Экспортер сам определит, какой блок использовать (8, 35 или оба)"),
 			   ]
 		)
 		
@@ -554,12 +578,76 @@ class PanelSettings(PropertyGroup):
 		maxlen=2,
 		)
 		
-	triggerType_enum = bpy.props.EnumProperty(
+	#event types:                        (type,  v1,  par_cnt,  ...)
+	#type 13 trigger
+	#4  - repair station event #2        (4,       0,  0)
+	#12 - no_optim_099 (dr.b3d)          (12,      0,  0)
+	#13 - restart                        (13,    481, 10, x, y, z, 1, 0, 0, room_ap_048)
+	#15 - repair station event #1        (15,      0,  0)
+	#22 - no_rain_no_sun                 (22,      0,  0)
+	#23 - weather_change (dr.b3d)        (23,      5,  4, (x, y, z), w)
+	#29 - ???                            (29,     40,  0)                   //возможно, проверка скорости игрока для штрафа машиной ДПС?
+	#30 - radar                          (30,   3001,  4, 65, (1, 0, 0))    //RadarEvents in b3d
+	#31 - road hedgehog (police ezh)     (31,   2240,  7)                   //EzhEvent    in b3d
+	#4095 - module loader (from env dir) (4095,   0,   1, "ap")
+	
+	trigger13_type = bpy.props.EnumProperty(
 		name="Тип триггера",
-		items=(('loader', "Загрузчик", "Загрузчик участков карты"),
-			   ('radar0', "Радар 0", "Event 0"),
-			   ('radar1', "Радар 1", "Event 1"),
+		items=(('4',      "4 СТО #2",      ""),
+			   ('15',     "15 СТО #1",      ""),
+			   ('22',     "22 no_rain_no_sun",      ""),
+			   ('30',     "30 Радар-детектор", "Road radar"),
+			   ('31',     "31 Дорожный ёж",    "Road hedgehog"),
+			   ('4095',   "4095 Загрузчик",    "Загрузчик b3d-файлов карты"),
 			   ),
+		)
+		
+	trigger13_var1_int = IntProperty(
+		name = "1-й параметр события (int)",
+		description="",
+		)
+		
+	trigger13_var2_int = IntProperty(
+		name = "Количество параметров",
+		description="Количество далее идущих параметров в байтах / 4",
+		)
+		
+	trigger13_radar_float = FloatProperty(
+		name = "Скоростное ограничение",
+		description = "",
+		default = 65.0,
+		)
+		
+	#triggerType_enum = bpy.props.EnumProperty(
+	#	name="Тип триггера",
+	#	items=(('loader', "Загрузчик", "Загрузчик участков карты"),
+	#		   ('radar0', "Радар 0", "Event 0"),
+	#		   ('radar1', "Радар 1", "Event 1"),
+	#		   ),
+	#	)
+	
+	event_x = FloatProperty(
+		name = "event.x",
+		description = "",
+		default = 0.0,
+		)
+	
+	event_y = FloatProperty(
+		name = "event.y",
+		description = "",
+		default = 0.0,
+		)
+	
+	event_z = FloatProperty(
+		name = "event.z",
+		description = "",
+		default = 0.0,
+		)
+	
+	event_w = FloatProperty(
+		name = "event radius",
+		description = "",
+		default = 0.0,
 		)
 		
 	addBlockName4_string = StringProperty(
@@ -610,6 +698,26 @@ class PanelSettings(PropertyGroup):
 				('z', "z", ""),
 			   ]
 		)
+		
+	normals_enum = EnumProperty(
+		name="Нормали",
+		items=[ ('2', "xyz", ""), #1 - тоже самое
+				('3', "какой-то float", ""),
+			   ]
+		)
+		
+	normals_float = FloatProperty(
+		name = "Какой-то float",
+		description = "Что-то",
+		default = 1.0,
+		min = 0.0,
+		)
+	
+	write_other_uv = BoolProperty(
+		name="UV2, UV3 и остальные",
+		description="Экспортировать все слои UV?",
+		default = False
+		)	
 
 # ------------------------------------------------------------------------
 #	operators
@@ -680,6 +788,24 @@ class AddOperator(bpy.types.Operator):
 			object['add_name'] = mytool.addBlockName_string
 			bpy.context.scene.objects.link(object)
 			
+		if block_type == 9:
+			object_name = mytool.BlockName_string
+			object = bpy.data.objects.new(object_name, None) 
+			object['block_type'] = block_type
+			object.location=cursor_pos #(0.0,0.0,0.0)
+			object['node_radius'] = mytool.Radius
+			object['event_x'] = mytool.event_x
+			object['event_y'] = mytool.event_y
+			object['event_z'] = mytool.event_z
+			object['event_w'] = mytool.event_w
+			bpy.context.scene.objects.link(object)
+			
+			separator = bpy.data.objects.new(("z_" + mytool.BlockName_string + "_444"), None) 
+			separator['block_type'] = 444
+			bpy.context.scene.objects.link(separator)
+			separator.parent = object
+		
+			
 		if block_type == 10:
 			object_name = mytool.BlockName_string
 			object = bpy.data.objects.new(object_name, None) 
@@ -688,6 +814,18 @@ class AddOperator(bpy.types.Operator):
 			object['node_radius'] = mytool.Radius
 			object['lod_distance'] = mytool.LOD_Distance
 			bpy.context.scene.objects.link(object)
+			for i in range(2):
+				group = bpy.data.objects.new((mytool.BlockName_string + "_group_" + str(i)), None) 
+				group['block_type'] = 5
+				group['node_radius'] = mytool.Radius
+				group['add_name'] = ""
+				bpy.context.scene.objects.link(group)
+				group.parent = object
+				if (i < mytool.groupsNum_int - 1):
+					separator = bpy.data.objects.new((mytool.BlockName_string + "_group_" + str(i) + "_444"), None) 
+					separator['block_type'] = 444
+					bpy.context.scene.objects.link(separator)
+					separator.parent = object
 		
 		if block_type == 12:
 			object_name = mytool.BlockName_string
@@ -704,21 +842,23 @@ class AddOperator(bpy.types.Operator):
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
 			object['block_type'] = block_type
-			if mytool.triggerType_enum == "loader":
-				object['type'] = "loader"
+			object['event13_type'] = int(mytool.trigger13_type)
+			object['event13_var1'] = mytool.trigger13_var1_int
+			object['event13_var2'] = mytool.trigger13_var2_int
+			if mytool.trigger13_type == "4095":
 				object['route_name'] = mytool.routeName_string
-			if mytool.triggerType_enum == "radar0":
-				object['type'] = "radar0"
-				object['var0'] = 30
-				object['var1'] = 3005
-				object['var2'] = 4
-				object['speed_limit'] = mytool.speed_limit
-			if mytool.triggerType_enum == "radar1":
-				object['type'] = "radar1"
-				object['var0'] = 30
-				object['var1'] = -1
-				object['var2'] = 4
-				object['speed_limit'] = mytool.speed_limit
+			#if mytool.triggerType_enum == "radar0":
+			#	object['type'] = "radar0"
+			#	object['var0'] = 30
+			#	object['var1'] = 3005
+			#	object['var2'] = 4
+			#	object['speed_limit'] = mytool.speed_limit
+			#if mytool.triggerType_enum == "radar1":
+			#	object['type'] = "radar1"
+			#	object['var0'] = 30
+			#	object['var1'] = -1
+			#	object['var2'] = 4
+			#	object['speed_limit'] = mytool.speed_limit
 			bpy.context.scene.objects.link(object)
 		
 		if block_type == 14:
@@ -726,32 +866,9 @@ class AddOperator(bpy.types.Operator):
 			object = bpy.data.objects.new(object_name, None)
 			object['block_type'] = block_type
 			object.location=cursor_pos
-			if mytool.T14_enum == "car":
-				object['var0'] = 0 
-				object['var1'] = mytool.Radius
-				object['var2'] = mytool.Radius/2
-				object['var3'] = 10
-				object['var4'] = 18
-			elif mytool.T14_enum == "trl":
-				object['var0'] = 0
-				object['var1'] = mytool.Radius
-				object['var2'] = mytool.Radius/2
-				object['var3'] = 16
-				object['var4'] = 25
-				
-			elif mytool.T14_enum == "trl_cyc":
-				object['var0'] = 0
-				object['var1'] = mytool.Radius
-				object['var2'] = mytool.Radius/2
-				object['var3'] = 18
-				object['var4'] = 25
-				
-			elif mytool.T14_enum == "clk":
-				object['var0'] = 0
-				object['var1'] = mytool.Radius * 0.08
-				object['var2'] = mytool.Radius * 0.51
-				object['var3'] = mytool.Radius
-				object['var4'] = 0
+			object['node_radius'] = mytool.Radius
+			object['event_type'] = int(mytool.T14_enum)
+
 			bpy.context.scene.objects.link(object)
 		
 		if block_type == 18:
@@ -837,15 +954,49 @@ class AddOperator(bpy.types.Operator):
 			bpy.context.scene.objects.link(object)
 			
 		if block_type == 28:
+			myvertex = []
+			myfaces = []
+
+			mypoint = [(-mytool.T28_radius_x / 2, 0, -mytool.T28_radius_y / 2)]
+			myvertex.extend(mypoint)
+
+			mypoint = [(-mytool.T28_radius_x / 2, 0, mytool.T28_radius_y / 2)]
+			myvertex.extend(mypoint)
+			
+			mypoint = [(mytool.T28_radius_x / 2, 0, mytool.T28_radius_y / 2)]
+			myvertex.extend(mypoint)
+
+			mypoint = [(mytool.T28_radius_x / 2, 0, -mytool.T28_radius_y / 2)]
+			myvertex.extend(mypoint)
+
+			myface = [(0, 1, 2, 3), (3, 2, 1, 0)]
+			myfaces.extend(myface)
+
+
 			object_name = mytool.BlockName_string
-			object = bpy.data.objects.new(object_name, None)
-			object.location=cursor_pos
+			mymesh = bpy.data.meshes.new(object_name)
+
+			object = bpy.data.objects.new(object_name, mymesh)
+
+			bpy.context.scene.objects.link(object)
+
+			mymesh.from_pydata(myvertex, [], myfaces)
+
+			mymesh.update(calc_edges=True)
+	
+			object.location = cursor_pos
+			
+			#object_name = mytool.BlockName_string
+			#object = bpy.data.objects.new(object_name, None)
+			#object.location=cursor_pos
 			object['block_type'] = block_type
 			object['node_radius'] = mytool.Radius
-			object['sprite_radius'] = mytool.T28_radius
+			object['sprite_radius_x'] = mytool.T28_radius_x / 2
+			object['sprite_radius_y'] = mytool.T28_radius_y / 2
 			object['texNum'] = mytool.texNum_int
+
 			object_name = mytool.BlockName_string
-			bpy.context.scene.objects.link(object)
+			#bpy.context.scene.objects.link(object)
 			
 		if block_type == 30:
 			object_name = mytool.BlockName_string
@@ -891,11 +1042,19 @@ class AddOperator(bpy.types.Operator):
 			object_name = mytool.BlockName_string
 			object = bpy.data.objects.new(object_name, None)
 			object.location=cursor_pos
-			object['block_type'] = block_type
+			object['block_type']  = block_type
 			object['node_radius'] = mytool.Radius
-			object['light_radius'] = mytool.RadiusLight
-			object['light_type'] = int(mytool.LType_enum)
-			object['intensity'] = mytool.Intensity
+			object['light_var']      = mytool.LightVar_int
+			object['light_type']     = int(mytool.LightType_enum)
+			object['light_dir_x']    = mytool.light_dir_x
+			object['light_dir_y']    = mytool.light_dir_y
+			object['light_dir_z']    = mytool.light_dir_z
+			object['light_falloff']  = mytool.LightFalloff
+			object['light_attenuation0'] = mytool.LightAttenuation0
+			object['light_attenuation1'] = mytool.LightAttenuation1
+			object['light_attenuation2'] = mytool.LightAttenuation2
+			object['light_theta'] = mytool.LightTheta
+			object['light_phi']   = mytool.LightPhi
 			object['R'] = mytool.R / 255
 			object['G'] = mytool.G / 255
 			object['B'] = mytool.B / 255
@@ -981,27 +1140,27 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 		
-		if block_type == 0:
+		elif block_type == 0:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 			layout.prop(mytool, "addSpaceName_string")
 			
 			
-		if block_type == 1:
+		elif block_type == 1:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 			layout.prop(mytool, "addSpaceName_string")
 			layout.prop(mytool, "routeName_string")
 			
-		if block_type == 3:
+		elif block_type == 3:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 			layout.prop(mytool, "Radius")
 			
-		if block_type == 4:
+		elif block_type == 4:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
@@ -1009,12 +1168,22 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			layout.prop(mytool, "addBlockName4_string")
 			layout.prop(mytool, "addBlockName_string")
 		
-		if block_type == 5:
+		elif block_type == 5:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 			layout.prop(mytool, "addBlockName_string")
 			layout.prop(mytool, "Radius")
+			
+		elif block_type == 9:
+			layout.prop(mytool, "BlockName_string")
+			self.layout.label("Тип блока:")
+			layout.prop(mytool, "addBlockType_enum", text="")
+			layout.prop(mytool, "Radius")
+			layout.prop(mytool, "event_x")
+			layout.prop(mytool, "event_y")
+			layout.prop(mytool, "event_z")
+			layout.prop(mytool, "event_w")
 			
 		elif block_type == 10:
 			layout.prop(mytool, "BlockName_string")
@@ -1034,17 +1203,20 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
-			layout.prop(mytool, "triggerType_enum", text="")
-			if mytool.triggerType_enum == "loader":
+			layout.prop(mytool, "trigger13_type", text="")
+			layout.prop(mytool, "trigger13_var1_int")
+			layout.prop(mytool, "trigger13_var2_int")
+			#layout.prop(mytool, "triggerType_enum", text="")
+			if mytool.trigger13_type == "4095":
 				layout.prop(mytool, "routeName_string")
-			elif mytool.triggerType_enum == "radar0" or "radar1":
-				layout.prop(mytool, "speed_limit")
+			#elif mytool.triggerType_enum == "radar0" or "radar1":
+			#	layout.prop(mytool, "speed_limit")
 			
 		elif block_type == 14:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
-			self.layout.label("Вариант преднастроек:")
+			self.layout.label("Тип события:")
 			layout.prop(mytool, "T14_enum", text="")
 			layout.prop(mytool, "Radius")
 
@@ -1096,7 +1268,8 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
 			layout.prop(mytool, "Radius")
-			layout.prop(mytool, "T28_radius")
+			layout.prop(mytool, "T28_radius_x")
+			layout.prop(mytool, "T28_radius_y")
 			layout.prop(mytool, "texNum_int")
 			
 		elif block_type == 30:
@@ -1110,13 +1283,22 @@ class OBJECT_PT_b3d_add_panel(Panel):
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
 			layout.prop(mytool, "addBlockType_enum", text="")
-			layout.prop(mytool, "LType_enum")
 			layout.prop(mytool, "Radius")
-			layout.prop(mytool, "RadiusLight")
-			layout.prop(mytool, "Intensity")
+			layout.prop(mytool, "LightVar_int")
+			layout.prop(mytool, "LightType_enum")
+			layout.prop(mytool, "light_dir_x")
+			layout.prop(mytool, "light_dir_y")
+			layout.prop(mytool, "light_dir_z")
+			layout.prop(mytool, "LightAttenuation0")
+			layout.prop(mytool, "LightAttenuation1")
+			layout.prop(mytool, "LightAttenuation2")
 			layout.prop(mytool, "R")
 			layout.prop(mytool, "G")
 			layout.prop(mytool, "B")
+			if mytool.LightType_enum == '3':
+				layout.prop(mytool, "LightFalloff")
+				layout.prop(mytool, "LightTheta")
+				layout.prop(mytool, "LightPhi")
 			
 		elif block_type == 40:
 			layout.prop(mytool, "BlockName_string")
@@ -1159,9 +1341,21 @@ class GetValuesOperator(bpy.types.Operator):
 		object = bpy.context.selected_objects[0]
 		block_type = object['block_type']
 		
-		if block_type == 5:
+		if block_type == 4:
+			mytool.addBlockName4_string = object['add_name']
+			mytool.addBlockName1_string = object['add_name1']
+			mytool.Radius1 = object['node_radius']	
+		
+		elif block_type == 5:
 			mytool.addBlockName1_string = object['add_name']
 			mytool.Radius1 = object['node_radius']
+			
+		elif block_type == 9:
+			mytool.Radius1 = object['node_radius']
+			mytool.event_x = object['event_x']
+			mytool.event_y = object['event_y']
+			mytool.event_z = object['event_z']
+			mytool.event_w = object['event_w']
 			
 		elif block_type == 7:
 			if 'BType' in object:
@@ -1186,6 +1380,11 @@ class GetValuesOperator(bpy.types.Operator):
 			mytool.CH1 = object['height']
 			mytool.CollisionType_enum = object['CType']
 			
+		elif block_type == 13:
+			mytool.trigger13_type = str(object['event13_type'])
+			mytool.trigger13_var1_int = object['event13_var1']
+			mytool.trigger13_var2_int = object['event13_var2']
+			
 		elif block_type == 18:
 			mytool.Radius1 = object['node_radius']
 			mytool.addBlockName1_string = object['add_name']
@@ -1208,16 +1407,31 @@ class GetValuesOperator(bpy.types.Operator):
 			
 		elif block_type == 28:
 			mytool.texNum_int = object['texNum']
-			mytool.T28_radius1 = object['sprite_radius']
+			mytool.T28_radius_x = object['sprite_radius_x'] * 2
+			mytool.T28_radius_y = object['sprite_radius_y'] * 2
 
 		elif block_type == 33:
-			mytool.Radius1 = object['node_radius']
-			mytool.LType_enum = str(object['light_type'])
-			mytool.RadiusLight1 = object['light_radius']
-			mytool.Intensity1 = object['intensity'] 
-			mytool.R1 = object['R'] * 255
-			mytool.G1 = object['G'] * 255
-			mytool.B1 = object['B'] * 255	
+			mytool.Radius = object['node_radius']
+			
+			mytool.LightVar_int = object['light_var']
+			mytool.LightType_enum = str(object['light_type'])
+			
+			mytool.light_dir_x = object['light_dir_x']
+			mytool.light_dir_y = object['light_dir_y']
+			mytool.light_dir_z = object['light_dir_z']
+			
+			mytool.LightFalloff = object['light_falloff']
+			
+			mytool.LightAttenuation0 = object['light_attenuation0']
+			mytool.LightAttenuation1 = object['light_attenuation1']
+			mytool.LightAttenuation2 = object['light_attenuation2']
+			
+			mytool.LightTheta = object['light_theta']
+			mytool.LightPhi = object['light_phi'] 
+			
+			mytool.R = object['R'] * 255
+			mytool.G = object['G'] * 255
+			mytool.B = object['B'] * 255	
 		
 		elif block_type == 37:
 			if 'BType' in object:
@@ -1230,8 +1444,20 @@ class GetValuesOperator(bpy.types.Operator):
 			else:
 				object['type1'] = "manual"
 				mytool.addBlockMeshType_enum = str(object['type1'])
+			if 'normals_type' in object:
+				mytool.normals_enum = str(object['normals_type'])
+			else:
+				mytool.normals_enum = 2
+			if object['normal_flt']:
+				mytool.normal_flt = object['normal_flt']
+			else:
+				mytool.normal_flt = 1.0
+			if object['export_layers'] == 1:
+				mytool.write_other_uv = True
+			else:
+				mytool.write_other_uv = False
 			#mytool.addMeshType_enum = str(object['type2'])
-			mytool.SType_enum = str(object['SType'])
+			#mytool.SType_enum = str(object['SType'])
 			mytool.MType_enum = str(object['MType'])
 			mytool.FType_enum = str(object['FType'])
 			mytool.texNum_int = object['texNum']
@@ -1261,7 +1487,12 @@ class SetValuesOperator(bpy.types.Operator):
 				
 			object['block_type'] = block_type
 			
-			if block_type == 5:
+			if block_type == 4:
+				object['add_name'] = mytool.addBlockName4_string
+				object['add_name1'] = mytool.addBlockName_string
+				object['node_radius'] = mytool.Radius1
+			
+			elif block_type == 5:
 				object['add_name'] = mytool.addBlockName1_string
 				object['node_radius'] = mytool.Radius1
 				
@@ -1271,6 +1502,14 @@ class SetValuesOperator(bpy.types.Operator):
 				object['FType'] = int(mytool.FType_enum)
 				object['MType'] = int(mytool.MType_enum)
 				object['texNum'] = int(mytool.texNum_int)
+				
+			elif block_type == 9:
+				object['add_name'] = mytool.addBlockName1_string
+				object['node_radius'] = mytool.Radius1
+				object['event_x'] = mytool.event_x
+				object['event_y'] = mytool.event_y
+				object['event_z'] = mytool.event_z
+				object['event_w'] = mytool.event_w
 				
 			elif block_type == 10:
 				object['node_radius'] = mytool.Radius1
@@ -1303,25 +1542,55 @@ class SetValuesOperator(bpy.types.Operator):
 			elif block_type == 28:
 				object['texNum'] = mytool.texNum_int
 				object['node_radius'] = mytool.Radius1
-				object['sprite_radius'] = mytool.T28_radius1
+				object['sprite_radius_x'] = mytool.T28_radius_x / 2
+				object['sprite_radius_y'] = mytool.T28_radius_y / 2
 				
 			elif block_type == 33:
-				object['node_radius'] = mytool.Radius1
-				object['light_type'] = int(mytool.LType_enum)
-				object['light_radius'] = mytool.RadiusLight1
-				object['intensity'] = mytool.Intensity1
-				object['R'] = mytool.R1 / 255
-				object['G'] = mytool.G1 / 255
-				object['B'] = mytool.B1 / 255
+				object['node_radius'] = mytool.Radius
+				object['light_var']      = mytool.LightVar_int
+				object['light_type']     = int(mytool.LightType_enum)
+				object['light_dir_x']    = mytool.light_dir_x
+				object['light_dir_y']    = mytool.light_dir_y
+				object['light_dir_z']    = mytool.light_dir_z
+				object['light_falloff']  = mytool.LightFalloff
+				object['light_attenuation0'] = mytool.LightAttenuation0
+				object['light_attenuation1'] = mytool.LightAttenuation1
+				object['light_attenuation2'] = mytool.LightAttenuation2
+				object['light_theta'] = mytool.LightTheta
+				object['light_phi']   = mytool.LightPhi
+				object['R'] = mytool.R / 255
+				object['G'] = mytool.G / 255
+				object['B'] = mytool.B / 255
 				
 			elif block_type == 37:
 				object['type1'] = str(mytool.addBlockMeshType_enum)
 				#object['type2'] = str(mytool.addMeshType_enum)
 				object['BType'] = int(mytool.Faces_enum)
-				object['SType'] = int(mytool.SType_enum)
+				#object['SType'] = int(mytool.SType_enum)
 				object['MType'] = int(mytool.MType_enum)
 				object['FType'] = int(mytool.FType_enum)
 				object['texNum'] = int(mytool.texNum_int)
+				
+				object['normals_type'] = int(mytool.normals_enum)
+				object['normal_flt'] = float(mytool.normals_float)
+				object['export_layers'] = bool(mytool.write_other_uv)
+				
+				format_bytes = bytearray()
+				
+				if object['normals_type'] == 1 or object['normals_type'] == 2:
+					format_bytes.append(2)
+				elif object['normals_type'] == 3:
+					format_bytes.append(3)
+
+				if object['export_layers']:
+					format_bytes.append(len(object.data.uv_layers) - 1)
+				else:
+					format_bytes.append(0)
+						
+				format_bytes.append(0)
+				format_bytes.append(0)
+				
+				object['SType'] = struct.unpack("<i", format_bytes)[0]
 			
 		return {'FINISHED'}
 
@@ -1356,32 +1625,34 @@ class FixUVOperator(bpy.types.Operator):
 		
 			object = bpy.context.selected_objects[i]
 			
-			bpy.ops.object.mode_set(mode = 'EDIT') 
+			if object.type == 'MESH':
 			
-			context = bpy.context
-			obj = context.edit_object
-			me = obj.data
-			bm = bmesh.from_edit_mesh(me)
-			# old seams
-			old_seams = [e for e in bm.edges if e.seam]
-			# unmark
-			for e in old_seams:
-				e.seam = False
-			# mark seams from uv islands
-			bpy.ops.uv.seams_from_islands()
-			seams = [e for e in bm.edges if e.seam]
-			# split on seams
-			print(seams)
-			print("salo 111")
-			bmesh.ops.split_edges(bm, edges=seams)
-			# re instate old seams.. could clear new seams.
-			for e in old_seams:
-				e.seam = True
-			bmesh.update_edit_mesh(me)
-
-			boundary_seams = [e for e in bm.edges if e.seam and e.is_boundary]
+				bpy.ops.object.mode_set(mode = 'EDIT') 
 				
-			bpy.ops.object.mode_set(mode = 'OBJECT')
+				context = bpy.context
+				obj = context.edit_object
+				me = obj.data
+				bm = bmesh.from_edit_mesh(me)
+				# old seams
+				old_seams = [e for e in bm.edges if e.seam]
+				# unmark
+				for e in old_seams:
+					e.seam = False
+				# mark seams from uv islands
+				bpy.ops.uv.seams_from_islands()
+				seams = [e for e in bm.edges if e.seam]
+				# split on seams
+				print(seams)
+				print("salo 111")
+				bmesh.ops.split_edges(bm, edges=seams)
+				# re instate old seams.. could clear new seams.
+				for e in old_seams:
+					e.seam = True
+				bmesh.update_edit_mesh(me)
+
+				boundary_seams = [e for e in bm.edges if e.seam and e.is_boundary]
+					
+				bpy.ops.object.mode_set(mode = 'OBJECT')
 	
 		return {'FINISHED'}
 		
@@ -1508,6 +1779,13 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 			elif block_type == 4:
 				self.layout.label("Тип блока: " + str(block_type))
 				self.layout.label("Количество вложенных блоков: " + lenStr)
+				if 'add_name' in object:
+					layout.prop(mytool, "addBlockName4_string")
+					layout.prop(mytool, "addBlockName_string")
+					layout.prop(mytool, "Radius1")
+				else:
+				   self.layout.label("Имя присоединённого блока не указано. Сохраните настройки,")
+				   self.layout.label("а затем попробуйте выделить блок заново.")
 			
 			elif block_type == 5:
 				self.layout.label("Тип блока: " + str(block_type))
@@ -1526,7 +1804,7 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 			elif block_type == 7:   
 				self.layout.label("Тип блока: " + str(block_type))
 				if 'texNum' in object:
-					layout.prop(mytool, "addBlockMeshType_enum")
+					#layout.prop(mytool, "addBlockMeshType_enum")
 					
 					if (mytool.addBlockMeshType_enum) == "auto":
 						layout.prop(mytool, "FType_enum")
@@ -1550,6 +1828,11 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 			elif block_type == 9:
 				self.layout.label("Тип блока: " + str(block_type))
 				self.layout.label("Количество вложенных блоков: " + lenStr)
+				layout.prop(mytool, "Radius1")
+				layout.prop(mytool, "event_x")
+				layout.prop(mytool, "event_y")
+				layout.prop(mytool, "event_z")
+				layout.prop(mytool, "event_w")
 
 			elif block_type == 10:
 				self.layout.label("Тип блока: " + str(block_type))
@@ -1578,6 +1861,8 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 			elif block_type == 13:
 				self.layout.label("Тип блока: " + str(block_type))
 				self.layout.label("Количество вложенных блоков: " + lenStr)
+				layout.prop(mytool, "event13_var1")
+				layout.prop(mytool, "event13_var2")
 
 			elif block_type == 14:
 				self.layout.label("Тип блока: " + str(block_type))
@@ -1665,7 +1950,8 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 				self.layout.label("Тип блока: " + str(block_type))
 				if 'sprite_radius' in object:
 					layout.prop(mytool, "Radius1")
-					layout.prop(mytool, "T28_radius1")
+					layout.prop(mytool, "T28_radius_x")
+					layout.prop(mytool, "T28_radius_y")
 					layout.prop(mytool, "texNum_int")
 				else:
 				   self.layout.label("Указаны не все атрибуты объекта.")
@@ -1689,13 +1975,22 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 				
 			elif block_type == 33:
 				self.layout.label("Тип блока: " + str(block_type))
-				layout.prop(mytool, "Radius1")
-				layout.prop(mytool, "LType_enum")
-				layout.prop(mytool, "RadiusLight1")
-				layout.prop(mytool, "Intensity1")
-				layout.prop(mytool, "R1")
-				layout.prop(mytool, "G1")
-				layout.prop(mytool, "B1")
+				layout.prop(mytool, "Radius")
+				layout.prop(mytool, "LightVar_int")
+				layout.prop(mytool, "LightType_enum")
+				layout.prop(mytool, "light_dir_x")
+				layout.prop(mytool, "light_dir_y")
+				layout.prop(mytool, "light_dir_z")
+				layout.prop(mytool, "LightAttenuation0")
+				layout.prop(mytool, "LightAttenuation1")
+				layout.prop(mytool, "LightAttenuation2")
+				layout.prop(mytool, "R")
+				layout.prop(mytool, "G")
+				layout.prop(mytool, "B")
+				if mytool.LightType_enum == '3':
+					layout.prop(mytool, "LightFalloff")
+					layout.prop(mytool, "LightTheta")
+					layout.prop(mytool, "LightPhi")
 
 			elif block_type == 34:
 				self.layout.label("Тип блока: " + str(block_type))
@@ -1713,22 +2008,51 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 				self.layout.label("Тип блока: " + str(block_type))
 				#self.layout.label("Количество вложенных блоков: " + lenStr)
 				if 'texNum' in object:
-					layout.prop(mytool, "addBlockMeshType_enum")
+					#layout.prop(mytool, "addBlockMeshType_enum")
 					
-					if (mytool.addBlockMeshType_enum) == "auto":
-						layout.prop(mytool, "SType_enum")
-						#layout.prop(mytool, "FType_enum")
-						#layout.prop(mytool, "addMeshType_enum")
-						layout.prop(mytool, "FType_enum")
-						layout.prop(mytool, "MType_enum")
-					else:
-						layout.prop(mytool, "Faces_enum")
-						if int(mytool.Faces_enum) == 35:
-							layout.prop(mytool, "MType_enum")
-							layout.prop(mytool, "SType_enum")
+					#format_bytes = bytearray(b'\x00\x00\x00\x00')
+					format_bytes = bytearray()
+					verts_format = 0
+					
+					if 'normals_type' in object:
+						normals_str = ""
+						uv_str = ""
+							
+						if object['normals_type'] == 1 or object['normals_type'] == 2:
+							normals_str = "NX NY NZ"
+							format_bytes.append(2)
+						elif object['normals_type'] == 3:
+							normals_str = "NX"
+							format_bytes.append(3)
+
+						if object['export_layers']:
+							if (len(object.data.uv_layers) > 1):
+								for i in range(len(object.data.uv_layers) - 1):
+									uv_str += "UV{} ".format(i+2)
+									#format_bytes[1] = struct.pack("<B", i + 1)
+							format_bytes.append(len(object.data.uv_layers) - 1)
 						else:
-							layout.prop(mytool, "SType_enum")
-							layout.prop(mytool, "FType_enum")
+							format_bytes.append(0)
+						
+						format_bytes.append(0)
+						format_bytes.append(0)		
+						print(format_bytes)
+						verts_format = struct.unpack("<i", format_bytes)[0]
+							
+						self.layout.label("Формат={} | XYZ UV {} {}".format(verts_format, normals_str, uv_str))
+					
+					layout.prop(mytool, "normals_enum")
+					if int(mytool.normals_enum) == 3:
+						layout.prop(mytool, "normals_float")
+					layout.prop(mytool, "write_other_uv")
+					
+					layout.prop(mytool, "Faces_enum")
+					if int(mytool.Faces_enum) == 35:
+						layout.prop(mytool, "MType_enum")
+						#layout.prop(mytool, "SType_enum")
+					else:
+						layout.prop(mytool, "SType_enum")
+						layout.prop(mytool, "FType_enum")
 						
 					layout.prop(mytool, "texNum_int")
 				else:
@@ -1870,6 +2194,7 @@ class OBJECT_PT_b3d_func_panel(Panel):
 		
 		layout.operator("wm.mirror_objects_operator")
 
+"""
 class OBJECT_PT_b3d_misc_panel(Panel):
 	bl_idname = "OBJECT_PT_b3d_misc_panel"
 	bl_label = "О плагине"
@@ -1889,6 +2214,7 @@ class OBJECT_PT_b3d_misc_panel(Panel):
 		
 		self.layout.label("Автор плагина: aleko2144")
 		self.layout.label("vk.com/rnr_mods")
+"""
 # ------------------------------------------------------------------------
 # register and unregister
 # ------------------------------------------------------------------------

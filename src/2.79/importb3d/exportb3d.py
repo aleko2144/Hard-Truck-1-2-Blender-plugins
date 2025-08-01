@@ -104,43 +104,27 @@ def MsgBox(label = "", title = "Error", icon = 'ERROR'):
 	
 def export_pro(file, textures_path):
 	file = open(myFile_pro+'.pro','w')
+
 	
-	#file.write('TEXTUREFILES ' + str(len(bpy.data.materials)) + '\n')
-	
-	#imgs = []
-	#for img in bpy.data.images:
-	#	imgs.append(img.name)
+	file.write('PALETTEFILES 0\n')
+	file.write('SOUNDFILES 0\n')
+	file.write('BACKFILES 0\n')
+	file.write('MASKFILES 0\n')
+	file.write('TEXTUREFILES ' + str(len(bpy.data.materials)) + '\n')
+
+	for material in bpy.data.materials:
+		file.write(textures_path + material.name + '.txr' + '\n')
 		
-	#for material in bpy.data.materials:
-	#	file.write('txr\\' + material.active_texture.name + '.txr' + '\n')
-		
-	#file.write('\n')
-	
+
+	file.write('COLORS 0\n')
 	file.write('MATERIALS ' + str(len(bpy.data.materials)) + '\n')
 	
-	materials = []
-	num_tex = 0
-	
+	i = 1
 	for material in bpy.data.materials:
-		materials.append(material.name)
-	
-	for i in range(len(materials)):
-		num_tex = i#imgs.index[i]
-		#print(str(imgs[i]))
-		file.write(materials[i] + ' tex ' + str(num_tex + 1) + '\n')
-		
-	file.write('TEXTUREFILES ' + str(len(bpy.data.materials)) + '\n')
-	
-	imgs = []
-	for img in bpy.data.images:
-		imgs.append(img.name)
-		
-	for material in bpy.data.materials:
-		try:
-			file.write(textures_path + material.texture_slots[0].texture.image.name[:-3] + 'txr' + '\n')
-		except:
-			file.write(textures_path + "error" + '.txr' + '\n')
-		
+		file.write(material.name + ' tex ' + str(i) + '\n')
+		i += 1
+
+	file.write('SOUNDS 0\n')
 	file.write('\n')
 	
 def clone_node():
@@ -173,7 +157,8 @@ def export(file, generate_pro_file):
 	global verNums
 	verNums = []
 	
-	file.write(b'B3D\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
+	file.write(struct.pack('<i', 6566754))
+	#file.write(b'B3D\x00')#struct.pack("4c",b'B',b'3',b'D',b'\x00'))
 	#ba = bytearray(b'\x00' * 20)
 	
 	#file.write(ba)
@@ -334,7 +319,7 @@ def export35(object, verticesL, file, faces, uvs):
 			#file.write(struct.pack("<iffiffiff",faces[i*3],uvs[i*3].x,uvs[i*3].y,faces[i*3+1],uvs[i*3+1].x,uvs[i*3+1].y,faces[i*3+2],uvs[i*3+2].x,uvs[i*3+2].y))
 			
 	file.write(struct.pack("<i",555))
-
+	
 def forChild(object, root, file):
 	if (not root):
 		try:
@@ -360,6 +345,7 @@ def forChild(object, root, file):
 			else:
 				type1 = "manual"
 			
+			#split_UV(object)
 			
 			#if (type == 0):
 			#	file.write(bytearray(b'\x00'*12))
@@ -405,7 +391,7 @@ def forChild(object, root, file):
 				file.write(str.encode(object['add_name'])+bytearray(b'\x00'*(32-len(object['add_name']))))#Block Name
 				file.write(struct.pack("<i",len(object.children)))
 				
-			elif (type==7 and type1 == "manual"):
+			elif (type==7):
 				verticesL = []
 				uvs = []
 				faces = []
@@ -441,6 +427,7 @@ def forChild(object, root, file):
 						verticesL.append((v.co,v.normal,uv_average))
 					except:
 						pass
+                
 				for f in bm.faces:
 					f.normal_flip()
 				
@@ -488,238 +475,16 @@ def forChild(object, root, file):
 				
 				#file.write(struct.pack("<i",555))
 				
-			elif (type==7 and type1 == "auto"):
-				verticesL = []
-				uvs = []
-				faces = []
-					
-				bm = bmesh.new()
-				bm.from_mesh(object.data)
-				bm.verts.ensure_lookup_table()
-				bm.faces.ensure_lookup_table()
-				
-				try:
-					uv_layer = bm.loops.layers.uv[0]
-				except:
-					pass
-				
-				#mesh = obj.data
-				#bm = bmesh.new()
-				#bm.from_mesh(mesh)
-				
-				#bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method=0, ngon_method=0)		
-				bmesh.ops.triangulate(bm, faces=bm.faces, quad_method=0, ngon_method=0)	
-				bm.transform(global_matrix * object.matrix_world)
-					
-				bm.to_mesh(object.data)
-				#bm.free()
-				
-				#bmesh.ops.triangulate(bm, faces=bm.faces)
-				
-				
-				for v in bm.verts:
-					try:
-						uv_first = uv_from_vert_first(uv_layer, v)
-						uv_average = uv_from_vert_average(uv_layer, v)
-						verticesL.append((v.co,v.normal,uv_average))
-					except:
-						pass
-				for f in bm.faces:
-					f.normal_flip()
-				
-				meshdata = object.data
-				
-				for i, polygon in enumerate(meshdata.polygons):
-					for i1, loopindex in enumerate(polygon.loop_indices):
-						meshloop = meshdata.loops[loopindex]
-						faces.append(meshloop.vertex_index)
-						try:
-							uvs.append(meshdata.uv_layers[0].data[loopindex].uv)
-						except:
-							pass
-					verNums.extend(polygon.vertices)
-
+			elif(type==9):
 				file.write(struct.pack("<f",object.location.x))
 				file.write(struct.pack("<f",object.location.y))
 				file.write(struct.pack("<f",object.location.z))
-				file.write(struct.pack("<f",15))
-				file.write(bytearray(b'\x00'*32))
-				vLen = len(verticesL)
-		
-				file.write(struct.pack("<i",vLen))
-		
-				for i,vert in enumerate(verticesL):
-						file.write(struct.pack("<f",vert[0][0])) #x
-						file.write(struct.pack("<f",-vert[0][2])) #z
-						file.write(struct.pack("<f",vert[0][1])) #y
-						
-						try:
-							file.write(struct.pack("<f",vert[2][0])) #u
-							file.write(struct.pack("<f",1-vert[2][1])) #v
-						except:
-							file.write(struct.pack("<f",0)) #u
-							file.write(struct.pack("<f",0)) #v
-
-				smoothed_faces = []
-				flat_faces = []
-				
-				for face in bm.faces:
-					if face.smooth == True:
-						for i in range(len(face.verts)):
-							smoothed_faces.append(face.verts[i].index)
-					else:
-						for i in range(len(face.verts)):
-							flat_faces.append(face.verts[i].index)
-						#for i, polygon in enumerate(meshdata.polygons):
-						#	for i1, loopindex in enumerate(polygon.loop_indices):
-						#		meshloop = meshdata.loops[loopindex]
-						#		flat_faces.append(meshloop.vertex_index)
-					
-				print(smoothed_faces)
-				print("salo")
-				print(flat_faces)
-					
-				mesh_blocks = 0
-					
-				if len(smoothed_faces) > 0:
-					mesh_blocks += 1
-					
-				if len(flat_faces) > 0:
-					mesh_blocks += 1
-					
-				file.write(struct.pack("<i",mesh_blocks))
-				
-				#35
-				
-				if len(smoothed_faces) > 0:
-					file.write(struct.pack("<i",333))
-					file.write(bytearray(b'\x00'*32))
-					
-					
-					file.write(struct.pack("<i",int(35)))
-					
-					file.write(bytearray(b'\x00'*16))
-					file.write(struct.pack("<i",object['MType']))
-					if generatePro == True:
-						material_name = object.data.materials[0].name
-						texNum = bpy.data.materials.find(material_name)
-						file.write(struct.pack("<i",texNum))
-					else:
-						file.write(struct.pack("<i",object['texNum']))
-								
-					fLen = len(smoothed_faces)//3
-					file.write(struct.pack("<i",fLen))
-					
-					for i in range(fLen):
-						
-						if (object['MType']==3):
-							file.write(struct.pack("<i",16))
-							file.write(struct.pack("<f",1.0))
-							file.write(struct.pack("<i",32767))
-							if generatePro == True:
-								material_name = object.data.materials[0].name
-								texNum = bpy.data.materials.find(material_name)
-								file.write(struct.pack("<i",texNum))
-							else:
-								file.write(struct.pack("<i",object['texNum']))
-							file.write(struct.pack("<i",3))#VerNum
-							file.write(struct.pack("<3i",smoothed_faces[i*3],smoothed_faces[i*3+1],smoothed_faces[i*3+2]))
-							#file.write(struct.pack("<iffiffiff",faces[i*3],verticesL[faces[i*3]][2][0],1-verticesL[faces[i*3]][2][1],faces[i*3+1],verticesL[faces[i*3+1]][2][0],1-verticesL[faces[i*3+1]][2][1],faces[i*3+2],verticesL[faces[i*3+2]][2][0],1-verticesL[faces[i*3+2]][2][1]))
-							verticesL
-							
-						elif (object['MType']==1):
-							file.write(struct.pack("<i",50))
-							file.write(struct.pack("<f",1.0))
-							file.write(struct.pack("<i",32767))
-							if generatePro == True:
-								material_name = object.data.materials[0].name
-								texNum = bpy.data.materials.find(material_name)
-								file.write(struct.pack("<i",texNum))
-							else:
-								file.write(struct.pack("<i",object['texNum']))
-							file.write(struct.pack("<i",3))#VerNum
-							
-							file.write(struct.pack("<i5f",smoothed_faces[i*3],uvs[i*3].x, 1-uvs[i*3].y, -verticesL[smoothed_faces[i*3]][1][0], verticesL[smoothed_faces[i*3]][1][1], verticesL[smoothed_faces[i*3]][1][2]))
-							file.write(struct.pack("<i5f",smoothed_faces[i*3+1],uvs[i*3+1].x, 1-uvs[i*3+1].y, -verticesL[smoothed_faces[i*3+1]][1][0], verticesL[smoothed_faces[i*3+1]][1][1], verticesL[smoothed_faces[i*3+1]][1][2]))
-							file.write(struct.pack("<i5f",smoothed_faces[i*3+2],uvs[i*3+2].x, 1-uvs[i*3+2].y, -verticesL[smoothed_faces[i*3+2]][1][0], verticesL[smoothed_faces[i*3+2]][1][1], verticesL[smoothed_faces[i*3+2]][1][2]))
-							
-							#file.write(struct.pack("<iffiffiff",faces[i*3],uvs[i*3].x,uvs[i*3].y,faces[i*3+1],uvs[i*3+1].x,uvs[i*3+1].y,faces[i*3+2],uvs[i*3+2].x,uvs[i*3+2].y))
-							
-					file.write(struct.pack("<i",555))
-				
-				#08
-				
-				if len(flat_faces) > 0:
-					file.write(struct.pack("<i",333))
-					file.write(bytearray(b'\x00'*32))
-					
-					file.write(struct.pack("<i",int(8)))
-									
-					file.write(struct.pack("<f",object.location.x))
-					file.write(struct.pack("<f",object.location.y))
-					file.write(struct.pack("<f",object.location.z))
-					file.write(struct.pack("<f",0))
-								
-					#file.write(struct.pack("<i",object['MType']))
-					#file.write(struct.pack("<i",object['texNum']))
-									
-					fLen = len(flat_faces)//3
-					file.write(struct.pack("<i",fLen))
-					#file.write(struct.pack("<i", object['FType']))
-								
-					for i in range(fLen):
-							
-						if (object['FType']==0 or object['FType']==1):
-							file.write(struct.pack("<i", object['FType']))
-							file.write(struct.pack("<f",1.0))
-							file.write(struct.pack("<i",32767))
-							if generatePro == True:
-								material_name = object.data.materials[0].name
-								texNum = bpy.data.materials.find(material_name)
-								file.write(struct.pack("<i",texNum))
-							else:
-								file.write(struct.pack("<i",object['texNum']))
-							file.write(struct.pack("<i",3))
-							file.write(struct.pack("<3i",flat_faces[i*3],flat_faces[i*3+1],flat_faces[i*3+2]))
-							verticesL
-										
-						if (object['FType']==2):
-							file.write(struct.pack("<i", object['FType']))
-							file.write(struct.pack("<f",1.0))
-							file.write(struct.pack("<i",32767))
-							if generatePro == True:
-								material_name = object.data.materials[0].name
-								texNum = bpy.data.materials.find(material_name)
-								file.write(struct.pack("<i",texNum))
-							else:
-								file.write(struct.pack("<i",object['texNum']))
-							file.write(struct.pack("<i",3))
-							file.write(struct.pack("<i2f",flat_faces[i*3],uvs[i*3].x, 1-uvs[i*3].y))
-							file.write(struct.pack("<i2f",flat_faces[i*3+1],uvs[i*3+1].x, 1-uvs[i*3+1].y))
-							file.write(struct.pack("<i2f",flat_faces[i*3+2],uvs[i*3+2].x, 1-uvs[i*3+2].y))
-										
-							#file.write(struct.pack("<i",3))
-							#file.write(struct.pack("<i2f",faces[i*3],uvs[i*3].x, 1-uvs[i*3].y))
-							#file.write(struct.pack("<i2f",faces[i*3+1],uvs[i*3+1].x, 1-uvs[i*3+2].y))
-							#file.write(struct.pack("<i2f",faces[i*3+2],uvs[i*3+2].x, 1-uvs[i*3+2].y))
-										
-							verticesL
-							
-						if (object['FType']==144 or object['FType']==128):
-							file.write(struct.pack("<i", object['FType']))
-							file.write(struct.pack("<f",1.0))
-							file.write(struct.pack("<i",32767))
-							if generatePro == True:
-								material_name = object.data.materials[0].name
-								texNum = bpy.data.materials.find(material_name)
-								file.write(struct.pack("<i",texNum))
-							else:
-								file.write(struct.pack("<i",object['texNum']))
-							file.write(struct.pack("<i",3))
-							file.write(struct.pack("<3i",flat_faces[i*3],flat_faces[i*3+1],flat_faces[i*3+2]))
-							verticesL
-								
-					file.write(struct.pack("<i",555))
+				file.write(struct.pack("<f",object['node_radius']))
+				file.write(struct.pack("<f",object['event_x']))
+				file.write(struct.pack("<f",object['event_y']))
+				file.write(struct.pack("<f",object['event_z']))
+				file.write(struct.pack("<f",object['event_w']))
+				file.write(struct.pack("<i",len(object.children) - 1))
 				
 			elif (type==10):
 
@@ -748,44 +513,95 @@ def forChild(object, root, file):
 				file.write(struct.pack("<i",object['CType']))
 				file.write(struct.pack("<i",0))
 				
+				
+			#event types:                        (type,  v1,  v2,  ...)
+			#type 13 trigger
+			#4  - repair station event #2        (4,       0,  0)
+			#15 - repair station event #1        (15,      0,  0)
+			#31 - road hedgehog (police ezh)     (31,   2240,  7)
+			#4095 - module loader (from env dir) (4095,   0,   1, "ap")
+			
+			#type 14 trigger
+			#31 - benzo station number
+			#32 - benzo station blow(?)
+			
+				
 			elif (type==13): #trigger
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
-				if object['type'] == "loader":
-					file.write(struct.pack("<f",0))
-					file.write(struct.pack("<i",4095))
-					file.write(struct.pack("<i",0))
-					file.write(struct.pack("<i",1))
-					file.write(str.encode(object['route_name'])+bytearray(b'\x00'*(3-len(object['route_name']))))
-					file.write(bytearray(b'\xCD'))
-				if object['type'] == "radar0":
-					file.write(struct.pack("<f",object['var0']))
-					file.write(struct.pack("<i",-(object.location.x + 4)))
-					file.write(struct.pack("<i",object['var2']))
-					file.write(struct.pack("<i",object['speed_limit']))
-					file.write(struct.pack("<f",1))
-					file.write(struct.pack("<f",0))
-					file.write(struct.pack("<f",0))
-				if object['type'] == "radar1":
-					file.write(struct.pack("<f",object['var0']))
-					file.write(struct.pack("<i",object['var1']))
-					file.write(struct.pack("<i",object['var2']))
-					file.write(struct.pack("<i",object['speed_limit']))
-					file.write(struct.pack("<f",1))
-					file.write(struct.pack("<f",0))
-					file.write(struct.pack("<f",0))
+				file.write(struct.pack("<f",0)) #x
+				file.write(struct.pack("<f",0)) #y
+				file.write(struct.pack("<f",0)) #z
+				file.write(struct.pack("<f",0)) #w
+				file.write(struct.pack("<i",object['event13_type'])) #trigger type
+				#file.write(struct.pack("<i",object['event13_var1'])) #trigger type
+				#file.write(struct.pack("<i",object['event13_var2'])) #params count
+				
+				
+				#*.b3d from ENV dir loader
+				if object['event13_type'] == 4095:
+					#file.write(struct.pack("<i",4095)) #trigger type
+					#file.write(struct.pack("<i",0))
+					#file.write(struct.pack("<i",1))
+					#file.write(str.encode(object['route_name'])+bytearray(b'\x00'*(3-len(object['route_name']))))
+					
+					file.write(struct.pack("<i", 0))
+					file.write(struct.pack("<i", 1))
+					bytes_cnt = 4 - len(object['route_name']) - 1
+					file.write(str.encode(object['route_name']) + bytearray(b'\x00'))
+					file.write(bytearray(b'\xCD') * bytes_cnt)
+					
+					#file.write(struct.pack("<i",object['event13_var2']))
+					#bytes_cnt = (4 * object['event13_var2']) - len(object['route_name']) - 1
+					#file.write(str.encode(object['route_name']) + bytearray(b'\x00'))
+					#file.write(bytearray(b'\xCD') * bytes_cnt)
+				
+				#tunnel no_rain_no_sun
+				elif object['event13_type'] == 22:
+					file.write(struct.pack("<i", 0))
+					file.write(struct.pack("<i", 0))
+					
+				#if object['type'] == "loader":
+				#	file.write(struct.pack("<i",4095)) #trigger type
+				#	file.write(struct.pack("<i",0))
+				#	file.write(struct.pack("<i",1))
+				#	file.write(str.encode(object['route_name'])+bytearray(b'\x00'*(3-len(object['route_name']))))
+				#	file.write(bytearray(b'\xCD'))
+				
+				#if object['type'] == "radar0":
+				#	file.write(struct.pack("<f",object['var0']))
+				#	file.write(struct.pack("<i",-(object.location.x + 4)))
+				#	file.write(struct.pack("<i",object['var2']))
+				#	file.write(struct.pack("<i",object['speed_limit']))
+				#	file.write(struct.pack("<f",1))
+				#	file.write(struct.pack("<f",0))
+				#	file.write(struct.pack("<f",0))
+				#if object['type'] == "radar1":
+				#	file.write(struct.pack("<f",object['var0']))
+				#	file.write(struct.pack("<i",object['var1']))
+				#	file.write(struct.pack("<i",object['var2']))
+				#	file.write(struct.pack("<i",object['speed_limit']))
+				#	file.write(struct.pack("<f",1))
+				#	file.write(struct.pack("<f",0))
+				#	file.write(struct.pack("<f",0))
+				#if object['type'] == "radar1":
+				#	file.write(struct.pack("<f",object['var0']))
+				#	file.write(struct.pack("<i",object['var1']))
+				#	file.write(struct.pack("<i",object['var2']))
+				#	file.write(struct.pack("<i",object['speed_limit']))
+				#	file.write(struct.pack("<f",1))
+				#	file.write(struct.pack("<f",0))
+				#	file.write(struct.pack("<f",0))
 				
 			elif (type==14): # event object (ball in tb.b3d or sell block)
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",object['var0']))
-				file.write(struct.pack("<f",object['var1']))
-				file.write(struct.pack("<f",object['var2']))
-				file.write(struct.pack("<f",object['var3']))
-				file.write(struct.pack("<i",object['var4']))
+				file.write(struct.pack("<f",0)) #x
+				file.write(struct.pack("<f",0)) #y 
+				file.write(struct.pack("<f",0)) #z
+				file.write(struct.pack("<f",0)) #w
+				#дальше - параметры самого события
+				file.write(struct.pack("<f",object.location.x))
+				file.write(struct.pack("<f",object.location.y))
+				file.write(struct.pack("<f",object.location.z))
+				file.write(struct.pack("<f",object['node_radius']))
+				file.write(struct.pack("<i",object['event_type'])) #0-CollisionKey, 18-sell, 25-Nek_STrailer
 				file.write(struct.pack("<i",0))
 				file.write(struct.pack("<i",0))
 				
@@ -820,17 +636,21 @@ def forChild(object, root, file):
 				#VerNum = len(verticesL)+1
 				
 				#file.write(struct.pack("<i",VerNum))	#vertices+1
+				numVerts = 0
 				for subcurve in object.data.splines:
-					file.write(struct.pack("<i",len(subcurve.points)))
+					numVerts += len(subcurve.points)
+				
+				file.write(struct.pack("<i", numVerts))
 				
 				file.write(struct.pack("<f",0))
 				file.write(struct.pack("<f",0))
 				file.write(struct.pack("<f",0))
 				
-				for point in subcurve.points:
-					file.write(struct.pack("<f",point.co.x))
-					file.write(struct.pack("<f",point.co.y))
-					file.write(struct.pack("<f",point.co.z))
+				for subcurve in object.data.splines:
+					for point in subcurve.points:
+						file.write(struct.pack("<f",point.co.x))
+						file.write(struct.pack("<f",point.co.y))
+						file.write(struct.pack("<f",point.co.z))
 				
 				#for i in range(VerNum):
 				#	if (i==VerNum-1):
@@ -997,30 +817,32 @@ def forChild(object, root, file):
 				file.write(struct.pack("<f",object.location.z))
 				file.write(struct.pack("<2ifi",1,2,1,32767))
 				if generatePro == True:
+					#material_name = object['mat_name']
 					material_name = object.data.materials[0].name
 					texNum = bpy.data.materials.find(material_name)
 					file.write(struct.pack("<i",texNum))
 				else:
 					file.write(struct.pack("<i",object['texNum']))
-					file.write(struct.pack("<i",4))
 				
-				file.write(struct.pack("<f",(-object['sprite_radius'])))
-				file.write(struct.pack("<f",(object['sprite_radius'])))		
+				file.write(struct.pack("<i",4))
+				
+				file.write(struct.pack("<f",(-object['sprite_radius_x'])))
+				file.write(struct.pack("<f",( object['sprite_radius_y'])))		
 				file.write(struct.pack("<f",0))
 				file.write(struct.pack("<f",0))
 				
-				file.write(struct.pack("<f",(-object['sprite_radius'])))
-				file.write(struct.pack("<f",(-object['sprite_radius'])))
+				file.write(struct.pack("<f",(-object['sprite_radius_x'])))
+				file.write(struct.pack("<f",(-object['sprite_radius_y'])))
 				file.write(struct.pack("<f",0))
 				file.write(struct.pack("<f",1))
 				
-				file.write(struct.pack("<f",(object['sprite_radius'])))
-				file.write(struct.pack("<f",(-object['sprite_radius'])))
+				file.write(struct.pack("<f",( object['sprite_radius_x'])))
+				file.write(struct.pack("<f",(-object['sprite_radius_y'])))
 				file.write(struct.pack("<f",1))
 				file.write(struct.pack("<f",1))
 				
-				file.write(struct.pack("<f",(object['sprite_radius'])))
-				file.write(struct.pack("<f",(object['sprite_radius'])))
+				file.write(struct.pack("<f",(object['sprite_radius_x'])))
+				file.write(struct.pack("<f",(object['sprite_radius_y'])))
 				file.write(struct.pack("<f",1))
 				file.write(struct.pack("<f",0))
 				
@@ -1073,22 +895,46 @@ def forChild(object, root, file):
 				file.write(struct.pack("<f",object.location.z))
 				file.write(struct.pack("<f",(object['node_radius'])))
 				file.write(struct.pack("<i",1)) #use_lights
+				file.write(struct.pack("<i",(object['light_var'])))
 				file.write(struct.pack("<i",(object['light_type'])))
-				file.write(struct.pack("<i",2))
 				file.write(struct.pack("<f",object.location.x)) #lamp pos
 				file.write(struct.pack("<f",object.location.y))
 				file.write(struct.pack("<f",object.location.z))
-				file.write(struct.pack("<5f",0,0,1,1,0))
-				file.write(struct.pack("<f",(object['light_radius'])))
-				file.write(struct.pack("<f",(object['intensity'])))
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
+				file.write(struct.pack("<f",(object['light_dir_x'])))
+				file.write(struct.pack("<f",(object['light_dir_y'])))
+				file.write(struct.pack("<f",(object['light_dir_z'])))
+				file.write(struct.pack("<f",(object['light_falloff'])))
+				file.write(struct.pack("<f",(object['light_attenuation0'])))
+				file.write(struct.pack("<f",(object['light_attenuation1'])))
+				file.write(struct.pack("<f",(object['light_attenuation2'])))
+				file.write(struct.pack("<f",(object['light_theta']))) #0
+				file.write(struct.pack("<f",(object['light_phi'])))   #0
 				file.write(struct.pack("<f",(object['R'])))
 				file.write(struct.pack("<f",(object['G'])))
 				file.write(struct.pack("<f",(object['B'])))
 				file.write(struct.pack("<i",len(object.children)))
+				#old version
+				#file.write(struct.pack("<f",object.location.x)) #node pos
+				#file.write(struct.pack("<f",object.location.y))
+				#file.write(struct.pack("<f",object.location.z))
+				#file.write(struct.pack("<f",(object['node_radius'])))
+				#file.write(struct.pack("<i",1)) #use_lights
+				#file.write(struct.pack("<i",(object['light_type'])))
+				#file.write(struct.pack("<i",2))
+				#file.write(struct.pack("<f",object.location.x)) #lamp pos
+				#file.write(struct.pack("<f",object.location.y))
+				#file.write(struct.pack("<f",object.location.z))
+				#file.write(struct.pack("<5f",0,0,1,1,0))
+				#file.write(struct.pack("<f",(object['light_radius'])))
+				#file.write(struct.pack("<f",(object['intensity'])))
+				#file.write(struct.pack("<f",0))
+				#file.write(struct.pack("<f",0))
+				#file.write(struct.pack("<f",(object['R'])))
+				#file.write(struct.pack("<f",(object['G'])))
+				#file.write(struct.pack("<f",(object['B'])))
+				#file.write(struct.pack("<i",len(object.children)))
 				
-			elif (type==37 and type1 == "manual"):
+			elif (type==37):
 				verticesL = []
 				uvs = []
 				faces = []
@@ -1119,6 +965,22 @@ def forChild(object, root, file):
 					uv_average = uv_from_vert_average(uv_layer, v)
 					
 					verticesL.append((v.co,v.normal,uv_average))
+                   
+                
+				obj_UV_cnt = len(object.data.uv_layers)
+				verts_UV_layers = []
+				mesh_has_uv2 = False
+				if (object['export_layers'] != 0 and obj_UV_cnt > 1):
+					for k in range(obj_UV_cnt - 1):
+						uv_layer_bm = bm.loops.layers.uv[k + 1]
+						uv_layer = []
+						for v in bm.verts:
+							#uv_first = uv_from_vert_first(uv_layer, v)
+							#uv_average = uv_from_vert_average(uv_layer, v)
+							#verts_UV2.append((v.co,v.normal,uv_average))
+							uv_layer.append((uv_from_vert_average(uv_layer_bm, v)))
+							#verts_UV_layers.append((uv_from_vert_average(uv_layer, v)))
+						verts_UV_layers.append(uv_layer)
 					
 				#for f in bm.faces:
 					#f.normal_flip()
@@ -1170,44 +1032,36 @@ def forChild(object, root, file):
 				#	normals.append(normal_local)
 				#	print(normal_local)
 					
+				#num_uv = len(object.data.uv_layers)
 		
 				for i,vert in enumerate(verticesL):
 				
-						file.write(struct.pack("<f",vert[0][0])) #x
+						file.write(struct.pack("<f", vert[0][0])) #x
 						file.write(struct.pack("<f",-vert[0][2])) #z
-						file.write(struct.pack("<f",vert[0][1])) #y
+						file.write(struct.pack("<f", vert[0][1])) #y
 						try:
 							file.write(struct.pack("<f",vert[2][0])) #u
 							file.write(struct.pack("<f",1-vert[2][1])) #v
 						except:
 							file.write(struct.pack("<f",0)) #u
 							file.write(struct.pack("<f",0)) #v
+							
+						if (object['export_layers'] != 0):
+							if (obj_UV_cnt > 1):
+								for z in range(obj_UV_cnt - 1):
+									file.write(struct.pack("<f", verts_UV_layers[z][i][0]))     #u
+									file.write(struct.pack("<f", 1 - verts_UV_layers[z][i][1])) #v
+							else:
+								#for n in range(num_uv - 1):
+								for n in range(obj_UV_cnt - 1):
+									file.write(struct.pack("<2f",0,1))
 						
-						if (object['SType'] == 2):
+						if (object['normals_type'] == 2):
 							file.write(struct.pack("<f",vert[1][0])) #nx
-							file.write(struct.pack("<f",vert[1][1])) #nz
-							file.write(struct.pack("<f",vert[1][2])) #ny
-							
-						elif (object['SType'] == 3):
-							file.write(struct.pack("<f",1))
-							
-						elif (object['SType'] == 258) or (object['SType'] == 515):
-							file.write(struct.pack("<f",vert[1][0])) #nx
-							file.write(struct.pack("<f",vert[1][1])) #nz
-							file.write(struct.pack("<f",vert[1][2])) #ny
-							file.write(struct.pack("<2f",0,1))
-							#file.write(struct.pack("<f",vert[2][0])) #u
-							#file.write(struct.pack("<f",1-vert[2][1])) #v
-							
-						elif (object['SType'] == 514):
-							file.write(struct.pack("<f",vert[1][0])) #nx
-							file.write(struct.pack("<f",vert[1][1])) #nz
-							file.write(struct.pack("<f",vert[1][2])) #ny
-							file.write(struct.pack("<4f",0,1,0,1))	
-							#file.write(struct.pack("<f",vert[2][0])) #u
-							#file.write(struct.pack("<f",1-vert[2][1])) #v
-							#file.write(struct.pack("<f",vert[2][0])) #u
-							#file.write(struct.pack("<f",1-vert[2][1])) #v
+							file.write(struct.pack("<f",vert[1][1])) #ny #file.write(struct.pack("<f",vert[1][2])) #nz
+							file.write(struct.pack("<f",vert[1][2])) #nz #file.write(struct.pack("<f",vert[1][1])) #ny
+						elif (object['normals_type'] == 3):
+							file.write(struct.pack("<f", object['normal_flt']))
 					
 				file.write(struct.pack("<i",1))
 				
@@ -1835,3 +1689,4 @@ def forChild(object, root, file):
 		
 		
 		
+

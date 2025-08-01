@@ -21,9 +21,8 @@
 bl_info = {
     'name': 'B3D importer/exporter',
     'author': 'Yuriy Gladishenko, Andrey Prozhoga',
-    'version': (0, 1, 15),
+    'version': (0, 2, 0),
     'blender': (2, 7, 9),
-    'api': 34893,
     'description': 'This script imports and exports the King of the Road b3d',
     'warning': '',
     'wiki_url': 'http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/'\
@@ -162,4 +161,4 @@ def unregister():
 
 
 if __name__ == "__main__":
-    register() 
+    register()
