@@ -197,20 +197,18 @@ def import_way(file, context, filepath):
 
                     new_points = recalc_to_local_coord(points[0], points)
 
-                    polyline = curve_data.splines.new('POLY')
+                    polyline = curve_data.splines.new(type='NURBS')
                     polyline.points.add(len(new_points)-1)
                     for i, coord in enumerate(new_points):
                         x,y,z = coord
                         polyline.points[i].co = (x, y, z, 1)
 
-
-                    curve_data.bevel_depth = 0.3
-                    curve_data.bevel_mode = 'ROUND'
+                    polyline.order_u = 4
+                    polyline.use_endpoint_u = True
                     obj_name = EMPTY_NAME
                     # obj_name = get_numbered_name(EMPTY_NAME)
                     cur_obj = bpy.data.objects.new(obj_name, curve_data)
-                    # curve_data.bevel_mode = ''
-
+                    
                     cur_obj.location = (points[0])
                     cur_obj[BLOCK_TYPE] = 50
                     cur_obj[Blk050.Attr1.get_prop()] = attr1
