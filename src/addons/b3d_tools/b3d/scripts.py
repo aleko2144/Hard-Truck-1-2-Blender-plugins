@@ -309,6 +309,74 @@ def get_hierarchy_roots(root):
 
     return res
 
+def select_similar_by_type(b3d_obj, zclass):
+
+    attrs_cls = get_class_attributes(zclass)
+    bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
+
+    b3d_objects = [obj for obj in bpy.data.objects if "block_type" in obj.keys() and obj['block_type'] == bnum]
+
+    blocktool = bpy.context.scene.block_tool
+    for attr_class_name in attrs_cls:
+        attr_class = zclass.__dict__[attr_class_name]
+        pname = attr_class.get_prop()
+
+        param = None
+        blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
+        if blk is not None:
+
+            if getattr(blk, "show_{}".format(pname)):
+
+                if attr_class.get_block_type() == FieldType.FLOAT \
+                    or attr_class.get_block_type() == FieldType.RAD:
+                    param = float(getattr(blk, pname))
+
+                elif attr_class.get_block_type() == FieldType.INT:
+                    param = int(getattr(blk, pname))
+                    
+                elif attr_class.get_block_type() == FieldType.STRING:
+                    param = str(getattr(blk, pname))
+                    
+                elif attr_class.get_block_type() in [FieldType.ENUM, FieldType.ENUM_DYN]:
+                    if attr_class.get_subtype() == FieldType.INT:
+                        param = int(getattr(blk, pname))
+
+                    else: #FieldType.STRING
+                        param = str(getattr(blk, pname))
+
+                # elif attr_class.get_block_type() == FieldType.LIST:
+
+                #     col = getattr(blk, attr_class.get_prop())
+
+                #     col.clear()
+                #     for i, obj in enumerate(b3d_obj[attr_class.get_prop()]):
+                #         item = col.add()
+                #         item.index = i
+                #         item.value = obj
+
+                elif attr_class.get_block_type() == FieldType.WAY_SEG_FLAGS:
+                    flags = b3d_obj[attr_class.get_prop()]
+                    pname = attr_class.get_prop()
+                    param = None
+                    show_int = getattr(blk, '{}_show_int'.format(pname))
+                    
+                    if show_int:
+                        param = getattr(blk, '{}_segment_flags'.format(pname))
+                    else:
+                        param = 0
+                        param = param ^ (getattr(blk, '{}_is_curve'.format(pname)))
+                        param = param ^ (getattr(blk, '{}_is_path'.format(pname)) << 1)
+                        param = param ^ (getattr(blk, '{}_is_right_lane'.format(pname)) << 2)
+                        param = param ^ (getattr(blk, '{}_is_left_lane'.format(pname)) << 3)
+                        param = param ^ (getattr(blk, '{}_is_fillable'.format(pname)) << 4)
+                        param = param ^ (getattr(blk, '{}_is_hidden'.format(pname)) << 5)
+                        param = param ^ (getattr(blk, '{}_no_traffic'.format(pname)) << 6)
+            
+            if param is not None:
+                b3d_objects = [obj for obj in b3d_objects if pname in obj.keys() and obj[pname] == param]
+    
+    for obj in b3d_objects:
+        obj.select_set(True)
 
 # ------------------------------------------------------------------------
 #   LOD scripts (10)
@@ -561,7 +629,6 @@ def get_obj_by_prop(b3d_obj, zclass, pname):
                         item = col.add()
                         item.index = i
                         item.value = obj
-
 
 def set_obj_by_prop(b3d_obj, zclass, pname):
 

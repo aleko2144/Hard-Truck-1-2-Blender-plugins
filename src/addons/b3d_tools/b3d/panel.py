@@ -36,7 +36,8 @@ from .scripts import (
     show_hide_sphere,
     get_obj_by_prop,
     set_obj_by_prop,
-    create_custom_attribute
+    create_custom_attribute,
+    select_similar_by_type
 )
 
 from .classes import (
@@ -1098,6 +1099,30 @@ class ShowHideSphereOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+@make_annotations
+class SelectSimilarOperator(bpy.types.Operator):
+    bl_idname = "wm.select_similar_operator"
+    bl_label = "Select similar objects"
+    bl_description = "Select objects with same parameters"
+
+    pname = bpy.props.StringProperty()
+
+    def execute(self, context):
+        scene = context.scene
+        mytool = scene.my_tool
+
+        b3d_obj = get_active_object()
+        block_type = b3d_obj[consts.BLOCK_TYPE]
+
+        zclass = BlockClassHandler.get_class_def_by_type(block_type)
+
+        if zclass is not None:
+            select_similar_by_type(b3d_obj, zclass)
+
+            self.report({'INFO'}, "Similar object selected")
+
+        return {'FINISHED'}
+
 # ------------------------------------------------------------------------
 # panels
 # ------------------------------------------------------------------------
@@ -1385,6 +1410,7 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 
                 layout.operator("wm.get_block_values_operator")
                 layout.operator("wm.set_block_values_operator")
+                layout.operator("wm.select_similar_operator")
 
                 if zclass is not None:
                     draw_fields_by_type(self, zclass)
@@ -1844,7 +1870,8 @@ _classes = [
     ShowConditionalsOperator,
     HideConditionalsOperator,
     ShowHideSphereOperator,
-
+    SelectSimilarOperator,
+    # panels
     OBJECT_PT_b3d_add_panel,
     OBJECT_PT_b3d_single_add_panel,
     # OBJECT_PT_b3d_template_add_panel,
