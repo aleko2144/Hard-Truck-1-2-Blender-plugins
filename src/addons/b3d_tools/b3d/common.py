@@ -18,6 +18,9 @@ from ..compatibility import (
 #Setup module logger
 log = common_logger
 
+def get_class_attributes(zclass):
+    return [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+
 def write_size(file, ms, write_ms=None):
     if write_ms is None:
         write_ms = ms

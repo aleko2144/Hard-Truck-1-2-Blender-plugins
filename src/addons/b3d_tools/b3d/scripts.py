@@ -12,6 +12,7 @@ from ..common import (
 from .common import (
     get_polygons_by_selected_vertices,
     get_selected_vertices,
+    get_class_attributes,
     is_root_obj,
     is_mesh_block,
     get_root_obj,
@@ -540,28 +541,31 @@ def show_hide_sphere(context, root, pname):
 
 def get_obj_by_prop(b3d_obj, zclass, pname):
 
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass, True)
 
     blocktool = bpy.context.scene.block_tool
     for attr_class_name in attrs_cls:
         attr_class = zclass.__dict__[attr_class_name]
 
-        if attr_class.get_prop() == pname:
+        blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
+        if blk is not None:
+            if attr_class.get_prop() == pname:
 
-            if attr_class.get_block_type() == FieldType.LIST:
+                if attr_class.get_block_type() == FieldType.LIST:
 
-                col = getattr(getattr(blocktool, bname), attr_class.get_prop())
+                    col = getattr(blk, attr_class.get_prop())
 
-                col.clear()
-                for i, obj in enumerate(b3d_obj[attr_class.get_prop()]):
-                    item = col.add()
-                    item.index = i
-                    item.value = obj
+                    col.clear()
+                    for i, obj in enumerate(b3d_obj[attr_class.get_prop()]):
+                        item = col.add()
+                        item.index = i
+                        item.value = obj
+
 
 def set_obj_by_prop(b3d_obj, zclass, pname):
 
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass, True)
 
     blocktool = bpy.context.scene.block_tool
@@ -580,7 +584,7 @@ def set_obj_by_prop(b3d_obj, zclass, pname):
                 b3d_obj[attr_class.get_prop()] = arr
 
 def get_objs_by_type(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
     blocktool = bpy.context.scene.block_tool
@@ -633,6 +637,18 @@ def get_objs_by_type(b3d_obj, zclass):
                         item.index = i
                         item.value = obj
 
+                elif attr_class.get_block_type() == FieldType.WAY_SEG_FLAGS:
+                    flags = b3d_obj[attr_class.get_prop()]
+                    pname = attr_class.get_prop()
+                    setattr(blk, '{}_segment_flags'.format(pname), flags)
+                    setattr(blk, '{}_is_curve'.format(pname), (flags & 0b1))
+                    setattr(blk, '{}_is_path'.format(pname), (flags & 0b10) >> 1)
+                    setattr(blk, '{}_is_right_lane'.format(pname), (flags & 0b100) >> 2)
+                    setattr(blk, '{}_is_left_lane'.format(pname), (flags & 0b1000) >> 3)
+                    setattr(blk, '{}_is_fillable'.format(pname), (flags & 0b10000) >> 4)
+                    setattr(blk, '{}_is_hidden'.format(pname), (flags & 0b100000) >> 5)
+                    setattr(blk, '{}_no_traffic'.format(pname), (flags & 0b1000000) >> 6)
+
                 else:
                     setattr(
                         blk,
@@ -641,7 +657,7 @@ def get_objs_by_type(b3d_obj, zclass):
                     )
 
 def set_objs_by_type(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
     blocktool = bpy.context.scene.block_tool
@@ -651,7 +667,7 @@ def set_objs_by_type(b3d_obj, zclass):
         
         blk = getattr(blocktool, bname) if getattr(blocktool, bname) else None
         show_attr = getattr(blk, 'show_{}'.format(pname)) if hasattr(blk, 'show_{}'.format(pname)) else None
-        
+        print('save1')
         if blk is not None and show_attr:
             
             if attr_class.get_block_type() != FieldType.SPHERE_EDIT:
@@ -697,6 +713,27 @@ def set_objs_by_type(b3d_obj, zclass):
                         arr.append(item.value)
 
                     b3d_obj[pname] = arr
+                    
+                elif attr_class.get_block_type() == FieldType.WAY_SEG_FLAGS:
+                    # flags = b3d_obj[attr_class.get_prop()]
+                    pname = attr_class.get_prop()
+                    show_int = getattr(blk, '{}_show_int'.format(pname))
+                    print(show_int)
+                    if show_int:
+                        flags = getattr(blk, '{}_segment_flags'.format(pname))
+                    else:
+                        flags = 0
+                        flags = flags ^ (getattr(blk, '{}_is_curve'.format(pname)))
+                        flags = flags ^ (getattr(blk, '{}_is_path'.format(pname)) << 1)
+                        flags = flags ^ (getattr(blk, '{}_is_right_lane'.format(pname)) << 2)
+                        flags = flags ^ (getattr(blk, '{}_is_left_lane'.format(pname)) << 3)
+                        flags = flags ^ (getattr(blk, '{}_is_fillable'.format(pname)) << 4)
+                        flags = flags ^ (getattr(blk, '{}_is_hidden'.format(pname)) << 5)
+                        flags = flags ^ (getattr(blk, '{}_no_traffic'.format(pname)) << 6)
+                    
+                    print(flags)
+
+                    b3d_obj[pname] = int(flags)
 
                 else:
                     b3d_obj[pname] = getattr(blk, pname)
@@ -712,7 +749,7 @@ def get_per_face_by_type(b3d_obj, zclass):
         get_per_face_attr(b3d_obj, zclass)
 
 def get_per_face_attr(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
@@ -731,7 +768,7 @@ def get_per_face_attr(b3d_obj, zclass):
     bpy.ops.object.mode_set(mode = 'EDIT')
 
 def get_per_face_vc(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
@@ -755,7 +792,7 @@ def set_per_face_by_type(b3d_obj, zclass):
         set_per_face_attr(b3d_obj, zclass)
 
 def set_per_face_attr(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
@@ -773,7 +810,7 @@ def set_per_face_attr(b3d_obj, zclass):
     bpy.ops.object.mode_set(mode = 'EDIT')
 
 def set_per_face_vc(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
@@ -797,7 +834,7 @@ def get_per_vertex_by_type(b3d_obj, zclass):
     get_per_vertex_attr(b3d_obj, zclass)
 
 def get_per_vertex_attr(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 
@@ -819,7 +856,7 @@ def set_per_vertex_by_type(b3d_obj, zclass):
     set_per_vertex_attr(b3d_obj, zclass)
 
 def set_per_vertex_attr(b3d_obj, zclass):
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
 
     bname, bnum = BlockClassHandler.get_mytool_block_name_by_class(zclass)
 

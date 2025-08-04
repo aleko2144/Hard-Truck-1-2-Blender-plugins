@@ -12,7 +12,8 @@ from ..common import (
 from .. import consts
 
 from .common import (
-    is_root_obj
+    is_root_obj,
+    get_class_attributes
 )
 from .ui_utils import (
     draw_common,
@@ -39,7 +40,8 @@ from .scripts import (
 )
 
 from .classes import (
-    BlockClassHandler
+    BlockClassHandler,
+    FieldType
 )
 
 from .class_descr import (
@@ -276,7 +278,7 @@ class SingleAddOperator(bpy.types.Operator):
 
         cursor_pos = get_cursor_location()
 
-        parent_obj = bpy.context.object
+        parent_obj = get_active_object()
 
         object_name = mytool.block_name_string
 
@@ -667,7 +669,7 @@ class GetValuesOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
@@ -688,7 +690,7 @@ class GetPropValueOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
@@ -703,7 +705,7 @@ class SetFaceValuesOperator(bpy.types.Operator):
     bl_label = "Save block values"
 
     def execute(self, context):
-        curtype = bpy.context.object[consts.BLOCK_TYPE]
+        curtype = get_active_object()[consts.BLOCK_TYPE]
         objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
 
         for i in range(len(objects)):
@@ -725,7 +727,7 @@ class SetVertexValuesOperator(bpy.types.Operator):
     bl_label = "Save block values"
 
     def execute(self, context):
-        curtype = bpy.context.object[consts.BLOCK_TYPE]
+        curtype = get_active_object()[consts.BLOCK_TYPE]
         objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
 
         for i in range(len(objects)):
@@ -750,12 +752,12 @@ class SetValuesOperator(bpy.types.Operator):
 
         block_type = ''
 
-        active_obj = bpy.context.object
+        active_obj = get_active_object()
 
         curtype = active_obj[consts.BLOCK_TYPE]
 
         objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
-
+        print('save')
         for i in range(len(objects)):
 
             b3d_obj = objects[i]
@@ -785,7 +787,7 @@ class SetPropValueOperator(bpy.types.Operator):
         scene = context.scene
         mytool = scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
@@ -1116,7 +1118,7 @@ class OBJECT_PT_b3d_add_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
 
         object_name = '' if b3d_obj is None else b3d_obj.name
 
@@ -1249,7 +1251,7 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
 
     @classmethod
     def poll(self,context):
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
         if b3d_obj is not None: 
             if consts.BLOCK_TYPE in b3d_obj:
                 block_type = b3d_obj[consts.BLOCK_TYPE]
@@ -1262,7 +1264,7 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
 
         if b3d_obj is not None:
 
@@ -1296,7 +1298,7 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
         #Disabled for now. More analyze needed.
         return False
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
         if consts.BLOCK_TYPE in b3d_obj:
             block_type = b3d_obj[consts.BLOCK_TYPE]
         else:
@@ -1308,7 +1310,7 @@ class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
 
         if b3d_obj is not None:
 
@@ -1342,7 +1344,7 @@ class OBJECT_PT_b3d_edit_panel(bpy.types.Panel):
         layout = self.layout
         mytool = context.scene.my_tool
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
         if b3d_obj is not None:
             draw_common(self, b3d_obj)
 
@@ -1366,7 +1368,7 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
         block_type = ''
         #for i in range(len(bpy.context.selected_objects)):
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
 
         # if len(bpy.context.selected_objects):
         #     for i in range(1):
@@ -1414,7 +1416,7 @@ class OBJECT_PT_b3d_pob_single_edit_panel(bpy.types.Panel):
 
         #for i in range(len(bpy.context.selected_objects)):
 
-        b3d_obj = bpy.context.object
+        b3d_obj = get_active_object()
 
         # if len(bpy.context.selected_objects):
         #     for i in range(1):

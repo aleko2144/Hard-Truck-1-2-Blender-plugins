@@ -14,7 +14,8 @@ from .classes import (
 )
 
 from .common import (
-    get_level_group
+    get_level_group,
+    get_class_attributes
 )
 
 
@@ -56,7 +57,7 @@ def draw_common(l_self, obj):
 
 def draw_fields_by_type(l_self, zclass, multiple_edit = True):
 
-    attrs_cls = [obj for obj in zclass.__dict__.keys() if not obj.startswith('__')]
+    attrs_cls = get_class_attributes(zclass)
     boxes = {}
     for attr_class_name in attrs_cls:
         attr_class = zclass.__dict__[attr_class_name]
@@ -208,3 +209,52 @@ def draw_fields_by_type(l_self, zclass, multiple_edit = True):
                         col1.enabled = True
                     else:
                         col1.enabled = False
+
+        elif ftype == FieldType.WAY_SEG_FLAGS:
+            blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None
+            if blk is not None:
+                box = cur_layout.box()
+                if multiple_edit:
+
+                    if hasattr(blk, "show_{}".format(pname)):
+                        box.prop(blk, "show_{}".format(pname))
+                    
+                    if hasattr(blk, "{}_show_int".format(pname)):
+                        box.prop(blk, "{}_show_int".format(pname))
+                        
+                    col1 = box.column()
+                    if getattr(blk, "{}_show_int".format(pname)) == True:
+                        
+                        if hasattr(blk, "{}_segment_flags".format(pname)):
+                            col1.prop(blk, "{}_segment_flags".format(pname))
+
+                    else:
+
+                        if hasattr(blk, "{}_is_curve".format(pname)):
+                            col1.prop(blk, "{}_is_curve".format(pname))
+
+                        if hasattr(blk, "{}_is_path".format(pname)):
+                            col1.prop(blk, "{}_is_path".format(pname))
+
+                        if hasattr(blk, "{}_is_right_lane".format(pname)):
+                            col1.prop(blk, "{}_is_right_lane".format(pname))
+
+                        if hasattr(blk, "{}_is_left_lane".format(pname)):
+                            col1.prop(blk, "{}_is_left_lane".format(pname))
+
+                        if hasattr(blk, "{}_is_fillable".format(pname)):
+                            col1.prop(blk, "{}_is_fillable".format(pname))
+
+                        if hasattr(blk, "{}_is_hidden".format(pname)):
+                            col1.prop(blk, "{}_is_hidden".format(pname))
+
+                        if hasattr(blk, "{}_no_traffic".format(pname)):
+                            col1.prop(blk, "{}_no_traffic".format(pname))
+
+
+                    if hasattr(blk, "show_{}".format(pname)):
+                        col1.enabled = getattr(blk, "show_{}".format(pname))
+                else:
+
+                    col = box.column()
+                    col.prop(bpy.context.object, '["{}"]'.format(pname), text=prop_text)

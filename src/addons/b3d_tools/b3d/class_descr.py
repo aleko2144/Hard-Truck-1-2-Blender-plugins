@@ -71,6 +71,7 @@ class FieldType(enum.Enum):
     REFERENCEABLE = 24
     ROOM = 25
     RES_MODULE = 26
+    WAY_SEG_FLAGS = 27
 
     SPHERE_EDIT = 41
 
@@ -401,6 +402,8 @@ class ResBlock(bpy.types.PropertyGroup):
 
 # FieldType.V_FORMAT
 
+# FieldType.WAY_SEG_FLAGS
+
 # Used as subtypes
 # FieldType.MATERIAL_IND
 # FieldType.SPACE_NAME
@@ -502,6 +505,9 @@ class EnumDynParam(BlkParam):
 
 class VFormatParam(BlkParam):
     block_type = FieldType.V_FORMAT #Integer
+
+class WaySegFlagsParam(BlkParam):
+    block_type = FieldType.WAY_SEG_FLAGS #Integer
 
 class SphereEditParam(BlkParam):
     block_type = FieldType.SPHERE_EDIT
@@ -1124,23 +1130,23 @@ class Blk040():
 
 class Blk050():
 
-    class Attr1(IntParam):
-        name = 'Attr. 1'
+    class Attr1(WaySegFlagsParam):
+        name = 'Segment flags'
 
     class Attr2(FloatParam):
-        name = 'Attr. 2'
+        name = 'Extend multiplier'
 
     class Attr3(IntParam):
-        name = 'Attr. 3'
+        name = 'Lane Count?'
 
     class Rten(StringParam):
         name = 'Unk. name'
 
     class Width1(FloatParam):
-        name = 'Width 1'
+        name = 'Starting width'
 
     class Width2(FloatParam):
-        name = 'Width 2'
+        name = 'Ending width'
 
 
 class Blk051():

@@ -166,9 +166,6 @@ class BlockClassHandler():
             attr_class = bclass.__dict__[attr_class_name]
 
             pname = attr_class.get_prop()
-            log.debug(bname)
-            log.debug(bnum)
-            log.debug(pname)
             prop = None
 
             if multiple_edit: # lock switches only for multiple edit
@@ -356,6 +353,75 @@ class BlockClassHandler():
                     default = True
                 )
                 attributes['__annotations__']['{}_normal_flag'.format(pname)] = prop4
+
+            elif attr_class.get_block_type() == FieldType.WAY_SEG_FLAGS: 
+
+                if multiple_edit: # lock switches only for multiple edit
+                    attributes['__annotations__']["show_{}".format(pname)] = lock_prop
+
+                prop0 = BoolProperty(
+                    name = 'Raw edit',
+                    description = 'Show flags integer',
+                    default = False
+                )
+                attributes['__annotations__']['{}_show_int'.format(pname)] = prop0
+
+                prop0 = IntProperty(
+                    name = 'Segment flags',
+                    description = 'Segment flags as integer',
+                    default = 1
+                )
+                attributes['__annotations__']['{}_segment_flags'.format(pname)] = prop0
+
+                prop1 = BoolProperty(
+                    name = 'Use curved path',
+                    description = 'Path is built using a NURBS curve',
+                    default = True
+                )
+                attributes['__annotations__']['{}_is_curve'.format(pname)] = prop1
+
+                prop2 = BoolProperty(
+                    name = 'Use straight path',
+                    description = 'Path is built by passing points',
+                    default = False
+                )
+                attributes['__annotations__']['{}_is_path'.format(pname)] = prop2
+                
+                prop3 = BoolProperty(
+                    name = 'One-way right lane',
+                    description = 'One-way right-lane path',
+                    default = False
+                )
+                attributes['__annotations__']['{}_is_right_lane'.format(pname)] = prop3
+                
+                prop4 = BoolProperty(
+                    name = 'One-way left lane',
+                    description = 'One-way left-lane path',
+                    default = False
+                )
+                attributes['__annotations__']['{}_is_left_lane'.format(pname)] = prop4
+
+                prop5 = BoolProperty(
+                    name = 'Fillable path',
+                    description = 'Path on minimap is hidden, but filled once traversed',
+                    default = False
+                )
+                attributes['__annotations__']['{}_is_fillable'.format(pname)] = prop5
+                
+                prop6 = BoolProperty(
+                    name = 'Hidden path',
+                    description = 'Path on minimap is always hidden',
+                    default = False
+                )
+                attributes['__annotations__']['{}_is_hidden'.format(pname)] = prop6
+
+                prop7 = BoolProperty(
+                    name = 'No traffic?',
+                    description = 'Traffic isn''t spawning at this path',
+                    default = False
+                )
+                attributes['__annotations__']['{}_no_traffic'.format(pname)] = prop7
+
 
         if is_before_2_80():
             attributes = attributes['__annotations__']
