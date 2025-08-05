@@ -37,7 +37,8 @@ from .scripts import (
     get_obj_by_prop,
     set_obj_by_prop,
     create_custom_attribute,
-    select_similar_by_type
+    select_similar_objects_by_type,
+    select_similar_faces_by_type
 )
 
 from .classes import (
@@ -632,7 +633,7 @@ class CastAddOperator(bpy.types.Operator):
 
 class GetVertexValuesOperator(bpy.types.Operator):
     bl_idname = "wm.get_vertex_values_operator"
-    bl_label = "Get block values"
+    bl_label = "Get vertex params"
 
     def execute(self, context):
         b3d_obj = get_active_object()
@@ -647,7 +648,7 @@ class GetVertexValuesOperator(bpy.types.Operator):
 
 class GetFaceValuesOperator(bpy.types.Operator):
     bl_idname = "wm.get_face_values_operator"
-    bl_label = "Get block values"
+    bl_label = "Get face params"
 
     def execute(self, context):
         b3d_obj = get_active_object()
@@ -664,7 +665,7 @@ class GetFaceValuesOperator(bpy.types.Operator):
 
 class GetValuesOperator(bpy.types.Operator):
     bl_idname = "wm.get_block_values_operator"
-    bl_label = "Get block values"
+    bl_label = "Get object params"
 
     def execute(self, context):
         scene = context.scene
@@ -703,7 +704,7 @@ class GetPropValueOperator(bpy.types.Operator):
 
 class SetFaceValuesOperator(bpy.types.Operator):
     bl_idname = "wm.set_face_values_operator"
-    bl_label = "Save block values"
+    bl_label = "Save face params"
 
     def execute(self, context):
         curtype = get_active_object()[consts.BLOCK_TYPE]
@@ -725,7 +726,7 @@ class SetFaceValuesOperator(bpy.types.Operator):
 
 class SetVertexValuesOperator(bpy.types.Operator):
     bl_idname = "wm.set_vertex_values_operator"
-    bl_label = "Save block values"
+    bl_label = "Save vertex params"
 
     def execute(self, context):
         curtype = get_active_object()[consts.BLOCK_TYPE]
@@ -745,7 +746,7 @@ class SetVertexValuesOperator(bpy.types.Operator):
 
 class SetValuesOperator(bpy.types.Operator):
     bl_idname = "wm.set_block_values_operator"
-    bl_label = "Save block values"
+    bl_label = "Save object params"
 
     def execute(self, context):
         scene = context.scene
@@ -758,7 +759,7 @@ class SetValuesOperator(bpy.types.Operator):
         curtype = active_obj[consts.BLOCK_TYPE]
 
         objects = [cn for cn in bpy.context.selected_objects if cn[consts.BLOCK_TYPE] is not None and cn[consts.BLOCK_TYPE] == curtype]
-        print('save')
+        
         for i in range(len(objects)):
 
             b3d_obj = objects[i]
@@ -1100,12 +1101,10 @@ class ShowHideSphereOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 @make_annotations
-class SelectSimilarOperator(bpy.types.Operator):
-    bl_idname = "wm.select_similar_operator"
+class SelectSimilarObjectsOperator(bpy.types.Operator):
+    bl_idname = "wm.select_similar_objects_operator"
     bl_label = "Select similar objects"
     bl_description = "Select objects with same parameters"
-
-    pname = bpy.props.StringProperty()
 
     def execute(self, context):
         scene = context.scene
@@ -1117,9 +1116,31 @@ class SelectSimilarOperator(bpy.types.Operator):
         zclass = BlockClassHandler.get_class_def_by_type(block_type)
 
         if zclass is not None:
-            select_similar_by_type(b3d_obj, zclass)
+            select_similar_objects_by_type(b3d_obj, zclass)
 
             self.report({'INFO'}, "Similar object selected")
+
+        return {'FINISHED'}
+
+@make_annotations
+class SelectSimilarFacesOperator(bpy.types.Operator):
+    bl_idname = "wm.select_similar_faces_operator"
+    bl_label = "Select similar faces"
+    bl_description = "Select faces with same parameters"
+
+    def execute(self, context):
+        scene = context.scene
+        mytool = scene.my_tool
+
+        b3d_obj = get_active_object()
+        block_type = b3d_obj[consts.BLOCK_TYPE]
+
+        zclass = BlockClassHandler.get_pfb_class_def_by_type(block_type)
+
+        if zclass is not None:
+            select_similar_faces_by_type(b3d_obj, zclass)
+
+            self.report({'INFO'}, "Similar faces selected")
 
         return {'FINISHED'}
 
@@ -1298,6 +1319,11 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
             else:
                 block_type = None
 
+            if block_type in [8, 28, 35]:
+                layout.operator("wm.get_face_values_operator")
+                layout.operator("wm.set_face_values_operator")
+                layout.operator("wm.select_similar_faces_operator")
+
             if block_type == 8:
                 draw_fields_by_type(self, Pfb008)
             if block_type == 28:
@@ -1305,9 +1331,6 @@ class OBJECT_PT_b3d_pfb_edit_panel(bpy.types.Panel):
             if block_type == 35:
                 draw_fields_by_type(self, Pfb035)
 
-            if block_type in [8, 28, 35]:
-                layout.operator("wm.get_face_values_operator")
-                layout.operator("wm.set_face_values_operator")
 
 class OBJECT_PT_b3d_pvb_edit_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_b3d_pvb_edit_panel"
@@ -1410,7 +1433,7 @@ class OBJECT_PT_b3d_pob_edit_panel(bpy.types.Panel):
 
                 layout.operator("wm.get_block_values_operator")
                 layout.operator("wm.set_block_values_operator")
-                layout.operator("wm.select_similar_operator")
+                layout.operator("wm.select_similar_objects_operator")
 
                 if zclass is not None:
                     draw_fields_by_type(self, zclass)
@@ -1870,7 +1893,8 @@ _classes = [
     ShowConditionalsOperator,
     HideConditionalsOperator,
     ShowHideSphereOperator,
-    SelectSimilarOperator,
+    SelectSimilarObjectsOperator,
+    SelectSimilarFacesOperator,
     # panels
     OBJECT_PT_b3d_add_panel,
     OBJECT_PT_b3d_single_add_panel,

@@ -192,23 +192,30 @@ def draw_fields_by_type(l_self, zclass, multiple_edit = True):
                     if hasattr(blk, "show_{}".format(pname)):
                         box.prop(blk, "show_{}".format(pname))
                     
+                    if hasattr(blk, "{}_show_int".format(pname)):
+                        box.prop(blk, "{}_show_int".format(pname))
+                        
                     col1 = box.column()
-                    if hasattr(blk, "{}_triang_offset".format(pname)):
-                        col1.prop(blk, "{}_triang_offset".format(pname))
+                    if getattr(blk, "{}_show_int".format(pname)) == True:
+                        
+                        if hasattr(blk, "{}_format_raw".format(pname)):
+                            col1.prop(blk, "{}_format_raw".format(pname))
+                    else:
 
-                    if hasattr(blk, "{}_use_uvs".format(pname)):
-                        col1.prop(blk, "{}_use_uvs".format(pname))
+                        if hasattr(blk, "{}_triang_offset".format(pname)):
+                            col1.prop(blk, "{}_triang_offset".format(pname))
 
-                    if hasattr(blk, "{}_use_normals".format(pname)):
-                        col1.prop(blk, "{}_use_normals".format(pname))
+                        if hasattr(blk, "{}_use_uvs".format(pname)):
+                            col1.prop(blk, "{}_use_uvs".format(pname))
 
-                    if hasattr(blk, "{}_normal_flag".format(pname)):
-                        col1.prop(blk, "{}_normal_flag".format(pname))
+                        if hasattr(blk, "{}_use_normals".format(pname)):
+                            col1.prop(blk, "{}_use_normals".format(pname))
+
+                        if hasattr(blk, "{}_normal_flag".format(pname)):
+                            col1.prop(blk, "{}_normal_flag".format(pname))
 
                     if hasattr(blk, "show_{}".format(pname)):
-                        col1.enabled = True
-                    else:
-                        col1.enabled = False
+                        col1.enabled = getattr(blk, "show_{}".format(pname))
 
         elif ftype == FieldType.WAY_SEG_FLAGS:
             blk = getattr(blocktool, bname) if hasattr(blocktool, bname) else None

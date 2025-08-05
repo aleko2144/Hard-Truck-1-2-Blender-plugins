@@ -154,6 +154,20 @@ class BlockClassHandler():
         return zclass
 
     @staticmethod
+    def get_pfb_class_def_by_type(block_num):
+        if block_num > 100:
+            return None
+        zclass = BlockClassHandler.per_face_block_classes[block_num]
+        return zclass
+
+    @staticmethod
+    def get_pvb_class_def_by_type(block_num):
+        if block_num > 100:
+            return None
+        zclass = BlockClassHandler.per_vertex_block_classes[block_num]
+        return zclass
+
+    @staticmethod
     def create_type_class(bclass, multiple_edit = True):
         attrs_cls = [obj for obj in bclass.__dict__.keys() if not obj.startswith('__')]
 
@@ -325,6 +339,20 @@ class BlockClassHandler():
             elif attr_class.get_block_type() == FieldType.V_FORMAT: # currently only available in vertex edit
 
                 attributes['__annotations__']["show_{}".format(pname)] = lock_prop
+
+                prop0 = BoolProperty(
+                    name = 'Raw edit',
+                    description = 'Show raw integer',
+                    default = False
+                )
+                attributes['__annotations__']['{}_show_int'.format(pname)] = prop0
+                
+                prop0 = IntProperty(
+                    name = 'Format Raw',
+                    description = 'Raw format integer',
+                    default = 1
+                )
+                attributes['__annotations__']['{}_format_raw'.format(pname)] = prop0
 
                 prop1 = BoolProperty(
                     name = 'Triangulation offset',
