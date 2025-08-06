@@ -1066,7 +1066,7 @@ def get_from_attributes(attr_class, bname, attr_object, only_result = False):
             normal_flag = v_format & 1
 
             if not only_result:
-                blk['{}_format_raw'.format(pname)] = v_format
+                blk['{}_format_raw'.format(pname)] = format_raw
                 blk['{}_triang_offset'.format(pname)] = triang_offset
                 blk['{}_use_uvs'.format(pname)] = use_uv
                 blk['{}_use_normals'.format(pname)] = use_normals

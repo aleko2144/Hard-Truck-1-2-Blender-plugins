@@ -427,9 +427,9 @@ def export_b3d(context, op, export_dir):
             cur_res_name = cur_root.name[:-4]
             current_module = get_col_property_by_name(res_modules, cur_res_name)
 
-            used_materials = get_used_materials(obj_name)            
-            current_materials = {cn:ind for ind, cn in enumerate(sorted(used_materials))}
-            # current_materials = {cn.mat_name:ind for ind, cn in enumerate(current_module.materials)}
+            # used_materials = get_used_materials(obj_name)            
+            # current_materials = {cn:ind for ind, cn in enumerate(sorted(used_materials))}
+            current_materials = {cn.mat_name:ind for ind, cn in enumerate(current_module.materials)}
 
             current_res = cur_res_name
             create_border_list()
