@@ -410,8 +410,8 @@ def get_used_face(face, idx_transf):
     return new_face
 
 
-def get_polygons_by_selected_vertices(obj):
-    data = obj.data
+def get_polygons_by_selected_vertices(mesh):
+    data = mesh
     # data = bpy.context.object.data
     selected_polygons = []
     for f in data.polygons:
@@ -424,8 +424,8 @@ def get_polygons_by_selected_vertices(obj):
             selected_polygons.append(f)
     return selected_polygons
 
-def get_selected_vertices(obj):
-    data = obj.data
+def get_selected_vertices(mesh):
+    data = mesh
     selected_vertices = []
     for v in data.vertices:
         if v.select:

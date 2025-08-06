@@ -640,9 +640,9 @@ class GetVertexValuesOperator(bpy.types.Operator):
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
-            get_per_vertex_by_type(b3d_obj, Pvb008)
+            get_per_vertex_by_type(b3d_obj.data, Pvb008)
         elif block_type == 35:
-            get_per_vertex_by_type(b3d_obj, Pvb035)
+            get_per_vertex_by_type(b3d_obj.data, Pvb035)
 
         return {'FINISHED'}
 
@@ -655,11 +655,11 @@ class GetFaceValuesOperator(bpy.types.Operator):
         block_type = b3d_obj[consts.BLOCK_TYPE]
 
         if block_type == 8:
-            get_per_face_by_type(b3d_obj, Pfb008)
+            get_per_face_by_type(b3d_obj.data, Pfb008)
         elif block_type == 28:
-            get_per_face_by_type(b3d_obj, Pfb028)
+            get_per_face_by_type(b3d_obj.data, Pfb028)
         elif block_type == 35:
-            get_per_face_by_type(b3d_obj, Pfb035)
+            get_per_face_by_type(b3d_obj.data, Pfb035)
 
         return {'FINISHED'}
 
@@ -716,11 +716,11 @@ class SetFaceValuesOperator(bpy.types.Operator):
             block_type = b3d_obj[consts.BLOCK_TYPE]
 
             if block_type == 8:
-                set_per_face_by_type(b3d_obj, Pfb008)
+                set_per_face_by_type(b3d_obj.data, Pfb008)
             elif block_type == 28:
-                set_per_face_by_type(b3d_obj, Pfb028)
+                set_per_face_by_type(b3d_obj.data, Pfb028)
             elif block_type == 35:
-                set_per_face_by_type(b3d_obj, Pfb035)
+                set_per_face_by_type(b3d_obj.data, Pfb035)
 
         return {'FINISHED'}
 
@@ -738,9 +738,9 @@ class SetVertexValuesOperator(bpy.types.Operator):
             block_type = b3d_obj[consts.BLOCK_TYPE]
 
             if block_type == 8:
-                set_per_vertex_by_type(b3d_obj, Pvb008)
+                set_per_vertex_by_type(b3d_obj.data, Pvb008)
             elif block_type == 35:
-                set_per_vertex_by_type(b3d_obj, Pvb035)
+                set_per_vertex_by_type(b3d_obj.data, Pvb035)
 
         return {'FINISHED'}
 

@@ -337,7 +337,7 @@ def assign_material_by_vertices(obj, vert_indexes, mat_index):
 
     for idx in vert_indexes:
         obj.data.vertices[idx].select = True
-    selected_polygons = get_polygons_by_selected_vertices(get_active_object())
+    selected_polygons = get_polygons_by_selected_vertices((get_active_object()).data)
     for poly in selected_polygons:
         poly.material_index = mat_index
 
