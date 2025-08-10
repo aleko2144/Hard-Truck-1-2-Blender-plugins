@@ -2,7 +2,7 @@ bl_info = {
 	"name": "King of The Road Tools Panel for b3d exporter",
 	"description": "",
 	"author": "Andrey Prozhoga",
-	"version": (1, 1, 0),
+	"version": (1, 0, 0),
 	"blender": (2, 79, 0),
 	"location": "3D View > Tools",
 	"warning": "",
@@ -718,6 +718,16 @@ class PanelSettings(PropertyGroup):
 		description="Экспортировать все слои UV?",
 		default = False
 		)	
+		
+		
+	# type 20 params
+	
+	T20_enum = EnumProperty(
+		name="Тип блока",
+		items=[ ('default', "Обычная коллизия", ""),
+				('road_sign', "Сбиваемый дорожный знак", ""),
+			   ]
+		)
 
 # ------------------------------------------------------------------------
 #	operators
@@ -890,6 +900,10 @@ class AddOperator(bpy.types.Operator):
 			
 		if block_type == 20:
 			points = [(0,0,0), (0,1,0)]
+			
+			if (mytool.T20_enum == 'road_sign'):
+				points = [(0,0,0.5), (0,0,2.0)]
+			
 			curveData = bpy.data.curves.new('curve', type='CURVE')
 					
 			curveData.dimensions = '3D'
@@ -909,6 +923,7 @@ class AddOperator(bpy.types.Operator):
 			context.scene.objects.link(object)
 			object.name = mytool.BlockName_string
 			object['block_type'] = block_type
+			object['node_type'] = mytool.T20_enum
 			
 		if block_type == 21:
 			if mytool.Refer_bool is False:
@@ -1236,6 +1251,7 @@ class OBJECT_PT_b3d_add_panel(Panel):
 		elif block_type == 20:
 			layout.prop(mytool, "BlockName_string")
 			self.layout.label("Тип блока:")
+			layout.prop(mytool, "T20_enum", text="")
 			layout.prop(mytool, "addBlockType_enum", text="")
 
 		elif block_type == 21:
@@ -1524,6 +1540,9 @@ class SetValuesOperator(bpy.types.Operator):
 				object['add_name'] = mytool.addBlockName1_string
 				object['space_name'] = mytool.addSpaceName1_string
 			
+			elif block_type == 20:
+				object['node_type'] = mytool.T20_enum
+				
 			elif block_type == 21:
 				object['groups_num'] = mytool.groupsNum1_int
 				object['node_radius'] = mytool.Radius1
@@ -1897,6 +1916,7 @@ class OBJECT_PT_b3d_edit_panel(Panel):
 				
 			elif block_type == 20:
 				self.layout.label("Тип блока: " + str(block_type))
+				layout.prop(mytool, "T20_enum")
 				self.layout.label("Количество вложенных блоков: " + lenStr)
 
 			elif block_type == 21:

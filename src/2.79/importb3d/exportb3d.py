@@ -642,9 +642,21 @@ def forChild(object, root, file):
 				
 				file.write(struct.pack("<i", numVerts))
 				
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
-				file.write(struct.pack("<f",0))
+				if 'node_type' in object:
+					if object['node_type'] == 'default':
+						file.write(struct.pack("<f",0))
+						file.write(struct.pack("<f",0))
+						file.write(struct.pack("<f",0))
+					elif object['node_type'] == 'road_sign':
+						file.write(struct.pack("<i",1))
+						file.write(struct.pack("<i",5))
+						file.write(struct.pack("<i",2))
+						file.write(struct.pack("<f",3))
+						file.write(struct.pack("<i",65538))
+				else:
+					file.write(struct.pack("<f",0))
+					file.write(struct.pack("<f",0))
+					file.write(struct.pack("<f",0))
 				
 				for subcurve in object.data.splines:
 					for point in subcurve.points:
