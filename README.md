@@ -1,6 +1,6 @@
 # Blender-VWI
-Плагины для экспорта b3d-файлов игрового движка Virtual World Inventor из Blender 2.79. Импорт поддерживается, но имеет ряд недоработок.
-Существует существенно улучшенная версия от LabVaKars: https://github.com/LabVaKars/Hard-Truck-1-2-Blender-plugins
+Плагины для экспорта b3d-файлов игрового движка Virtual World Inventor из Blender 2.79. Импорт поддерживается, но имеет ряд недоработок. Данный плагин использовался мной при создании модификаций ко второй части - SEMod, RnR Classic и так далее.
+Рекомендуется использовать улучшенную версию от LabVaKars: https://github.com/LabVaKars/Hard-Truck-1-2-Blender-plugins
 
 ## Файлы в проекте
 
